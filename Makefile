@@ -321,6 +321,13 @@ host-rebuild-dashboard: ## Rebuild and redeploy dashboard on host
 	kubectl wait --for=condition=ready pod -n ai-pipeline -l app=pipeline-dashboard --timeout=60s || true
 	@echo "✓ Dashboard rebuilt and redeployed"
 
+host-rebuild-fullsend-dashboard: ## Rebuild and redeploy Fullsend dashboard on host
+	@echo "==> Rebuilding Fullsend dashboard image..."
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05j-build-fullsend-dashboard.sh
+	kubectl rollout restart deployment/fullsend-dashboard -n ai-pipeline
+	kubectl rollout status deployment/fullsend-dashboard -n ai-pipeline --timeout=60s
+	@echo "✓ Fullsend dashboard rebuilt and redeployed"
+
 host-build-agent: ## Build agent image on host
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05b-build-agent.sh
 

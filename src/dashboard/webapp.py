@@ -18,6 +18,7 @@ from src.dashboard.report_data import (
 )
 from src.cli.paths import discover_models, model_workspace
 from src.dashboard.rfe_data import load_rfe_issues, load_single_rfe, load_strat_issues, load_single_strat, load_epic_issues
+from src.dashboard.ticket_data import TicketAggregator
 
 # K8s orchestration (imported lazily to avoid requiring K8s client when not needed)
 try:
@@ -226,6 +227,11 @@ def create_app() -> Flask:
 
     @app.route("/")
     def dashboard():
+        return render_template("dashboard.html")
+
+        # Legacy pipeline artifact dashboard data is retained below for the
+        # detail routes and API compatibility while the landing page uses the
+        # live cross-emulator ticket browser above.
         issues = load_all_issues()
 
         # Flatten issues into one row per model
@@ -578,6 +584,31 @@ def create_app() -> Flask:
     def api_issues():
         issues = load_all_issues()
         return jsonify(issues)
+
+    @app.route("/api/tickets")
+    def api_tickets():
+        page = max(1, request.args.get("page", 1, type=int))
+        page_size = min(100, max(1, request.args.get("page_size", 50, type=int)))
+        result = TicketAggregator().collect(
+            query=request.args.get("q", ""),
+            source=request.args.get("source", ""),
+            type_name=request.args.get("type", ""),
+            category=request.args.get("category", ""),
+            state=request.args.get("state", ""),
+            label=request.args.get("label", ""),
+            project=request.args.get("project", ""),
+        )
+        total = len(result.tickets)
+        start = (page - 1) * page_size
+        end = start + page_size
+        return jsonify({
+            "tickets": result.tickets[start:end],
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "pages": (total + page_size - 1) // page_size,
+            "errors": result.errors,
+        })
 
     @app.route("/api/rfes")
     def api_rfes():

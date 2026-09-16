@@ -93,6 +93,9 @@
     .badge-tier-standard { background: #3b82f6; color: #fff; }
     .badge-tier-deep { background: #7c3aed; color: #fff; }
 
+    .nav-link-active { background: #f3f4f6; color: #111827; }
+    html.dark .nav-link-active { background: #1f2937; color: #fff; }
+
     /* --- Rubric dots --- */
     .rubric-dot {
       display: inline-block; width: 12px; height: 12px;
@@ -231,18 +234,18 @@
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors">
   <!-- Sticky glassmorphic header -->
   <nav class="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-700/60">
-    <div class="max-w-[100rem] mx-auto px-4 lg:px-8 flex items-center justify-between h-14">
+    <div class="w-[90%] max-w-none mx-auto px-4 lg:px-8 flex items-center justify-between h-14">
       <a href="/" class="flex items-center gap-2 text-gray-900 dark:text-white no-underline">
         <img src="{{ url_for('static', filename='img/breadboard-circuit.png') }}" alt="Breadboard" class="h-8 w-8 rounded-md object-contain">
         <span class="font-semibold text-base hidden sm:inline">Breadboard</span>
       </a>
       <div class="flex items-center gap-1">
-        <a href="/" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline">Dashboard</a>
-        <a href="/jobs" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline">Jobs</a>
-        <a href="/evals" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline">Evals</a>
-        <a href="/files" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline">Files</a>
-        <a href="/settings" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline">Settings</a>
-        <a href="/admin" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline">Admin</a>
+        <a href="/" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline{% if request.path == '/' %} nav-link-active{% endif %}">Tickets</a>
+        <a href="/jobs" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline{% if request.path.startswith('/jobs') %} nav-link-active{% endif %}">Jobs</a>
+        <a href="/evals" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline{% if request.path.startswith('/evals') %} nav-link-active{% endif %}">Evals</a>
+        <a href="/files" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline{% if request.path.startswith('/files') %} nav-link-active{% endif %}">Files</a>
+        <a href="/settings" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline{% if request.path.startswith('/settings') %} nav-link-active{% endif %}">Settings</a>
+        <a href="/admin" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline{% if request.path.startswith('/admin') %} nav-link-active{% endif %}">Admin</a>
         <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1"></div>
         <a href="http://mlflow.local" target="_blank" class="px-2 py-1.5 rounded-lg text-xs font-medium text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 transition-colors no-underline" title="MLflow Tracking">MLflow</a>
         <a href="http://markovd.local" target="_blank" class="px-2 py-1.5 rounded-lg text-xs font-medium text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 transition-colors no-underline" title="Markov Workflow Engine">Markov</a>
@@ -261,7 +264,7 @@
     </div>
   </nav>
 
-  <main class="max-w-[100rem] mx-auto px-4 lg:px-8 py-6">
+  <main class="w-[90%] max-w-none mx-auto px-4 lg:px-8 py-6">
     {% block content %}{% endblock %}
   </main>
 

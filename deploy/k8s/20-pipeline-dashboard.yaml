@@ -88,6 +88,15 @@ spec:
             secretKeyRef:
               name: pipeline-secrets
               key: JIRA_TOKEN
+        # The local emulator certificates are issued by Breadboard's internal CA.
+        - name: NO_SSL_VERIFY
+          value: "1"
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-token
+              key: token
+              optional: true
         - name: ATLASSIAN_MCP_URL
           valueFrom:
             secretKeyRef:

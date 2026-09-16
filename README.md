@@ -73,7 +73,7 @@ graph TB
         end
 
         subgraph core["Platform Services"]
-            dashboard["Pipeline Dashboard<br/>dashboard.local"]
+            dashboard["Breadboard Dashboard<br/>dashboard.local"]
             fullsend_dashboard["Fullsend Dashboard<br/>fullsend.local"]
             markov["markovd + PostgreSQL<br/>markov.local<br/>Workflow Control Plane"]
             mlflow["MLflow<br/>mlflow.local<br/>Experiment Tracking"]
@@ -487,7 +487,8 @@ python main.py dashboard
 
 Opens a Flask web app at `http://localhost:5000` with:
 
-- **Multi-tab view** — All Issues, Bugs, RFEs, Strategies, Epics
+- **Live ticket browser** — one combined, paginated list of Jira issues, GitHub issues and pull requests, and GitLab issues and merge requests
+- **Cross-emulator search and filters** — search across keys, titles, labels, projects, and repositories, with source, type, state, label, and project/repository filters
 - **Issue detail pages** — full Jira data alongside completeness scores, context maps, fix attempts with patches, validation results, self-corrections, and test plans
 - **RFE detail pages** — task content, reviews, and tabbed sections
 - **Strategy detail pages** — metadata, review summaries, and tabbed content
@@ -507,7 +508,7 @@ The project includes a full K3s-based deployment stack for running the pipeline 
 
 | Service | Namespace | URL | Purpose |
 |---------|-----------|-----|---------|
-| Pipeline Dashboard | ai-pipeline | `https://dashboard.local` | Web UI for bugs, RFEs, strategies, jobs |
+| Breadboard Dashboard | ai-pipeline | `https://dashboard.local` | Live cross-emulator ticket browser, pipeline jobs, and artifact views |
 | GitHub Emulator | ai-pipeline | `https://github.local` | Git hosting and GitHub API emulation |
 | GitLab Emulator | ai-pipeline | `https://gitlab.local` | GitLab API emulation with CI/CD pipelines |
 | Jira Emulator | ai-pipeline | `https://jira.local` | Jira REST API emulation for ticket management |
@@ -589,7 +590,8 @@ breadboard/
 │   │   ├── skill_config.py  # pipeline-skills.yaml parser
 │   │   └── validation.py    # Container lifecycle and validation agent runner
 │   └── dashboard/
-│       ├── webapp.py        # Flask dashboard (PicoCSS, SSE activity feed)
+│       ├── webapp.py        # Flask dashboard (Breadboard ticket browser, PicoCSS, SSE activity feed)
+│       ├── ticket_data.py   # Live Jira, GitHub, and GitLab ticket aggregation
 │       ├── report_data.py   # Dashboard data loading (bugs)
 │       ├── rfe_data.py      # Dashboard data loading (RFEs)
 │       ├── stats.py         # Aggregate statistics

@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import Any
 
 import requests
+import urllib3
 from flask import Flask, jsonify, render_template
+from urllib3.exceptions import InsecureRequestWarning
 
 try:
     from kubernetes import client, config
@@ -77,6 +79,10 @@ class FullsendCollector:
         )
         self.github_token = os.getenv("GITHUB_TOKEN", "")
         self.verify_tls = os.getenv("NO_SSL_VERIFY", "0") != "1"
+        if not self.verify_tls:
+            # The local emulator uses an internal CA. Suppress only the warning
+            # caused by this explicit development-only TLS opt-out.
+            urllib3.disable_warnings(InsecureRequestWarning)
         self.session = requests.Session()
         if self.github_token:
             self.session.headers.update({"Authorization": f"token {self.github_token}"})

@@ -1,6 +1,6 @@
 <img width="1269" height="353" alt="image" src="https://github.com/user-attachments/assets/0c011487-67f1-4fef-9def-72f686a8ac12" />
 
-# AI-First Pipeline
+# Breadboard
 
 Integration and deployment repository for the RHOAI (Red Hat OpenShift AI)
 AI-first engineering platform. It combines an active Python pipeline for bug,
@@ -60,18 +60,23 @@ workflow, skill, model, harness, and policy comparisons.
 
 ```mermaid
 graph TB
-    subgraph host["Host Machine"]
-        proxy["Go Reverse Proxy<br/>*.local TLS routing"]
+    subgraph host["Host and Local Clients"]
+        clients["Developer / Browser<br/>*.local endpoints"]
     end
 
     subgraph k3s["K3s Cluster"]
         direction TB
 
-        subgraph core["Core Services"]
+        subgraph edge["Edge and TLS"]
+            proxy["Go Ingress Proxy<br/>2 replicas · ai-pipeline<br/>*.local TLS routing"]
+            certmgr["cert-manager<br/>Internal CA"]
+        end
+
+        subgraph core["Platform Services"]
             dashboard["Pipeline Dashboard<br/>dashboard.local"]
-            markov["markovd + Markov Jobs<br/>markov.local<br/>Workflow Control Plane"]
+            fullsend_dashboard["Fullsend Dashboard<br/>fullsend.local"]
+            markov["markovd + PostgreSQL<br/>markov.local<br/>Workflow Control Plane"]
             mlflow["MLflow<br/>mlflow.local<br/>Experiment Tracking"]
-            es["Elasticsearch<br/>Trace Indexing"]
             observatory["Observatory<br/>observatory.local<br/>Claim Verification"]
         end
 
@@ -79,27 +84,36 @@ graph TB
             github["GitHub Emulator<br/>github.local"]
             gitlab["GitLab Emulator<br/>gitlab.local"]
             jira["Jira Emulator<br/>jira.local"]
-            runner["GitLab Runner<br/>K8s Executor"]
+            gitlab_runner["GitLab Runner<br/>gitlab-runner namespace<br/>Kubernetes executor"]
         end
 
-        subgraph infra["Infrastructure"]
-            certmgr["cert-manager<br/>Internal CA"]
-            traefik["Traefik<br/>Ingress Controller"]
+        subgraph fullsend["Fullsend and Agent Execution"]
+            mint["Fullsend Mint<br/>OIDC-to-token service"]
+            actions["GitHub Actions Runners<br/>base · config · site"]
+            openshell["OpenShell Gateway<br/>openshell-system"]
+            sandbox_controller["Agent Sandbox Controller<br/>agent-sandbox-system"]
+            jobs["Pipeline and Sandbox Jobs<br/>ai-pipeline<br/>Claude SDK · OpenCode · agentic-ci"]
         end
 
-        jobs["Pipeline / Workflow Jobs<br/>Claude SDK · OpenCode · agentic-ci"]
+        es["Elasticsearch<br/>deploy/k8s/17-elasticsearch.yaml<br/>not currently running"]
     end
 
-    proxy --> traefik
-    traefik --> dashboard & mlflow & markov & observatory
-    traefik --> github & gitlab & jira
-    runner --> gitlab
+    clients --> proxy
+    proxy --> dashboard & fullsend_dashboard & mlflow & markov & observatory
+    proxy --> github & gitlab & jira
     dashboard --> jira & mlflow & markov
+    fullsend_dashboard --> github & mint & mlflow
     markov --> jobs
     jobs --> jira & github & gitlab & mlflow
+    github --> actions
+    actions --> mint & openshell
+    actions --> jobs
+    openshell --> sandbox_controller
+    sandbox_controller --> jobs
+    gitlab_runner --> gitlab
     mlflow -.->|trace sync| es
     observatory --> github & gitlab & jira
-    certmgr -.->|TLS certs| traefik
+    certmgr -.->|TLS certificates| proxy
 ```
 
 ## Prerequisites
@@ -135,8 +149,8 @@ instructions and history.
 
 ```bash
 # Clone and enter the project
-git clone git@github.com:jctanner/ai-first-pipeline.git
-cd ai-first-pipeline
+git clone git@github.com:jctanner/breadboard.git
+cd breadboard
 
 # Create virtualenv and install dependencies
 uv sync
@@ -552,7 +566,7 @@ make host-list-backups              # List available backups
 ## Project Structure
 
 ```
-ai-first-pipeline/
+breadboard/
 ├── main.py                  # Entry point (CLI dispatcher)
 ├── pyproject.toml           # Dependencies and project metadata
 ├── Makefile                 # Build, deploy, and operational targets

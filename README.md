@@ -804,29 +804,29 @@ Fullsend dashboard and smoke harness can observe them.
 
 ```mermaid
 graph TB
-    job[Actions job in Fullsend runner]
-    inputs[Job inputs<br/>event payload · target workspace<br/>role token · model credentials]
-    gateway[OpenShell Gateway<br/>openshell-system]
-    controller[Sandbox Controller<br/>agent-sandbox-system]
+    job["Actions job in Fullsend runner"]
+    inputs["Job inputs<br/>event payload · target workspace<br/>role token · model credentials"]
+    gateway["OpenShell Gateway<br/>openshell-system"]
+    controller["Sandbox Controller<br/>agent-sandbox-system"]
 
     subgraph sandbox[Ephemeral Fullsend agent sandbox]
-        image[fullsend-sandbox-dev image<br/>Fullsend agent · Git · curl · Python]
-        workspace[/sandbox<br/>writable workspace]
-        temp[/tmp and /dev/null<br/>writable scratch paths]
-        system[System and image paths<br/>read-only]
-        ca[OpenShell proxy CA<br/>GIT_SSL_CAINFO · SSL_CERT_FILE]
-        agent[Agent process<br/>triage · code · review · fix]
+        image["fullsend-sandbox-dev image<br/>Fullsend agent · Git · curl · Python"]
+        workspace["/sandbox<br/>writable workspace"]
+        temp["/tmp and /dev/null<br/>writable scratch paths"]
+        system["System and image paths<br/>read-only"]
+        ca["OpenShell proxy CA<br/>GIT_SSL_CAINFO · SSL_CERT_FILE"]
+        agent["Agent process<br/>triage · code · review · fix"]
     end
 
     subgraph policy[Enforced egress policy]
-        github[GitHub emulator<br/>read-only REST access]
-        vertex[Vertex AI<br/>model access]
-        oauth[Google OAuth<br/>credential exchange]
-        denied[All other network destinations<br/>denied]
+        github["GitHub emulator<br/>read-only REST access"]
+        vertex["Vertex AI<br/>model access"]
+        oauth["Google OAuth<br/>credential exchange"]
+        denied["All other network destinations<br/>denied"]
     end
 
-    artifacts[Shared job artifacts<br/>status · logs · result files]
-    dashboard[Fullsend Dashboard<br/>run and pod observation]
+    artifacts["Shared job artifacts<br/>status · logs · result files"]
+    dashboard["Fullsend Dashboard<br/>run and pod observation"]
 
     job -->|create request: image, policy, workspace| gateway
     gateway --> controller --> sandbox

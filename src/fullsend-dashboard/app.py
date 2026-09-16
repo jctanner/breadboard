@@ -69,6 +69,12 @@ class FullsendCollector:
             for item in os.getenv("GITHUB_REPOS", "fullsend-dev/triage-target").split(",")
             if item.strip()
         ]
+        self.github_runs_limit = max(
+            1, int(os.getenv("FULLSEND_GITHUB_RUNS_LIMIT", "8"))
+        )
+        self.github_jobs_run_limit = max(
+            1, int(os.getenv("FULLSEND_GITHUB_JOBS_RUN_LIMIT", "8"))
+        )
         self.github_token = os.getenv("GITHUB_TOKEN", "")
         self.verify_tls = os.getenv("NO_SSL_VERIFY", "0") != "1"
         self.session = requests.Session()
@@ -105,47 +111,49 @@ class FullsendCollector:
         for repo in self.github_repos:
             try:
                 runs_payload = self._github_get(
-                    f"repos/{repo}/actions/runs", {"per_page": 20}
+                    f"repos/{repo}/actions/runs", {"per_page": self.github_runs_limit}
                 )
                 runs = runs_payload.get("workflow_runs", [])
                 normalized_runs = []
-                for run in runs:
+                for run_index, run in enumerate(runs):
                     jobs: list[dict[str, Any]] = []
-                    try:
-                        jobs_payload = self._github_get(
-                            f"repos/{repo}/actions/runs/{run['id']}/jobs",
-                            {"per_page": 100},
-                        )
-                        for job in jobs_payload.get("jobs", []):
-                            normalized_job = {
-                                "id": job.get("id"),
-                                "name": job.get("name"),
-                                "status": job.get("status"),
-                                "conclusion": job.get("conclusion"),
-                                "runner_name": job.get("runner_name"),
-                                "started_at": job.get("started_at"),
-                                "completed_at": job.get("completed_at"),
-                                "ui_url": f"{self.github_ui}/ui/{repo}/actions/jobs/{job['id']}",
-                                "steps": [
-                                    {
-                                        "name": step.get("name"),
-                                        "status": step.get("status"),
-                                        "conclusion": step.get("conclusion"),
-                                    }
-                                    for step in job.get("steps", [])
-                                ],
-                            }
-                            jobs.append(normalized_job)
-                            events.append({
-                                "kind": "github-job",
-                                "time": job.get("completed_at") or job.get("started_at"),
-                                "title": job.get("name", "GitHub Actions job"),
-                                "detail": f"{job.get('status')} / {job.get('conclusion') or 'active'}",
-                                "repo": repo,
-                                "run_id": run.get("id"),
-                            })
-                    except requests.RequestException as exc:
-                        errors.append(f"{repo} jobs: {exc}")
+                    jobs_loaded = run_index < self.github_jobs_run_limit
+                    if jobs_loaded:
+                        try:
+                            jobs_payload = self._github_get(
+                                f"repos/{repo}/actions/runs/{run['id']}/jobs",
+                                {"per_page": 100},
+                            )
+                            for job in jobs_payload.get("jobs", []):
+                                normalized_job = {
+                                    "id": job.get("id"),
+                                    "name": job.get("name"),
+                                    "status": job.get("status"),
+                                    "conclusion": job.get("conclusion"),
+                                    "runner_name": job.get("runner_name"),
+                                    "started_at": job.get("started_at"),
+                                    "completed_at": job.get("completed_at"),
+                                    "ui_url": f"{self.github_ui}/ui/{repo}/actions/jobs/{job['id']}",
+                                    "steps": [
+                                        {
+                                            "name": step.get("name"),
+                                            "status": step.get("status"),
+                                            "conclusion": step.get("conclusion"),
+                                        }
+                                        for step in job.get("steps", [])
+                                    ],
+                                }
+                                jobs.append(normalized_job)
+                                events.append({
+                                    "kind": "github-job",
+                                    "time": job.get("completed_at") or job.get("started_at"),
+                                    "title": job.get("name", "GitHub Actions job"),
+                                    "detail": f"{job.get('status')} / {job.get('conclusion') or 'active'}",
+                                    "repo": repo,
+                                    "run_id": run.get("id"),
+                                })
+                        except requests.RequestException as exc:
+                            errors.append(f"{repo} jobs: {exc}")
                     normalized_runs.append({
                         "id": run.get("id"),
                         "name": run.get("name"),
@@ -159,6 +167,7 @@ class FullsendCollector:
                         "html_url": run.get("html_url"),
                         "ui_url": f"{self.github_ui}/ui/{repo}/actions/runs/{run['id']}",
                         "jobs": jobs,
+                        "jobs_loaded": jobs_loaded,
                     })
                     events.append({
                         "kind": "github-run",

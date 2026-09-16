@@ -23,3 +23,17 @@ f8f746618eb5e53ea509b8c9ca7fdc1db7e855f9:.claude/skills/doc-plan/prompts/doc-pla
 33d28891aa6a5bb57984fea938c326e8e4e1398b:.claude/skills/doc-gather/scripts/resolve-jira.sh:generic-api-key:13
 33d28891aa6a5bb57984fea938c326e8e4e1398b:.claude/skills/doc-gather/scripts/resolve-jira.sh:generic-api-key:28
 36ee1191f5daf4b1ef309344d6b247676ed3e7d5:deploy/docs/ARCHITECTURE-V2.md:generic-api-key:1413
+
+# False positive: local-only OIDC request value used by the standalone mint smoke test
+fd8a832ff292ba42dd2e43e4c908b9f4bf50cd86:var/demos/fullsend-dev-stack/scripts/m8_standalone_mint_smoke.sh:curl-auth-header:43
+
+# False positives: local-only admin:admin credentials in emulator demo workflows
+77cc811831ed0a35fe73b58d1999776c51459f56:var/demos/end-to-end/workflows/run-pipeline.yaml:curl-auth-user:41
+77cc811831ed0a35fe73b58d1999776c51459f56:var/demos/end-to-end/workflows/run-pipeline.yaml:curl-auth-user:83
+a2f729e35f1817eacf11779d781f591d98f8df5d:var/demos/end-to-end/workflows/run-pipeline.yaml:curl-auth-user:55
+cc5609eb66867c6935175e43a81d5074cdc61da9:var/demos/end-to-end/workflows/run-pipeline.yaml:curl-auth-user:34
+1da0b5390735f5c0e14df6be009954a159cffa97:docs/plans/observability-demo-plan.md:curl-auth-user:423
+
+# False positives: public Jira text and generic storage terminology
+2cbf21267cf6810274ca87ec22e805a2082d0bcf:docs/reference/data-sources-and-access.md:generic-api-key:415
+a4aff1874e144d7f5f764584b9b5aa0ebb4fbf0f:benchmarks/arch-context/corpus-claude.yaml:generic-api-key:1615

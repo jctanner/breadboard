@@ -29,6 +29,11 @@ RUN case "${TARGETARCH}" in \
 
 COPY fullsend /usr/local/bin/fullsend
 COPY openshell /usr/local/bin/openshell
+# Fullsend's long-lived runner deployments use this image directly. Keep the
+# Actions runner implementation synchronized with the checked-out emulator;
+# otherwise rebuilding only the emulator image leaves the Fullsend runners
+# executing an older embedded runner.
+COPY runner.py /app/runner.py
 RUN chmod 0755 /usr/local/bin/fullsend /usr/local/bin/openshell
 
 ENV PATH="/usr/local/bin:${PATH}"

@@ -78,6 +78,10 @@ spec:
               value: https://github-emulator.ai-pipeline.svc.cluster.local/api/v3
             - name: GITHUB_REPOS
               value: fullsend-dev/triage-target
+            - name: FULLSEND_GITHUB_RUNS_LIMIT
+              value: "8"
+            - name: FULLSEND_GITHUB_JOBS_RUN_LIMIT
+              value: "8"
             - name: GITHUB_UI_URL
               value: https://github.local
             - name: NO_SSL_VERIFY

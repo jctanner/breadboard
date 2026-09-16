@@ -157,17 +157,22 @@
       const errors = [...(data.sources.github.errors||[]), ...(data.sources.kubernetes.errors||[])];
       document.querySelector('#errors').innerHTML = errors.length ? `<div class="error">${errors.map(esc).join('<br>')}</div>` : '';
       document.querySelector('#agents').innerHTML = data.agents.length ? `<table><tr><th>Name</th><th>Namespace</th><th>Phase</th><th>Containers</th></tr>${data.agents.map(p => `<tr><td><strong>${esc(p.name)}</strong></td><td>${esc(p.namespace)}</td><td class="status ${cls(p.phase)}">${esc(p.phase)}</td><td>${p.containers.map(c => `${esc(c.name)}: ${esc(c.state)}${c.ready?' ✓':''}`).join('<br>')}</td></tr>`).join('')}</table>` : empty('No Fullsend/OpenShell agent pods are currently visible.');
-      document.querySelector('#runs').innerHTML = runs.length ? `<table><tr><th>Run</th><th>Repo / branch</th><th>Status</th><th>Jobs</th></tr>${runs.map(r => `<tr><td><a class="link" href="${esc(r.ui_url)}">${esc(r.name)}</a><br><span class="muted">#${esc(r.id)} · ${esc(r.event)}</span></td><td>${esc(r.repo)}<br>${esc(r.branch)}</td><td class="status ${cls(r.conclusion||r.status)}">${esc(r.status)} / ${esc(r.conclusion||'active')}</td><td>${r.jobs.map(j => `<div><a class="link status ${cls(j.conclusion||j.status)}" href="${esc(j.ui_url)}">${esc(j.name)}</a> — ${esc(j.status)}${j.runner_name?` <span class="muted">(${esc(j.runner_name)})</span>`:''}</div>`).join('')||'–'}</td></tr>`).join('')}</table>` : empty('No GitHub Actions runs found.');
+      document.querySelector('#runs').innerHTML = runs.length ? `<table><tr><th>Run</th><th>Repo / branch</th><th>Status</th><th>Jobs</th></tr>${runs.map(r => `<tr><td><a class="link" href="${esc(r.ui_url)}">${esc(r.name)}</a><br><span class="muted">#${esc(r.id)} · ${esc(r.event)}</span></td><td>${esc(r.repo)}<br>${esc(r.branch)}</td><td class="status ${cls(r.conclusion||r.status)}">${esc(r.status)} / ${esc(r.conclusion||'active')}</td><td>${r.jobs_loaded ? (r.jobs.map(j => `<div><a class="link status ${cls(j.conclusion||j.status)}" href="${esc(j.ui_url)}">${esc(j.name)}</a> — ${esc(j.status)}${j.runner_name?` <span class="muted">(${esc(j.runner_name)})</span>`:''}</div>`).join('')||'–') : '<span class="muted">Jobs omitted for older run</span>'}</td></tr>`).join('')}</table>` : empty('No GitHub Actions runs found.');
       document.querySelector('#k8s-jobs').innerHTML = data.jobs.length ? `<table><tr><th>Name</th><th>Status</th><th>Created</th><th>Result</th></tr>${data.jobs.map(j => `<tr><td>${esc(j.name)}</td><td class="status ${cls(j.status)}">${esc(j.status)}</td><td>${esc(j.created_at)}</td><td>${esc(j.succeeded)} succeeded / ${esc(j.failed)} failed</td></tr>`).join('')}</table>` : empty('No Fullsend Kubernetes jobs found.');
       document.querySelector('#events').innerHTML = data.events.length ? data.events.map(e => `<div class="event"><span class="muted">${esc(e.time)}</span><strong>${esc(e.title)}</strong><span>${esc(e.detail)}${e.repo?` <span class="muted">(${esc(e.repo)} #${esc(e.run_id)})</span>`:''}</span></div>`).join('') : empty('No recent events found.');
     }
+    let refreshInFlight = false;
     async function refresh() {
+      if (refreshInFlight) return;
+      refreshInFlight = true;
       try {
         const response = await fetch('/api/state', {cache:'no-store'});
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         render(await response.json());
       } catch (error) {
         document.querySelector('#errors').innerHTML = `<div class="error">Dashboard refresh failed: ${esc(error)}</div>`;
+      } finally {
+        refreshInFlight = false;
       }
     }
     document.querySelector('#refresh').addEventListener('click', refresh);

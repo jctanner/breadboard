@@ -7,7 +7,7 @@ CONTAINER="ghemu-actions-real-runner-m8"
 CA_FILE="$(mktemp /tmp/m8-runner-ca.XXXXXX.crt)"
 
 if ! docker image inspect "${IMAGE}" >/dev/null 2>&1; then
-  echo "Missing ${IMAGE}; build it from checkouts/github-emulator/runner-real first." >&2
+  echo "Missing ${IMAGE}; build it from checkouts/github-emulator/src/runners/upstream first." >&2
   exit 2
 fi
 

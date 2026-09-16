@@ -17,5 +17,9 @@ Configuration is supplied through environment variables:
 - `GITHUB_UI_URL` — browser-facing GitHub emulator URL used to build `/ui/`
   run and job links;
 - `GITHUB_REPOS` — comma-separated `owner/repo` values to inspect;
+- `FULLSEND_GITHUB_RUNS_LIMIT` — number of recent workflow runs to fetch
+  (default `8`);
+- `FULLSEND_GITHUB_JOBS_RUN_LIMIT` — number of recent runs whose jobs are
+  fetched (default `8`);
 - `GITHUB_TOKEN` — optional read token; and
 - `NO_SSL_VERIFY=1` — explicit development-only TLS verification opt-out.

@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: github-actions-site-runner
+  namespace: ai-pipeline
+  labels:
+    app: github-actions-site-runner
+    breadboard.dev/role: fullsend-router
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: github-actions-site-runner
+  template:
+    metadata:
+      labels:
+        app: github-actions-site-runner
+        breadboard.dev/role: fullsend-router
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: runner
+          image: github-emulator-actions-real-runner:k3s
+          imagePullPolicy: Never
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              cp /etc/breadboard-ca/ca.crt /usr/local/share/ca-certificates/breadboard-internal-ca.crt
+              update-ca-certificates
+              exec /entrypoint.sh
+          env:
+            - name: GITHUB_EMULATOR_URL
+              value: https://github.local
+            - name: GITHUB_EMULATOR_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-actions-runner-credentials
+                  key: token
+            - name: RUNNER_SCOPE
+              value: enterprise
+            - name: RUNNER_ENTERPRISE
+              value: breadboard
+            - name: RUNNER_NAME
+              value: breadboard-enterprise-router
+            - name: RUNNER_LABELS
+              value: self-hosted,linux,fullsend-router
+            - name: RUNNER_WORKDIR
+              value: /runner-work
+            - name: GIT_SSL_CAINFO
+              value: /etc/ssl/certs/ca-certificates.crt
+            - name: SSL_CERT_FILE
+              value: /etc/ssl/certs/ca-certificates.crt
+            - name: RUNNER_ALLOW_RUNASROOT
+              value: "1"
+          volumeMounts:
+            - name: runner-work
+              mountPath: /runner-work
+            - name: breadboard-ca
+              mountPath: /etc/breadboard-ca
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            runAsUser: 0
+      volumes:
+        - name: runner-work
+          emptyDir: {}
+        - name: breadboard-ca
+          configMap:
+            name: internal-ca-cert

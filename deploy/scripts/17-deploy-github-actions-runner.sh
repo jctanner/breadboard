@@ -19,9 +19,17 @@ kubectl -n ai-pipeline create secret generic github-actions-runner-credentials \
 
 echo "==> Deploying GitHub emulator Actions runner"
 kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/23-github-actions-runner.yaml"
+kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/23b-github-actions-config-runner.yaml"
+kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/23c-github-actions-site-runner.yaml"
 kubectl -n ai-pipeline rollout restart deployment/github-actions-runner
+kubectl -n ai-pipeline rollout restart deployment/github-actions-config-runner
+kubectl -n ai-pipeline rollout restart deployment/github-actions-site-runner
 kubectl -n ai-pipeline rollout status deployment/github-actions-runner --timeout=180s
+kubectl -n ai-pipeline rollout status deployment/github-actions-config-runner --timeout=180s
+kubectl -n ai-pipeline rollout status deployment/github-actions-site-runner --timeout=180s
 
 echo "==> Runner status"
 kubectl -n ai-pipeline get deployment/github-actions-runner
-kubectl -n ai-pipeline get pods -l app=github-actions-runner -o wide
+kubectl -n ai-pipeline get deployment/github-actions-config-runner
+kubectl -n ai-pipeline get deployment/github-actions-site-runner
+kubectl -n ai-pipeline get pods -l 'breadboard.dev/role in (fullsend,fullsend-router)' -o wide

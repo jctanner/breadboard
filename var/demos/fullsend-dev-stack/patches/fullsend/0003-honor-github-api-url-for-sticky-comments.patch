@@ -1,0 +1,16 @@
+diff --git a/internal/cli/postcomment.go b/internal/cli/postcomment.go
+--- a/internal/cli/postcomment.go
++++ b/internal/cli/postcomment.go
+@@ -10,1 +10,0 @@
+-	gh "github.com/fullsend-ai/fullsend/internal/forge/github"
+@@ -70,1 +70,1 @@
+-			client := gh.New(token)
++			client := newGitHubLiveClient(token, "")
+diff --git a/internal/cli/tracker_client.go b/internal/cli/tracker_client.go
+--- a/internal/cli/tracker_client.go
++++ b/internal/cli/tracker_client.go
+@@ -7,1 +7,0 @@
+-	gh "github.com/fullsend-ai/fullsend/internal/forge/github"
+@@ -39,1 +39,1 @@
+-		fc := gh.New(ghToken)
++		fc := newGitHubLiveClient(ghToken, "")

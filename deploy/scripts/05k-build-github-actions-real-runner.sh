@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Build and import the GitHub emulator's deterministic Python Actions runner.
+# Build and import the upstream GitHub Actions runner compatibility image.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
-RUNNER_CONTEXT="${PROJECT_ROOT}/checkouts/github-emulator/src/runners/emulator"
-IMAGE="github-emulator-actions-runner:k3s"
+RUNNER_CONTEXT="${PROJECT_ROOT}/checkouts/github-emulator/src/runners/upstream"
+IMAGE="github-emulator-actions-real-runner:k3s"
 
 if command -v docker >/dev/null 2>&1; then
   CONTAINER_CMD=docker
@@ -18,7 +18,7 @@ else
 fi
 
 if [[ ! -f "${RUNNER_CONTEXT}/Dockerfile" ]]; then
-  echo "ERROR: GitHub emulator runner checkout is missing: ${RUNNER_CONTEXT}" >&2
+  echo "ERROR: GitHub emulator real runner checkout is missing: ${RUNNER_CONTEXT}" >&2
   exit 1
 fi
 
@@ -31,4 +31,4 @@ sudo k3s ctr images rm "docker.io/library/${IMAGE}" "localhost/${IMAGE}" 2>/dev/
 sudo k3s ctr images tag "localhost/${IMAGE}" "docker.io/library/${IMAGE}" 2>/dev/null || true
 
 echo "==> Imported images"
-sudo k3s ctr images ls | grep github-emulator-actions-runner
+sudo k3s ctr images ls | grep github-emulator-actions-real-runner

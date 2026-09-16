@@ -1,6 +1,6 @@
 # Fullsend Development Stack on Breadboard
 
-**Status:** M8 complete; all fidelity checkpoints are development-only and locally reproducible
+**Status:** M11 complete; automatic Fullsend event replay verified
 
 ## Goal
 
@@ -448,6 +448,78 @@ Run 122/job 170 completed successfully; the agent ran through OpenShell,
 passed schema validation, and posted an `APPROVE` review plus the marked
 Fullsend comment. The REST compatibility patch was required because the
 emulator's GraphQL `PullRequest.files` field is currently a stub.
+
+### M11 — Event-driven Fullsend triggers
+
+Implement the event surface used by the production-shaped Fullsend workflows
+and make the local M9/M10 fixtures subscribe to it while preserving manual
+dispatch for replay.
+
+- Dispatch matching workflows after successful issue, comment, label, pull
+  request, review, and Git push mutations.
+- Match the Fullsend activity allowlists and expose the complete payload to
+  `github.event` and the runner's `GITHUB_EVENT_PATH`.
+- Treat a push to an open PR head branch as `pull_request_target`/
+  `synchronize`; commits and branch updates therefore use the normal push/PR
+  event path rather than a Fullsend-specific trigger.
+- Keep event dispatch generic; do not couple it to Fullsend repository names or
+  labels.
+
+**Evidence:** `checkouts/github-emulator/tests/test_actions_event_triggers.py`
+passes 15 focused tests covering the activity matrix, payload contexts,
+comments, labels, reviews, branch/commit push metadata, and push
+synchronization. M9 and M10 seed workflow definitions now include the
+automatic event subscriptions. Live issue #8 automatically triggered M9 run
+133/job 189, which completed successfully and posted comment #8.
+
+### M12 — Production-shaped shim and stage routing
+
+Replace the accumulated M1–M10 fixture workflows in `triage-target` with the
+minimal workflow-call topology used by Fullsend:
+
+- `triage-target/.github/workflows/fullsend.yaml` is the event-filtering shim;
+- `fullsend-dev/.fullsend/.github/workflows/dispatch.yml` is the central
+  dispatcher; and
+- `fullsend-dev/.fullsend/.github/workflows/triage.yml` delegates to
+  `triage-agent.yml`, which runs the pinned triage harness.
+- `code.yml`/`code-agent.yml` and `review.yml`/`review-agent.yml` provide the
+  same thin-caller boundary for the code and review stages.
+- The central dispatcher routes `ready-for-triage`, `ready-to-code`, and
+  `ready-for-review` labels (plus their `/fs-*` commands and relevant PR
+  events) to the matching stage instead of sending every event to triage.
+
+The repeatable `scripts/m11_seed.py` setup creates the config repository,
+removes the target's old workflow/config fixtures, preserves the target's
+non-Fixture files, and verifies the resulting active workflow inventory.
+The emulator must recursively resolve imported repositories for GitHub-style
+job-level reusable workflow references, forward `with`/secret context, and
+remap nested job dependencies; unresolved or cyclic references remain visible
+as skipped placeholders. It must also evaluate job-level `if` expressions and
+materialize rejected jobs as skipped so event guards do not create feedback
+loops.
+
+Because the emulator's development runner registration is repository-scoped,
+the bootstrap deploys one runner for `triage-target` and one for `.fullsend`.
+This preserves the production-shaped repository split without making the
+runner poll unrelated repositories.
+
+**Exit:** a new issue in `triage-target` creates the shim run, routes through
+the central dispatcher, materializes the nested triage-agent job, and runs the
+triage stage. Routing labels and commands select the matching code/review
+stage, while bot comments and non-routing labels do not create another triage
+run.
+
+### M13 — Seed the remaining routed agent assets
+
+Populate the cleaned `.fullsend` repository with the pinned code and review
+harnesses, their scripts, schemas, profiles, providers, skills, and role
+configuration. Preserve the local GitHub/mint/Vertex adaptations already used
+by triage, and pass the coder/reviewer token outputs into the corresponding
+host-side post-script boundaries.
+
+**Exit:** `ready-to-code` runs the pinned code agent without remote fallback;
+`ready-for-review` and pull-request review events run the pinned review agent;
+each stage has a repeatable emulator-side result and no stage re-enters triage.
 
 ## Acceptance criteria
 

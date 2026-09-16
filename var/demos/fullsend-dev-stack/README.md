@@ -178,7 +178,7 @@ Build the upstream runner image from the emulator checkout, then run the
 isolated real-runner workflow:
 
 ```bash
-docker build -t ghemu-actions-real-runner-test:latest checkouts/github-emulator/runner-real
+docker build -t ghemu-actions-real-runner-test:latest checkouts/github-emulator/src/runners/upstream
 bash var/demos/fullsend-dev-stack/scripts/m8_real_runner_smoke.sh
 ```
 

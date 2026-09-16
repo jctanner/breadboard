@@ -27,6 +27,10 @@ APP_ACTION = ".github/actions/mint-token/action.yml"
 WORKFLOW_CONTENT = r'''name: M9 Fullsend real triage
 
 on:
+  issues:
+    types: [opened, edited, labeled]
+  issue_comment:
+    types: [created]
   workflow_dispatch:
     inputs:
       issue_number:
@@ -45,7 +49,8 @@ jobs:
     env:
       # Keep the issue URL in GitHub's documented shape because the upstream
       # triage scripts validate it. GH_HOST routes gh CLI requests locally.
-      GITHUB_ISSUE_URL: https://github.com/fullsend-dev/triage-target/issues/${{ inputs.issue_number }}
+      GITHUB_ISSUE_URL: https://github.com/fullsend-dev/triage-target/issues/${{ github.event.issue.number || inputs.issue_number }}
+      GITHUB_ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
       GITHUB_API_URL: https://github.local/api/v3
       GITHUB_SERVER_URL: https://github.local
       GH_HOST: github.local
@@ -79,6 +84,7 @@ jobs:
       - name: Run the real Fullsend triage agent
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_ENTERPRISE_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO_FULL_NAME: fullsend-dev/triage-target
           MINT_REPOS: triage-target
         run: |
@@ -95,7 +101,7 @@ jobs:
         run: |
           set -eu
           comments="$(curl -kfsS -H "Authorization: token ${GH_TOKEN}" \
-            "${GITHUB_API_URL}/repos/fullsend-dev/triage-target/issues/${{ inputs.issue_number }}/comments")"
+            "${GITHUB_API_URL}/repos/fullsend-dev/triage-target/issues/${{ github.event.issue.number || inputs.issue_number }}/comments")"
           test "$(jq -r 'length > 0' <<<"${comments}")" = true
           printf 'M9 real Fullsend triage API result is visible\n'
 '''
@@ -152,11 +158,11 @@ def _triage_harness() -> str:
     )
     content = content.replace(
         "        GH_TOKEN: ${GH_TOKEN}\n",
-        "        GH_TOKEN: ${GH_TOKEN}\n        GH_ENTERPRISE_TOKEN: ${GH_TOKEN}\n",
+        "        GH_TOKEN: ${GH_TOKEN}\n        GITHUB_TOKEN: ${GH_TOKEN}\n        GH_ENTERPRISE_TOKEN: ${GH_TOKEN}\n",
     )
     content = content.replace(
         '        GH_TOKEN: \"${GH_TOKEN}\"\n',
-        '        GH_TOKEN: \"${GH_TOKEN}\"\n        GH_ENTERPRISE_TOKEN: \"${GH_TOKEN}\"\n',
+        '        GH_TOKEN: \"${GH_TOKEN}\"\n        GITHUB_TOKEN: \"${GH_TOKEN}\"\n        GH_ENTERPRISE_TOKEN: \"${GH_TOKEN}\"\n',
     )
     return content
 
@@ -165,6 +171,9 @@ def _triage_env() -> str:
     return (
         'export ISSUE_URL="${GITHUB_ISSUE_URL}"\n'
         'export GH_TOKEN="${GH_TOKEN}"\n'
+        # gh uses the enterprise-token variable for non-github.com hosts.
+        # Keep the same minted token for both public GitHub and github.local.
+        'export GH_ENTERPRISE_TOKEN="${GH_TOKEN}"\n'
         'export GH_HOST="${GH_HOST:-github.local}"\n'
     )
 

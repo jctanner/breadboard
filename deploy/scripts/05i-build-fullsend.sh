@@ -10,6 +10,7 @@ OPENSHELL_ROOT="${PROJECT_ROOT}/checkouts/openshell"
 FULLSEND_PATCHES=(
   "${PROJECT_ROOT}/var/demos/fullsend-dev-stack/patches/fullsend/0001-openshell-compatible-sandbox-and-dummy-env.patch"
   "${PROJECT_ROOT}/var/demos/fullsend-dev-stack/patches/fullsend/0002-allow-insecure-dev-mint-url.patch"
+  "${PROJECT_ROOT}/var/demos/fullsend-dev-stack/patches/fullsend/0003-honor-github-api-url-for-sticky-comments.patch"
 )
 RUNNER_CONTEXT="${PROJECT_ROOT}/deploy/fullsend-runner-dev"
 SANDBOX_CONTEXT="${PROJECT_ROOT}/deploy/fullsend-sandbox-dev"
@@ -32,6 +33,12 @@ for required in "${FULLSEND_ROOT}/go.mod" "${OPENSHELL_ROOT}/Cargo.toml" "${FULL
   fi
 done
 
+RUNNER_SOURCE="${PROJECT_ROOT}/checkouts/github-emulator/src/runners/emulator/runner.py"
+if [[ ! -f "${RUNNER_SOURCE}" ]]; then
+  echo "ERROR: GitHub emulator runner source is missing: ${RUNNER_SOURCE}" >&2
+  exit 1
+fi
+
 BUILD_CONTEXT="$(mktemp -d /tmp/fullsend-runner-build.XXXXXX)"
 FULLSEND_BUILD_ROOT="$(mktemp -d /tmp/fullsend-source-build.XXXXXX)"
 cleanup() { rm -rf "${BUILD_CONTEXT}" "${FULLSEND_BUILD_ROOT}"; }
@@ -48,6 +55,7 @@ done
 echo "==> Building OpenShell CLI from pinned checkout"
 (cd "${OPENSHELL_ROOT}" && cargo build --release -p openshell-cli)
 cp "${OPENSHELL_ROOT}/target/release/openshell" "${BUILD_CONTEXT}/openshell"
+cp "${RUNNER_SOURCE}" "${BUILD_CONTEXT}/runner.py"
 
 echo "==> Building ${RUNNER_IMAGE}"
 "${CONTAINER_CMD}" build -f "${RUNNER_CONTEXT}/Containerfile" -t "${RUNNER_IMAGE}" "${BUILD_CONTEXT}"

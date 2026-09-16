@@ -24,6 +24,10 @@ FIXTURE_FILE = "src/review_fixture.py"
 WORKFLOW_CONTENT = r'''name: M10 Fullsend review
 
 on:
+  pull_request_target:
+    types: [opened, synchronize, ready_for_review, closed, labeled, unlabeled]
+  pull_request_review:
+    types: [submitted]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -40,7 +44,7 @@ jobs:
       pull-requests: write
       issues: write
     env:
-      GITHUB_PR_URL: https://github.com/fullsend-dev/triage-target/pull/${{ inputs.pr_number }}
+      GITHUB_PR_URL: https://github.com/fullsend-dev/triage-target/pull/${{ github.event.pull_request.number || inputs.pr_number }}
       GITHUB_API_URL: https://github.local/api/v3
       GITHUB_SERVER_URL: https://github.local
       GH_HOST: github.local
@@ -53,8 +57,8 @@ jobs:
       OPENSHELL_GATEWAY_ENDPOINT: http://openshell.openshell-system.svc.cluster.local:8080
       OPENSHELL_GATEWAY_NAME: openshell
       REPO_FULL_NAME: fullsend-dev/triage-target
-      PR_NUMBER: ${{ inputs.pr_number }}
-      GITHUB_PR_NUMBER: ${{ inputs.pr_number }}
+      PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+      GITHUB_PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
       PRIOR_REVIEW_SHA: ""
       PRIOR_REVIEW_PROVENANCE: none
       REVIEW_SKIP_AUTHORS: ""
@@ -81,7 +85,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO_FULL_NAME: fullsend-dev/triage-target
-          PR_NUMBER: ${{ inputs.pr_number }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
           MINT_REPOS: triage-target
         run: |
           set -eu
@@ -97,9 +101,9 @@ jobs:
         run: |
           set -eu
           reviews="$(curl -kfsS -H "Authorization: token ${GH_TOKEN:-${GITHUB_TOKEN:-}}" \
-            "${GITHUB_API_URL}/repos/fullsend-dev/triage-target/pulls/${{ inputs.pr_number }}/reviews")"
+            "${GITHUB_API_URL}/repos/fullsend-dev/triage-target/pulls/${{ github.event.pull_request.number || inputs.pr_number }}/reviews")"
           comments="$(curl -kfsS -H "Authorization: token ${GH_TOKEN:-${GITHUB_TOKEN:-}}" \
-            "${GITHUB_API_URL}/repos/fullsend-dev/triage-target/issues/${{ inputs.pr_number }}/comments")"
+            "${GITHUB_API_URL}/repos/fullsend-dev/triage-target/issues/${{ github.event.pull_request.number || inputs.pr_number }}/comments")"
           test "$(jq -r 'length > 0' <<<"${reviews}")" = true || \
             test "$(jq -r 'length > 0' <<<"${comments}")" = true
           printf 'M10 review API result is visible\n'
@@ -157,7 +161,7 @@ def _review_harness() -> str:
     )
     content = content.replace(
         '        GH_TOKEN: "${GH_TOKEN}"\n',
-        '        GH_TOKEN: "${GH_TOKEN}"\n        GH_ENTERPRISE_TOKEN: "${REVIEW_TOKEN}"\n',
+        '        GH_TOKEN: "${GH_TOKEN}"\n        GITHUB_TOKEN: "${REVIEW_TOKEN}"\n        GH_ENTERPRISE_TOKEN: "${REVIEW_TOKEN}"\n',
     )
     return content
 
@@ -166,6 +170,7 @@ def _review_env() -> str:
     return (
         'export PR_URL="${GITHUB_PR_URL}"\n'
         'export GH_TOKEN="${GH_TOKEN}"\n'
+        'export GITHUB_TOKEN="${REVIEW_TOKEN:-${GH_TOKEN}}"\n'
         'export GH_ENTERPRISE_TOKEN="${REVIEW_TOKEN:-${GH_TOKEN}}"\n'
         'export PR_NUMBER="${PR_NUMBER}"\n'
         'export REPO_FULL_NAME="${REPO_FULL_NAME}"\n'

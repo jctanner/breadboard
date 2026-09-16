@@ -2,9 +2,9 @@
 """Development-only Fullsend token mint for the breadboard emulators.
 
 This is intentionally not an OIDC verifier or a GitHub App implementation.
-It accepts one opaque development OIDC value and returns pre-created emulator
-PATs selected by role.  The role/repository checks preserve the Fullsend API
-contract while keeping the local stack deterministic.
+It accepts one opaque development OIDC value and returns pre-created,
+bot-owned emulator PATs selected by role.  The role/repository checks preserve
+the Fullsend API contract while keeping the local stack deterministic.
 """
 
 from __future__ import annotations

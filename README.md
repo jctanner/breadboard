@@ -786,6 +786,67 @@ API for workflow and job state and the Kubernetes API for Fullsend pods, jobs,
 and events. This keeps operational visibility separate from the event delivery
 and execution credentials used by the runners.
 
+### Fullsend Agent Sandbox
+
+Each Fullsend agent runs inside an OpenShell-managed sandbox. The runner owns
+the workflow job and supplies the event payload, checked-out workspace, scoped
+GitHub token, and model credentials. OpenShell creates the sandbox through the
+cluster sandbox controller, mounts the workspace, injects its proxy CA, and
+applies the role's filesystem and network policy before the agent starts.
+
+The development policy used by the integrated smoke path makes the system
+directories and application image read-only. Only `/sandbox`, `/tmp`, and
+`/dev/null` are writable. The agent can reach the GitHub emulator through a
+read-only egress rule and can call the permitted Vertex AI and Google OAuth
+endpoints. Other network destinations are denied by the policy. The runner
+keeps the final status and artifacts in the shared job volume, where the
+Fullsend dashboard and smoke harness can observe them.
+
+```mermaid
+graph TB
+    job[Actions job in Fullsend runner]
+    inputs[Job inputs<br/>event payload · target workspace<br/>role token · model credentials]
+    gateway[OpenShell Gateway<br/>openshell-system]
+    controller[Sandbox Controller<br/>agent-sandbox-system]
+
+    subgraph sandbox[Ephemeral Fullsend agent sandbox]
+        image[fullsend-sandbox-dev image<br/>Fullsend agent · Git · curl · Python]
+        workspace[/sandbox<br/>writable workspace]
+        temp[/tmp and /dev/null<br/>writable scratch paths]
+        system[System and image paths<br/>read-only]
+        ca[OpenShell proxy CA<br/>GIT_SSL_CAINFO · SSL_CERT_FILE]
+        agent[Agent process<br/>triage · code · review · fix]
+    end
+
+    subgraph policy[Enforced egress policy]
+        github[GitHub emulator<br/>read-only REST access]
+        vertex[Vertex AI<br/>model access]
+        oauth[Google OAuth<br/>credential exchange]
+        denied[All other network destinations<br/>denied]
+    end
+
+    artifacts[Shared job artifacts<br/>status · logs · result files]
+    dashboard[Fullsend Dashboard<br/>run and pod observation]
+
+    job -->|create request: image, policy, workspace| gateway
+    gateway --> controller --> sandbox
+    job -->|mount workspace and inject env| workspace
+    job -->|write completion and result| artifacts
+    image --> agent
+    workspace --> agent
+    temp --> agent
+    system --> agent
+    ca --> agent
+    job -->|role-scoped token| agent
+    agent -->|read source and publish allowed updates| github
+    agent -->|model requests| vertex
+    agent -->|OIDC-related credential exchange| oauth
+    agent -.->|blocked by policy| denied
+    agent -->|exit status and generated files| job
+    artifacts --> dashboard
+    controller -.->|pod state and events| dashboard
+```
+
 ## Markov and markovd
 
 Markov is the workflow CLI/runner; markovd is the persistent API and React UI

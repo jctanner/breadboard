@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Pipeline Dashboard{% endblock %}</title>
+  <title>{% block title %}Breadboard{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -233,8 +233,8 @@
   <nav class="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-700/60">
     <div class="max-w-[100rem] mx-auto px-4 lg:px-8 flex items-center justify-between h-14">
       <a href="/" class="flex items-center gap-2 text-gray-900 dark:text-white no-underline">
-        <span class="bg-primary-600 text-white rounded-lg w-8 h-8 flex items-center justify-center text-sm font-bold">P</span>
-        <span class="font-semibold text-base hidden sm:inline">Pipeline Dashboard</span>
+        <img src="{{ url_for('static', filename='img/breadboard-circuit.png') }}" alt="Breadboard" class="h-8 w-8 rounded-md object-contain">
+        <span class="font-semibold text-base hidden sm:inline">Breadboard</span>
       </a>
       <div class="flex items-center gap-1">
         <a href="/" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors no-underline">Dashboard</a>

@@ -181,10 +181,6 @@ vagrant-describe-job: ## Describe last job (set JOB_NAME=<name> to specify)
 
 ##@ Vagrant: Elasticsearch & Trace Sync
 
-vagrant-deploy-elasticsearch: ## Deploy Elasticsearch to the cluster
-	@echo "==> Deploying Elasticsearch..."
-	vagrant ssh -c "cd /vagrant/deploy/scripts && sudo bash 11-deploy-elasticsearch.sh"
-
 vagrant-sync-traces: ## Sync MLflow traces to Elasticsearch (incremental)
 	@echo "==> Syncing MLflow traces to Elasticsearch..."
 	vagrant ssh -c "kubectl exec -n ai-pipeline deploy/pipeline-dashboard -c dashboard -- uv run python /app/scripts/sync_mlflow_to_elastic.py"
@@ -464,10 +460,6 @@ host-push-gcp-creds: ## Create/update gcp-credentials secret from local ADC
 		--from-file=credentials.json="$(GCP_CREDS)" \
 		--dry-run=client -o yaml | kubectl apply -f -
 	@echo "✓ gcp-credentials secret created/updated in ai-pipeline namespace"
-
-host-deploy-elasticsearch: ## Deploy Elasticsearch on host
-	@echo "==> Deploying Elasticsearch..."
-	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/11-deploy-elasticsearch.sh
 
 host-sync-traces: ## Sync MLflow traces to Elasticsearch on host (incremental)
 	@echo "==> Syncing MLflow traces to Elasticsearch..."

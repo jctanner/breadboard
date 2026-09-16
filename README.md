@@ -84,18 +84,20 @@ graph TB
             github["GitHub Emulator<br/>github.local"]
             gitlab["GitLab Emulator<br/>gitlab.local"]
             jira["Jira Emulator<br/>jira.local"]
+        end
+
+        subgraph runners["CI and Runner Infrastructure"]
+            actions["GitHub Actions Runners<br/>base · config · site"]
             gitlab_runner["GitLab Runner<br/>gitlab-runner namespace<br/>Kubernetes executor"]
         end
 
         subgraph fullsend["Fullsend and Agent Execution"]
             mint["Fullsend Mint<br/>OIDC-to-token service"]
-            actions["GitHub Actions Runners<br/>base · config · site"]
             openshell["OpenShell Gateway<br/>openshell-system"]
             sandbox_controller["Agent Sandbox Controller<br/>agent-sandbox-system"]
             jobs["Pipeline and Sandbox Jobs<br/>ai-pipeline<br/>Claude SDK · OpenCode · agentic-ci"]
         end
 
-        es["Elasticsearch<br/>deploy/k8s/17-elasticsearch.yaml<br/>not currently running"]
     end
 
     clients --> proxy
@@ -111,7 +113,6 @@ graph TB
     openshell --> sandbox_controller
     sandbox_controller --> jobs
     gitlab_runner --> gitlab
-    mlflow -.->|trace sync| es
     observatory --> github & gitlab & jira
     certmgr -.->|TLS certificates| proxy
 ```

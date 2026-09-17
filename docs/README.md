@@ -1,4 +1,4 @@
-# AI-First Pipeline Documentation
+# Breadboard Documentation
 
 ## Architecture
 
@@ -22,6 +22,13 @@ Mermaid `.mmd` files — render on GitHub or paste into [Mermaid Live Editor](ht
 ## Deployment
 
 - [README.md](deployment/README.md) — K3s deployment quick start, .env setup, troubleshooting
+
+## Fullsend Integration
+
+- [fullsend-integration.md](fullsend-integration.md) — Fullsend services, event flow, token exchange, and sandbox boundaries
+- [fullsend-services.mmd](architecture/diagrams/fullsend-services.mmd) — Fullsend and Breadboard service topology
+- [fullsend-event-flow.mmd](architecture/diagrams/fullsend-event-flow.mmd) — GitHub event, Actions, OIDC, mint, and agent sequence
+- [fullsend-agent-sandbox.mmd](architecture/diagrams/fullsend-agent-sandbox.mmd) — Agent sandbox mounts, egress policy, and artifacts
 
 ## Reference
 

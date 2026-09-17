@@ -1,6 +1,6 @@
-# AI-First Pipeline Kubernetes Deployment
+# Breadboard Kubernetes Deployment
 
-Quick reference for deploying ai-first-pipeline to K3s.
+Quick reference for deploying Breadboard to K3s.
 
 ## Prerequisites
 

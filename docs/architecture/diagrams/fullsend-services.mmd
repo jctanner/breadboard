@@ -1,0 +1,34 @@
+graph LR
+    operator["Developer or operator"] --> dashboard["Fullsend Dashboard<br/>fullsend.local"]
+
+    subgraph forge["GitHub Emulator"]
+        github["Repositories, issues, pull requests"]
+        actions["Actions event matching<br/>workflow runs and job queue"]
+    end
+
+    subgraph execution["Fullsend execution plane"]
+        repo_runner["Repository runner"]
+        config_runner["Config runner"]
+        site_runner["Site-wide runner"]
+        mint["Fullsend Mint<br/>fullsend-mint-dev"]
+        openshell["OpenShell Gateway<br/>openshell-system"]
+        controller["Sandbox Controller<br/>agent-sandbox-system"]
+        agent["Fullsend agent sandbox<br/>triage · code · review · fix"]
+    end
+
+    subgraph platform["Breadboard platform services"]
+        vertex["Vertex AI"]
+        telemetry["MLflow / Observatory"]
+    end
+
+    dashboard -->|"read runs, jobs, pods, events"| actions
+    dashboard -->|read| github
+    actions -->|"queue jobs"| repo_runner & config_runner & site_runner
+    repo_runner & config_runner & site_runner -->|"poll, claim, log, complete"| actions
+    repo_runner & config_runner & site_runner -->|"OIDC exchange"| mint
+    repo_runner & config_runner & site_runner -->|"start constrained work"| openshell
+    openshell --> controller --> agent
+    mint -->|"scoped GitHub token"| agent
+    agent -->|"clone, comment, push, update PR"| github
+    agent -->|"model calls"| vertex
+    agent -.->|"optional OTLP traces and artifacts"| telemetry

@@ -1,0 +1,32 @@
+sequenceDiagram
+    participant User as Developer or automation
+    participant GH as GitHub emulator
+    participant Shim as Fullsend workflow shim
+    participant Dispatch as Reusable dispatch workflow
+    participant Runner as Actions runner
+    participant OIDC as Local OIDC broker
+    participant Mint as Fullsend Mint
+    participant Shell as OpenShell gateway
+    participant Agent as Agent sandbox
+    participant Telemetry as MLflow / Observatory
+
+    User->>GH: Issue, PR, comment, or review event
+    GH->>GH: Match trigger and create workflow run
+    GH->>Shim: Start fullsend workflow with event payload
+    Shim->>Dispatch: workflow_call(event_action, payload, mint_url)
+    Dispatch->>GH: Queue triage, code, review, or fix job
+    Runner->>GH: Poll and claim queued job
+    GH-->>Runner: Job steps, event payload, and Actions environment
+    Runner->>OIDC: Request OIDC assertion
+    OIDC-->>Runner: Development OIDC assertion
+    Runner->>Mint: POST /v1/token(role, repos) with assertion
+    Mint-->>Runner: Scoped role token
+    Runner->>GH: Checkout target repository with scoped token
+    Runner->>Shell: Start OpenShell agent execution
+    Shell->>Agent: Create policy-constrained sandbox
+    Agent->>GH: Read repository and write allowed updates
+    Agent->>Telemetry: Optional traces and artifacts
+    Agent-->>Shell: Agent result and artifacts
+    Shell-->>Runner: Execution result
+    Runner->>GH: Upload logs and complete job
+    GH-->>Shim: Complete workflow run

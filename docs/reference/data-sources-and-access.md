@@ -1,6 +1,6 @@
 # Data Sources and Access Reference
 
-This document catalogs every data source available in the AI-First Pipeline system, how to access it, and what fields are available. Use this as a reference when building queries, writing analysis scripts, or orienting new agents.
+This document catalogs every data source available in the Breadboard system, how to access it, and what fields are available. Use this as a reference when building queries, writing analysis scripts, or orienting new agents.
 
 All services run in the `ai-pipeline` Kubernetes namespace. In-cluster URLs use `<service>.ai-pipeline.svc.cluster.local` or just `<service>` (short DNS). From the host, access is via `vagrant ssh -c "kubectl exec ..."` or the dashboard's external URL (`https://dashboard.local`).
 

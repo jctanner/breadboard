@@ -1,340 +1,226 @@
-# AI-First Pipeline
+# Breadboard
 
-Integration and deployment repository for the RHOAI AI-first engineering
-pipeline. It contains the original Python CLI and Flask dashboard, plus the K3s
-manifests and automation that assemble a larger set of independently developed
-component services. The Python pipeline is still active; it is one execution
-path in the platform, not the whole platform.
+Breadboard is the integration and deployment repository for an AI-native
+software engineering platform. It combines the Python pipeline and dashboard
+with Kubernetes manifests, local Jira/GitHub/GitLab emulators, workflow
+services, runners, observability services, and the Fullsend agent execution
+path.
 
-The broader platform defines, runs, observes, evaluates, and governs AI-native
-software-engineering workflows against realistic but isolated Jira, GitHub,
-GitLab, CI, and telemetry services. Its reference end-to-end scenario turns a
-business request into reviewed planning artifacts and implementation work:
+The repository supports two related execution paths:
+
+- the Python CLI and pipeline agent, which run the bug, RFE, and strategy
+  phases and can launch Kubernetes jobs; and
+- the integrated service stack, which runs Markov workflows, emulated source
+  systems, CI runners, Observatory, MLflow, and Fullsend in a resettable local
+  K3s environment.
+
+The current reference workflow is still represented by:
 
 ```text
 RFE -> quality gate -> strategy -> review -> epics -> investigation/codegen
 ```
 
-Because the environment can be reset and seeded, the same workflow can be
-replayed with different skills, models, harnesses, runners, policies, and source
-revisions. This makes the repository both an execution platform and a testbed
-for comparing AI-assisted engineering practices.
+## Working rules
 
-The grand vision is a continuous-improvement loop. Workflow outputs and traces
-are decomposed into claims, checked against versioned evidence, and attributed
-to the layer responsible for a failure. Those findings should drive targeted
-changes to skills, context, retrieval, workflows, models, tools, or policy and
-then become regression cases for the next run:
+- Treat `checkouts/` and `checkouts.tmp/` as separate, ignored component
+  repositories. Read their local `AGENTS.md` or `CLAUDE.md` before changing
+  anything there.
+- `deploy/k8s/` and `deploy/scripts/deploy-all.sh` are the authoritative
+  deployment inventory. Older material under `deploy/docs/` may describe
+  superseded architecture.
+- Keep project work notes, plans, bugs, decisions, and tasks under `.ledger/`.
+  The documentation tree is for maintained product and architecture docs.
+- Before creating or updating anything in `.ledger/`, read
+  `.ledger/agentic_work_ledger.md` for the full ledger instructions.
+- Do not commit `.env`, credentials, generated issue/workspace data, logs,
+  runtime state, or ignored component checkouts.
+- Run `git diff --check` after documentation or code edits. Run the smallest
+  relevant test or compile check before reporting completion.
 
-```text
-skills + context + models + policy
-                 |
-                 v
-           workflow execution
-                 |
-                 v
-       artifacts + traces + claims
-                 |
-                 v
-      evidence-based verification
-                 |
-                 v
-         root-cause attribution
-                 |
-                 v
- targeted improvement + regression replay
-```
-
-## Quick Reference
+## Quick reference
 
 ```bash
-uv sync                                    # Install dependencies
-python main.py <command> [options]          # Run a pipeline phase
-python main.py dashboard --port 5000       # Launch web dashboard
-make host-deploy-all                       # Build/deploy the complete K3s stack
-make host-status                           # Inspect deployed services
-checkouts/markovd/bin/markovd-cli projects sync ai-first-pipeline --wait
-# See var/demos/end-to-end/README.md for the complete reference scenario
+uv sync
+python main.py <command> [options]
+python main.py dashboard --port 5000
+
+make host-deploy-all
+make host-status
+make host-rebuild-dashboard
+make host-rebuild-fullsend-dashboard
+make security
 ```
 
-## Prerequisites
+The integrated stack uses the `ai-pipeline` Kubernetes namespace and exposes
+the local services through the host proxy. The main user interfaces are
+`https://dashboard.local`, `https://fullsend.local`, `https://github.local`,
+`https://gitlab.local`, `https://jira.local`, `https://markov.local`, and
+`https://observatory.local` when the stack is running.
+
+## Prerequisites and environment
 
 - Python 3.13+
-- `uv` package manager
-- Google Cloud credentials (Vertex AI)
-- Jira access (REST API token)
-- Podman or Docker (container image builds); Podman is required for patch validation
-- K3s and kubectl (full component stack only)
+- `uv`
+- Podman or Docker for image builds; Podman is required by patch validation
+- K3s and `kubectl` for the integrated stack
+- Google Cloud credentials when running Vertex-backed agents
+- Jira credentials when using the production Jira API rather than the emulator
 
-## Environment
+Create a gitignored `.env` in the project root as needed:
 
-Create `.env` in the project root (gitignored):
-
-```
+```text
 CLAUDE_CODE_USE_VERTEX=1
 CLOUD_ML_REGION=global
 ANTHROPIC_VERTEX_PROJECT_ID=<gcp-project-id>
 JIRA_SERVER=https://issues.redhat.com
 JIRA_USER=<email>
 JIRA_TOKEN=<api-token>
-ATLASSIAN_MCP_URL=http://127.0.0.1:8081/sse   # optional MCP server
+ATLASSIAN_MCP_URL=http://127.0.0.1:8081/sse
 ```
 
-## Commands
+The integrated deployment also reads service-specific credentials and tokens
+from Kubernetes secrets. Do not add those values to manifests or documentation.
 
-### Bug Analysis Pipeline
-| Command | Description |
-|---------|-------------|
-| `bug-fetch` | Fetch RHOAIENG bugs from Jira into `issues/` |
-| `bug-completeness` | Score bug quality (0-100) |
-| `bug-context-map` | Map bugs to architecture context and repos |
-| `bug-fix-attempt` | Attempt AI-generated code fixes |
-| `bug-test-plan` | Generate test plans |
-| `bug-write-test` | Write QE tests for opendatahub-tests |
-| `bug-all` | Run phases 2-6 in dependency order |
+## CLI commands
 
-### RFE Pipeline
-| Command | Description |
-|---------|-------------|
-| `rfe-create` | Create RFE from problem statement |
-| `rfe-review` | Review/score RFE with rubric |
-| `rfe-split` | Split oversized RFE |
-| `rfe-submit` | Submit RFE to RHAIRFE Jira project |
-| `rfe-speedrun` / `rfe-all` | End-to-end RFE pipeline |
+The Python entry point is `main.py`. Available phase groups include:
 
-### Strategy Pipeline
-| Command | Description |
-|---------|-------------|
-| `strat-create` | Create strategies from approved RFEs |
-| `strat-refine` | Add HOW, dependencies, NFRs |
-| `strat-review` | Adversarial review |
-| `strat-submit` | Push to RHAISTRAT Jira tickets |
-| `strat-security-review` | Security-focused threat assessment |
-| `strat-all` | Run full strategy pipeline |
+| Group | Commands |
+| --- | --- |
+| Bug analysis | `bug-fetch`, `bug-completeness`, `bug-context-map`, `bug-fix-attempt`, `bug-test-plan`, `bug-write-test`, `bug-all` |
+| RFE | `rfe-create`, `rfe-review`, `rfe-split`, `rfe-submit`, `rfe-speedrun`, `rfe-all` |
+| Strategy | `strat-create`, `strat-refine`, `strat-review`, `strat-submit`, `strat-security-review`, `strat-all` |
 
-### Common Flags
-- `--model {sonnet,opus,haiku}` - Claude model (default: opus). Bug phases accept multiple `--model` flags.
-- `--max-concurrent N` - Parallel agent limit (default: 5)
-- `--issue KEY` - Process specific issue(s); repeatable
-- `--limit N` - Process first N issues
-- `--force` - Regenerate existing outputs
-- `--component NAME` - Filter by Jira component (bug phases)
+Common options include `--model`, `--max-concurrent`, repeatable `--issue`,
+`--limit`, `--force`, and `--component`. Phase outputs are validated against
+the schemas in `src/cli/schemas.py`; invalid outputs are retained with an
+`.invalid` suffix so a rerun can replace them.
 
-## Project Structure
+## Repository layout
 
-```
-main.py                     # Entry point (CLI dispatcher)
-pyproject.toml              # Dependencies (uv)
-var/
-  pipeline-skills.yaml      # Phase-to-skill mapping and invocation config
-  skills-registry.yaml      # Staging registry for external skill plugins
-  markov-workflows/          # Markov workflow definitions
-.env                        # Credentials (gitignored)
-
-src/
-  cli/
-    cli.py                  # Argument parsing
-    phases.py               # Phase orchestrators, agent launcher, batch runner
-    agent_runner.py          # Claude Agent SDK wrapper
-    prompts.py              # Skill prompt extraction and injection
-    skill_config.py         # pipeline-skills.yaml parser
-    schemas.py              # JSON Schema definitions for phase outputs
-    paths.py                # Workspace path utilities
-    repo_mapping.py          # Upstream/midstream/downstream repo name resolution
-    validation.py           # Podman container patch validation
-  dashboard/
-    webapp.py               # Flask dashboard (SSE activity feed)
-    report_data.py          # Dashboard data loading
-    rfe_data.py             # RFE artifact loading
-    stats.py                # Aggregate statistics
-    k8s_orchestrator.py     # K8s job management
-    mlflow_client.py        # MLflow API client
-    templates/              # Jinja2 HTML templates
-    static/js/              # Frontend JavaScript
-
-scripts/
-  fetch_bugs.py             # Standalone Jira fetch
-  attach_to_jira.py         # Attach artifacts to Jira tickets
-  clean.sh                  # Reset workspaces and logs
-
-deploy/
-  k8s/                      # K3s resources for every deployed component
-  scripts/                  # 19-step install/build/deploy automation
-  dashboard/                # Container image for the local Flask dashboard
-  pipeline-agent/           # Job image for the Python/SDK execution path
-  golang-reverse-proxy/     # Host-facing *.local reverse proxy
-  repos/                    # External component checkouts (gitignored)
-
-.claude/skills/             # Local agent skill definitions (SKILL.md files)
-  bug-completeness/         # Score bug quality
-  bug-context-map/          # Map to architecture context
-  bug-fix-attempt/          # Generate code fixes
-  bug-test-plan/            # Design test plans
-  bug-write-test/           # Write QE tests
-  patch-validation/         # Validate patches in containers
-  strat-security-review/    # Security threat assessment
-  strat-submit/             # Push strategies to Jira
-
-remote_skills/rfe-creator/  # External repo (gitignored) with RFE/strategy skills
-.context/                   # External architecture context repos (gitignored)
+```text
+main.py                         CLI dispatcher
+pyproject.toml                  Python dependencies
+src/cli/                        Phase orchestration and agent execution
+src/dashboard/                  Breadboard dashboard and APIs
+src/fullsend-dashboard/         Read-only Fullsend operations dashboard
+scripts/                        Standalone utilities and cleanup scripts
+deploy/k8s/                     Kubernetes resources
+deploy/scripts/                 Build, bootstrap, and deployment automation
+deploy/dashboard/               Breadboard dashboard image
+deploy/pipeline-agent/          Pipeline job image
+deploy/golang-reverse-proxy/    Host-facing *.local proxy
+docs/                           Maintained architecture and deployment docs
+.ledger/                        Project plans, tasks, bugs, decisions, notes
+var/markov-workflows/           Markov workflow definitions
+var/demos/                      Resettable scenarios and integration demos
 ```
 
-`checkouts/` is deliberately not source-controlled here. The build scripts
-expect sibling checkouts such as `github-emulator`, `jira-emulator`,
-`gitlab-emulator`, `markov`, `markovd`, and `observatory` to be populated there.
-Changes inside those directories belong to their component repositories, not
-to this repository.
+The dashboard contains both the original pipeline views and the current
+ticket browser. The root page queries the Jira, GitHub, and GitLab emulators,
+combines issues, pull requests, and merge requests, fetches all available
+pages before applying filters, and defaults to hiding closed, done, resolved,
+merged, and completed work. GitHub links use the emulator's `/ui/` prefix.
 
-### Generated Directories (gitignored)
-- `issues/` - Fetched Jira JSON and phase output files
-- `workspace/` - Cloned midstream repos per issue + model-specific outputs
-- `logs/` - Structured activity logs (`activity.jsonl`) and phase logs
-- `artifacts/security-reviews/` - Full analytical security reviews (on-disk reference)
-- `artifacts/security-requirements/` - Actionable security requirements (attached to Jira)
+The dashboard implementation is centered in `src/dashboard/webapp.py` and
+`src/dashboard/ticket_data.py`; its shared layout and ticket browser are in
+`src/dashboard/templates/` and `src/dashboard/static/js/`.
 
-## Architecture
+## Integrated services
 
-### Platform Capabilities
+The active deployment includes:
 
-- **Workflow composition** - Markov workflows sequence skills and service API
-  operations with conditions, fan-out, concurrency, reusable sub-workflows,
-  facts, and quality gates.
-- **Interchangeable execution** - Jobs can select Claude Code or OpenCode and
-  SDK, shell, or `agentic-ci` runners rather than embedding one agent harness
-  into the workflow definition.
-- **Realistic isolation** - Jira and forge emulators support destructive,
-  repeatable integration scenarios without changing production systems.
-- **Governance** - Rubric labels and workflow gates demonstrate policy checks;
-  the same mechanism can enforce human approval, security, evidence, test,
-  budget, or repository policies.
-- **Observability and evaluation** - MLflow, OpenTelemetry, strace,
-  Elasticsearch, and Observatory connect job behavior, cost, artifacts, and
-  claim verification to workflow outcomes.
-- **Continuous improvement** - Verification findings are routed to the layer
-  that should change, and historical scenarios become regression tests for
-  skill, context, retrieval, workflow, model, harness, and policy revisions.
-- **Provenance** - Jira issues, workflow and skill versions, model/harness
-  choices, source revisions, traces, artifacts, and gate decisions can form an
-  auditable lineage from intent to implementation.
-- **Closed-loop delivery** - The service set can extend code generation into
-  branches or pull requests, CI execution, failure diagnosis, repair, review,
-  and outcome-driven evaluation.
+| Service | Purpose |
+| --- | --- |
+| Breadboard dashboard | Combined live ticket browser, pipeline jobs, artifact views, and service links |
+| Markov and markovd | Declarative workflows, run state, approvals, and job orchestration |
+| Observatory | Trace and artifact collection, claim extraction, verification, and quality reporting |
+| MLflow | Agent traces and experiment data |
+| Jira emulator | Jira-compatible issues, UI, snapshots, and MCP-compatible operations |
+| GitHub emulator | REST/GraphQL, Git transport, web UI, Actions, and admin APIs |
+| GitLab emulator | GitLab API, Git transport, issues, merge requests, and CI APIs |
+| GitLab Runner | Kubernetes-executor runner for emulator CI jobs |
+| GitHub Actions runners | Runners for emulator Actions workflows, including Fullsend workflows |
+| Fullsend Mint | Exchanges development OIDC assertions for scoped GitHub credentials |
+| Fullsend runner and OpenShell | Runs role-specific agent work inside the sandbox boundary |
+| Fullsend dashboard | Read-only operational view of Actions, jobs, pods, and events |
+| Traefik, cert-manager, and host proxy | Internal TLS and `*.local` service routing |
 
-The reference implementation is `var/demos/end-to-end/`. It resets Jira,
-GitHub, Observatory, MLflow, artifact storage, and context storage; imports
-repositories; seeds an RFE; and runs the RFE-to-strategy-to-epic-to-code chain.
-Use its README and workflow definitions as the best example of how the
-components are intended to work together.
+Fullsend is GitHub-first. Its current development flow starts from the
+`fullsend-dev/triage-target` repository in the GitHub emulator. It uses Actions,
+OIDC, Fullsend Mint, OpenShell, and a sandbox runner; the Fullsend dashboard
+observes that flow but does not dispatch agent work. See
+[`docs/fullsend-integration.md`](docs/fullsend-integration.md) and its three
+Mermaid diagrams for the service topology, event flow, and sandbox boundary.
 
-### Improvement Feedback Loop
+The Kubernetes manifests and deployment scripts define the current stack. Do
+not infer deployed services from the contents of `checkouts/`; that directory
+also contains source and dependency repositories that are not deployed.
 
-Observatory is intended to be the quality system for the platform, not only a
-post-run hallucination dashboard. It extracts atomic claims from artifacts,
-gathers evidence, records supported/refuted/insufficient/inconclusive verdicts,
-and helps identify why a result failed. The corrective action depends on that
-root cause:
+## Development and deployment
 
-| Finding | Improvement target |
-|---------|--------------------|
-| Skill ignored evidence that was available | Skill instructions and examples |
-| Required evidence did not exist | Architecture or domain context |
-| Retrieval selected irrelevant evidence | Indexing, queries, and retrieval policy |
-| Workflow omitted validation or review | Markov workflow and gates |
-| Agent lacked the required capability | Harness, runner, or tool policy |
-| Source material was stale or contradictory | Human-owned documentation |
-| Model failed despite sufficient evidence | Prompt, model choice, or escalation rule |
-| Claim cannot be verified automatically | Human-review gate |
+Host targets are defined in `Makefile`. Useful targets include:
 
-Prefer this attribution model when diagnosing poor output. Do not treat every
-refuted or unsupported claim as a prompt defect. Preserve the originating issue,
-artifact, workflow/skill revision, source revision, evidence, verifier, and
-verdict so improvements can be evaluated against the same case.
+- `host-deploy-all` for a complete deployment;
+- `host-status` and `kubectl get pods -A` for cluster inspection;
+- `host-rebuild-dashboard` for the Breadboard dashboard;
+- `host-rebuild-fullsend-dashboard` for the Fullsend operations dashboard;
+- `host-rebuild-agent`, `host-rebuild-markov`, and the emulator rebuild targets
+  for component changes; and
+- `security` for the repository security scan.
 
-Useful regression metrics include claim support/refutation rates, evidence
-coverage, cross-verifier agreement, human-review rate, recurring regressions,
-duration and cost, and downstream CI or acceptance outcomes. These metrics
-should eventually participate in Markov gates so evidence quality can control
-whether work advances.
+Use the component's own build or deployment target when changing a checkout.
+For a dashboard-only Python change, `python main.py dashboard --port 5000`
+is sufficient for local development; a deployed image requires the matching
+host rebuild target.
 
-### Component Inventory
+## Generated and ignored data
 
-| Component | Role | Source / deployment |
-|-----------|------|---------------------|
-| Python CLI and pipeline agent | Direct phase execution through Claude Agent SDK or OpenCode; patch validation and batch runs | `main.py`, `src/cli/`, `deploy/pipeline-agent/` |
-| Pipeline dashboard | Reviews artifacts, launches Kubernetes Jobs, streams activity, and links to platform services | `src/dashboard/`, `deploy/dashboard/` |
-| Markov | Declarative workflow CLI executed by workflow jobs | external `checkouts/markov/`; definitions in `var/markov-workflows/` |
-| markovd | Workflow API/UI, run state, approval gates, and Kubernetes job orchestration | external `checkouts/markovd/`; PostgreSQL side service |
-| Observatory | Collects CI artifacts/traces, extracts and verifies claims, and reports pipeline quality | external `checkouts/observatory/` |
-| MLflow | Agent trace and experiment store | upstream MLflow image with persistent SQLite/artifacts |
-| Elasticsearch | Search index populated from MLflow traces by sync jobs/scripts | upstream Elasticsearch image |
-| GitHub emulator | GitHub REST/GraphQL, Git transport, web UI, and admin surface for isolated tests | external `checkouts/github-emulator/` |
-| GitLab emulator | GitLab API/git/CI test surface | external `checkouts/gitlab-emulator/` |
-| Jira emulator | Jira v2/v3 API, UI, snapshots, and MCP-compatible issue operations | external `checkouts/jira-emulator/` |
-| GitLab Runner | Runs emulator CI jobs with the Kubernetes executor | upstream runner chart/image in `gitlab-runner` namespace |
-| Ingress/TLS | Traefik, cert-manager internal CA, and Go `*.local` host proxy | `deploy/k8s/`, `deploy/golang-reverse-proxy/` |
+The following locations are runtime or generated data and should not be
+treated as source documentation:
 
-The `checkouts/` directory can contain additional reference or dependency
-checkouts (for example agent SDKs, agentic-ci, skill repos, and upstream tools).
-Do not assume every directory there is a deployed service; the Kubernetes
-manifests and `deploy/scripts/deploy-all.sh` are the authoritative deployment
-inventory.
+- `issues/` — fetched Jira data and phase outputs;
+- `workspace/` — per-issue repositories and model outputs;
+- `logs/` — activity and phase logs;
+- `.context/` — cloned architecture context;
+- `remote_skills/rfe-creator/` — external RFE/strategy skill repository;
+- `checkouts/` and `checkouts.tmp/` — external component repositories; and
+- generated security review and requirement artifacts.
 
-### Skill System
+## Skills, workflows, and validation
 
-Skills are defined as `SKILL.md` files containing agent instructions. Two invocation methods:
+Local skills live under `.claude/skills/`. External RFE and strategy skills are
+configured through `var/pipeline-skills.yaml`; the registry is staged in
+`var/skills-registry.yaml`. Markov workflow definitions live under
+`var/markov-workflows/`.
 
-- **Templated** - SKILL.md content injected directly into agent prompt (bug analysis phases). Deterministic and batch-friendly.
-- **Native** - Agent uses SDK skill discovery via `Skill` tool. Used for RFE/strategy phases where agents need the full external repo context (CLAUDE.md, scripts, sub-skills).
+Bug phases run concurrently through `src/cli/phases.py`, and fix attempts can
+use Podman recipes from `odh-tests-context`. Validation feedback can be fed
+back into retry prompts with `--validation-retries`. The dashboard receives
+pipeline activity through Server-Sent Events and can submit Kubernetes jobs.
 
-Configuration lives in `var/pipeline-skills.yaml`, which maps each phase to its skill, source repo, invocation method, and allowed tools.
+The resettable end-to-end scenario is under `var/demos/end-to-end/`. Read its
+README and workflow definitions before changing the scenario or its service
+contracts.
 
-### Workspace Model
+## Documentation and ledger
 
-Each bug issue gets: `workspace/{ISSUE_KEY}/{model_id}/`
-- `src/` - Cloned midstream (opendatahub-io) repo
-- `{phase}.json` - Structured output (validated against JSON Schema)
-- `{phase}.md` - Human-readable output
-- `{phase}.log` - Agent execution log
+[`docs/README.md`](docs/README.md) is the documentation index. It links to
+architecture, deployment, reference, and Fullsend integration material.
 
-Invalid outputs are renamed to `*.invalid` and don't block re-runs.
+`.ledger/` is the project work ledger. Its top-level location is
+`<PROJECTROOT>/.ledger`; keep plans, tasks, bugs, decisions, and notes there.
+Read [`<PROJECTROOT>/.ledger/agentic_work_ledger.md`](.ledger/agentic_work_ledger.md)
+for the full ledger instructions before creating or updating ledger material.
+Do not add ledger planning material back under `docs/`.
 
-### Repo Mapping
+## Current conventions
 
-Three-tier contribution model: upstream -> midstream (opendatahub-io) -> downstream (Red Hat).
-Fixes always target midstream. `src/cli/repo_mapping.py` resolves names across tiers.
-
-### Validation Loop
-
-Fix attempts can be validated in Podman containers using `odh-tests-context` recipes. On failure, validation feedback is injected into a retry prompt for self-correction (configurable retries via `--validation-retries`).
-
-### Dashboard
-
-Flask app with PicoCSS + vanilla JS. In addition to artifact views for bugs,
-RFEs, strategies, and epics, it submits and monitors Kubernetes Jobs, exposes
-MLflow-backed run/trace data, provides admin operations, and streams activity
-through Server-Sent Events (SSE). Launch locally with
-`python main.py dashboard`.
-
-### Concurrency
-
-Phases run agents in parallel via asyncio semaphore. Default 5 concurrent agents. Activity events pushed to the dashboard for live monitoring.
-
-## Key Conventions
-
-- All phase outputs are validated against JSON Schema (draft 2020-12) defined in `src/cli/schemas.py`
-- RFE/strategy artifacts use YAML frontmatter for structured metadata
-- The `--model` flag determines the workspace subdirectory path for bug phases
-- MCP servers (e.g., Atlassian) are configured per-phase in `var/pipeline-skills.yaml`
-- Jira projects: `RHOAIENG` (bugs), `RHAIRFE` (RFEs), `RHAISTRAT` (strategies)
-
-## Development Notes
-
-- `src/cli/phases.py` is the largest module (~3,300 lines) containing all phase orchestration logic
-- `src/dashboard/webapp.py` contains the Flask dashboard with Jinja2 templates
-- The `.context/` directory holds git-cloned architecture docs; these are not checked in
-- `remote_skills/rfe-creator/` is a separate git repo cloned into place; it has its own `CLAUDE.md`
-- `checkouts/*` are separate, ignored repositories. Read and follow the
-  component's own `AGENTS.md` or `CLAUDE.md` before changing one.
-- `deploy/scripts/deploy-all.sh` and `deploy/k8s/*.yaml` define the current
-  integrated stack; older design documents under `deploy/docs/` may describe
-  superseded execution paths.
+- Jira projects used by the phase pipelines are `RHOAIENG`, `RHAIRFE`, and
+  `RHAISTRAT`.
+- RFE and strategy artifacts use YAML frontmatter.
+- The `--model` value determines the bug workspace subdirectory.
+- MCP servers are configured per phase in `var/pipeline-skills.yaml`.
+- Read the deployment manifests before changing service names, routes, ports,
+  or credentials; local UI paths and API paths are intentionally different for
+  some emulators.

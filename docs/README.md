@@ -23,22 +23,6 @@ Mermaid `.mmd` files — render on GitHub or paste into [Mermaid Live Editor](ht
 
 - [README.md](deployment/README.md) — K3s deployment quick start, .env setup, troubleshooting
 
-## Plans
-
-Planning and strategy documents.
-
-- [local-cluster-plan.md](../.ledger/plans/local-cluster-plan.md) — Move k3s from Vagrant VM to host at /data
-- [new-frontend-plan.md](../.ledger/plans/new-frontend-plan.md) — Dashboard redesign for bugs/RFEs/strategies
-- [arch-context-testing-plan.md](../.ledger/plans/arch-context-testing-plan.md) — A/B benchmark: flat_files vs arch_query
-- [validation-loop-plan.md](../.ledger/plans/validation-loop-plan.md) — Post-fix validation loop with odh-tests-context
-- [agent-runner-v2-plan.md](../.ledger/plans/agent-runner-v2-plan.md) — Pluggable runner system + MLflow for agentic-ci
-- [dynamic-skill-fqn-plan.md](../.ledger/plans/dynamic-skill-fqn-plan.md) — Dynamic skill resolution via URI-style FQNs
-- [agentic-ci-optional-runner-plan.md](../.ledger/plans/agentic-ci-optional-runner-plan.md) — Optional agentic-ci runner in pipeline agent image
-- [skill-factory-demo-plan.md](../.ledger/plans/skill-factory-demo-plan.md) — Closed-loop skill generation demo using full service stack
-- [observability-demo-plan.md](../.ledger/plans/observability-demo-plan.md) — RFE-to-strategy pipeline with claim analysis and remediation
-- [closed-loop-hallucination-remediation-demo-plan.md](../.ledger/plans/closed-loop-hallucination-remediation-demo-plan.md) — End-to-end RFE/STRAT/EPIC claim loop with fix-and-rerun validation
-- [evals-dashboard-plan.md](../.ledger/plans/evals-dashboard-plan.md) — Add Evals page to dashboard for agent-eval-harness runs with A/B context comparison
-
 ## Reference
 
 Stable reference material.
@@ -50,37 +34,6 @@ Stable reference material.
 - [mlflow-basics.md](reference/mlflow-basics.md) — MLflow evaluations with Claude via Vertex API
 - [mlflow-claude.md](reference/mlflow-claude.md) — Claude Code tracing via MLflow autolog
 
-## Bugs
-
-Tracked issues and investigations.
-
-- [opencode-mlflow-issue.md](../.ledger/bugs/opencode-mlflow-issue.md) — OpenCode MLflow trace parity with Claude Code
-- [opencode-sdk-noop.md](../.ledger/bugs/opencode-sdk-noop.md) — OpenCode SDK silently drops prompts
-- [eval-job-143610-bugs.md](../.ledger/bugs/eval-job-143610-bugs.md) — 16 bugs from first eval harness run (dataset config, harness, pipeline)
-
-## Notes
-
-Research, investigations, and dated analysis reports.
-
-- [arch-context-bugs-2026-05-03.md](../.ledger/notes/arch-context-bugs-2026-05-03.md) — Broken symlinks blocking ~26.6% of RHAISTRAT issues
-- [arch-context-consumption-problem.md](../.ledger/notes/arch-context-consumption-problem.md) — Agents waste 54% of tool calls on navigation
-- [arch-context-consumption-problem-chatgpt.md](../.ledger/notes/arch-context-consumption-problem-chatgpt.md) — YAML index layer recommendation
-- [arch-context-consumption-problem-chatgpt-2.md](../.ledger/notes/arch-context-consumption-problem-chatgpt-2.md) — arch-query validation
-- [arch-context-corpus-generation.md](../.ledger/notes/arch-context-corpus-generation.md) — Extracting benchmark questions from Elasticsearch
-- [arch-context-gaps-2026-05-03.md](../.ledger/notes/arch-context-gaps-2026-05-03.md) — Missing components causing RFE validation failures
-- [arch-context-gaps.md](../.ledger/notes/arch-context-gaps.md) — Missing component docs and infrastructure blockers
-- [benchmark-arch-context-2026-05-05.md](../.ledger/notes/benchmark-arch-context-2026-05-05.md) — Benchmark results: flat_files vs arch_query
-- [benchmark-arch-context-2026-05-06.md](../.ledger/notes/benchmark-arch-context-2026-05-06.md) — Follow-up benchmark with instruction fixes
-- [claude-mcp-behavior.md](../.ledger/notes/claude-mcp-behavior.md) — MCP tools not exposed via `claude --print`
-- [claude-sdk-mlflow-integration.md](../.ledger/notes/claude-sdk-mlflow-integration.md) — SDK has no built-in MLflow; hooks available
-- [token-usage-report-2026-05-03.md](../.ledger/notes/token-usage-report-2026-05-03.md) — Cost analysis: median $0.86/issue, $2.16K total
-- [agent-parallelism-testing.md](../.ledger/notes/agent-parallelism-testing.md) — Layer 2 agent self-parallelism test notes
-- [AICP-assessment.md](../.ledger/notes/AICP-assessment.md) — AI Core Platform pipeline assessment
-
 ## Reference (top-level)
 
 - [vertex-claude-runtime.md](vertex-claude-runtime.md) — Vertex AI Claude runtime wiring
-
-## Ledger
-
-- [agentic_work_ledger.md](../.ledger/agentic_work_ledger.md) — Filesystem-native project management methodology for AI agents

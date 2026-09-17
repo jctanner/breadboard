@@ -334,75 +334,21 @@ python main.py dashboard --port 8080
 
 ## Pipeline Architecture
 
-### Bug Analysis Pipeline
+The platform composes skills, service operations, agent execution, validation,
+and review into replayable workflows. A typical path starts with a request or
+bug in Jira, gathers context, produces planning or code artifacts, validates
+the result, and records the outcome back in the connected services.
 
-```
-Jira (RHOAIENG)
-     |
-     v
-+-----------+
-| 1. Fetch  |  Download issue JSON to issues/
-+-----+-----+
-      |
-      v
-+--------------+   +--------------+
-|2. Complete-  |   | 3. Context   |   (run in parallel per issue)
-|   ness       |   |    Map       |
-+------+-------+   +------+-------+
-       |                  |
-       +--------+---------+
-                v
-       +----------------+
-       | 4. Fix Attempt |  Clone midstream repos, generate patch
-       +-------+--------+
-               |
-               v
-       +----------------+
-       |  Validation    |  Spin up podman container, run lint + tests
-       |  Loop (0-N)    |  On failure: feed errors back to fix agent
-       +-------+--------+
-               |
-               v
-       +----------------+     +----------------+
-       | 5. Test Plan   |     | 6. Write Test  |
-       +----------------+     +----------------+
-```
+The Python CLI and dashboard provide direct phase execution and job control.
+Markov and markovd provide the declarative workflow path, including branching,
+concurrency, reusable sub-workflows, facts, and approval gates. The emulators
+make these integrations repeatable, while the runner and sandbox layers keep
+agent execution isolated.
 
-Each issue flows through phases independently, sharing a concurrency pool. Phases 2 and 3 run in parallel since they're independent. Phase 4 waits for both, and phases 5-6 wait for phase 4.
-
-### RFE Pipeline
-
-```
-Problem statement / Jira (RHAIRFE)
-     |
-     v
-+-----------+     +-----------+     +-----------+     +-----------+
-|  Create   | --> |  Review   | --> |  Split    | --> |  Submit   |
-|  (draft)  |     | (rubric)  |     | (if needed)|    | (to Jira) |
-+-----------+     +-----------+     +-----------+     +-----------+
-
-rfe-speedrun / rfe-all runs the full sequence automatically.
-```
-
-### Strategy Pipeline
-
-```
-Approved RFEs (RHAIRFE) --> Jira (RHAISTRAT)
-     |
-     v
-+-----------+     +-----------+     +-----------+     +-----------------+
-|  Create   | --> |  Refine   | --> |  Review   | --> | Security Review |
-|  (draft)  |     | (HOW/NFR) |     | (adversarial)|  | (threat model)  |
-+-----------+     +-----------+     +-----------+     +-----------------+
-                                         |
-                                         v
-                                    +-----------+
-                                    |  Submit   |
-                                    | (to Jira) |
-                                    +-----------+
-
-strat-all runs refine, review, submit, and security-review in sequence.
-```
+The workflows are intentionally composable rather than tied to one fixed
+sequence. Bug analysis, RFE and strategy work, CI repair, security review, and
+evaluation can use the same skills, service APIs, evidence, and governance
+mechanisms.
 
 ## How It Works
 
@@ -462,10 +408,6 @@ Bug phase outputs are stored per-issue in `workspace/{KEY}/{model_id}/`:
 Raw Jira issue JSON is stored in `issues/{KEY}.json`.
 
 Invalid outputs are renamed to `*.invalid` and won't block re-runs.
-
-### RFE/Strategy outputs
-
-RFE and strategy artifacts use YAML frontmatter and are managed by the `rfe-creator` skill repo. Security reviews are written to `security-reviews/`.
 
 ### Fix attempt recommendations
 

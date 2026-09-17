@@ -36,7 +36,7 @@ def main() -> int:
         if relative.startswith(RAW_PREFIX):
             errors.append(f"raw analysis workspace must not be committed: {relative}")
             continue
-        if not relative.startswith(("scripts/claude_binary_analysis/", "docs/notes/", "var/demos/skill-disambiguation/results/")):
+        if not relative.startswith(("scripts/claude_binary_analysis/", ".ledger/notes/", "var/demos/skill-disambiguation/results/")):
             continue
         path = root / relative
         if not path.is_file():

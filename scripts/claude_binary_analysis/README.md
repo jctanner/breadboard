@@ -73,7 +73,7 @@ directory retains argv, debug/stdout/stderr output, raw strace, and extracted
 BUN_BIN=/path/to/pinned/bun \
   python3 -m unittest discover -s scripts/claude_binary_analysis/tests -v
 python3 scripts/claude_binary_analysis/validate_claims.py \
-  docs/notes/claude-code-2.1.214-plugin-claims.json --check-paths
+  .ledger/notes/claude-code-2.1.214-plugin-claims.json --check-paths
 python3 scripts/claude_binary_analysis/check_commit_safety.py
 ```
 

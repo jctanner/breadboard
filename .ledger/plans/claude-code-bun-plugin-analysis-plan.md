@@ -511,7 +511,7 @@ introduced for JavaScript analysis.
    paths, installed discovery order, and `--plugin-dir` order.
 7. A claim ledger connecting binary offsets, source correspondences, runtime
    runs, strace artifacts, and conclusions.
-8. A concise report under `docs/notes/` and corrections to the skill
+8. A concise report under `.ledger/notes/` and corrections to the skill
    disambiguation findings where warranted.
 
 ## Acceptance criteria

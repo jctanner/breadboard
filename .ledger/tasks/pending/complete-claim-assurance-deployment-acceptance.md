@@ -29,7 +29,7 @@ pipeline and record enough evidence to evaluate the plan's completion criteria.
       RFE-to-code pipeline twice or whether the existing claim-stage idempotency
       evidence satisfies the intended criterion.
 - [ ] Update the Claimify plan with final run IDs, metrics, and limitations.
-- [ ] Move this task and the regression-evaluation task to `docs/tasks/done/`
+- [ ] Move this task and the regression-evaluation task to `.ledger/tasks/done/`
       only after their acceptance criteria are satisfied.
 
 ## Scope Constraint

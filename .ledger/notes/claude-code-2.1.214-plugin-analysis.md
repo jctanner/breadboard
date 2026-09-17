@@ -26,12 +26,12 @@ ELF Build ID      788318c9115981678ca1a25f40cdb3b39df71403
 ```
 
 Machine-readable provenance is in
-`docs/notes/claude-code-2.1.214-binary-manifest.json`; exact function ranges
+`.ledger/notes/claude-code-2.1.214-binary-manifest.json`; exact function ranges
 are seeded by the 12-topic catalog in
-`docs/notes/claude-code-2.1.214-plugin-anchor-catalog.json`; exact function
+`.ledger/notes/claude-code-2.1.214-plugin-anchor-catalog.json`; exact function
 ranges and hashes are in
-`docs/notes/claude-code-2.1.214-plugin-correspondences.json`; the claim ledger
-is `docs/notes/claude-code-2.1.214-plugin-claims.json`.
+`.ledger/notes/claude-code-2.1.214-plugin-correspondences.json`; the claim ledger
+is `.ledger/notes/claude-code-2.1.214-plugin-claims.json`.
 
 ## Method and evidence boundary
 
@@ -91,7 +91,7 @@ qualified command metadata + one expanded skill -> API
 ```
 
 Detailed order- and error-preserving pseudocode is in
-`docs/notes/claude-code-2.1.214-plugin-pseudocode.md`.
+`.ledger/notes/claude-code-2.1.214-plugin-pseudocode.md`.
 
 ## Answers to the analysis questions
 

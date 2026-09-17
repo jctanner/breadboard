@@ -9,7 +9,7 @@ request/response bodies to the artifacts volume.
 
 ## Context
 
-See `docs/decisions/ADR-0001-api-body-dump-observability-flag.md`.
+See `.ledger/decisions/ADR-0001-api-body-dump-observability-flag.md`.
 
 The existing three flags follow an identical pattern across six touchpoints.
 This task replicates that pattern for the new flag.

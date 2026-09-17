@@ -469,7 +469,7 @@ The `arch-context-accuracy` eval in `eval-datasets` was the first end-to-end eva
 
 4. **Use model aliases (`opus`, `sonnet`) not full Vertex IDs.** The harness has a `VERTEX_MODEL_ALIASES` map in `score.py` that resolves aliases to the correct Vertex model IDs (`opus` → `claude-opus-4-6`, `sonnet` → `claude-sonnet-4-6`). Full model IDs like `claude-sonnet-4-6-20250514` do NOT work on Vertex.
 
-5. **Known harness bugs add ~60s of agent friction per run.** BUG-11 (preflight marks fresh state as stale — agent uses `--clean --force`) and BUG-14 (agent must manually discover eval venv python for scoring). These are documented in `docs/bugs/eval-job-143610-bugs.md`.
+5. **Known harness bugs add ~60s of agent friction per run.** BUG-11 (preflight marks fresh state as stale — agent uses `--clean --force`) and BUG-14 (agent must manually discover eval venv python for scoring). These are documented in `.ledger/bugs/eval-job-143610-bugs.md`.
 
 6. **The dashboard Evals page is the best way to run and monitor evals.** The evals tab at `/evals` has a submit form with select-with-toggle fields for harness/dataset/context repos, live log polling in the detail modal, and a re-run button that pre-fills the form. Use it instead of raw CLI commands for the demo.
 

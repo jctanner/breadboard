@@ -308,7 +308,7 @@ Our FQN runtime currently clones the repo, symlinks `skills/<skill>` into
 That compatibility path may omit plugin namespace behavior, hook behavior, or
 other repo context that makes the prompt conventions more reliable.
 
-See `docs/plans/plugin-aware-fqn-skill-loading-plan.md` for the proposed fix.
+See `.ledger/plans/plugin-aware-fqn-skill-loading-plan.md` for the proposed fix.
 
 Plugin-aware loading appears to have been enabled for the latest run:
 

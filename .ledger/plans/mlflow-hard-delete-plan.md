@@ -14,7 +14,7 @@ experiment must be in active state
 
 `mlflow gc` is not enough for this deployment either. It has been observed to
 fail on trace/spans foreign keys in the SQLite backend. The manual fix recorded
-in `docs/bugs/mlflow-soft-delete-blocks-traces.md` is direct SQL deletion in
+in `.ledger/bugs/mlflow-soft-delete-blocks-traces.md` is direct SQL deletion in
 foreign-key-safe order.
 
 This is an admin-only demo reset feature, not a general MLflow product API. It
@@ -176,7 +176,7 @@ poison experiment names through soft deletes.
 
 ### 7. Bug Note
 
-File: `docs/bugs/mlflow-soft-delete-blocks-traces.md`
+File: `.ledger/bugs/mlflow-soft-delete-blocks-traces.md`
 
 Update the workaround section after implementation:
 

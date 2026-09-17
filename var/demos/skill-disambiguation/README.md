@@ -70,4 +70,4 @@ the API body dumps to extract:
 
 ## Plan
 
-See `docs/plans/skill-disambiguation-experiment-plan.md` for the full design.
+See `.ledger/plans/skill-disambiguation-experiment-plan.md` for the full design.

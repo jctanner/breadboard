@@ -1,0 +1,111 @@
+Subject: fix(action): skip local sandbox host setup when a gateway is configured
+
+The agent action turns the runner into a sandbox host in four steps: install
+Podman, configure it rootless, write a local OpenShell gateway config, and
+install the OpenShell CLI. That is right for a GitHub-hosted runner, which is a
+fresh virtual machine with none of it.
+
+It is wrong for a runner pointed at an OpenShell gateway that already runs
+somewhere else. Sandboxes are created on the gateway, so the runner needs no
+container runtime, and a gateway config written on the runner never reaches the
+gateway it is meant to configure. Fullsend already supports this arrangement:
+internal/sandbox/gateway_endpoint.go honours an explicit
+OPENSHELL_GATEWAY_ENDPOINT and connects directly to a running gateway.
+
+Today those steps run unconditionally and fail on any runner that is not a
+virtual machine, because "sudo usermod" and "systemctl --user" are not
+available in a container.
+
+Guard the two Podman steps and the local gateway configuration on the absence
+of an explicit gateway endpoint, so a runner that hosts its own sandboxes is
+unchanged and a runner that does not stops building a second copy of a service
+it already has.
+
+Two smaller guards travel with it, for the same reason: skip the OpenShell CLI
+installer when the CLI is already on PATH, since the installer needs sudo and a
+CDN to reinstall what the image ships; and skip the jsonschema install when it
+already imports, since pip refuses an externally managed environment.
+
+Breadboard note: applied to the Fullsend mirror the emulator serves, because it
+changes files a workflow reads at run time. Written to be sent upstream as-is.
+Add a DCO sign-off before submitting it as a human-authored change.
+
+diff --git a/action.yml b/action.yml
+index 9ed38708..e31382af 100644
+--- a/action.yml
++++ b/action.yml
+@@ -365,11 +365,27 @@ runs:
+ 
+     - name: Install Podman
+       shell: bash
+-      run: "$GITHUB_ACTION_PATH/.github/scripts/install-podman.sh"
++      run: |
++        set -euo pipefail
++        # A runner pointed at an already-running OpenShell gateway does not
++        # host sandboxes itself, so it needs no container runtime. Installing
++        # one would be building a second, local copy of a capability the
++        # environment already provides. See internal/sandbox/gateway_endpoint.go,
++        # which documents connecting directly to an external gateway.
++        if [[ -n "${OPENSHELL_GATEWAY_ENDPOINT:-}" ]]; then
++          echo "Sandboxes run on the gateway at ${OPENSHELL_GATEWAY_ENDPOINT}; skipping local Podman."
++          exit 0
++        fi
++        "$GITHUB_ACTION_PATH/.github/scripts/install-podman.sh"
+ 
+     - name: Configure rootless Podman
+       shell: bash
+       run: |
++        set -euo pipefail
++        if [[ -n "${OPENSHELL_GATEWAY_ENDPOINT:-}" ]]; then
++          echo "Sandboxes run on the gateway at ${OPENSHELL_GATEWAY_ENDPOINT}; skipping rootless Podman setup."
++          exit 0
++        fi
+         test -f /sys/fs/cgroup/cgroup.controllers || { echo "::error::cgroups v2 required"; exit 1; }
+         whoami_user="$(whoami)"
+         grep -q "^${whoami_user}:" /etc/subuid || sudo usermod --add-subuids 100000-165535 --add-subgids 100000-165535 "${whoami_user}"
+@@ -380,6 +396,14 @@ runs:
+     - name: Configure OpenShell gateway
+       shell: bash
+       run: |
++        set -euo pipefail
++        # This writes the configuration for a gateway running on this machine.
++        # An external gateway is configured where it runs, not here, and
++        # writing a local config would not reach it.
++        if [[ -n "${OPENSHELL_GATEWAY_ENDPOINT:-}" ]]; then
++          echo "Using the external gateway at ${OPENSHELL_GATEWAY_ENDPOINT}; skipping local gateway configuration."
++          exit 0
++        fi
+         source "$GITHUB_ACTION_PATH/.github/scripts/openshell-version.sh"
+         mkdir -p $HOME/.config/openshell/
+         cat > $HOME/.config/openshell/gateway.env << EOF
+@@ -395,11 +419,28 @@ runs:
+ 
+     - name: Install OpenShell CLI
+       shell: bash
+-      run: "$GITHUB_ACTION_PATH/.github/scripts/install-openshell.sh"
++      run: |
++        set -euo pipefail
++        # The CLI is needed wherever the gateway runs. A runner image that
++        # already ships it does not need the installer, which requires sudo and
++        # reaches a CDN.
++        if command -v openshell >/dev/null 2>&1; then
++          echo "openshell is already installed: $(command -v openshell)"
++          exit 0
++        fi
++        "$GITHUB_ACTION_PATH/.github/scripts/install-openshell.sh"
+ 
+     - name: Install validation dependencies
+       shell: bash
+-      run: pip install --quiet "jsonschema>=4.18.0"
++      run: |
++        set -euo pipefail
++        # Already satisfied on an image that ships it, and pip refuses to
++        # install into an externally managed environment without being told to.
++        if python3 -c "import jsonschema" >/dev/null 2>&1; then
++          echo "jsonschema is already available"
++          exit 0
++        fi
++        pip install --quiet "jsonschema>=4.18.0"
+ 
+     - name: Set up Go for target repo pre-commit hooks
+       if: hashFiles(format('{0}/go.mod', inputs.target-repo)) != ''

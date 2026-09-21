@@ -47,8 +47,13 @@ spec:
               value: breadboard-enterprise-router
             - name: RUNNER_LABELS
               value: self-hosted,linux,fullsend-router
+            # The workspace and RUNNER_TEMP are siblings under one
+            # volume, as they are on GitHub. RUNNER_TEMP has to sit outside the
+            # workspace: a checkout with no path: makes the workspace root a
+            # git working tree, and a source build unpacked into it would land
+            # inside that repository.
             - name: RUNNER_WORKDIR
-              value: /runner-work
+              value: /runner-root/workspace
             - name: GIT_SSL_CAINFO
               value: /etc/ssl/certs/ca-certificates.crt
             - name: SSL_CERT_FILE
@@ -57,7 +62,7 @@ spec:
               value: "1"
           volumeMounts:
             - name: runner-work
-              mountPath: /runner-work
+              mountPath: /runner-root
             - name: breadboard-ca
               mountPath: /etc/breadboard-ca
               readOnly: true

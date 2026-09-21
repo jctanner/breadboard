@@ -1,0 +1,96 @@
+Subject: fix(action): honor GITHUB_API_URL and GITHUB_SERVER_URL
+
+The agent action and the CLI install action address github.com by name in
+seven places: four REST calls that resolve a release, the release asset
+download, and two git remotes. Every other host the action talks to is taken
+from the standard Actions variables, so on any host that is not
+github.com these seven calls go to the wrong place. On GitHub Enterprise
+Server they leave the appliance; against a local emulator they leave the
+cluster. In both cases the credential presented is not valid there, and the
+release check turns a 401 into
+"Unexpected HTTP 401 checking release ...; cannot proceed".
+
+Use ${GITHUB_API_URL} for the REST calls and ${GITHUB_SERVER_URL} for the
+download and the git remotes, each falling back to the public host so
+behaviour on github.com is unchanged. The remotes preserve the server's own
+scheme rather than assuming https, so an http-only appliance still works.
+
+Breadboard note: this patch is applied to the Fullsend mirror the emulator
+serves, not to the Go binary, because it changes files a workflow reads at
+run time. It is written to be sent upstream as-is. Add a DCO sign-off before
+submitting it as a human-authored change.
+
+diff --git a/.github/actions/install-fullsend-cli/action.yml b/.github/actions/install-fullsend-cli/action.yml
+index 1ea0d689..d3af4413 100644
+--- a/.github/actions/install-fullsend-cli/action.yml
++++ b/.github/actions/install-fullsend-cli/action.yml
+@@ -179,7 +179,8 @@ runs:
+         fi
+         echo "::add-mask::${GH_TOKEN}"
+         SRC="${RUNNER_TEMP}/fullsend-src"
+-        REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${WORKFLOW_REPOSITORY}.git"
++        SERVER="${GITHUB_SERVER_URL:-https://github.com}"
++        REMOTE="${SERVER%%://*}://x-access-token:${GH_TOKEN}@${SERVER#*://}/${WORKFLOW_REPOSITORY}.git"
+         echo "Cloning ${WORKFLOW_REPOSITORY} at ref: ${WORKFLOW_SHA}"
+         git init "${SRC}"
+         git -C "${SRC}" remote add origin "${REMOTE}"
+diff --git a/action.yml b/action.yml
+index 9ed38708..46e5f541 100644
+--- a/action.yml
++++ b/action.yml
+@@ -125,7 +125,7 @@ runs:
+           TAG="$(retry_curl -fsSL \
+             -H "Accept: application/vnd.github+json" \
+             -H "Authorization: Bearer ${GH_TOKEN}" \
+-            "https://api.github.com/repos/fullsend-ai/fullsend/releases/latest" | jq -r '.tag_name')"
++            "${GITHUB_API_URL:-https://api.github.com}/repos/fullsend-ai/fullsend/releases/latest" | jq -r '.tag_name')"
+           if [[ -z "${TAG}" || "${TAG}" == "null" ]]; then
+             echo "::error::Could not resolve latest release tag"
+             exit 1
+@@ -140,7 +140,7 @@ runs:
+           commit_sha=$(retry_curl -fsSL \
+             -H "Accept: application/vnd.github+json" \
+             -H "Authorization: Bearer ${GH_TOKEN}" \
+-            "https://api.github.com/repos/fullsend-ai/fullsend/git/tags/${VERSION}" 2>/dev/null \
++            "${GITHUB_API_URL:-https://api.github.com}/repos/fullsend-ai/fullsend/git/tags/${VERSION}" 2>/dev/null \
+             | jq -r '.object.sha // empty') || true
+           if [[ -n "${commit_sha}" ]]; then
+             echo "Dereferenced annotated tag object ${VERSION:0:12} to commit ${commit_sha:0:12}"
+@@ -158,7 +158,7 @@ runs:
+             resp=$(retry_curl -fsSL \
+               -H "Accept: application/vnd.github+json" \
+               -H "Authorization: Bearer ${GH_TOKEN}" \
+-              "https://api.github.com/repos/fullsend-ai/fullsend/tags?per_page=100&page=${page}") \
++              "${GITHUB_API_URL:-https://api.github.com}/repos/fullsend-ai/fullsend/tags?per_page=100&page=${page}") \
+               || { echo "::warning::Tag lookup failed on page ${page}; skipping SHA-to-tag resolution"; break; }
+             match=$(echo "${resp}" | jq -r --arg sha "${VERSION}" \
+               '.[] | select(.commit.sha == $sha) | .name' \
+@@ -190,7 +190,7 @@ runs:
+         HTTP_STATUS="$(retry_curl -sL -o /dev/null -w "%{http_code}" \
+           -H "Accept: application/vnd.github+json" \
+           -H "Authorization: Bearer ${GH_TOKEN}" \
+-          "https://api.github.com/repos/fullsend-ai/fullsend/releases/tags/${VERSION_URL}")"
++          "${GITHUB_API_URL:-https://api.github.com}/repos/fullsend-ai/fullsend/releases/tags/${VERSION_URL}")"
+ 
+         if [[ "${HTTP_STATUS}" == "200" ]]; then
+           echo "Found release ${VERSION_URL}; downloading pre-built binary"
+@@ -270,7 +270,8 @@ runs:
+         esac
+ 
+         ASSET_NAME="fullsend_${VERSION_ASSET}_${os}_${arch}.tar.gz"
+-        URL="https://github.com/fullsend-ai/fullsend/releases/download/${VERSION_URL}/${ASSET_NAME}"
++        SERVER="${GITHUB_SERVER_URL:-https://github.com}"
++        URL="${SERVER}/fullsend-ai/fullsend/releases/download/${VERSION_URL}/${ASSET_NAME}"
+ 
+         echo "Downloading from: ${URL}"
+         retry_curl -fsSL "${URL}" -o "/tmp/${ASSET_NAME}"
+@@ -326,7 +327,8 @@ runs:
+         fi
+         echo "::add-mask::${GH_TOKEN}"
+         SRC="${RUNNER_TEMP}/fullsend-src"
+-        REMOTE="https://x-access-token:${GH_TOKEN}@github.com/fullsend-ai/fullsend.git"
++        SERVER="${GITHUB_SERVER_URL:-https://github.com}"
++        REMOTE="${SERVER%%://*}://x-access-token:${GH_TOKEN}@${SERVER#*://}/fullsend-ai/fullsend.git"
+         echo "Cloning fullsend at ref: ${SOURCE_REF}"
+         git init "${SRC}"
+         git -C "${SRC}" remote add origin "${REMOTE}"

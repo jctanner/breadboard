@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-"""Idempotently seed the M8 GitHub App installation fixture."""
+"""Idempotently seed the fake GitHub App installation fixture used by the
+default seeded-fixture path (formerly the "M8" seed).
+
+This fixture is a named compatibility test, not the conformance path. See
+`.ledger/plans/fullsend-integration-conformance-plan.md` decision 1.
+"""
 
 from __future__ import annotations
 
 import json
 import time
 
-from m1_seed import API_URL, ORG, REPO, TOKEN, api_request, ensure_org, ensure_repo
+from emulator import API_URL, ORG, REPO, api_request, ensure_org, ensure_repo
 
 
 APP_ID = "1001"

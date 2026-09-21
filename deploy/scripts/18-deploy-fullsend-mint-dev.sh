@@ -7,7 +7,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 GITHUB_URL="${GITHUB_EMULATOR_URL:-https://github.local}"
 GITHUB_TOKEN="${GITHUB_EMULATOR_TOKEN:-ghp_admin_default_token}"
-OIDC_TOKEN="${FULLSEND_DEV_OIDC_TOKEN:-fullsend-dev-oidc}"
 API="${GITHUB_URL%/}/api/v3"
 FULLSEND_ORG="${FULLSEND_GITHUB_ORG:-fullsend-dev}"
 
@@ -109,8 +108,9 @@ ROLE_TOKENS="$(jq -nc \
   '{triage:$triage,scribe:$scribe,coder:$coder,review:$review,fix:$fix,fullsend:$fullsend}')"
 
 echo "==> Creating fullsend-mint-dev credentials secret"
+# No shared OIDC secret: the mint verifies signed Actions OIDC tokens against
+# the emulator's published keys, so the only secret it needs is the role map.
 kubectl -n ai-pipeline create secret generic fullsend-mint-dev-credentials \
-  --from-literal=oidc-token="${OIDC_TOKEN}" \
   --from-literal=role-tokens="${ROLE_TOKENS}" \
   --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 

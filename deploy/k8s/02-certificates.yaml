@@ -148,3 +148,33 @@ spec:
   issuerRef:
     name: internal-ca-issuer
     kind: Issuer
+---
+# Certificate for the development Fullsend token mint.
+# Fullsend refuses a non-HTTPS mint URL at install time, and the mint now
+# receives OIDC assertions that should not cross the cluster in the clear.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: fullsend-mint-dev-tls
+  namespace: ai-pipeline
+spec:
+  secretName: fullsend-mint-dev-tls
+  duration: 8760h # 1 year
+  renewBefore: 720h # 30 days
+
+  commonName: fullsend-mint-dev.ai-pipeline.svc.cluster.local
+
+  dnsNames:
+    - fullsend-mint-dev
+    - fullsend-mint-dev.ai-pipeline
+    - fullsend-mint-dev.ai-pipeline.svc
+    - fullsend-mint-dev.ai-pipeline.svc.cluster.local
+    - mint.local
+
+  privateKey:
+    algorithm: RSA
+    size: 2048
+
+  issuerRef:
+    name: internal-ca-issuer
+    kind: Issuer

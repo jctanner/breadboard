@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
-# Run the M6 Fullsend/Claude smoke and verify its emulator-side issue comment.
+# Run the Fullsend/Claude result smoke (formerly "M6") and verify its
+# emulator-side issue comment. This is a named legacy compatibility test, not
+# the conformance path - see
+# .ledger/plans/fullsend-integration-conformance-plan.md.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
-SOURCE_MANIFEST="${PROJECT_ROOT}/deploy/k8s/25-fullsend-m4-smoke.yaml"
+SOURCE_MANIFEST="${PROJECT_ROOT}/deploy/k8s/25-fullsend-direct-token-smoke.yaml"
+ARTIFACTS_DIR="${PROJECT_ROOT}/deploy/fullsend/legacy/artifacts/result-smoke"
 MANIFEST="$(mktemp)"
 trap 'rm -f "${MANIFEST}" "${MANIFEST}.tmp"' EXIT
 
 sed \
-  -e 's/fullsend-m4-smoke/fullsend-m6-result/g' \
-  -e 's/m4-smoke/m6-result/g' \
+  -e 's/fullsend-direct-token-smoke/fullsend-result-smoke/g' \
+  -e 's/direct-token-smoke/result-smoke/g' \
   -e 's/runtime: dummy/runtime: claude/g' \
   -e 's/name: triage/name: claude/g' \
   -e 's/fullsend run triage/fullsend run claude/g' \
-  -e 's/milestone: m4/milestone: m6/g' \
-  -e 's/M4/M6/g' \
+  -e 's/breadboard\.dev\/fixture: direct-token-smoke/breadboard.dev\/fixture: result-smoke/' \
   -e 's/--forge github \\/--forge github/' \
   -e '/--no-post-script/d' \
   "${SOURCE_MANIFEST}" > "${MANIFEST}"
@@ -56,11 +59,11 @@ awk '
   print "    repo=\"${FULLSEND_STATUS_REPO:?FULLSEND_STATUS_REPO is required}\""
   print "    number=\"${FULLSEND_STATUS_NUMBER:?FULLSEND_STATUS_NUMBER is required}\""
   print "    token=\"${GITHUB_TOKEN:?GITHUB_TOKEN is required}\""
-  print "    body=\"<!-- fullsend-dev-stack:triage -->\\nFullsend M6 Claude/Vertex triage completed through OpenShell.\""
+  print "    body=\"<!-- fullsend-result-smoke:triage -->\\nFullsend result smoke Claude/Vertex triage completed through OpenShell.\""
   print "    curl_args=\"\""
   print "    if [ \"${NO_SSL_VERIFY:-0}\" = \"1\" ]; then curl_args=\"-k\"; fi"
   print "    curl ${curl_args} -fsS -o /dev/null -X POST \"${api}/repos/${repo}/issues/${number}/comments\" -H \"Authorization: token ${token}\" -H \"Content-Type: application/json\" -d \"$(jq -nc --arg body \"${body}\" \x27{body:$body}\x27)\""
-  print "    echo \"Fullsend M6 result comment posted to ${repo}#${number}\""
+  print "    echo \"Fullsend result smoke comment posted to ${repo}#${number}\""
   post_script_data_added = 1
 }
 /^[[:space:]]+- key: behaviour-current-scenario\.yaml$/ {
@@ -75,18 +78,18 @@ awk '
 ' "${MANIFEST}" > "${MANIFEST}.tmp"
 mv "${MANIFEST}.tmp" "${MANIFEST}"
 
-if [ -n "${M6_MANIFEST_OUTPUT:-}" ]; then
-  cp "${MANIFEST}" "${M6_MANIFEST_OUTPUT}"
+if [ -n "${RESULT_SMOKE_MANIFEST_OUTPUT:-}" ]; then
+  cp "${MANIFEST}" "${RESULT_SMOKE_MANIFEST_OUTPUT}"
   exit 0
 fi
 
-kubectl -n ai-pipeline delete job fullsend-m6-result --ignore-not-found --wait=true
-kubectl -n ai-pipeline delete pods -l job-name=fullsend-m6-result --ignore-not-found --wait=true
+kubectl -n ai-pipeline delete job fullsend-result-smoke --ignore-not-found --wait=true
+kubectl -n ai-pipeline delete pods -l job-name=fullsend-result-smoke --ignore-not-found --wait=true
 kubectl apply -f "${MANIFEST}"
 
 POD=""
 for _ in $(seq 1 600); do
-  POD="$(kubectl -n ai-pipeline get pods -l job-name=fullsend-m6-result -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+  POD="$(kubectl -n ai-pipeline get pods -l job-name=fullsend-result-smoke -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
   if [ -n "${POD}" ] && kubectl -n ai-pipeline exec "${POD}" -c artifact-holder -- test -f /artifacts/.fullsend-done >/dev/null 2>&1; then
     break
   fi
@@ -94,14 +97,14 @@ for _ in $(seq 1 600); do
 done
 
 if [ -z "${POD}" ] || ! kubectl -n ai-pipeline exec "${POD}" -c artifact-holder -- test -f /artifacts/.fullsend-done >/dev/null 2>&1; then
-  echo "Fullsend M6 result smoke did not produce completion marker" >&2
-  kubectl -n ai-pipeline get pods -l job-name=fullsend-m6-result -o wide >&2 || true
+  echo "Fullsend result smoke did not produce completion marker" >&2
+  kubectl -n ai-pipeline get pods -l job-name=fullsend-result-smoke -o wide >&2 || true
   exit 1
 fi
 
 kubectl -n ai-pipeline logs "${POD}"
-mkdir -p "${PROJECT_ROOT}/var/demos/fullsend-dev-stack/artifacts/m6"
-kubectl -n ai-pipeline cp "${POD}:/artifacts" "${PROJECT_ROOT}/var/demos/fullsend-dev-stack/artifacts/m6" --container=artifact-holder --retries=2
+mkdir -p "${ARTIFACTS_DIR}"
+kubectl -n ai-pipeline cp "${POD}:/artifacts" "${ARTIFACTS_DIR}" --container=artifact-holder --retries=2
 STATUS="$(kubectl -n ai-pipeline exec "${POD}" -c artifact-holder -- cat /artifacts/.fullsend-status)"
 
 GITHUB_URL="${GITHUB_EMULATOR_URL:-https://github.local}"
@@ -111,19 +114,19 @@ COMMENTS="$(curl --silent --show-error --fail --insecure \
   -H "Authorization: token ${GITHUB_TOKEN}" \
   -H 'Accept: application/vnd.github+json' \
   "${GITHUB_API}/repos/fullsend-dev/triage-target/issues/1/comments")"
-mkdir -p "${PROJECT_ROOT}/var/demos/fullsend-dev-stack/artifacts/m6"
-jq '[.[] | {id,body,user:.user.login,created_at}]' <<<"${COMMENTS}" > "${PROJECT_ROOT}/var/demos/fullsend-dev-stack/artifacts/m6/emulator-comments.json"
-if ! jq -e 'any(.[]; .body | contains("<!-- fullsend-dev-stack:triage -->"))' "${PROJECT_ROOT}/var/demos/fullsend-dev-stack/artifacts/m6/emulator-comments.json" >/dev/null; then
-  echo "Fullsend M6 did not create the expected marked issue comment" >&2
-  kubectl -n ai-pipeline delete job fullsend-m6-result --ignore-not-found
+mkdir -p "${ARTIFACTS_DIR}"
+jq '[.[] | {id,body,user:.user.login,created_at}]' <<<"${COMMENTS}" > "${ARTIFACTS_DIR}/emulator-comments.json"
+if ! jq -e 'any(.[]; .body | contains("<!-- fullsend-result-smoke:triage -->"))' "${ARTIFACTS_DIR}/emulator-comments.json" >/dev/null; then
+  echo "Fullsend result smoke did not create the expected marked issue comment" >&2
+  kubectl -n ai-pipeline delete job fullsend-result-smoke --ignore-not-found
   exit 1
 fi
 
-kubectl -n ai-pipeline delete job fullsend-m6-result --ignore-not-found
+kubectl -n ai-pipeline delete job fullsend-result-smoke --ignore-not-found
 
 if [ "${STATUS}" != "0" ]; then
-  echo "Fullsend M6 result smoke exited with status ${STATUS}" >&2
+  echo "Fullsend result smoke exited with status ${STATUS}" >&2
   exit 1
 fi
 
-echo "M6 emulator result verified; artifacts copied to var/demos/fullsend-dev-stack/artifacts/m6"
+echo "Result smoke verified against the emulator; artifacts copied to ${ARTIFACTS_DIR}"

@@ -6,11 +6,15 @@ import queue
 import shutil
 import stat
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 
-from flask import Flask, render_template, jsonify, abort, Response, request
+import requests
+import urllib3
+from flask import Flask, render_template, jsonify, abort, redirect, Response, request
 from jinja2 import FileSystemLoader
+from urllib3.exceptions import InsecureRequestWarning
 
 from src.dashboard.report_data import (
     load_all_issues, load_single_issue,
@@ -68,6 +72,87 @@ _pipeline_state = {
 }
 _state_lock = threading.Lock()
 _MAX_EVENTS = 5000
+
+
+def _check_service(service: dict[str, str]) -> dict[str, str]:
+    """Return a small live status record without exposing credentials."""
+    verify_tls = os.getenv("NO_SSL_VERIFY", "0") != "1"
+    try:
+        response = requests.get(
+            service["check_url"],
+            timeout=3,
+            verify=verify_tls,
+        )
+        response.raise_for_status()
+        return {**service, "status": "up", "detail": f"HTTP {response.status_code}"}
+    except requests.RequestException as exc:
+        return {**service, "status": "down", "detail": str(exc)}
+
+
+def _system_status() -> dict[str, object]:
+    """Collect live service status and the dashboard's deployment metadata."""
+    if os.getenv("NO_SSL_VERIFY", "0") == "1":
+        urllib3.disable_warnings(InsecureRequestWarning)
+
+    jira = os.getenv(
+        "BREADBOARD_JIRA_URL",
+        "https://jira-emulator.ai-pipeline.svc.cluster.local",
+    ).rstrip("/")
+    github = os.getenv(
+        "GITHUB_API_URL",
+        "https://github-emulator.ai-pipeline.svc.cluster.local/api/v3",
+    ).rstrip("/")
+    gitlab = os.getenv(
+        "GITLAB_API_URL",
+        "https://gitlab-emulator.ai-pipeline.svc.cluster.local/api/v4",
+    ).rstrip("/")
+    services = [
+        # The emulator does not implement Jira's serverInfo endpoint. Its
+        # priority metadata endpoint is used by its own container readiness
+        # probe and is a stable read-only connectivity check.
+        {"name": "Jira emulator", "url": jira, "check_url": f"{jira}/rest/api/2/priority"},
+        {"name": "GitHub emulator", "url": github, "check_url": f"{github}/"},
+        {"name": "GitLab emulator", "url": gitlab, "check_url": f"{gitlab}/version"},
+        {
+            "name": "MLflow",
+            "url": os.getenv("MLFLOW_TRACKING_URI", "http://mlflow.ai-pipeline.svc.cluster.local:5000").rstrip("/"),
+            "check_url": f"{os.getenv('MLFLOW_TRACKING_URI', 'http://mlflow.ai-pipeline.svc.cluster.local:5000').rstrip('/')}/health",
+        },
+        {
+            "name": "Markovd",
+            "url": os.getenv("MARKOVD_URL", "http://markovd.ai-pipeline.svc.cluster.local:8080").rstrip("/"),
+            "check_url": f"{os.getenv('MARKOVD_URL', 'http://markovd.ai-pipeline.svc.cluster.local:8080').rstrip('/')}/api/v1/health",
+        },
+        {
+            "name": "Observatory",
+            "url": os.getenv("OBSERVATORY_URL", "http://observatory.ai-pipeline.svc.cluster.local:8000").rstrip("/"),
+            "check_url": f"{os.getenv('OBSERVATORY_URL', 'http://observatory.ai-pipeline.svc.cluster.local:8000').rstrip('/')}/healthz",
+        },
+        {
+            "name": "Fullsend Mint",
+            "url": os.getenv("FULLSEND_MINT_URL", "http://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080").rstrip("/"),
+            "check_url": f"{os.getenv('FULLSEND_MINT_URL', 'http://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080').rstrip('/')}/health",
+        },
+    ]
+    with ThreadPoolExecutor(max_workers=len(services)) as executor:
+        services = list(executor.map(_check_service, services))
+    for service in services:
+        service.pop("check_url", None)
+
+    return {
+        "services": services,
+        "cluster": {
+            "namespace": os.getenv("KUBERNETES_NAMESPACE", "ai-pipeline"),
+            "platform": "K3s",
+            "storage_class": "local-path",
+        },
+        "ticket_browser": {
+            "sources": "Jira, GitHub, GitLab",
+            "work_items": "Issues, pull requests, merge requests",
+            "closed_by_default": True,
+            "pagination": "Fetches all emulator pages before filtering",
+        },
+    }
 
 
 def _broadcast_sse(data: dict) -> None:
@@ -515,50 +600,13 @@ def create_app() -> Flask:
             abort(404)
         return render_template("strat_detail.html", strat=strat)
 
+    @app.route("/system-status")
+    def system_status():
+        return render_template("settings.html", **_system_status())
+
     @app.route("/settings")
-    def settings():
-        config = {
-            'JIRA_SERVER': os.getenv('JIRA_SERVER'),
-            'JIRA_USER': os.getenv('JIRA_USER'),
-            'JIRA_TOKEN': os.getenv('JIRA_TOKEN'),
-            'GITHUB_EMULATOR_URL': os.getenv('GITHUB_EMULATOR_URL'),
-            'CLAUDE_CODE_USE_VERTEX': os.getenv('CLAUDE_CODE_USE_VERTEX'),
-            'CLOUD_ML_REGION': os.getenv('CLOUD_ML_REGION'),
-            'ANTHROPIC_VERTEX_PROJECT_ID': os.getenv('ANTHROPIC_VERTEX_PROJECT_ID'),
-            'ATLASSIAN_MCP_URL': os.getenv('ATLASSIAN_MCP_URL'),
-            'GOOGLE_APPLICATION_CREDENTIALS': os.getenv('GOOGLE_APPLICATION_CREDENTIALS'),
-        }
-
-        cluster = {
-            'namespace': 'ai-pipeline',
-            'platform': 'K3s',
-            'storage_class': 'local-path',
-        }
-
-        services = [
-            {
-                'name': 'Jira Emulator',
-                'url': os.getenv('JIRA_SERVER', 'https://jira-emulator.ai-pipeline.svc.cluster.local'),
-                'status': 'available' if os.getenv('JIRA_SERVER') else 'unknown',
-            },
-            {
-                'name': 'GitHub Emulator',
-                'url': os.getenv('GITHUB_EMULATOR_URL', 'https://github-emulator.ai-pipeline.svc.cluster.local'),
-                'status': 'available' if os.getenv('GITHUB_EMULATOR_URL') else 'unknown',
-            },
-            {
-                'name': 'Atlassian MCP',
-                'url': os.getenv('ATLASSIAN_MCP_URL', 'http://jira-emulator.ai-pipeline.svc.cluster.local:8081/sse'),
-                'status': 'available' if os.getenv('ATLASSIAN_MCP_URL') else 'unknown',
-            },
-            {
-                'name': 'Vertex AI',
-                'url': f"https://{os.getenv('CLOUD_ML_REGION', 'global')}-aiplatform.googleapis.com",
-                'status': 'available' if os.getenv('CLAUDE_CODE_USE_VERTEX') == '1' else 'unknown',
-            },
-        ]
-
-        return render_template("settings.html", config=config, cluster=cluster, services=services)
+    def settings_legacy_redirect():
+        return redirect("/system-status", code=308)
 
     @app.route("/admin")
     def admin():

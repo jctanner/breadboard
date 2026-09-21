@@ -43,24 +43,19 @@ spec:
               value: fullsend-dev-config-runner
             - name: RUNNER_LABELS
               value: self-hosted,linux,fullsend
+            # The workspace and RUNNER_TEMP are siblings under one
+            # volume, as they are on GitHub. RUNNER_TEMP has to sit outside the
+            # workspace: a checkout with no path: makes the workspace root a
+            # git working tree, and a source build unpacked into it would land
+            # inside that repository.
             - name: RUNNER_WORKDIR
-              value: /runner-work
+              value: /runner-root/workspace
             - name: GIT_SSL_CAINFO
               value: /etc/ssl/certs/ca-certificates.crt
             - name: SSL_CERT_FILE
               value: /etc/ssl/certs/ca-certificates.crt
             - name: FULLSEND_MINT_URL
               value: http://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080
-            - name: FULLSEND_DEV_OIDC_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: fullsend-mint-dev-credentials
-                  key: oidc-token
-            - name: ACTIONS_ID_TOKEN_REQUEST_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: fullsend-mint-dev-credentials
-                  key: oidc-token
             - name: CLAUDE_CODE_USE_VERTEX
               valueFrom:
                 secretKeyRef:
@@ -87,7 +82,7 @@ spec:
               value: openshell
           volumeMounts:
             - name: runner-work
-              mountPath: /runner-work
+              mountPath: /runner-root
             - name: breadboard-ca
               mountPath: /etc/breadboard-ca
               readOnly: true

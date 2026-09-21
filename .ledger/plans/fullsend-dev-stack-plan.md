@@ -1,6 +1,14 @@
 # Fullsend Development Stack on Breadboard
 
-**Status:** M11 complete; automatic Fullsend event replay verified
+**Status:** Superseded 2026-09-16 by
+[`fullsend-integration-conformance-plan.md`](fullsend-integration-conformance-plan.md).
+This plan's M0-M11 development-stack work is complete and its scripts,
+patches, and history were moved by that plan's work package 8; see
+[`.ledger/notes/fullsend-dev-stack-history.md`](../notes/fullsend-dev-stack-history.md)
+for the change ledger and milestone run log. Do not add new work here -
+add it to the conformance plan instead.
+
+**Prior status:** M11 complete; automatic Fullsend event replay verified
 
 ## Goal
 

@@ -146,7 +146,7 @@ echo ""
 echo "Step 20/22: Bootstrapping Fullsend mint, in-cluster DNS, and GitHub Actions runner..."
 bash "${SCRIPT_DIR}/18-deploy-fullsend-mint-dev.sh"
 bash "${SCRIPT_DIR}/17-deploy-github-actions-runner.sh"
-bash "${SCRIPT_DIR}/22-seed-fullsend-m8.sh"
+bash "${SCRIPT_DIR}/22-seed-fullsend.sh"
 echo ""
 
 # Step 20: Wait for all deployments

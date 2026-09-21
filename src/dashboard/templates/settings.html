@@ -1,112 +1,73 @@
 {% extends "layout.html" %}
-{% block title %}Settings{% endblock %}
+{% block title %}System Status{% endblock %}
 {% block content %}
 
-<h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Configuration Settings</h2>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">System Status</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Live connectivity checks from the Breadboard dashboard.</p>
+  </div>
+  <span class="text-xs text-gray-400 dark:text-gray-500">Checked when this page loaded</span>
+</div>
 
 <div class="space-y-6">
-
   <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
     <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-base font-semibold text-gray-900 dark:text-white">Environment Variables</h3>
+      <h3 class="text-base font-semibold text-gray-900 dark:text-white">Services</h3>
     </div>
     <div class="overflow-x-auto">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-50 dark:bg-gray-800 text-xs uppercase text-gray-500 dark:text-gray-400">
-        <tr>
-          <th class="px-5 py-2.5 text-left">Variable</th>
-          <th class="px-5 py-2.5 text-left">Value</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-        {% for key, value in config.items() %}
-        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-          <td class="px-5 py-2"><code class="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{{ key }}</code></td>
-          <td class="px-5 py-2">
-            {% if value %}
-              {% if 'TOKEN' in key or 'PASSWORD' in key or 'SECRET' in key %}
-                <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{{ '***' + value[-4:] if value and value|length > 4 else '***' }}</code>
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 dark:bg-gray-800 text-xs uppercase text-gray-500 dark:text-gray-400">
+          <tr>
+            <th class="px-5 py-2.5 text-left">Service</th>
+            <th class="px-5 py-2.5 text-left">Endpoint</th>
+            <th class="px-5 py-2.5 text-left">Status</th>
+            <th class="px-5 py-2.5 text-left">Detail</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+          {% for service in services %}
+          <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <td class="px-5 py-2.5 font-medium">{{ service.name }}</td>
+            <td class="px-5 py-2.5"><code class="text-xs">{{ service.url }}</code></td>
+            <td class="px-5 py-2.5">
+              {% if service.status == 'up' %}
+                <span class="inline-flex items-center gap-1.5 text-green-600 dark:text-green-400"><span class="w-2 h-2 rounded-full bg-green-500"></span> Available</span>
               {% else %}
-                <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{{ value }}</code>
+                <span class="inline-flex items-center gap-1.5 text-red-600 dark:text-red-400"><span class="w-2 h-2 rounded-full bg-red-500"></span> Unavailable</span>
               {% endif %}
-            {% else %}
-              <em class="text-gray-400 text-xs">not set</em>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+            </td>
+            <td class="px-5 py-2.5 text-xs text-gray-500 dark:text-gray-400">{{ service.detail }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-    <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-base font-semibold text-gray-900 dark:text-white">Cluster Information</h3>
-    </div>
-    <div class="overflow-x-auto">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-50 dark:bg-gray-800 text-xs uppercase text-gray-500 dark:text-gray-400">
-        <tr>
-          <th class="px-5 py-2.5 text-left">Property</th>
-          <th class="px-5 py-2.5 text-left">Value</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-        <tr><td class="px-5 py-2 font-medium text-gray-600 dark:text-gray-400">Namespace</td><td class="px-5 py-2"><code class="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{{ cluster.namespace }}</code></td></tr>
-        <tr><td class="px-5 py-2 font-medium text-gray-600 dark:text-gray-400">Platform</td><td class="px-5 py-2"><code class="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{{ cluster.platform }}</code></td></tr>
-        <tr><td class="px-5 py-2 font-medium text-gray-600 dark:text-gray-400">Storage Class</td><td class="px-5 py-2"><code class="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{{ cluster.storage_class }}</code></td></tr>
-      </tbody>
-    </table>
-    </div>
-  </div>
-
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-    <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-base font-semibold text-gray-900 dark:text-white">Service Endpoints</h3>
-    </div>
-    <div class="overflow-x-auto">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-50 dark:bg-gray-800 text-xs uppercase text-gray-500 dark:text-gray-400">
-        <tr>
-          <th class="px-5 py-2.5 text-left">Service</th>
-          <th class="px-5 py-2.5 text-left">URL</th>
-          <th class="px-5 py-2.5 text-left">Status</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-        {% for service in services %}
-        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-          <td class="px-5 py-2">{{ service.name }}</td>
-          <td class="px-5 py-2"><code class="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{{ service.url }}</code></td>
-          <td class="px-5 py-2">
-            {% if service.status == 'available' %}
-              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-green-500"></span> <span class="text-green-600 dark:text-green-400">Available</span></span>
-            {% elif service.status == 'unknown' %}
-              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-400"></span> <span class="text-gray-500">Unknown</span></span>
-            {% else %}
-              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span> <span class="text-red-600 dark:text-red-400">Unavailable</span></span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    </div>
-  </div>
-
-  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-    <details>
-      <summary class="px-5 py-3 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50">About These Settings</summary>
-      <div class="px-5 pb-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-3xl">
-        <p class="mb-2">This page displays the configuration used by the Breadboard system.</p>
-        <p class="mb-2"><strong class="text-gray-900 dark:text-white">Environment Variables</strong> are loaded from the <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">.env</code> file or Kubernetes secrets and control how the pipeline connects to external services.</p>
-        <p class="mb-2"><strong class="text-gray-900 dark:text-white">Cluster Information</strong> describes the Kubernetes environment where the pipeline is running.</p>
-        <p class="mb-2"><strong class="text-gray-900 dark:text-white">Service Endpoints</strong> lists the URLs for Jira, GitHub emulators, and other services used by the pipeline.</p>
-        <p><em>Note:</em> Sensitive values like tokens and passwords are partially masked for security.</p>
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white">Deployment</h3>
       </div>
-    </details>
-  </div>
+      <dl class="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
+        <div class="px-5 py-3 flex justify-between gap-4"><dt class="text-gray-500 dark:text-gray-400">Platform</dt><dd>{{ cluster.platform }}</dd></div>
+        <div class="px-5 py-3 flex justify-between gap-4"><dt class="text-gray-500 dark:text-gray-400">Namespace</dt><dd><code class="text-xs">{{ cluster.namespace }}</code></dd></div>
+        <div class="px-5 py-3 flex justify-between gap-4"><dt class="text-gray-500 dark:text-gray-400">Storage class</dt><dd><code class="text-xs">{{ cluster.storage_class }}</code></dd></div>
+      </dl>
+    </div>
 
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white">Ticket browser</h3>
+      </div>
+      <dl class="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
+        <div class="px-5 py-3 flex justify-between gap-4"><dt class="text-gray-500 dark:text-gray-400">Sources</dt><dd>{{ ticket_browser.sources }}</dd></div>
+        <div class="px-5 py-3 flex justify-between gap-4"><dt class="text-gray-500 dark:text-gray-400">Work items</dt><dd>{{ ticket_browser.work_items }}</dd></div>
+        <div class="px-5 py-3 flex justify-between gap-4"><dt class="text-gray-500 dark:text-gray-400">Closed items</dt><dd>{{ 'Hidden by default' if ticket_browser.closed_by_default else 'Shown by default' }}</dd></div>
+        <div class="px-5 py-3 flex justify-between gap-4"><dt class="text-gray-500 dark:text-gray-400">Pagination</dt><dd class="text-right">{{ ticket_browser.pagination }}</dd></div>
+      </dl>
+    </div>
+  </div>
 </div>
 {% endblock %}

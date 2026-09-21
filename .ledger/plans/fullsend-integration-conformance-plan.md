@@ -1,0 +1,2227 @@
+# Fullsend Integration Conformance
+
+**Status:** Waves 1 and 2 complete 2026-09-17 (A2 held on a dependency
+decision), plus B9 and D1 to D3. A real event runs the whole chain into the
+Triage job, which checks out upstream defaults, runs nested composite actions,
+and reaches the mint. Job tokens are now scoped by the job's declared
+`permissions:`, the OIDC exchange uses real signed claims that the mint
+verifies, the mint is served over internal TLS, and G17 is fixed. A real event
+now mints a triage credential, checks out the target repository with it, sets up
+credentials and the agent environment, and reaches the agent step itself. The
+trace reaches the agent step, resolves releases against the emulator, and
+installs the Fullsend CLI from a vendored binary, and reaches host setup,
+where it stops on `sudo: command not found`. Install is no longer in the way.
+The remaining wall is the agent action's host setup, which wants sudo, systemd
+and rootless Podman in a pod that has none of them. See status notes. See status notes.
+
+## Goal
+
+Make Breadboard run Fullsend the way Fullsend is meant to run today, in a
+local stack that can be reset and re-run. Keep the older development
+shortcuts around as clearly named tests, but never let them count as proof
+that the real path works.
+
+Fullsend is now a first-class part of the Breadboard stack, not a demo. Its
+deployment files belong under `deploy/` next to every other service. The
+`var/demos/fullsend-dev-stack/` folder goes away, and the milestone prefixes
+(`m4`, `m8`, `M11`, and so on) disappear from every file that survives.
+
+## Words used in this plan
+
+| Term | Meaning here |
+| --- | --- |
+| Fullsend | The upstream project (`fullsend-ai/fullsend`) that runs AI agents against a code forge. |
+| agents repo | `fullsend-ai/agents`. Holds the agent definitions Fullsend runs: prompts, sandbox settings, output schemas, and scripts. |
+| forge | A code host: GitHub, GitLab, or Jira. In this stack it is always an emulator. |
+| GitHub emulator | Breadboard's local GitHub stand-in at `https://github.local`. It serves the API, Git, Actions, and a web UI. |
+| target repo | The repository an agent works on. The demo uses `fullsend-dev/triage-target` in the GitHub emulator. |
+| shim | The one small workflow file Fullsend installs in a target repo (`.github/workflows/fullsend.yaml`). It listens for issue, pull request, review, label, and comment events and hands them to Fullsend. |
+| reusable-dispatch | Fullsend's `reusable-dispatch.yml` workflow. The shim calls it. It checks who triggered the event, picks a stage, and runs it. |
+| stage | One kind of agent job: triage, review, code, or fix. |
+| runner | The GitHub Actions runner pod that executes workflow jobs. |
+| mint | A small service that trades a workflow's identity token for a short-lived forge credential limited to one role and one repository. |
+| OIDC token | A signed identity token GitHub Actions gives a workflow job. It says which repo, workflow, and branch the job came from. The mint checks it. |
+| role | The Fullsend permission level a stage needs. Triage and review are read-level. Code and fix are write-level. |
+| harness | A file in the agents repo that describes how to run one stage: which image, policy, credentials, scripts, and output schema to use. |
+| OpenShell | The sandbox runtime. It runs the agent in an isolated process with an allow-list of binaries, files, and network destinations. |
+| policy / provider / profile | OpenShell settings selected by the harness. Policy limits what the agent can touch. Provider injects a credential. Profile routes network traffic. |
+| pre-script / post-script | Scripts named in a harness. Both run on the host, outside the sandbox, with credentials. The pre-script fetches inputs. The post-script checks the agent's output and writes it to the forge. The agent itself never writes to the forge. |
+| scaffold | The set of files Fullsend's installer writes into a target repo: the shim, a config file, and a few caller workflows. |
+| seed | A script that creates emulator orgs, repos, users, secrets, and fixtures from a clean state. |
+| checkout | A clone of an upstream repository under `checkouts/`. |
+| conformance path | The one end-to-end route this plan is trying to prove. Everything else is a legacy test. |
+| compatibility profile | The short list of local substitutions the conformance path is allowed to make. See decision 3. |
+
+### The three legacy fixtures
+
+Breadboard's earlier Fullsend work was numbered by milestone. The numbers are
+still in the file names today. This plan calls the fixtures by what they do,
+and work package 8 renames the files to match.
+
+| Plain name | Files | What it does |
+| --- | --- | --- |
+| direct-token smoke job | `deploy/k8s/25-fullsend-m4-smoke.yaml`, `19-run-fullsend-m4-smoke.sh` | A Kubernetes Job that clones the target repo, reads a forge token straight from a Secret, and runs `fullsend run triage` with the post-script turned off. No Actions, no mint. |
+| default seeded fixture | `22-seed-fullsend-m8.sh`, which runs `m8_seed.py` and `m8_mirror.py` | What `deploy-all.sh` installs today. Registers a fake GitHub App and copies a small set of Fullsend workflow and action files into the emulator. |
+| config-repo fixture | `m11_seed.py`, `onboard_repo.py` | Puts only the shim in the target repo and puts the dispatcher and per-stage workflows in a separate `.fullsend` repo. This is the older per-organization layout that Fullsend has since deprecated (Fullsend ADR 0044). |
+
+The numeric prefixes on `deploy/scripts/` and `deploy/k8s/` files (`05i`,
+`22`, `25`) are deployment ordering, not milestones. They stay.
+
+## Today versus target
+
+| Boundary | Today | Target |
+| --- | --- | --- |
+| Where routing lives | A Breadboard-seeded `.fullsend` repo | Fullsend's own `reusable-dispatch.yml`, called from the shim |
+| Who may trigger an agent | Nobody is checked | Collaborator permission check that fails closed |
+| How the agent gets a credential | An opaque dev token, or a token read straight from a Secret | An OIDC token exchanged by the mint for a short-lived, scoped credential |
+| Which images and patches run | Local images plus three patches, two of which no longer apply | Local images built from the current checkouts with a documented, minimal patch set |
+| How results are reported | Post-script disabled; a clean exit counts as success | Post-script, output schema, forge status, and telemetry all retained |
+
+## Sources audited
+
+Fullsend and the agents repo are permanent Breadboard dependencies. They belong
+at `checkouts/fullsend-ai/fullsend` and `checkouts/fullsend-ai/agents`, which is
+the layout `gh-org-clone` produces when run inside `checkouts/`. Keep those
+clones pristine. Breadboard-specific changes go in patch files or Breadboard's
+own tree.
+
+The audit used the temporary clones, which stay the provenance until the move
+is done:
+
+- Fullsend: `checkouts.tmp/fullsend-ai/fullsend` at `a734637c`
+- agents: `checkouts.tmp/fullsend-ai/agents` at `6ffe9c77`
+- Breadboard: `deploy/` and `var/demos/fullsend-dev-stack/`
+
+The audit changed nothing and could not reach a live cluster. Every runtime
+claim below still needs a real run to confirm it.
+
+## Findings
+
+### Source checkouts and patches
+
+- `deploy/scripts/05i-build-fullsend.sh` points at `checkouts.tmp/fullsend`,
+  which does not exist. The clone is at `checkouts.tmp/fullsend-ai/fullsend`.
+  Seven files under `var/demos/fullsend-dev-stack/` (`README.md`,
+  `m0-contract.json`, `m3_seed.py`, `m8_mirror.py`,
+  `m8_standalone_mint_smoke.sh`, `m9_seed.py`, `m10_seed.py`) reference the
+  same missing path. A fresh `make host-deploy-all` fails at the Fullsend
+  image build until this is fixed.
+- The build script applies three patches from
+  `var/demos/fullsend-dev-stack/patches/fullsend/`. Against the current
+  Fullsend revision, `0001` and `0003` no longer apply. `0002` still does.
+- A stale clone of the agents repo sits at `checkouts/fullsend-agents`
+  (revision `9b85a9ad`, from 2026-08-21). It is not the audited revision and is
+  in the wrong place.
+- Reproducibility comes from the reset-and-seed procedure, not from pinning
+  source revisions. Record revisions in logs when it helps debugging. Do not
+  make them deployment pins.
+
+### The demo folder
+
+- `var/demos/fullsend-dev-stack/` was built as a throwaway demo. It now holds
+  the only copies of things the deployment depends on: the three Fullsend
+  patches, the `github-emulator-readonly.yaml` OpenShell policy, and the seed
+  and mirror scripts that `22-seed-fullsend-m8.sh` runs.
+- Twenty-four files there are tracked. Sixteen are milestone-prefixed seed
+  and smoke scripts (`m0_contract.py` through `m11_seed.py`, plus
+  `onboard_repo.py` and `test_m11_seed_contract.py`). The `artifacts/` tree
+  and `m8-real-runner.log` are untracked run output.
+- Five deploy scripts reach into the folder: `05i-build-fullsend.sh`,
+  `19-run-fullsend-m4-smoke.sh`, `20-run-fullsend-m5-vertex.sh`,
+  `21-run-fullsend-m6-result.sh`, and `22-seed-fullsend-m8.sh`. So do one
+  `.gitleaksignore` line and the older
+  `.ledger/plans/fullsend-dev-stack-plan.md`.
+- `docs/fullsend-integration.md` does not reference the folder, so the docs
+  will not break when it is removed.
+
+### Workflow layout
+
+- `deploy-all.sh` installs the default seeded fixture. The config-repo fixture
+  is close to Fullsend's deprecated per-organization layout. Neither is the
+  current per-repo layout.
+- Fullsend's current per-repo install writes a small scaffold into the target
+  repo: the shim, `.fullsend/config.yaml`, any customized override
+  directories, and a few directly installed caller workflows. Everything else
+  (agents, skills, schemas, harnesses, policies, profiles, providers, scripts)
+  is fetched at run time from the selected Fullsend and agents revisions.
+- `reusable-dispatch.yml` does the routing and keeps the stage logic inline
+  on purpose, so there is no second set of stage files to drift (Fullsend ADR
+  0062).
+- Breadboard should generate the scaffold from the Fullsend checkout rather
+  than hand-maintain a parallel copy.
+
+### Identity and authorization
+
+- Four identities must stay separate: the person or bot that caused the
+  event, the Actions workflow, the Fullsend role, and the individual emulator
+  service accounts the sandbox uses. One shared admin token spanning all four
+  is a failure. The seed must therefore create and use non-admin accounts for
+  each of them, so that permission failures are visible instead of hidden by
+  admin rights.
+- Fullsend's real workflow gets an OIDC token (`id-token: write`) and calls
+  the mint action with an explicit role and repo scope.
+- Breadboard's `fullsend-mint-dev` accepts an opaque dev token and hands back
+  pre-created emulator tokens from a Kubernetes Secret. It does not validate
+  any claims. The direct-token smoke job skips the mint entirely.
+- Fullsend requires a collaborator permission check before any automatic or
+  slash-command dispatch (Fullsend ADR 0054). The default seeded fixture has
+  no such check.
+
+### Sandbox, images, and policies
+
+- Breadboard builds `fullsend-runner-dev:k3s` and `fullsend-sandbox-dev:k3s`
+  locally and applies the patches above.
+- The harness files in the agents repo form one contract. A triage harness
+  picks a sandbox image and `policies/base.yaml`, layers a Vertex provider and
+  OpenShell profile, then a forge overlay (GitHub, GitLab, or Jira) swaps in
+  the forge provider, profile, skill, environment file, output schema, and
+  post-script inputs. Host-file rules then place credentials, OIDC material,
+  and workspace inputs at fixed sandbox paths. Changing one layer changes the
+  meaning of the others, so review them per stage, not per file.
+- The local mint URL is plain HTTP inside the cluster, accepted only through
+  patch `0002` gated by `NO_SSL_VERIFY=1`. Fullsend production requires HTTPS
+  except for localhost development.
+
+### Results and telemetry
+
+- The direct-token smoke job disables the post-script. Real Fullsend harnesses
+  rely on the post-script to validate output against a schema and write
+  status, comments, and labels back to the forge.
+- The conformance path must keep the output schema, status reporting,
+  post-script behavior, and telemetry. A clean sandbox exit proves nothing on
+  its own.
+
+## The target flow
+
+```mermaid
+flowchart LR
+    E[Issue, PR, review, label, or comment event]
+    S[Shim in target repo]
+    D[Fullsend reusable-dispatch workflow]
+    A[Permission check and stage choice]
+    M[Mint: OIDC token to scoped credential]
+    R[Actions runner]
+    O[OpenShell sandbox]
+    H[Agent harness]
+    P[Post-script writes results]
+    F[Forge status, comments, artifacts]
+
+    E --> S --> D --> A
+    A --> M --> R --> O --> H --> P --> F
+```
+
+A conformance seed must install the scaffold, set the repo variables and
+secrets, point the shim at the emulator's reusable workflow, and prove that
+every box above leaves an identifier behind: a run, a job, a token exchange, a
+sandbox, a result, and a forge change.
+
+### Identity rules along that flow
+
+1. The forge records who caused the event.
+2. The shim and dispatcher check that person's repo permission before starting
+   anything. Triage and review need read-level. Code and fix need write-level.
+   Label handoffs need whatever permission applying the label needs. Missing
+   permission stops the run.
+3. The workflow asks Actions for an OIDC token that names the repo, workflow,
+   branch or event, and environment.
+4. The mint checks those claims and returns a credential for one role and one
+   repo only. It rejects unknown repos, role escalation, wrong audience,
+   expired tokens, and replays.
+5. The runner hands that short-lived credential to the sandbox through
+   Fullsend's normal provider path. The sandbox never sees the token registry
+   or an admin credential.
+6. The harness and post-script act as that scoped identity. The dashboard
+   records actor, repo, role, run, and exchange outcome, never secret values.
+
+## Sandbox review questions
+
+Answer these for triage, review, and code/fix and record the answers in a
+stage matrix (one row per stage: agents revision, harness file, image input,
+policy, providers, profiles, host files, schema, scripts, forge overlay, local
+substitutions, observed checks).
+
+- Does the freshly built image contain the binaries and entrypoints the
+  harness expects? Reviewer note: it should contain whatever the harness
+  needs. Concrete examples from the real harnesses are required before this
+  can be answered; work package 4 collects them.
+- Does the policy allow only what the stage needs? A read-only triage profile
+  must not inherit the write-capable code profile. Reviewer note: this is in
+  the spirit of Fullsend, OpenShell, and sandboxing, and is the intended
+  direction.
+- Do providers inject credentials through OpenShell's credential path rather
+  than broad environment variables or shared files? Reviewer note: follow the
+  Fullsend and agents repo examples and OpenShell's standard practice.
+- Do profiles route only the emulator hosts and approved model endpoints, with
+  TLS kept where the credential type needs it?
+- Do host-file rules expose only what the stage needs, with no path escaping
+  the sandbox?
+- Does the schema match what the validation loop and post-script consume,
+  including retry limits?
+- Do pre- and post-scripts run on the host side, with write credentials
+  available only to the post-script?
+
+## Decisions
+
+All decided on 2026-09-16.
+
+1. The default deployment targets Fullsend's current per-repo layout. The
+   three legacy fixtures stay as named tests only.
+2. Breadboard uses the `fullsend-ai/fullsend` and `fullsend-ai/agents`
+   checkouts directly, at `checkouts/fullsend-ai/*`, kept pristine, with only
+   the small patch set the dev stack truly needs.
+3. The only allowed local substitutions are local image builds of the runner
+   and sandbox, and emulator `.local` routing with development CA handling.
+   Opaque mint tokens and a plain-HTTP mint are not allowed on the conformance
+   path. They may survive only inside the legacy fixtures, and patch `0002`
+   is retired once the mint is served over the stack's internal TLS.
+4. The conformance mint validates real OIDC claims and scopes to one repo,
+   using the emulator's OIDC issuer and key set or Fullsend's standalone mint.
+5. Any workflow, OIDC, App, reusable-workflow, or permission feature the
+   scaffold needs and an emulator lacks is added to that emulator as part of
+   this plan. No Breadboard compatibility layer. Work package 2 finds the
+   gaps at B2 and then fixes them.
+6. The first scenario to prove is triage on an issue. It is read-only and has
+   the smallest credential surface. Review on a pull request and the full
+   triage-to-code-to-review sequence follow.
+7. Breadboard adds a dashboard onboarding action, built in parallel with the
+   rest because it does not depend on the conformance path.
+
+8. Fullsend is a first-class service. Everything the deployment needs moves
+   from `var/demos/fullsend-dev-stack/` to `deploy/`, the demo folder is
+   deleted, and no surviving file keeps a milestone prefix. Scripts that only
+   existed to prove an earlier milestone are deleted rather than moved.
+9. **Runtime and model.** Use the `dummy` runtime wherever it suffices, and
+   reach for a real agent only where genuinely agentic behaviour is the thing
+   under test. **If `dummy` starts blocking progress, switch to Claude on
+   Vertex rather than working around it** - the preference is for cheap
+   determinism, not for defending the dummy runtime. When a real agent is needed, use Claude on Vertex pinned to
+   `claude-haiku-4-5` rather than Fullsend's default. The default is `opus`,
+   set in both `harness/triage.yaml` and `agents/triage.md` in the agents
+   repository. Override it with the repository variable `FULLSEND_MODEL`, or
+   `TRIAGE_FULLSEND_MODEL` for the triage stage alone, rather than editing the
+   checkout, which decision 2 requires to stay pristine. The cluster already
+   carries what this needs: a `gcp-credentials` secret, and the runners
+   already set `CLAUDE_CODE_USE_VERTEX`, `ANTHROPIC_VERTEX_PROJECT_ID`, and
+   `GOOGLE_APPLICATION_CREDENTIALS`.
+
+## Breakpoints
+
+A breakpoint is a hard stop. When the work reaches one, the agent stops,
+hands over something the reviewer can open, click, or run, and waits. The
+reviewer answers **go**, **pivot**, or **stop**, and the answer is written in
+the status notes before any further work starts. Breakpoints exist so that
+direction gets checked every day or two, not after weeks.
+
+Rules for agents working this plan:
+
+- Never work past a breakpoint without a recorded **go**.
+- Each breakpoint must be reachable in about one working session. If it is
+  not, split it and add the new breakpoint here before continuing.
+- What is handed over must be real: a URL in the running stack, a command
+  that runs, or a page that shows actual output. Not a description of what
+  would happen.
+- If a breakpoint cannot be reached, stop anyway and show what blocked it.
+  A blocked breakpoint is still a breakpoint.
+- Prefer the smallest thing that proves the direction. A stub job that shows
+  the right event reaching the right place beats a half-built agent run.
+
+| # | You get to see or try | How to check it | The question you answer |
+| --- | --- | --- | --- |
+| B1 | Fullsend lives under `deploy/`, the demo folder is gone, and the stack still comes up | `tree deploy/fullsend`, `make host-deploy-all`, then open `https://fullsend.local` and `https://github.local/ui/fullsend-dev/triage-target` | Is this the file layout and naming you want? |
+| B2 | The real Fullsend scaffold installed in the target repo, plus a page listing every gap the emulators have when the shim calls `reusable-dispatch.yml`. Every gap on that page becomes a work item in this plan. | Browse the target repo in the emulator UI and see `.github/workflows/fullsend.yaml` and `.fullsend/config.yaml`. Read the gap list. | Which gaps get fixed first, and in what order? Fixing them is part of the plan, not a question. |
+| B3 | Opening an issue as a non-admin user starts an Actions run that reaches a stub triage job; a second user without permission is refused | Log in to the emulator as each user, open an issue, watch the Actions tab | Does the event, routing, and permission path behave the way you expect? |
+| B4 | A workflow job that shows its OIDC claims, exchanges them at the mint, and gets a credential that works on its own repo and is refused on another | Read the job log in the Actions UI; see the exchange on the Fullsend dashboard | Is this the trust model you want before an agent ever runs? |
+| B5 | The real triage agent runs on one issue and the post-script writes a label and comment back | Open the issue in the emulator UI and read what the agent wrote. Open the sandbox evidence bundle and the stage matrix. | Is the agent output useful, and is the sandbox boundary right? |
+| B6 | One make target that resets, seeds, deploys, runs triage, and leaves an evidence folder | Run it from a clean cluster and read the evidence folder | Is this repeatable enough to hand to someone else? |
+| B7 | A button in the Breadboard dashboard whose backend runs the real `fullsend` CLI (`fullsend github setup OWNER/REPO`) against the emulator and opens the scaffold pull request. Not a re-implementation of what the CLI does. | Click it, open the PR in the emulator UI, and read the CLI command and output the dashboard captured | Is this how you want onboarding to feel? Can land any time after B1. |
+
+Each work package below names the breakpoint it feeds.
+
+### Which model runs each stretch
+
+The breakpoints do more for the outcome than the model choice. Pick by the
+shape of the work between stops, and give the agent this file plus the
+breakpoint it is working toward at the start of every session.
+
+| Toward | Work | Model | Why |
+| --- | --- | --- | --- |
+| B1 | Packages 8 and 1: file moves, renames, path fixes, patch rebasing, one deploy run | Sonnet 5 or Opus 5 | Mechanical and well specified. Fable is overkill and its longer turns only cost more. |
+| B2 | Package 2, first half: read the real `reusable-dispatch.yml`, run the scaffold against the emulator, produce an honest gap list | Opus 5 at high or xhigh effort; Fable if budget allows | The most judgment-heavy stop. A weaker model quietly papers over gaps instead of listing them. |
+| B3, B4 | Package 2 second half and package 3: fix emulator gaps, permission check, OIDC issuance, mint validation | Opus 5 | Real code in an unfamiliar codebase plus a trust model that must fail closed. Escalate to Fable only for a single deep gap, such as OIDC issuance in the emulator. |
+| B5 | Packages 4 and 5: harness diff, sandbox policy, stage matrix, result reporting | Opus 5 | Layered policy and credential reasoning, but bounded by concrete files. |
+| B6, B7 | Package 6 make target; package 7 dashboard button | Sonnet 5 | Plumbing with clear success criteria. |
+
+If one model must run the whole plan: Opus 5 at xhigh effort. Fable earns its
+cost only on a long, ambiguous investigation where the agent must hold a lot
+of unfamiliar context without fooling itself, and B2 is the only stop here
+that looks like that.
+
+## Work packages
+
+Packages 1 and 8 come first and can be done together. Package 7 runs in
+parallel with everything. The rest go roughly in order.
+
+### 1. Fix the source inputs
+
+Feeds breakpoint B1.
+
+- [x] Choose `checkouts/fullsend-ai/fullsend` and `checkouts/fullsend-ai/agents`
+  as the canonical paths.
+- [x] Remove or move the stale `checkouts/fullsend-agents` clone. Removed:
+  it was two commits behind the audited revision and carried only two
+  uncommitted lines swapping `model: opus` for a local override - exactly
+  the kind of working-tree drift decision 2 rules out.
+- [x] Move the temporary clones into the canonical paths. Record the audited
+  revisions first. `checkouts.tmp/fullsend-ai/fullsend` and `.../agents` held
+  only the audited clones plus unrelated sibling repos (`adoption-analytics`,
+  `autonomy-analysis`, `autonomy-readiness`, `experiments`, `metrics`,
+  `pi-anthropic-vertex`, `pi-xai-vertex`, `.fullsend`) that are out of this
+  plan's scope and were left untouched.
+- [x] Fix the eight files that reference `checkouts.tmp/fullsend` (fewer
+  once package 8 deletes some of them). Five of the eight were deleted by
+  work package 8; the remaining three (`05i-build-fullsend.sh`, and the
+  renamed `mirror-fullsend-workflows.py`) now point at
+  `checkouts/fullsend-ai/fullsend`.
+- [x] Record active revisions and image inputs in diagnostics, not as pins.
+  `05i-build-fullsend.sh` now echoes the Fullsend and OpenShell checkout
+  revisions at build time.
+- [x] Rebase, replace, or drop each of the three patches. `0001` (sandbox
+  name length) is superseded by upstream's own `generateSandboxName` fix;
+  dropped. `0003` (sticky-comment forge URL) is superseded by upstream's
+  `newAuthenticatedGitHubClient`/`GITHUB_API_URL` handling; dropped. `0002`
+  (insecure dev mint URL) still applies and moved to `deploy/fullsend/patches/`;
+  it is flagged for retirement in work package 3, not this one. One behavior
+  change: `0001` also skipped the Fullsend binary upload for the dummy
+  runtime as a speed optimization with no upstream equivalent; dropping the
+  whole patch means the legacy direct-token smoke now uploads the full
+  binary. Revisit only if that smoke actually breaks or slows down.
+- [x] Add a check that fails the build when a patch does not apply.
+  `05i-build-fullsend.sh` now runs `git apply --check` per patch first and
+  exits with a message pointing at this plan before attempting the real apply.
+
+**Done when:** a clean build consumes the canonical checkouts, and every patch
+either applies cleanly or has been removed with its upstream equivalent
+confirmed. Met: `0002` applies cleanly against the canonical checkout
+(verified with `git apply --check`); `0001` and `0003` are removed with
+their upstream equivalents confirmed by reading the current Fullsend source.
+
+### 2. Install the real workflow layout
+
+Feeds breakpoints B2 and B3. Stop at B2 once the gap list exists so the
+order of fixes can be agreed. Every emulator gap found is added to this
+package as a checklist item and fixed during execution.
+
+- [x] Compare the per-repo scaffold with the two seeded fixtures.
+- [x] Choose the shim plus `reusable-dispatch.yml` chain as the target.
+- [ ] Run the triage-on-issue scaffold against the GitHub emulator and list
+  every gap: workflow-call inputs, permissions, event payloads, reusable
+  workflow references, job outputs.
+- [ ] Add each listed gap as a checklist item here, then fix it in the
+  emulator that owns it (decision 5). The GitHub emulator first; the GitLab
+  and Jira emulators if a forge overlay exercises them.
+- [ ] Generate the scaffold from the Fullsend checkout instead of keeping a
+  hand-written copy.
+- [x] Trace one event through every box in the target flow and record the
+  API call and resulting ID at each step. The trace stops at the first
+  boundary; see the gap list below.
+- [ ] Keep the legacy fixtures out of the conformance deployment path.
+
+#### Gap list (B2 deliverable, 2026-09-16)
+
+Twenty-five gaps found: 23 in the emulator, 2 on the Fullsend side. Each is a
+work item. Ordering is the reviewer's call at B2; nothing below has been fixed.
+Nine were observed live against the running stack; the other sixteen were
+confirmed by reading the emulator source, because the trace stalls before they
+would fire.
+
+**Where the trace actually stopped.** Issue #38 created in
+`fullsend-dev/triage-target` → the real shim matched `issues.opened` → run
+`1103` created (`workflow_id` 30, head `8e45555`) → job `1752`
+"dispatch (reusable workflow)" **stuck `queued` with zero steps**, because the
+called workflow could not be resolved. Nothing past that boundary ran.
+
+*Group A - seeding, not engine defects (cheapest).*
+
+- [x] **[W1] A1. `fullsend-ai/fullsend` does not exist in the emulator** (404). The
+  shim calls `uses: fullsend-ai/fullsend/.github/workflows/reusable-dispatch.yml@main`.
+  The engine *does* support cross-repo reusable refs
+  (`workflow_service.py:231-246`, resolved from the DB by `full_name` and read
+  with `git show <ref>:<path>`), so this is a missing seed, not a missing
+  feature. This alone is what stalled job `1752`. Seeded by `deploy/fullsend/seed/seed-upstream-fullsend.py`, which mirrors the dispatch chain (81 files) from the checkout and is wired into `22-seed-fullsend.sh`.
+- [ ] **[W2, blocked on a dependency decision] A2. Repository secrets cannot be
+  created the normal way.**
+  `actions/secrets/public-key` returns 404, so the encrypted-value flow the
+  real API and `gh secret set` use is unavailable. A plaintext `PUT` exists as
+  a substitute. **Not done in wave 2.** Faithful support means decrypting
+  libsodium sealed boxes, which needs PyNaCl; the emulator declares no such
+  dependency and `cryptography` alone cannot do it (no XSalsa20-Poly1305).
+  Accepting `encrypted_value` without decrypting it would store silently wrong
+  secrets, which is the quiet-failure pattern this plan exists to remove. This
+  needs an explicit decision to add PyNaCl to the emulator, so it is left for
+  the owner rather than taken unilaterally. Nothing on the current trace needs
+  it: the mint and GCP values are set through the plaintext path.
+
+*Group B - Actions engine. B1 and B2 block the dispatch design outright.*
+
+- [x] **[W1] B1. Job `outputs:` are never parsed and there is no `needs` context.**
+  `build_job_graph` reads `runs-on`, `needs`, `steps`, `uses`, `env`,
+  `strategy`, `permissions`, `if`, `timeout-minutes` - not `outputs`. `needs`
+  is used only for ordering. So `needs.route.outputs.stage` evaluates to the
+  empty string, every stage job's `if:` is false, and **no stage can ever
+  run** even once A1 is fixed. This is the single largest gap. Job `outputs:` are parsed, dependencies resolve by YAML job key rather than display name, and jobs with dependencies defer their condition and steps until promotion so a `needs` context exists. The runner reports step outputs; the server resolves the job's outputs from them. Migration `0004_workflow_job_outputs`.
+- [x] **[W1] B2. `fromJSON()` is not implemented** (absent from `src/app/`; the only
+  hits are vendored front-end packages). The triage job reads
+  `fromJSON(needs.route.outputs.event_payload).issue.html_url` and
+  `harness-run` gates on `fromJSON(...).include[0]`. Implemented in both evaluators, with the trailing property and index access it needs.
+- [x] **[W2] B3. `toJSON()` is not implemented.** The triage job passes
+  `FULLSEND_REPO_VARS: ${{ toJSON(vars) }}`. Implemented in the shared evaluator; `toJSON(vars)` and a `fromJSON(toJSON(x))` round trip both verified.
+- [x] **[W2] B4. `hashFiles()` is not implemented.** It guards the "Checkout
+  upstream defaults" step. An unknown function makes the `if:` parser raise,
+  which is caught and treated as false, so the step is **silently skipped**
+  rather than failing loudly. **Now confirmed as the next blocker, and the
+  false default is actively wrong here:** on GitHub
+  `hashFiles(...) == ''` is *true* when the files are absent, so the step
+  should run. Wave 1's G4 fix resolves step conditions server-side and
+  inherits the same swallow-to-false behaviour, so it stored a literal
+  `false` and the step vanished. B4's fix must cover both the job and step
+  condition paths, and an unevaluable condition should fail loudly rather
+  than default either way. Implemented **on the runner**, because `hashFiles` reads the job workspace and the server cannot see it. The server now defers any condition it cannot decide to the runner instead of defaulting it to false, and the runner fails a step loudly when a condition is unevaluable rather than skipping it silently.
+- [x] **[W2] B5. `job.workflow_repository` and `job.workflow_sha` contexts are
+  absent.** The same step uses them to check out the upstream defaults at the
+  exact dispatch revision, which is how ADR 0062 avoids version skew. `job.workflow_repository` and `job.workflow_sha` now report the repository and resolved commit an inlined reusable workflow came from, falling back to the run's own repository and head commit for locally defined jobs.
+- [x] **[W1, promoted from W4 on 2026-09-17] B6. Interpolated expressions could
+  not evaluate operators**, so `${{ inputs.x || 'default' }}` yielded empty
+  and, far worse, a job's `outputs:` mapping could not be resolved. **This was
+  blocking, like C3.** The dispatch's routing output is
+  `a != 'true' && b != 'true' && steps.route.outputs.stage || ''`; the
+  path-lookup fallback returned empty, so the router chose `triage` and the
+  emulator then erased that decision on the way out of the job. Fixed by
+  routing any expression containing an operator, literal, or call through the
+  real parser; bare paths and plain `||` chains keep their previous behaviour.
+- [ ] **[W4] B7. `workflow_call` typed inputs, `required`, and `default` are not
+  honoured.** Unsupplied inputs render empty instead of their declared
+  defaults. Some of the dispatch's guards work only by coincidence today.
+- [ ] **[W4] B8. `secrets: inherit` is silently discarded** (parsed as a string, then
+  dropped). The shim passes explicit secrets, so this is a latent trap rather
+  than a current failure.
+- [x] **[W3, sequencing agreed 2026-09-17: before breakpoint B4] B9. Job-level `permissions:` are parsed and stored but never enforced**;
+  a job token authenticates as the run actor with full privileges. This is a
+  trust-boundary gap that work package 3 depends on. **Done 2026-09-17, mirroring GitHub's documented semantics** rather than the weaker write-only scheme first proposed. The reviewer asked whether this was a GitHub construct or a Fullsend one; it is entirely GitHub's, and the emulator's own `specs/github-actions.md` documents the rule that matters: *declaring any permission sets every unspecified scope to `none`*. Enforcing only writes would therefore have admitted requests GitHub refuses, which is the same class of quiet falsehood this plan exists to remove. Implemented in `app/services/job_permissions.py` and enforced in the auth path, so it covers every route and applies only to job tokens; other credentials are untouched. Refusals are `403 Resource not accessible by integration`. Two deliberate deviations are documented in the module: a job declaring no permissions at all is permissive, because GitHub defers to a repository setting the emulator does not have; and an unmapped endpoint allows reads but denies and logs writes, so a gap in the map is loud rather than silent.
+- [ ] **[W4] B10. Job-level `concurrency:` is not supported**, and workflow-level
+  `cancel-in-progress` defaults to true where GitHub defaults to false. Every
+  dispatch stage job declares a job-level group.
+
+*Group C - runner and actions.*
+
+- [x] **[W1] C1. Every `uses:` except `actions/checkout@*` and local `./` composite
+  actions is silently skipped and reported as success.** A skipped mint or
+  agent step would show green. This is the most dangerous gap on the list,
+  because it manufactures false passes. An unsupported `uses:` step now fails and names what the runner can execute.
+- [x] **[W2] C2. The checkout shim ignores `sparse-checkout`, `fetch-depth`,
+  `persist-credentials`, `token`, and `allow-unsafe-pr-checkout`**; it honours
+  only `repository`, `ref`, and `path` and always uses ambient credentials. `token`, `fetch-depth` (including `0` for full history), `sparse-checkout`, and `persist-credentials: false` are honoured. An explicit `token:` now takes precedence over the runner's ambient admin credential, so a step checking out with a minted credential uses that one.
+- [x] **[W1, promoted from W4 on 2026-09-17] C3. `${{ github.token }}` is never
+  resolved** and survives as literal text into the step environment. **This is
+  blocking, not latent.** With wave 1 in place the dispatch reaches its
+  authorization gate and stops there: the routing step runs
+  `gh api repos/.../collaborators/<user>/permission` with
+  `GH_TOKEN: ${{ github.token }}`, gets `Bad credentials (HTTP 401)`, and
+  correctly fails closed with "No stage matched". Observed in run 1120.
+  Nothing can reach a stage until this is fixed.
+
+  Fixed, and the checkbox was left unticked by oversight. The runner resolves
+  `github.token` to the job's scoped token at execution time so the credential
+  is never written into stored step records. Confirmed live from run 1120,
+  where the authorization call returned `Bad credentials`, to run 1171, where
+  Route's "Determine stage" step succeeds and the chain reaches the agent.
+
+*Group D - OIDC and identity. These feed B4, the mint breakpoint.*
+
+- [x] **[W3] D1. `ACTIONS_ID_TOKEN_REQUEST_TOKEN` is not issued per job.** The
+  runner-side broker compared against an ambient value and returned a static
+  `FULLSEND_DEV_OIDC_TOKEN`. Fixed: the loopback broker is deleted, the request
+  token is the job's own scoped token, and the request URL points at the
+  emulator. A job that did not declare `id-token: write` now has both variables
+  cleared from its step environment, so it cannot inherit a leftover from the
+  pod. The shared secret is gone from the runner manifests and from the mint's
+  Kubernetes secret.
+- [x] **[W3] D2. OIDC claims are not derived from the run.** `job_workflow_ref`
+  was a hard-coded fixture string, and `sub`/`aud` came from query parameters
+  with hard-coded defaults, so any caller could request any subject. Fixed: the
+  endpoint authenticates the job token, looks up the run, and derives
+  repository, owner, ids, workflow, workflow ref, ref, sha, event, and actor
+  from it. `sub` takes GitHub's pull-request form for pull-request events. The
+  caller still chooses the audience, as on GitHub. The mint now verifies the
+  signature against the emulator's published keys and refuses any repository
+  the token was not issued for.
+- [x] **[W3] D3. The upstream-runner protocol path supplies no OIDC variables at
+  all.** Fixed: the job request message carries both variables in each step's
+  environment, gated on the same `id-token: write` declaration. The upstream
+  runner's own internal plumbing for these variables was not reverse-engineered,
+  so delivery is through the step environment, which is what has to hold them
+  when the step runs. Untested against a real upstream runner.
+
+*Group E - REST API surface (all four confirmed live).*
+
+- [x] **[W1] E1. `GET /installation/repositories` returns 404** where real GitHub
+  returns 401/403 for a PAT. Fullsend treats 401/403 as "not an installation
+  token" but any other status as fatal, so this **hard-fails
+  `fullsend repos install` during preflight** before any work begins. Implemented and confirmed live: a personal access token now receives 403.
+- [ ] **[W4] E2. Creating a variable that already exists returns 500**, not 409.
+- [ ] **[W4] E3. `GET /repos/{o}/{r}/actions/variables/{name}` returns 405.**
+- [ ] **[W4] E4. `/organizations` returns 404.**
+- [ ] **[W4] E5. Issue `html_url` names the wrong owner** - issue #38 in
+  `fullsend-dev/triage-target` reported
+  `https://github.local/admin/triage-target/issues/38`.
+
+*Group G - found while fixing wave 1. Not in the original 25.*
+
+- [x] **[W1] G1. A dynamic matrix crashed the whole event dispatch.** The
+  harness stage declares `matrix: ${{ fromJSON(...) }}`. Strategy blocks are
+  not rendered before expansion, so the value arrives as a string and
+  `dict(...)` raised, surfacing as **HTTP 500 on the API call that created the
+  issue** - the trigger itself failed, not just the workflow. Unreachable
+  before A1 because the reusable workflow never resolved. Fixed by treating an
+  unrenderable matrix as a single job and logging it. Real dynamic-matrix
+  support remains unbuilt and is a candidate for a later wave.
+
+- [x] **[W1] G2. Reusable-call substitution destroyed compound expressions.**
+  Inputs and secrets were substituted into the called workflow lexically, and
+  any expression merely *starting* with `inputs.` was treated as a bare path.
+  `${{ inputs.matrix == '' }}` - the condition guarding the dispatch's Route
+  job - became the empty string, which then failed to parse and **silently
+  skipped the job**. With Route skipped, every stage skipped with it. Fixed by
+  substituting only bare context paths and carrying the call's inputs and
+  secrets into each inlined job's expression context instead. Also unreachable
+  before A1.
+
+- [x] **[W1] G3. Combining a caller's condition with a child's produced an
+  unparseable expression.** Inlining AND-ed the two `if:` strings without
+  normalizing their `${{ }}` wrappers, giving `(...) && (${{ ... }})` with the
+  marker mid-expression. The parser rejected the `$`, the error was swallowed,
+  and the job was skipped. Every stage job inherits the shim's condition, so
+  this skipped the entire chain even once G2 was fixed. Fixed by unwrapping
+  both sides before combining.
+
+- [x] **[W1] G4. Step conditions were evaluated by the runner with almost no
+  context.** The runner resolves only `steps.*`; every other path yields the
+  empty string there. The dispatch's very first step guards with
+  `if: inputs.event_action == ''`, which was therefore always true, so the
+  workflow's own validation fired and failed the Route job. Conditions that do
+  not depend on runtime state are now decided server-side, where the full
+  context exists, and reduced to a literal the runner understands. Conditions
+  reading `steps.*`, `success()`, `failure()`, `cancelled()`, or `always()`
+  still belong to the runner.
+- [x] **[W1] G5. Reusable-call inputs were never rendered.** A `with:` value is
+  written in the caller's terms (`event_action: ${{ github.event.action }}`),
+  but was carried into the called workflow unrendered, so `inputs.event_action`
+  was the literal expression text rather than `opened`. Now rendered against
+  the caller's context.
+- [ ] **[W1] G6. The scaffold targets GitHub-hosted runner labels.** The shim
+  renders `runs-on: ubuntu-24.04`, while this stack's runners are labelled
+  `fullsend`, so every job sat queued forever. Fullsend's scaffold renderer
+  already supports a runner-image override, so the conformance seed must set
+  it. Currently applied by hand when generating the scaffold; it belongs in
+  the seed as a documented local substitution under decision 3.
+
+- [x] **[W1] G7. The runner never pointed the `gh` CLI at the emulator.** It
+  sets `GITHUB_API_URL`, but `gh` does not read that variable; it needs
+  `GH_HOST`. Every `gh` call therefore went to api.github.com and returned
+  `Bad credentials` regardless of the credential supplied. This sat directly
+  underneath C3 and produced an identical symptom, so fixing C3 alone changed
+  nothing observable. Confirmed by running `gh api` inside the runner pod with
+  and without `GH_HOST`: without it, "Bad credentials"; with it, the emulator
+  answers. Fixed by deriving the host from the emulator URL and exporting
+  `GH_HOST` to every step.
+
+- [x] **[W1] G8. `gh` ignores `GH_TOKEN` against the emulator host.** It treats
+  any host other than github.com as GitHub Enterprise and reads
+  `GH_ENTERPRISE_TOKEN` instead, so a workflow setting only `GH_TOKEN` stayed
+  unauthenticated. This is the third distinct cause behind the same failing
+  permission check, and each produced a different message: `Bad credentials`
+  (wrong host, G7), then `Requires authentication` (right host, wrong
+  variable, G8). Fixed by mirroring whichever token the workflow chose into
+  `GH_ENTERPRISE_TOKEN`, so the credential the workflow intended is the one
+  `gh` uses. Verified in the runner pod: the exact call the router makes now
+  returns `admin`.
+
+- [x] **[W1] G9. The runner image lacked `yq`.** With the three token causes
+  fixed, the router **selected a stage** (`Routed to stage: triage`) and then
+  failed at the next step with `yq: command not found`. The dispatch reads its
+  config with `yq` in ten places: the kill switch, agent enablement, and role
+  gating. `jq`, `gh`, `git` and the Fullsend and OpenShell binaries were all
+  present; `yq` was the only omission. Added to
+  `deploy/fullsend-runner-dev/Containerfile` pinned and checksum-verified, in
+  the same style as the existing `gh` install.
+
+- [x] **[W1] G10. The `needs` context answered only to prefixed job keys.**
+  Inlining a reusable workflow renames its jobs after the calling job
+  (`route` becomes `dispatch / route`) and remaps `needs:` to match, but the
+  called workflow's own expressions still say `needs.route`, because that is
+  its name for the job. Every stage condition therefore read an empty stage
+  and skipped, even with the routing decision correctly resolved on the job.
+  Each job is now registered under both its prefixed key and its original one,
+  with the prefixed key winning on collision.
+- [x] **[W1] G11. Job `outputs:` are not exposed by the jobs API.** Not
+  blocking, but it made diagnosis harder: the API reports steps and their
+  outputs while omitting the job's own resolved outputs, so confirming the
+  routing decision meant querying the database directly. Worth adding when
+  convenient.
+
+- [x] **[W2] G12. A step condition mixing runtime and server context could not
+  be evaluated by either side.** The dispatch gates a step on both a prior
+  step's output and the event context
+  (`steps.route.outputs.stage != '' && github.event_name == 'issue_comment'`).
+  The server cannot decide it because of the `steps.*` half; the runner cannot
+  because of the `github.*` half. Previously this was hidden: the runner
+  silently treated the whole thing as false, which happened to match the
+  desired skip. Once wave 2 made unevaluable conditions fail loudly, the same
+  step **failed the Route job** instead of skipping. Fixed by binding the
+  server-resolvable paths into the expression as literals before deferring, so
+  the runner receives something it can finish. A good illustration of the
+  bargain this plan keeps making: removing a quiet failure exposes a real one.
+
+- [x] **[W2] G13. The runner's condition parser stopped consuming tokens on a
+  short circuit.** It combined operands with `result and self._parse_not()`,
+  so Python's short circuit skipped the *parse* of the right-hand side, not
+  just its evaluation. The remaining tokens then sat unconsumed and the parser
+  reported a trailing expression. Unreachable while conditions were simple;
+  binding server context (G12) made falsy-left-operand expressions routine and
+  it surfaced immediately. The server's own parser was already written
+  correctly, which is what made the contrast obvious.
+
+- [ ] **[W4] G14. The repository default-workflow-permissions setting does not
+  exist.** On GitHub, a job that declares no `permissions:` block inherits the
+  repository or organisation default, set through
+  `GET/PUT /repos/{owner}/{repo}/actions/permissions/workflow` and the org
+  equivalent, carrying `default_workflow_permissions: read|write` and
+  `can_approve_pull_request_reviews`. The emulator implements neither
+  endpoint and has nowhere to store the value, so B9 hardcodes "permissive"
+  for a job that declares nothing. That is a real divergence: on a repository
+  set to the restricted default, such a job gets contents and packages read
+  only, and the emulator would wrongly allow it to write. Surfaced while
+  implementing B9 and recorded here because a deviation noted only inside a
+  completed item is a deviation that gets lost.
+- [ ] **[W4] G15. The permission-to-endpoint map is incomplete by
+  construction.** `job_permissions.py` maps the scopes the dispatch exercises;
+  anything unmapped allows reads and denies writes, logging
+  `Unmapped write path`. That keeps gaps loud rather than silent, but the map
+  should be completed against the emulator's actual route table so the
+  fallback stops being load-bearing. The log line is the to-do list.
+
+- [x] **[W3] G16. Every 403 was flattened to the single word "Forbidden".**
+  The error middleware discarded the detail on any 403, so the refusal reasons
+  B9 had just built - which scope the job lacked, whether the endpoint was
+  mapped - never reached the caller. Three unrelated causes produced one
+  indistinguishable response body, the same aliasing that made the earlier
+  trace so slow to read. Real GitHub varies this message, and the variation is
+  the diagnostic value. Fixed: a supplied detail is preserved, and "Forbidden"
+  remains the default. Found while writing the OIDC permission test.
+
+- [x] **[W4] G17. The bundled runner cannot execute third-party actions.** With
+  the mint exchange working, the Triage job reached "Setup GCP and prepare
+  credentials" and stopped on `google-github-actions/auth@7c6bc77`, which the
+  runner refuses by name rather than silently skipping. Fixed by emulating that
+  one action locally rather than gating the step or building a general action
+  runtime. Workload Identity Federation cannot be reproduced here: there is no
+  Google security token service to reach and no federation trust against the
+  local issuer. What the later steps depend on is narrower, an
+  application-default credentials file and the variables pointing at it, and
+  Fullsend's own `prepare-sandbox-credentials.sh` documents that it no-ops for
+  any credential that is not `external_account`. So a mounted credentials file
+  is a mode Fullsend already supports, not something invented for the emulator.
+  The runner now carries a named list of locally emulated actions; everything
+  not on it is still refused by name, and the refusal message names the list.
+  A federated or missing credentials file fails the step rather than exporting
+  nothing and reporting success.
+
+- [x] **[W4] G18. The runner sets only a subset of the standard runner
+  variables.** With release resolution fixed, the agent step now fails on
+  `/bin/bash: line 40: RUNNER_TEMP: unbound variable`. The Fullsend actions
+  read four the runner never sets: `RUNNER_TEMP`, `RUNNER_ARCH`,
+  `GITHUB_PATH`, and `GITHUB_ACTION_PATH`. The last two are not just variables
+  but behaviours - `GITHUB_PATH` is how a step prepends to `PATH` for later
+  steps, which is how every install step here puts `fullsend` on the path, and
+  `GITHUB_ACTION_PATH` is the directory of the composite action currently
+  running, which later steps use to locate their own scripts.
+
+  Fixed, all four. A survey of the whole mirrored tree confirmed these are the
+  only standard variables it reads that the runner did not set, so the fix is
+  complete rather than the next instalment. `RUNNER_TEMP` is created empty for
+  each job and removed with the workspace, and it sits **beside** the workspace
+  rather than inside it, because a checkout with no `path:` makes the workspace
+  root a git working tree and a source build unpacked into it would land in
+  that repository. The three runner manifests now mount one volume at
+  `/runner-root` with the workspace and temp as siblings under it, matching
+  GitHub's own layout. `RUNNER_ARCH` reports `X64`/`ARM64` rather than what
+  uname says. `GITHUB_PATH` is applied to later steps and not to the step that
+  wrote it. `GITHUB_ACTION_PATH` is set only inside a composite action and is
+  actively cleared outside one, so a stale value cannot point a script at the
+  wrong tree.
+
+- [x] **[W4] G19. The runner's composite renderer drops compound
+  expressions.** `_render_local_action` handles exactly three shapes:
+  `github.token`, `inputs.X`, and a four-part `steps.<id>.outputs.<name>`.
+  Anything else is returned as its own literal text, so a composite step's
+  `env:` entry written as
+  `${{ steps.detect.outputs.source-ref || steps.detect.outputs.version-url }}`
+  reaches the shell verbatim and git reports
+  `invalid refspec '${{ steps.detect... }}'`.
+
+  This is the same defect as G2, on the other side of the system. The server's
+  renderer was given a real parser when the identical problem appeared there;
+  the runner's was not, even though the runner already carries one,
+  `_StepIfParser`, used for `if:` conditions with step outputs. The fix is to
+  route anything containing an operator, a literal, or a call through that
+  parser, exactly as `render_expressions` does server-side.
+
+  Fixed that way. `_StepIfParser` now takes a context rather than raw step
+  outputs, so one expression can read `steps`, `inputs`, and `github.token`
+  together, and it gained an `evaluate()` that returns the value while
+  `parse()` keeps its boolean contract. Rendering needs the value: `a || b` in
+  a step's `env:` has to produce the winning string, not `true`.
+
+  One deliberate asymmetry. A missing key under a known root renders empty,
+  matching Actions, where reading an absent property is null. An **unknown
+  root** raises, and the renderer then leaves the whole expression as literal
+  text. The server renders every other context before a step reaches the
+  runner, so an unresolved root means something upstream did not run, and
+  rendering it empty would convert a missing renderer into a silently wrong
+  value. A step condition on an unknown root still fails the step loudly, as
+  before.
+
+- [x] **[W4] G20. A push synchronized closed pull requests, at a stale base
+  commit.** The first diagnosis in this entry, that `_get_head_sha` read the
+  bare repository's `HEAD`, was wrong and is corrected here. The two failing
+  runs were `pull_request_target`, not `issues`, and the cause was in the
+  pull-request synchronize dispatch:
+
+  - the query selecting pull requests to synchronize had **no state filter**,
+    so a push raised synchronize activity for every pull request that branch
+    had ever been the head of. The repository has a closed pull request whose
+    head ref is `main`, so every push to the default branch dispatched a run
+    for it; and
+  - the run was stamped with `pr.base_sha`, the base commit recorded when the
+    pull request was opened. GitHub runs `pull_request_target` against the base
+    branch **as it is now**, which is the entire point of the event: it runs
+    the base branch's own workflow code. The stored value pointed at a commit
+    no ref reached any more, which is why checkout then failed.
+
+  Both fixed: only open, unmerged pull requests synchronize, and the run
+  resolves the base branch's current tip. `get_ref_sha` also now looks a bare
+  name up as a branch first, since `git rev-parse main` is ambiguous when a tag
+  shares the name.
+
+- [x] **[W4] G21. Not a gap. Closed after measurement.** The claim was that
+  the transport is stricter than GitHub and needs
+  `uploadpack.allowAnySHA1InWant`. That was written from the error message
+  rather than from evidence, and measuring real git shows it is false:
+
+  | Commit asked for | Stock `git-upload-pack` |
+  | --- | --- |
+  | Reachable from a ref, not a branch tip | **served**, no configuration needed |
+  | Reachable from nothing | refused, `not our ref` |
+
+  The case Actions actually needs, a commit that is not a branch tip, already
+  works. The commit in the failing run was reachable from nothing, and GitHub
+  refuses that too. Setting `allowAnySHA1InWant` would have made this emulator
+  **more permissive than the thing it emulates** and hidden G20 rather than
+  fixing it. This is the same error as the first B9 recommendation, caught by
+  measuring instead of by review this time.
+
+  The change was written, then reverted. A regression test pins both directions
+  and asserts neither transport module enables the setting, so the shortcut is
+  not reachable for again. If some future case genuinely needs an unreachable
+  commit fetchable, the faithful answer is to give it a ref the way GitHub does
+  with `refs/pull/N/head`.
+
+- [x] **[W4] G23. Workflow-level `permissions:` were not inherited by jobs.**
+  `build_job_graph` read `permissions` only from each job, so a workflow that
+  scoped its token once at the top was recorded as declaring nothing. Found
+  immediately by the B4 trust check, whose first run died on
+  `ACTIONS_ID_TOKEN_REQUEST_TOKEN: unbound variable` despite declaring
+  `id-token: write`. Fixed: a job with no block of its own inherits the
+  workflow's, and a job's own block replaces it outright rather than merging,
+  which is what GitHub does. Merging would silently widen a job that was
+  written to narrow itself. A workflow that declares nothing anywhere behaves
+  exactly as before.
+
+- [x] **[W4] G22. A private repository's issues are served to a token with no
+  access to it.** `GET /repos/{o}/{r}` correctly returns 404 for a
+  non-collaborator, but `GET /repos/{o}/{r}/issues` returns 200 with the
+  issues. The private check is written inline in the repository endpoint
+  rather than in a shared authorization helper, so every other endpoint that
+  resolves a repository by name misses it. Two consequences, in opposite
+  directions: a private repository leaks to any authenticated token, and a
+  collaborator on a private repository is refused by the one endpoint that does
+  check, because that check tests ownership rather than collaboration.
+
+  Found by the B4 trust check, which probed it deliberately and reported it as
+  a warning rather than omitting it.
+
+  Fixed. `app/services/repository_access.py` now holds the single answer to
+  who may read a repository: public to everyone, private to the owner, a site
+  admin, a collaborator, or a member of the owning organisation. It is enforced
+  at the authentication chokepoint in `deps.get_current_user` rather than at
+  165 route handlers, which is the placement the job-token permission check
+  already uses and which the code there already argues for.
+
+  Three things were not obvious going in:
+
+  - **The unauthenticated branch is the one that matters most**, and a check
+    placed after a single return would have missed it. `get_current_user` had
+    five early returns; authentication is now a private function and the check
+    wraps every one of its exits.
+  - **A refusal must be 404, not 403.** A 403 confirms that a private
+    repository exists to someone who cannot see it, which is the fact the check
+    is there to hide.
+  - **The check costs a query on every repository request**, which a test
+    pinning the readme endpoint to one repository query caught immediately. The
+    resolved row is cached on the session and reused by both repository
+    resolvers, so the count is unchanged.
+
+*Group F - Fullsend-side, not emulator gaps. Decision 5 does not cover these.*
+
+- [ ] **[Track F] F1. `fullsend github setup` cannot target the emulator.** It and
+  `github set|status|uninstall|sync-scaffold` build their client with bare
+  `gh.New(token)`, ignoring `GITHUB_API_URL`, so they always reach
+  api.github.com (observed: `401 Bad credentials` from real GitHub).
+  `fullsend repos install` *does* honour the base URL and is the viable entry
+  point. **This blocks B7 as written**, since the reviewer required the
+  dashboard button to run the real CLI - it must either use `repos install` or
+  this must be fixed upstream.
+- [ ] **[Track F] F2. The CLI rejects a non-HTTPS `--mint-url` at install time**, a check
+  separate from the runtime patch. It reinforces the work package 3 item to
+  serve the conformance mint over TLS.
+- [x] **[Track F] F3. The agent action resolves releases against
+  `api.github.com` by name.** `action.yml` hardcodes that host in four calls -
+  latest release, annotated tag dereference, tag listing, and the release
+  check - instead of using `GITHUB_API_URL`. Presented with an emulator token,
+  real GitHub answers 401 and the step exits with
+  `Unexpected HTTP 401 checking release v6d5bb1b...; cannot proceed`. This is
+  the same class as F1 and is now the end of the trace.
+
+  Resolved by option 2, patching the action, chosen with the intent of sending
+  it upstream. `deploy/fullsend/patches/0003-honor-github-api-and-server-url.patch`
+  replaces seven hardcoded hosts across `action.yml` and
+  `.github/actions/install-fullsend-cli/action.yml`: four REST calls use
+  `${GITHUB_API_URL}`, and the release download and two git remotes use
+  `${GITHUB_SERVER_URL}`, each falling back to the public host so behaviour on
+  github.com is unchanged. The git remotes preserve the server's own scheme
+  rather than assuming https.
+
+  The patch is applied to the **mirror**, not to the Fullsend binary, because
+  it changes files a workflow reads at run time. `seed-upstream-fullsend.py`
+  applies it while mirroring and treats a patch that no longer applies as an
+  error, since silently serving unpatched files would reproduce exactly the
+  unexplained 401 this fixes.
+
+  **Confirmed live, run 1157.** Release resolution now reaches the emulator,
+  correctly reports `No release found for vde965fc4...; building from source`,
+  and the 401 is gone. That selects the source-build path, which is deep: it
+  needs `actions/setup-go`, a Go toolchain, Podman, systemd user services, and
+  OpenShell. Vendoring the binary remains available and is complementary rather
+  than an alternative; it short-circuits before any of that and is upstream's
+  own mechanism. That is a separate decision from this patch.
+
+- [ ] **[Track F] F4. The runner pod has egress to the public internet.** The
+  401 above is evidence: the request reached `api.github.com` and was answered.
+  A sandbox boundary that is supposed to confine an agent to local services
+  cannot be demonstrated while the runner that launches it can reach anything.
+  This is a finding about the boundary, not about Fullsend, and it belongs in
+  the sandbox review questions.
+
+**Done when:** a resettable seed installs the real layout, emulator contract
+tests cover the resulting Actions graph, and a retained trace links the
+original event to the final forge change.
+
+### 3. Fix identity, minting, and permissions
+
+Feeds breakpoints B3 (permission check) and B4 (mint exchange).
+
+- [ ] Write down exactly what the development mint trusts and covers, and
+  confine it to the legacy fixtures.
+- [x] Serve the conformance mint over internal TLS. A cert-manager certificate
+  from the internal CA covers the mint's service names, the server wraps its
+  socket when one is mounted, and the runner reaches it over TLS with the CA it
+  already trusts. Patch `0002` has not been removed yet; that needs a run with
+  the patch dropped to confirm nothing else depends on it.
+- [x] Seed non-admin accounts for the **event actor** and use them in the
+  conformance run. `deploy/fullsend/seed/seed-conformance-actors.py` creates
+  three identities on the target repository and prints their tokens. The
+  workflow, role, and sandbox service identities are still outstanding.
+- [x] Add the OIDC request contract to the runner path and confirm which
+  claims reach the mint. Both runner paths now set the request URL and a
+  per-job request token, gated on `id-token: write`.
+- [x] Choose real claim validation and repo scoping for the conformance mint.
+- [x] Implement that validation using the emulator's issuer and key set. The
+  mint verifies the RS256 signature against the emulator's JWKS, checks issuer,
+  audience, and expiry, and refuses any repository the token was not issued
+  for. Keys are fetched in-cluster over plain HTTP and refetched on an unknown
+  key id, so an emulator reset does not strand the mint.
+- [ ] Implement Fullsend's collaborator permission check for automatic and
+  slash-command dispatch.
+- [ ] Prove a role credential cannot cross repo or role boundaries via
+  environment, mounts, logs, or post-script output.
+- [ ] Remove direct `FULLSEND_ROLE_TOKENS` use from the conformance path.
+- [ ] Record actor, repo, role, workflow, mint exchange, and downstream
+  identity in evidence without secret values.
+
+**Done when:** mint and dispatch tests show the trust model works, permission
+failures stop the run, and no long-lived token passes through the sandbox.
+
+### 4. Align images, harnesses, and sandbox policies
+
+Feeds breakpoint B5.
+
+- [ ] Collect concrete examples from the triage, review, and code harnesses
+  of the binaries, entrypoints, providers, and credential paths they expect.
+- [ ] Diff those harnesses against Breadboard's local images, policies,
+  profiles, schemas, scripts, and environment variables.
+- [ ] Decide which resources are mirrored locally and how their revision is
+  shown at run time. Keep it simple enough to rebuild often.
+- [ ] Verify filesystem, network, binary, and credential boundaries against
+  the OpenShell and Fullsend design records.
+- [ ] Replace broad custom policy with the narrowest policy that passes.
+- [ ] Verify local CA, `.local` routing, and TLS from both the runner and the
+  sandbox.
+- [ ] Write the compatibility profile as a separate document containing only
+  what decision 3 allows.
+- [ ] Produce the stage matrix.
+
+**Done when:** the real harness runs after a normal local rebuild, the stage
+matrix and compatibility profile exist, and a retained evidence bundle proves
+the sandbox boundaries.
+
+### 5. Restore real result reporting
+
+Feeds breakpoint B5.
+
+- [ ] Run the harness with its post-script and validation loop enabled.
+- [ ] Keep Fullsend's output schema and status/comment behavior unchanged.
+- [ ] Send Fullsend traces and artifacts to MLflow and Observatory where the
+  harness supports it.
+- [ ] Show the run's workflow, job, sandbox, result, and failure state in the
+  Fullsend operations dashboard.
+
+**Done when:** an agent result is verified in the emulator API and UI, through
+output validation, through post-script behavior, and in retained telemetry.
+
+### 6. Make the whole check repeatable
+
+Feeds breakpoint B6.
+
+- [ ] Reset and seed the emulator with no manual UI steps.
+- [ ] Build or import every image from the canonical checkouts.
+- [ ] Deploy the runner, mint, OpenShell, DNS, and policy prerequisites.
+- [ ] Run the triage-on-issue scenario from a clean state.
+- [ ] Collect revisions, run and job IDs, sandbox logs, agent output, forge
+  changes, and failure evidence.
+- [ ] Add one make target that does all of the above.
+
+**Done when:** the scenario passes after a reset, and its evidence lets
+another agent reproduce or diagnose a failure without chat history.
+
+### 7. Add dashboard onboarding
+
+Feeds breakpoint B7. Runs in parallel with packages 1 to 6 (decision 7).
+
+Fullsend's CLI already onboards a repo (`fullsend github setup OWNER/REPO` or
+`fullsend repos install OWNER/REPO`). The dashboard button runs that real
+CLI command on the backend, from the canonical checkout, and captures its
+output. It does not re-implement what the CLI does. This keeps Fullsend's
+pull-request review step and means the dashboard cannot drift from the CLI.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Dashboard
+    participant CLI as Fullsend CLI
+    participant GitHub as GitHub emulator
+    participant PR as Scaffold pull request
+
+    User->>Dashboard: Pick a repo, start onboarding
+    Dashboard->>Dashboard: Check the user is allowed, confirm target
+    Dashboard->>CLI: Run per-repo setup
+    CLI->>GitHub: Set variables, secrets, scaffold branch
+    CLI->>PR: Open fullsend/scaffold-install PR
+    PR-->>Dashboard: PR URL and status
+    Dashboard-->>User: Link to review and merge
+```
+
+Rules: use a short-lived GitHub App installation token with repo and workflow
+write scope only. Never send it to the browser or keep it after the run. A
+stored personal token is a bigger risk and only a deliberately scoped local
+fallback. Always deliver through a pull request so a maintainer reviews the
+generated files before they activate. No direct-commit mode from the normal
+action.
+
+- [ ] Define who may start onboarding from the dashboard.
+- [ ] Add a backend operation that runs the real `fullsend` CLI from the
+  canonical checkout and captures the command, exit code, and output.
+- [ ] Provide the short-lived App credential to that operation.
+- [ ] Return the PR URL, branch, commit, and any failure to the dashboard
+  without the credential.
+- [ ] Handle repos that already have a scaffold or an open scaffold PR
+  without creating duplicates.
+- [ ] Keep direct-commit mode unavailable from the normal action.
+- [ ] Add an emulator-backed test for permission, PR creation, repeat
+  onboarding, and credential cleanup.
+
+**Done when:** an allowed user can onboard an emulator repo, gets a reviewable
+PR, and can repeat the action without duplicate state.
+
+### 8. Move Fullsend out of the demo folder
+
+Feeds breakpoint B1.
+
+Target layout under `deploy/`:
+
+| Today | Target | Note |
+| --- | --- | --- |
+| `var/demos/fullsend-dev-stack/patches/fullsend/*.patch` | `deploy/fullsend/patches/` | Only the patches that survive package 1. |
+| `var/demos/fullsend-dev-stack/policies/github-emulator-readonly.yaml` | `deploy/fullsend/policies/` | Reviewed in package 4. |
+| `scripts/m8_seed.py`, `scripts/m8_mirror.py` | `deploy/fullsend/seed/` with purpose names, for example `seed-github-app.py` and `mirror-fullsend-workflows.py` | These become the basis of the conformance seed in package 2. |
+| `scripts/onboard_repo.py` | `deploy/fullsend/legacy/onboard-repo-config-fixture.py`, **not** `seed/` | Executing this package found that `onboard_repo.py` hand-rolls the deprecated config-repo fixture (fake per-role App installations, bot collaborators) and depends on constants from the deleted `m11_seed.py`. The B7 review verdict (recorded after this mapping table was written) requires the real onboarding action to call the actual `fullsend` CLI, not reimplement it. Moved to `legacy/` instead of `seed/`, with its two needed constants inlined and a docstring warning work package 7 not to reuse it. |
+| `scripts/m1_seed.py` (shared helpers) | `deploy/fullsend/seed/emulator.py` | Keep only the helpers the surviving seeds import. |
+| `scripts/m0_*`, `m2_`, `m3_`, `m7_`, `m9_`, `m10_`, `m11_`, `m8_events_smoke.py`, `m8_protocol_check.sh`, `m8_real_runner_*`, `m8_standalone_mint_smoke.sh`, `test_m11_seed_contract.py`, `m0-contract.json` | deleted | Each proved one milestone. Anything still needed as a legacy test moves to `deploy/fullsend/legacy/` with a plain name. |
+| `README.md` | mostly `.ledger/notes/fullsend-dev-stack-history.md`; one fact into `docs/fullsend-integration.md` | Executing this package found the README was almost entirely a milestone-by-milestone run log for scripts this package deletes, not live documentation. Only the emulator's OIDC issuer/JWKS fact was still true and moved to the doc; the rest joined the change ledger as history. |
+| `change-ledger.md` | `.ledger/notes/fullsend-dev-stack-history.md` | History belongs in the ledger, not the docs tree. |
+| `artifacts/`, `m8-real-runner.log` | deleted | Untracked run output. Future evidence goes where package 6 defines. |
+| `deploy/scripts/19-run-fullsend-m4-smoke.sh` | `19-run-fullsend-direct-token-smoke.sh` | Legacy test, kept and renamed. |
+| `deploy/scripts/20-run-fullsend-m5-vertex.sh` | `20-run-fullsend-vertex-smoke.sh` | Legacy test, kept and renamed. |
+| `deploy/scripts/21-run-fullsend-m6-result.sh` | `21-run-fullsend-result-smoke.sh` | Legacy test, kept and renamed. |
+| `deploy/scripts/22-seed-fullsend-m8.sh` | `22-seed-fullsend.sh` | Becomes the conformance seed once package 2 lands. |
+| `deploy/k8s/25-fullsend-m4-smoke.yaml` | `25-fullsend-direct-token-smoke.yaml` | Legacy test, kept and renamed. |
+
+- [x] Create `deploy/fullsend/` with `patches/`, `policies/`, `seed/`, and
+  `legacy/` and move the surviving files into it.
+- [x] Rename the five deploy scripts and the smoke manifest above and update
+  `deploy-all.sh`, the `Makefile`, and the other scripts that call them.
+  (`Makefile` needed no change - it only references `05j-build-fullsend-dashboard.sh`,
+  which was not renamed.)
+- [x] Delete the milestone-only scripts, the contract file, the artifacts
+  tree, and the log.
+- [x] Fold the demo README into `docs/fullsend-integration.md` and move the
+  change ledger into `.ledger/notes/`. Most of the README was a milestone
+  run log rather than live documentation, so its narrative moved into
+  `.ledger/notes/fullsend-dev-stack-history.md` alongside the change ledger;
+  only the still-true fact (the emulator's ephemeral OIDC issuer and JWKS)
+  was added to the doc.
+- [x] Update the `.gitleaksignore` entry that names a demo script path.
+  The fingerprint's path field must stay byte-exact (gitleaks fingerprints
+  are `commit:path:rule:line` against historical commits), so it still names
+  the old path; only the surrounding comment was updated to explain why.
+- [x] Mark `.ledger/plans/fullsend-dev-stack-plan.md` as superseded by this
+  plan.
+- [x] Remove `var/demos/fullsend-dev-stack/` and confirm nothing outside
+  `.ledger/` still references it. `var/demos/end-to-end/` is unrelated and
+  stays. One documented exception: `.gitleaksignore`'s fingerprint path
+  (above).
+
+**Done when:** `grep -r fullsend-dev-stack` finds hits only under `.ledger/`,
+no Fullsend file under `deploy/` carries a milestone prefix, and
+`make host-deploy-all` still builds and seeds Fullsend from the new paths.
+
+## Related material
+
+- [`docs/fullsend-integration.md`](../../docs/fullsend-integration.md)
+- [`var/demos/fullsend-dev-stack/README.md`](../../var/demos/fullsend-dev-stack/README.md)
+- [`var/demos/fullsend-dev-stack/change-ledger.md`](../../var/demos/fullsend-dev-stack/change-ledger.md)
+- [`deploy/scripts/05i-build-fullsend.sh`](../../deploy/scripts/05i-build-fullsend.sh)
+- [`deploy/k8s/25-fullsend-m4-smoke.yaml`](../../deploy/k8s/25-fullsend-m4-smoke.yaml)
+- Fullsend ADR 0017: credential isolation for sandboxed agents
+- Fullsend ADR 0044: deprecate per-org installation mode
+- Fullsend ADR 0054: authorize all agent dispatch paths
+- Fullsend ADR 0062: prevent dispatch version skew
+- Fullsend ADR 0063: polling and normalized dispatch architecture
+- Fullsend ADR 0090: runtime-neutral sandbox hooks contract
+
+## Status notes
+
+Append discoveries, decisions, test runs, open questions, and every
+breakpoint verdict here. When a work package becomes real work, give it its
+own task, bug, or ADR file.
+
+### Breakpoint log
+
+| Breakpoint | Date | Verdict | Notes |
+| --- | --- | --- | --- |
+| B1 | 2026-09-16 | **go** | WP8 and WP1 executed and checked against the running stack by Sonnet 5. Verdict given by the reviewer moving work on to B2. See the 2026-09-16 execution entry below. |
+| B2 | 2026-09-17 | **go** | 25 gaps found. Reviewer accepted the proposed fix order unchanged: W1 A1/B1/B2/C1/E1, W2 B3/B4/B5/C2/A2, W3 B9/D1/D2/D3, W4 the remaining nine, Track F the two Fullsend-side items. Instruction: do wave 1, stop at B3. |
+| B3 | 2026-09-17 | **go** | Both halves demonstrated with non-admin actors: `fullsend-triager` (triage) routes to the Triage job; `fullsend-reader` (read) and `fullsend-outsider` (no access) are both refused. Reviewer approved proceeding to wave 2. |
+| B4 | | *awaiting verdict* | Demonstrable end to end as of run 1176, with no caveat left in it. `Fullsend trust check` prints the job's own OIDC claims, exchanges them, and asserts the boundary in both directions across six endpoints. Seeded and repeatable via `deploy/fullsend/seed/seed-trust-check.py`. |
+| B5 | | | |
+| B6 | | | |
+| B7 | | | |
+
+### 2026-09-16
+
+- Decisions 2, 3, 5, 6, and 7 recorded from a visual review of this plan.
+- Canonical checkout layout changed to `checkouts/fullsend-ai/<repo>` to
+  match `gh-org-clone`.
+- Found that the build script and seven demo-stack files point at a
+  nonexistent path, so a fresh deploy fails at the Fullsend image build.
+- Found a stale agents clone at `checkouts/fullsend-agents`.
+- Milestone numbers replaced with plain names for the three legacy fixtures.
+- Plan rewritten in plain language with a glossary.
+- Decision 8 added: Fullsend deployment files move from the demo folder to
+  `deploy/`, the demo folder is removed, and milestone prefixes go away.
+  Package 8 lists the file-by-file mapping.
+- Breakpoints B1 to B7 added. Agents stop at each one and wait for a
+  recorded verdict. This is a response to an earlier plan where agents
+  iterated for days without a check-in and produced something unusable.
+- Model mapping recorded per stretch: Sonnet or Opus toward B1, Opus at high
+  or xhigh (Fable optional) toward B2, Opus toward B3 to B5, Sonnet toward
+  B6 and B7. Opus 5 at xhigh if a single model runs everything.
+
+### 2026-09-16 execution (B1: work packages 8 and 1, by Sonnet 5)
+
+Both packages are done. Findings and deviations worth a second look:
+
+- **Checked out and promoted revisions:** `checkouts/fullsend-ai/fullsend` at
+  `a734637c`, `checkouts/fullsend-ai/agents` at `6ffe9c77`. The stale
+  `checkouts/fullsend-agents` (revision `9b85a9ad`, two commits behind, with
+  uncommitted local edits) was deleted rather than fast-forwarded - decided
+  in-session since nothing in its diff was worth preserving.
+- **Patch verdicts confirmed by direct inspection**, not just `git apply
+  --check`: `0001`'s sandbox-name-length fix is now `generateSandboxName` in
+  upstream `internal/cli/run.go`. `0003`'s sticky-comment forge-URL fix is
+  now `newAuthenticatedGitHubClient`/`GITHUB_API_URL` handling in upstream
+  `internal/cli/forge_client.go` and `github_client.go`. Both dropped.
+  `0002` still applies and moved to `deploy/fullsend/patches/`.
+- **One accepted regression:** `0001` also skipped the Fullsend binary upload
+  for the dummy runtime (a speed optimization, no upstream equivalent).
+  Dropping the whole patch means the legacy direct-token smoke now uploads
+  the full binary. Not fixed here - flag if that smoke becomes slow or
+  breaks.
+- **`onboard_repo.py` did not go where the work package 8 mapping table
+  said.** It hand-rolls the deprecated config-repo fixture and would have
+  contradicted the B7 review verdict (real CLI required) if reused for work
+  package 7. Moved to `deploy/fullsend/legacy/onboard-repo-config-fixture.py`
+  instead of `seed/`, with a docstring warning against reuse. The mapping
+  table above was corrected to match.
+- **`README.md` was almost entirely a run log for deleted scripts.** Only the
+  emulator's OIDC issuer/JWKS fact survived into
+  `docs/fullsend-integration.md`; the rest joined
+  `.ledger/notes/fullsend-dev-stack-history.md`.
+- **One `.gitleaksignore` fingerprint still names the old demo path on
+  purpose** - gitleaks fingerprints are `commit:path:rule:line` against a
+  historical commit, so the path field has to stay byte-exact. This is the
+  one line outside `.ledger/` that still matches `fullsend-dev-stack`.
+- **Deploy scripts renamed and repointed:** `19`/`20`/`21`/`22` and
+  `deploy/k8s/25-fullsend-direct-token-smoke.yaml`, with internal job/config
+  names and the posted-comment marker string renamed to match.
+  `05i-build-fullsend.sh` now points at the canonical checkout, echoes both
+  checkout revisions as a build-time diagnostic, and fails with a plan
+  pointer if a patch no longer applies. `deploy-all.sh` updated to call
+  `22-seed-fullsend.sh`.
+- **Live verification, not a full `make host-deploy-all`.** The stack was
+  already deployed and running on this machine's persistent cluster (Fullsend
+  dashboard and mint pods up for 19-26 days). Rebuilding and restarting every
+  service with the full target would have been disproportionate to what this
+  package changed, so the check instead rebuilt only what changed:
+  - `deploy/scripts/05i-build-fullsend.sh` run for real: Go build against the
+    canonical checkout, OpenShell CLI release build, both images rebuilt and
+    imported into k3s. The runner image got a new digest (it embeds the
+    Fullsend binary); the sandbox image kept its digest (its build context
+    doesn't depend on the Fullsend source), which is expected.
+  - `deploy/scripts/22-seed-fullsend.sh` run for real against the live
+    emulator. First run failed with a real bug: `mirror-fullsend-workflows.py`
+    computed the project root one directory too shallow (`parents[2]`
+    instead of `parents[3]`) after the file moved under `deploy/fullsend/seed/`.
+    Fixed and reran; both seed scripts completed and the shim/action files
+    are now confirmed present in `fullsend-dev/triage-target` via the
+    emulator API.
+  - `https://fullsend.local` and
+    `https://github.local/ui/fullsend-dev/triage-target` both return 200
+    after the rebuild.
+  - A background-process mistake on the first rebuild attempt (a manual
+    shell `&` inside a tracked background command silently killed the build
+    when the outer command returned) is noted here so it isn't repeated:
+    background a build with the harness's own tracking, not a nested `&`.
+  - `git diff --check` is clean.
+  Not run: the full first-boot deploy path (`make host-deploy-all` from a
+  cold cluster). This package's changes were verified against a warm stack;
+  a genuinely cold-start proof is more properly part of work package 6.
+- Breakpoint definitions reviewed. B1, B3, B4, B5, and B6 kept as written.
+  B2 changed: emulator gaps are work items to fix during execution, not a
+  reason to reconsider decision 5. B7 changed: the dashboard button must run
+  the real `fullsend` CLI on the backend to create the PR.
+- Still unknown: whether the GitHub emulator has gaps for the per-repo
+  scaffold (package 2), and what the real harnesses need from the sandbox
+  image (package 4).
+
+### 2026-09-16 execution (B2: work package 2, first half, by Opus 5)
+
+The real scaffold is installed and a real event was traced. Twenty-five gaps
+are recorded as work items in package 2 above. Nothing was fixed.
+
+- **Scaffold generated from the checkout, not hand-written.** Built the
+  `fullsend` CLI from `checkouts/fullsend-ai/fullsend` (with patch `0002`) and
+  used its own `scaffold` package to emit the per-repo files. The shim is
+  byte-identical in size to what `fullsend github setup --dry-run` reports
+  (5414 bytes), so the generator and the CLI agree.
+- **What a GitHub per-repo install actually writes**, corrected from the
+  earlier reading of this plan: `.github/workflows/fullsend.yaml` (the shim),
+  `.github/workflows/prioritize.yml` (a thin caller dispatched by an external
+  scheduler, not through the shim), and `.fullsend/config.yaml`. The config
+  file is generated by the CLI rather than carried in the scaffold embed,
+  which is why it is easy to miss in the source tree. Plus repository
+  variables `FULLSEND_MINT_URL`, `FULLSEND_GCP_REGION`,
+  `FULLSEND_PER_REPO_INSTALL` and secrets `FULLSEND_GCP_PROJECT_ID`,
+  `FULLSEND_GCP_WIF_PROVIDER`.
+- **Installed into the emulator** at commit `8e45555`, and the three
+  repository variables were set (the mint URL had to be `PATCH`ed because
+  creating an existing variable returns 500 rather than 409).
+- **The trace stops at the first boundary.** Issue #38 → run `1103` → job
+  `1752` stuck `queued` with zero steps, because
+  `fullsend-ai/fullsend` is not a repository in the emulator and the reusable
+  call cannot resolve.
+- **The engine is better than expected in one place and worse in another.**
+  Cross-repo reusable workflow references *are* implemented, with an explicit
+  code comment about Fullsend's `.fullsend` repo name, so A1 is a seeding job
+  rather than an engine feature. But job `outputs:` and the `needs` context do
+  not exist at all, so the dispatch workflow's entire routing contract
+  (`needs.route.outputs.stage`) cannot work until that is built. That, not the
+  missing repo, is the real blocker.
+- **Two gaps manufacture false confidence and deserve weight in the ordering.**
+  Any `uses:` that is not `actions/checkout` or a local composite action is
+  skipped and reported as success (C1), and an unknown function in an `if:`
+  is swallowed and treated as false (B4). Both turn missing capability into a
+  green check rather than a failure.
+- **Decision 5 does not cover two of the findings.** F1 and F2 are Fullsend-side
+  limitations, not emulator gaps. F1 in particular blocks B7 as the reviewer
+  specified it, because `fullsend github setup` cannot be pointed at the
+  emulator at all; `fullsend repos install` can.
+- Verification method: every Group E item and the trace were observed live
+  against the running stack. Group B and C items were confirmed by reading the
+  emulator source directly, not only from the capability survey.
+
+### 2026-09-17 B2 verdict
+
+The reviewer accepted the proposed order for all 25 gaps without changes and
+with no note. Each gap in work package 2 above now carries its wave in
+brackets. The instruction was to do wave 1 and stop at B3.
+
+| Wave | Gaps | Intent |
+| --- | --- | --- |
+| W1 | A1, B1, B2, C1, E1, **C3**, **B6** | Make one event reach a stage, honestly. C3 and B6 promoted from W4 on 2026-09-17, each once it proved blocking. |
+| W2 | B3, B4, B5, C2, A2 | Make the triage job actually execute |
+| W3 | B9, D1, D2, D3 | The trust boundary, feeding B3 and B4 |
+| W4 | B7, B8, B10, E2, E3, E4, E5, G14, G15 | Latent traps and API polish (C3 and B6 promoted to W1) |
+| Track F | F1, F2 | Fullsend-side; decision 5 does not cover these |
+
+### 2026-09-17 wave 1 execution (by Opus 5)
+
+All five wave-1 gaps are implemented and verified against the live stack. Five
+further blocking defects surfaced once the chain started resolving; all were
+pre-existing and unreachable before, and all are fixed. The emulator suite went
+from 342 to 348 passing tests, with 17 new regression tests.
+
+**How far the trace got, run by run.** Each line is a real run against the
+running stack.
+
+| Run | Result |
+| --- | --- |
+| 1103 (before wave 1) | one job, `queued`, zero steps, never resolved |
+| 1111 | reusable call resolves: 10 real jobs, all skipped |
+| 1113 | jobs carry real steps (8-14 each), all still skipped |
+| 1115 | Route `queued`, stages correctly `waiting` on it |
+| 1118 | Route **executes**, fails on the workflow's own `event_action` guard |
+| 1120 | Route **succeeds**; reaches the authorization gate and fails closed |
+| 1122 | C3 fixed; identical symptom, different cause (G7) |
+| 1126 | **`Routed to stage: triage`** - the router selects a stage; fails next on missing `yq` (G9) |
+
+**Where it stops now.** Run 1120's routing step logged:
+
+```
+::warning::Permission API call failed for admin: gh: Bad credentials (HTTP 401)
+No stage matched - skipping dispatch
+```
+
+The step receives `GH_TOKEN = '${{ github.token }}'` as literal text. Its event
+context is correct (`EVENT_NAME=issues`, `EVENT_ACTION=opened`), so routing
+inputs are right and only the credential is broken. The gate then fails closed,
+which is the behaviour Fullsend ADR 0054 asks for. This is gap C3, which the B2
+ordering placed in wave 4 on the understanding that it was a latent trap. It is
+not: it is the single remaining blocker for B3.
+
+**Recommendation:** promote C3 into wave 1 and resolve `github.token` to a
+scoped job token. B9 (enforce job permissions, wave 3) is its natural
+companion, since that token should carry the job's declared permissions rather
+than full actor rights.
+
+**Unplanned defects found and fixed (G1-G5), plus one open (G6).** Every one of
+them silently skipped work or reported success rather than failing, which is
+the exact pattern this plan exists to catch. G1 was the worst: a dynamic matrix
+crashed the whole event dispatch, so creating an issue returned HTTP 500 - the
+trigger failed, not just the workflow.
+
+**Not done, and not claimed.** No stage job has executed, so no agent has run.
+B3's own test (a non-admin actor reaching a stub triage job, and an
+unauthorized actor being refused) has not been performed, because the
+authorization gate cannot succeed for anyone yet. Seeding the non-admin
+accounts B3 needs is a work package 3 item and remains untouched.
+
+### 2026-09-17 B3 handover
+
+A real issue event now travels the whole routing path and starts the Triage
+job. Run 1132: Route completed successfully, resolved
+`{"stage": "triage", ...}` as its job outputs, and the Triage job was promoted
+out of `waiting` and executed.
+
+Triage's own steps then ran for real:
+
+| Step | Result |
+| --- | --- |
+| Checkout config repository | success, a real clone at `91fb2c03` |
+| Checkout upstream defaults | skipped, `hashFiles()` unsupported (B4) |
+| Prepare workspace | failure, `./.defaults/...` missing because the step above skipped |
+| Mint token, checkout target, GCP, agent env, run agent | skipped |
+
+That is precisely wave 2's boundary: B4 (`hashFiles`) and B5
+(`job.workflow_repository` / `job.workflow_sha`) are what the upstream-defaults
+checkout needs, and everything after it depends on that directory existing.
+
+**What B3 asks, and what is actually proven.** B3 asks for two things. The
+first, that opening an issue starts a run reaching a triage job, is now
+demonstrated, though the job fails at a known and scoped gap rather than
+completing. The second, that a user without permission is refused, is **not
+tested at all**: every run so far was triggered by `admin`, who holds admin
+permission on the repository. Proving the refusal needs the non-admin accounts
+that work package 3 is responsible for seeding, so the authorization gate has
+only ever been observed passing, never denying.
+
+**Wave 1 final tally.** Five planned gaps, two promoted from wave 4 once each
+proved blocking (C3, B6), and eleven unplanned defects (G1-G11). Every
+unplanned one was pre-existing and unreachable before the chain resolved, and
+every one degraded quietly rather than failing. The emulator suite went from
+342 to 357 passing tests.
+
+### 2026-09-17 B3 denial validation (pivot)
+
+The reviewer directed a pivot to prove the half of B3 that nothing had tested:
+that the authorization gate actually refuses. Every previous run was triggered
+by `admin`, who owns the repository and is short-circuited to `admin`
+permission, so the gate had only ever been seen admitting.
+
+`deploy/fullsend/seed/seed-conformance-actors.py` now seeds three non-admin
+identities on the target repository. Fullsend authorizes an `issues opened`
+event with `has_repo_permission "$ISSUE_USER_LOGIN" triage`, which accepts
+`admin`, `maintain`, `write`, and `triage` and rejects everything else
+(ADR 0054).
+
+| Actor | Repository role | Run | Routing decision | Log |
+| --- | --- | --- | --- | --- |
+| `fullsend-triager` | `triage` | 1134 | `stage='triage'`, Triage job ran | `Routed to stage: triage` |
+| `fullsend-reader` | `pull` | 1136 | `stage=''`, Triage skipped | `No stage matched - skipping dispatch` |
+| `fullsend-outsider` | none | 1138 | `stage=''`, Triage skipped | `Permission API call failed ... 404` then `No stage matched` |
+
+Each run was matched to its author through the stored trigger payload rather
+than by assuming the runs arrived in order.
+
+Two things worth noting. The gate distinguishes *below-threshold* access from
+*no* access: a reader is refused silently on the role check, while a
+non-collaborator produces a 404 that the script treats as a denial and warns
+about, which is the fail-closed behaviour ADR 0054 asks for. And the denial
+path is genuinely reached, not skipped over: the dispatch, the permission API,
+and the router's own logic all execute for a user who is then turned away.
+
+Breakpoint B3 is therefore answered in both directions. What remains untested
+in the identity area is everything beyond the event actor: the workflow, role,
+and sandbox service identities are still one shared credential, which is work
+package 3's remaining scope and gap B9.
+
+### 2026-09-17 wave 2 start, and a standing constraint
+
+Reviewer approved wave 2 after B3. Sequencing agreed for B9: it lands after
+wave 2 and **before breakpoint B4**, because B4 asks whether the mint's trust
+model is right, and a mint that scopes correctly on top of a job token that
+does not is a boundary that cannot actually be tested.
+
+**Constraint until B9 lands: no result from wave 2 onward may be cited as
+evidence about credential scoping.** A job token currently authenticates as the
+run's actor and ignores the `permissions:` block above it, so any step that
+succeeds may be succeeding on privileges it should not have. Steps passing is
+not evidence that the boundary holds.
+
+A correction to earlier wording in these notes: a job token carries the rights
+of *whoever triggered the run*, not administrator rights as such. On run 1134
+it carried `fullsend-triager`'s triage-level rights. The defect is that the
+declared `permissions:` are ignored, which on an admin-triggered run does mean
+admin rights.
+
+### 2026-09-17 wave 2 result
+
+Four of five wave-2 gaps are done and proven against the running stack; A2 is
+held pending a dependency decision. Two further pre-existing defects surfaced
+and were fixed (G12, G13), both of the same shape as everything before them:
+quiet behaviour that only became visible once the surrounding quiet behaviour
+was removed.
+
+**Run 1144, the Triage job, in its own words:**
+
+```
+Step 2: Checkout upstream defaults
+Checked out fullsend-ai/fullsend@6d5bb1b8 (sparse: .github/actions/,
+  .github/scripts/, internal/scaffold/fullsend-repo/, action.yml)
+
+Step 3: Prepare workspace
+Running local composite action ./.defaults/.github/actions/prepare-workspace
+Running local composite action ./.defaults/.github/actions/validate-enrollment
+Per-repo mode - skipping config.yaml enrollment check (self-enrolled)
+Validation passed for fullsend-dev/triage-target
+
+Step 4: Mint triage token
+Running local composite action ./.defaults/.github/actions/mint-token
+Requesting token: role=triage level= repos=triage-target
+curl: (35) TLS connect error: wrong version number
+```
+
+That single log proves several wave-2 items at once: `hashFiles` decided the
+guard correctly, `job.workflow_sha` resolved to the real commit of the mirrored
+upstream repository, sparse-checkout applied the exact four paths the workflow
+asked for, and nested composite actions ran from the checked-out defaults.
+
+**Where it stops, and why that is expected.** The mint URL is
+`https://fullsend-mint-dev...:8080`, but that service speaks plain HTTP on
+8080; confirmed from inside the runner, where `http` answers and `https` fails
+to negotiate. This is not a new gap. It is the work package 3 item "serve the
+conformance mint over internal TLS so patch 0002 can go", made unavoidable by
+gap F2, which is that the Fullsend CLI refuses to install a scaffold pointing
+at a non-HTTPS mint. Decision 3 already ruled a plain-HTTP mint out of the
+conformance path.
+
+**Next, per the sequencing agreed before wave 2:** B9 (enforce job
+permissions), then the mint's TLS, then breakpoint B4. The standing constraint
+still holds: until B9 lands, nothing here may be cited as evidence about
+credential scoping.
+
+### 2026-09-17 runtime and model decision
+
+Recorded as decision 9. Verified rather than assumed, since all three parts
+were checkable:
+
+- **Fullsend's default really is `opus`**, set in both `harness/triage.yaml`
+  and `agents/triage.md` in the agents repository.
+- **The override is a repository variable**, not a source edit:
+  `FULLSEND_MODEL`, or `TRIAGE_FULLSEND_MODEL` to scope it to triage. The
+  dispatch already forwards these as `FULLSEND_REPO_VARS: toJSON(vars)`, which
+  is one of the wave-2 items. So pinning the model needs no change to the
+  checkout, which decision 2 requires to stay pristine.
+- **The credentials are present**: a `gcp-credentials` secret exists in
+  `ai-pipeline`, and the Actions runners already carry
+  `CLAUDE_CODE_USE_VERTEX`, `ANTHROPIC_VERTEX_PROJECT_ID`, and
+  `GOOGLE_APPLICATION_CREDENTIALS`.
+
+**Consequence for breakpoint B5.** With `dummy` preferred, B5 should
+demonstrate the pipeline and the sandbox boundary, not the quality of an
+agent's judgement. Those are different claims and the evidence for one is not
+evidence for the other.
+
+**Outstanding work this creates.** The repository's `.fullsend/config.yaml`
+sets `runtime: dummy`, but no `.fullsend/behaviour/current-scenario.yaml`
+exists, and the dummy runtime hard-fails when that script is missing. A
+behaviour script has to be written and seeded before any run can get past the
+agent step. It should assert the things the boundary depends on: that the
+scoped credential arrived, that the emulator is reachable and other
+destinations are not, and that a retained artifact comes back out. The dummy
+runtime's operations (`assert_env`, `assert_file`, `assert_json`,
+`read_file`, `url_get`, `http`, `checkout_branch`, `write_fixture`) are chosen
+for exactly that.
+
+Note also that the dummy runtime emits `behaviour-results.json`, not the agent
+output schema the post-script consumes. A green dummy run therefore leaves the
+issue unlabelled by design; forge mutation is evidence only under a real
+runtime.
+
+### 2026-09-17 B9, and a corrected recommendation
+
+I first proposed enforcing writes only and leaving reads alone, on the grounds
+that it was the safer subset. The reviewer asked whether the behaviour was
+GitHub's or Fullsend's, which was the right question: `permissions:` is
+entirely a GitHub Actions feature, and checking the emulator's own Actions
+reference showed the proposal was not a conservative subset at all. GitHub
+sets every unspecified scope to `none` as soon as any permission is declared,
+so a write-only scheme would have admitted reads GitHub refuses. The reviewer
+chose full fidelity.
+
+The distinction is not academic here. Fullsend's triage job declares
+`actions: write, contents: read, id-token: write, issues: write`. Under the
+real rule it therefore has **no pull-request access whatsoever**, and may
+comment on an issue but not push code. That asymmetry is exactly the boundary
+this plan set out to prove, and the weaker scheme would have granted it
+silently.
+
+One correctness catch came from testing against the dispatch's real permission
+blocks rather than invented ones: reading a collaborator's permission is
+metadata-level, not administration. The router authorizes every event with
+that call while declaring no administration scope, and it works on GitHub, so
+mapping it to administration would have broken authorization for every run.
+
+**The standing constraint from wave 2 is now lifted.** Results may again be
+cited as evidence about credential scoping, with one qualification: a job
+token still authenticates as the run's actor, so it is scoped by permission
+but not yet by identity. Separating those is the rest of work package 3.
+
+### 2026-09-17 D1 to D3, and the mint's side of the exchange
+
+D1, D2, and D3 are the emulator's half of the trust model that breakpoint B4
+asks about. Implementing them without the mint's half would have been
+pointless, so the mint changed with them.
+
+**What the exchange used to be.** One string, `fullsend-dev-oidc`, lived in the
+runner pod's environment and in the mint's environment. A step asked a loopback
+broker on the runner for a token; the broker compared the ambient value to
+itself and handed back that same string. The mint compared it to its own copy.
+Nothing in the request said which run, repository, or job was asking, so the
+mint's role and repository checks could not mean anything. Any process in the
+namespace that could read the secret could request any role on any repository.
+
+**What it is now.** The emulator issues a signed token whose claims are read
+out of the run:
+
+| Claim | Source |
+| --- | --- |
+| `sub` | derived from repository, event, and ref; the pull-request form for pull-request events |
+| `repository`, `repository_owner`, `repository_id` | the run's repository |
+| `run_id`, `run_number`, `run_attempt` | the run |
+| `workflow`, `workflow_ref`, `job_workflow_ref`, `job_workflow_sha` | the run's workflow |
+| `ref`, `sha`, `event_name`, `actor`, `actor_id` | the run |
+| `aud` | the caller, as on GitHub |
+
+The caller authenticates with its own job token and chooses only the audience.
+The previous endpoint accepted a caller-supplied `subject` query parameter,
+which is the whole vulnerability in one line; a regression test now asserts
+that passing one changes nothing.
+
+**What the mint does with it.** It fetches the emulator's published keys,
+verifies the RS256 signature, checks issuer, audience, and expiry, and then
+refuses any repository the token was not issued for. That last check is the one
+worth having: a run in one repository can no longer mint a credential for
+another. The mint refuses to start at all if its issuer settings are missing,
+so it cannot quietly fall back to the scheme it replaced.
+
+**Gating.** On GitHub a job gets these variables only if it declared
+`id-token: write`. Both runner paths now follow that, and the emulator-side
+runner actively clears the two variables when the job did not ask, so a
+leftover in the pod environment cannot be inherited. The shared secret is gone
+from both runner manifests and from the mint's Kubernetes secret.
+
+**One honest limit.** The upstream `actions/runner` path delivers the two
+variables through each step's environment in the job request message. Its own
+internal variable plumbing was not reverse-engineered; two attempts to read it
+from the upstream source did not find the code. The step environment is what
+has to hold the values when the step runs, so this is correct by construction,
+but it is untested against a real upstream runner.
+
+**Found on the way: G16.** Writing the test for a job that lacks
+`id-token: write` showed that the error middleware replaced every 403 body with
+the single word "Forbidden". That silently discarded the refusal reasons B9 had
+just built. It is the same aliasing problem that made the earlier trace so slow
+to read, and it was fixed rather than worked around in the test.
+
+**Tests.** 387 pass in the emulator, including 8 new tests for the endpoint's
+claims and 4 for the runner's step environment. 11 new tests cover the mint's
+verification and repository scoping, run from the Breadboard repository.
+
+### 2026-09-17 the mint over TLS, and the live exchange
+
+Finishing D1 to D3 left the trace one step further along and immediately
+blocked on the next item the reviewer had already sequenced, so it was done in
+the same pass.
+
+The repository variable `FULLSEND_MINT_URL` named an `https://` endpoint while
+the mint served plain HTTP, and curl reported
+`wrong version number` six times through its retries. The mint now has a
+cert-manager certificate from the internal CA covering its service names, wraps
+its socket when a certificate is mounted, and its probes use HTTPS.
+
+**The live result.** A real `issues opened` event on
+`fullsend-dev/triage-target` now produces:
+
+| Step | Outcome |
+| --- | --- |
+| Route | success, 11 steps |
+| Triage: checkout config, upstream defaults, prepare workspace | success |
+| Triage: mint triage token | **success** |
+| Triage: checkout target repository | success, using the minted credential |
+| Triage: setup GCP | fails on a third-party action (G17) |
+
+The mint's own line reads
+`Granted scope: repos=fullsend-dev/triage-target permissions=contents=read,issues=write,metadata=read repo_selection=selected`,
+and it reached that from a signed assertion it verified against the emulator's
+published keys rather than from a string it already knew.
+
+**The negative cases, live.** Presented to the mint from the runner pod:
+
+| Presented | Response |
+| --- | --- |
+| the old shared secret `fullsend-dev-oidc` | 401, not enough segments |
+| a malformed token | 401, invalid header |
+| an `alg: none` token with correct claims | 401, no matching signing key |
+
+The first of those is the one that matters: the credential that used to be
+sufficient is now worthless.
+
+### 2026-09-17 G17, and why the fix is a shim rather than a gate
+
+The Triage job stopped on `google-github-actions/auth`. Three ways to get past
+it were available, and the choice is worth recording because two of them would
+have bought a green step without buying any evidence.
+
+**Gating the step** was the cheapest. The conformance path runs
+`runtime: dummy` and needs no Google credentials, so skipping the step would
+have worked immediately. It was rejected because the step is unconditional in
+the upstream harness, and gating it means the local workflow is no longer the
+workflow being certified. The plan exists to prove the real one runs.
+
+**A general action runtime** was the most faithful and was rejected as out of
+proportion. It needs a network path to github.com, a JavaScript action
+runtime, and a way to run container actions. Nothing in the current gap list
+needs the other 99% of that.
+
+**Emulating this one action** is what was done. The deciding evidence came from
+Fullsend's own `prepare-sandbox-credentials.sh`, which says in its header that
+it no-ops for any credential whose type is not `external_account`. Service
+account and authorized-user credentials are therefore a mode Fullsend already
+supports; the local stack already mounts one at
+`/var/run/secrets/gcp/credentials.json`. So the emulation does not invent a
+behaviour, it selects a supported one.
+
+The runner now keeps a named list of locally emulated actions. Anything not on
+it is refused by name as before, and the refusal now names the list so the
+boundary is readable from a failing log. The emulation fails the step when the
+credentials file is missing, unreadable, or federated, because exporting
+nothing and reporting success is the exact failure mode this runner was made
+loud to prevent.
+
+**Live result.** Run 1152, Triage job:
+
+| Step | Outcome |
+| --- | --- |
+| Checkout config, upstream defaults, prepare workspace | success |
+| Mint triage token | success |
+| Checkout target repository | success |
+| Setup GCP and prepare credentials | **success** |
+| Setup agent environment | **success** |
+| Run triage agent | fails at F3 |
+
+The step logged the credential type it found, `authorized_user`, and the
+project it resolved from that credential's quota project. Naming the type
+matters: it is what decides whether Fullsend's sandbox credential script does
+anything.
+
+**Two findings behind it.** The agent step now fails because the action
+resolves releases against `api.github.com` by name rather than through
+`GITHUB_API_URL`, recorded as F3 with three options that differ in what the run
+would then prove. That it got a 401 rather than a timeout is itself a finding:
+the runner pod has egress to the public internet, recorded as F4, which limits
+what any sandbox-boundary claim can currently mean.
+
+**Tests.** 401 pass in the emulator, including 10 new tests for the emulated
+action: the variables it exports, the project-id precedence, the quota-project
+fallback, and each of the four refusal paths, plus one asserting an unlisted
+action is still refused and one asserting the list matches on name rather than
+version so a version bump shows up in the log instead of breaking the run.
+
+### 2026-09-17 F3, and where a patch has to be applied
+
+Option 2 was chosen: patch the action rather than vendor around it, with the
+intent of sending the change upstream. The upstream argument is
+self-contained and does not mention this project. Every other host the action
+talks to comes from the standard Actions variables; seven calls address
+github.com by name instead. On GitHub Enterprise Server those seven leave the
+appliance. The credential presented is not valid wherever they land, and the
+release check turns the resulting 401 into `cannot proceed`.
+
+The fix uses `${GITHUB_API_URL}` for the four REST calls and
+`${GITHUB_SERVER_URL}` for the release download and the two git remotes, each
+falling back to the public host so behaviour on github.com is unchanged. The
+git remotes preserve the server's own scheme rather than assuming https, so an
+http-only appliance still works.
+
+**The part that was not obvious.** The existing patch list lives in
+`deploy/scripts/05i-build-fullsend.sh` and is applied to a source export before
+the Fullsend binary is compiled. Adding this patch there would have done
+nothing. `action.yml` is never compiled; the workflow checks it out at run time
+from the emulator's mirror of `fullsend-ai/fullsend`. So the patch had to be
+applied where the mirror is built, in `seed-upstream-fullsend.py`.
+
+There are now two patch lists, and the split is not arbitrary: one patches Go
+source before compilation, the other patches files a workflow reads at run
+time. A patch belongs in exactly one, depending on whether it survives
+compilation. Both are commented to say so, because putting a patch in the wrong
+one fails silently.
+
+The mirror seeder treats a patch that no longer applies as an error rather than
+a warning, for the same reason: serving unpatched files quietly would
+reproduce the unexplained 401 this fixes, several jobs downstream.
+
+**Confirmed live, run 1157.** The agent step now logs
+`No release found for vde965fc4...; building from source at ref: de965fc4...`.
+The 401 is gone and resolution reaches the emulator.
+
+**What that exposes.** Correct resolution selects the source-build path, which
+is considerably deeper than the release path: `actions/setup-go`, a Go
+toolchain, `make go-build`, then Podman, rootless configuration, systemd user
+services, and OpenShell. Vendoring the binary short-circuits all of it before
+the first API call, is upstream's own supported mechanism, and needs no patch.
+Vendoring and this patch are complementary, not alternatives: the patch is
+correct regardless of which install path a run takes. Whether the conformance
+run should exercise the source build or vendor past it is a separate decision
+and has not been made.
+
+**Immediate blocker.** `RUNNER_TEMP: unbound variable`, recorded as G18. The
+runner sets only a subset of the standard runner variables, and two of the
+four missing ones, `GITHUB_PATH` and `GITHUB_ACTION_PATH`, are behaviours
+rather than values.
+
+### 2026-09-18 G18, and where the per-job temp directory belongs
+
+A survey of the whole mirrored Fullsend tree found exactly four standard
+variables it reads that the runner never set: `RUNNER_TEMP` in thirty-nine
+places, `GITHUB_PATH` in eight, `RUNNER_ARCH` in five, and
+`GITHUB_ACTION_PATH` in three. Everything else it reads was already provided.
+Doing that survey first is the difference between fixing this once and finding
+the fifth one three runs later, which is how the last several gaps have
+arrived.
+
+**Two of the four are behaviours, not values.** `GITHUB_PATH` is a file whose
+lines are prepended to `PATH` for the steps that follow, and it is how every
+one of Fullsend's install paths puts its binary where the next step can run it.
+Setting it to a path and never reading the file back would have made an install
+look like it worked and the next step report "command not found".
+`GITHUB_ACTION_PATH` is the directory of the composite action currently
+running, which a step uses to find scripts shipped beside it. The runner now
+sets it only inside a composite action and actively clears it outside one, so a
+value left in the pod environment cannot point a script at the wrong tree.
+
+**Where `RUNNER_TEMP` goes turned out to matter.** GitHub places it beside the
+workspace rather than inside it. The obvious shortcut was to put it under the
+existing workspace directory, next to `.runner-state`, which is already there.
+That is wrong here for a specific reason: a checkout with no `path:` initialises
+a git repository at the workspace root, and the very step that needs
+`RUNNER_TEMP` unpacks a full source tree into it. That tree would have landed
+inside a repository the workflow later inspects. The three runner manifests now
+mount one volume at `/runner-root` with the workspace and `_temp` as siblings
+under it, which is GitHub's own layout. The directory is created empty for each
+job and removed with the workspace, so a build cache or credential file cannot
+outlive the job that made it.
+
+**Live result, run 1159.** The agent step now resolves the release against the
+emulator, reports no release and selects a source build, and clones the
+Fullsend source into `/runner-root/_temp/fullsend-src`. Both halves of that are
+new: the clone proves the F3 patch resolves `GITHUB_SERVER_URL` against the
+emulator, and the destination proves `RUNNER_TEMP` is real.
+
+**What stopped it.** `fatal: invalid refspec '${{ steps.detect.outputs.source-ref || steps.detect.outputs.version-url }}'`.
+The runner's composite renderer passed a compound expression through as its own
+text. Recorded as G19, and it is the same defect as G2 on the other side of the
+system: the server's renderer was given a real parser when this appeared there,
+and the runner's was not, although the runner already carries a suitable parser
+for `if:` conditions.
+
+**The fork that now matters more than the next gap.** Fixing G19 leads to
+`actions/setup-go`, then a Go toolchain, `make go-build`, Podman, rootless
+configuration, systemd user services, and OpenShell. That is the source-build
+path, chosen because the emulator has no releases. Vendoring the binary
+short-circuits all of it before the first API call and is upstream's own
+supported mechanism. Which one the conformance run should take is a decision
+about what the run is meant to prove, and it has not been made.
+
+**Tests.** 411 pass, including 10 new ones covering each variable: that the
+temp directory exists, is writable, is outside the workspace and starts empty
+each job; that the architecture uses GitHub's spelling; that `GITHUB_PATH`
+reaches later steps but not the step that wrote it and accumulates across
+steps; and that `GITHUB_ACTION_PATH` points at the running action and is unset
+outside one.
+
+### 2026-09-18 G19, and the fork is now the blocker
+
+The runner's composite renderer understood three expression shapes and returned
+everything else as its own text. So
+`${{ steps.detect.outputs.source-ref || steps.detect.outputs.version-url }}`
+in a step's `env:` reached the shell as those literal characters, and git
+reported it as an invalid refspec three times through a retry loop before
+falling back to a full clone that failed the same way.
+
+This was the same defect as G2, on the other side of the system. The server's
+renderer was given a real parser when the identical problem appeared there. The
+runner's was not, even though the runner already carried a suitable parser for
+`if:` conditions. The fix routes anything containing an operator, a literal, or
+a call through that parser, and gives the parser a context so one expression
+can read `steps`, `inputs`, and `github.token` together. `parse()` keeps its
+boolean contract; a new `evaluate()` returns the value, because rendering needs
+the winning string rather than `true`.
+
+One asymmetry is deliberate. A missing key under a known root renders empty,
+matching Actions, where reading an absent property is null. An unknown root
+raises and the expression is left as literal text. The server renders every
+other context before a step reaches the runner, so an unresolved root means
+something upstream did not run; rendering it empty would turn a missing
+renderer into a silently wrong value rather than a visible one.
+
+**Live result, run 1161.** The agent step now logs
+`Cloning fullsend at ref: de965fc4129b63054eded58483842ea1b7a5c828`, the
+shallow fetch succeeds first time, and the checkout lands on that commit. The
+retry loop and the full-clone fallback are both gone.
+
+**What it stopped on, and why that is not another gap.**
+`Unsupported action: actions/setup-go@924ae3a1`. This is the fork flagged when
+G18 landed, now reached. The source-build path continues into a Go toolchain,
+`make go-build`, Podman, rootless configuration, systemd user services, and
+OpenShell. Each is a decision, not an oversight. Vendoring the binary
+short-circuits the whole path before the first API call and is upstream's own
+supported mechanism, placed by `fullsend admin install --vendor`.
+
+The choice is about what the conformance run is meant to prove, and nothing
+further should be built until it is made. Emulating `actions/setup-go` the way
+`google-github-actions/auth` was emulated is possible, but unlike that one it
+has no local effect to reproduce: there is no Go toolchain in the runner image
+to point it at, so it would mean installing one, and then the run is
+certifying a build pipeline rather than an agent pipeline.
+
+**Tests.** 424 pass, including 13 new ones for rendering: the fallback chain
+that caused this, falling through an empty first operand, hyphenated output
+names, comparisons, inputs and the job token inside compound expressions, plain
+paths still taking the cheap route, an unsupported context staying visible in
+both rendering and conditions, and recursion through a step mapping. One
+existing parser test was updated for the new constructor contract.
+
+### 2026-09-18 setup-go, and a recommendation I had to withdraw
+
+When G19 landed I argued against emulating `actions/setup-go`, on the grounds
+that unlike the Google auth action it had no local effect to reproduce. That
+was wrong, and the reviewer said so. The two are not alike. Workload Identity
+Federation is unemulatable here because it needs a Google security token
+service this stack cannot reach. `actions/setup-go` resolves a version, makes a
+toolchain available, and puts it on `PATH`. Every one of those is reproducible
+locally. My objection described a cost, installing a toolchain, and dressed it
+as an impossibility.
+
+**The design is the reviewer's.** Pin a commonly used Go in the image; if a job
+asks for a different one, fetch it. That is what `actions/setup-go` already
+does on hosted runners, which answer from a preinstalled tool cache and
+download only on a miss, so the hybrid is closer to the real action than either
+extreme.
+
+One refinement narrowed the download branch further. Go 1.21 and later fetch
+the toolchain a module asks for during the build, so an image toolchain older
+than the request is delegated to Go itself rather than downloaded by us. The
+download path remains for a Go too old to switch, and for an image with no Go
+at all.
+
+**What it does.** Go 1.26.5, the version Fullsend's `go.mod` asks for, is now
+pinned in the runner image with a checksum, the same way `gh` and `yq` already
+are. The emulation resolves the requested version from `go-version`, or from a
+`go-version-file` where a `toolchain` directive beats a `go` directive and any
+other file holds a bare version. It then selects:
+
+| Situation | What happens |
+| --- | --- |
+| Image toolchain is new enough | Used, and said so |
+| Image toolchain is older than the request | Used, with a loud note that Go will switch toolchains during the build |
+| Image has no Go, or Go too old to switch | Downloaded, and a failed download is reported rather than swallowed |
+| No Go and no version named | Fails rather than guessing |
+
+The mismatch is logged either way. A silent auto-upgrade is how a run ends up
+certifying a toolchain nobody chose, which is the same class of quiet failure
+this trace has been clearing out since C1.
+
+**A second gap it exposed, fixed with it.** The first live run failed on
+`go-version-file not found: /runner-root/workspace/${{ runner.temp }}/...`.
+The `runner` context describes the machine, so only the runner can resolve it
+and the server correctly leaves it alone, but the runner did not implement it
+either. It now does, for `os`, `arch`, `name`, and `temp`. Rendering and
+condition evaluation were also sharing two copies of the same dotted lookup;
+they now share one function, so they cannot drift apart.
+
+**What this does not move, and a new reason why.** The wall is host setup, not
+install. Two steps after the build the action runs
+`systemctl --user start podman.socket`, and the runner pod has no systemd, no
+Podman, and no sudo.
+
+The second live run then found something that prices the source-build path out
+on its own. The emulator's mirror of `fullsend-ai/fullsend` is deliberately
+narrow: workflows, actions, scripts, the scaffold, and `action.yml`. It carries
+no `go.mod` and no Go source, so there is nothing to build. Making the build
+work means mirroring the whole repository, 1344 files and 21 MB, and then every
+run downloads Go modules and compiles 658 Go files, because the repository
+vendors none.
+
+That is work to reproduce something this stack already has. The runner image is
+built by `05i-build-fullsend.sh`, which compiles `fullsend` from this same
+checkout and copies the binary to `/usr/local/bin/fullsend`. An in-workflow
+source build would recompile, per job, what the image build already produced.
+The action does not find it only because it looks for a vendored copy in the
+workspace rather than on `PATH`.
+
+**Tests.** 441 pass, including 15 new ones for the emulation: version
+precedence, `toolchain` over `go`, a bare version file, a relative path
+resolved against the workspace, a missing file, numeric rather than lexical
+comparison, and each of the five selection outcomes above. Three more cover the
+`runner` context in rendering and in conditions.
+
+**Honest limit on the evidence.** Live runs exercise registration, dispatch,
+version-file resolution, and the loud failure. They have not yet exercised the
+selection itself, because the mirror carries no `go.mod` to resolve against.
+Selection is covered by unit tests only.
+
+### 2026-09-20 the vendored install, and why the build was happening at all
+
+The reviewer asked why fullsend was being compiled on every run. The answer was
+that nobody had decided it should be. The agent action tries three install
+methods in order, and the local stack seeded neither of the first two, so every
+run fell through to the last one:
+
+| Order | Method | Why it missed here |
+| --- | --- | --- |
+| 1 | A binary committed in the workspace | Nothing seeded one |
+| 2 | A release matching the workflow's commit | The emulator carries no releases |
+| 3 | A build from source | Reached by elimination |
+
+On real GitHub the second is the normal path, which made the source build both
+the least representative of the three and the one we were on. The setup-go work
+in the previous entry was chasing that fallback rather than the cause. It is
+still a real emulator gap, and the action has a second setup-go step for a
+target repository's own Go tooling that needs it regardless, but it was not the
+short way to a running agent.
+
+**What was seeded.** `deploy/fullsend/seed/seed-vendored-binary.py` commits the
+prebuilt CLI into the target repository at `.fullsend/bin/fullsend`, the path
+`fullsend admin install --vendor` writes for a per-repo install. Two details
+were deliberate. The binary is the artifact
+`deploy/scripts/05i-build-fullsend.sh` compiled for the runner image, now
+published to a gitignored `deploy/fullsend/vendor/`, so what a run executes and
+what the image ships cannot drift apart. And it is pushed over git rather than
+the contents API, because git records mode 100755 and the contents API drops
+the executable bit; the seeder asserts that mode rather than trusting the
+umask.
+
+Verified byte for byte: a fresh clone of the repository produces a 28758281
+byte ELF executable whose sha256 matches the build artifact.
+
+**Live result, run 1169.** The agent step logs
+`Using vendored binary: .fullsend/bin/fullsend` and `fullsend version dev`. No
+release lookup, no Go, no compile. It then downloads Podman, verifies its
+checksum, and stops on `sudo: command not found`.
+
+That is the host-setup wall, now reached rather than predicted, and it is the
+wall worth arguing about. The pod has no sudo, no systemd, and no Podman, and
+the three host-setup steps carry no conditions.
+
+**Two bugs this exposed, recorded as G20 and G21.** Pushing the binary moved
+`main`, and the next two runs were stamped with a commit that was not on the
+branch at all, then failed checkout because the git transport will not serve an
+unadvertised object. Neither is caused by vendoring; the push only made them
+visible. Both will recur on their own as soon as any push lands between an
+event and its dispatch, so they are not incidental.
+
+**A smaller note.** A directory listing from the contents API reports `size: 0`
+for its entries, while fetching the file itself reports the true size. Real
+GitHub reports the blob size in both. Not blocking anything, and not worth a
+gap number on its own, but it is why the first check of the seeded file looked
+wrong.
+
+### 2026-09-20 G20 and G21, and a diagnosis that had to be withdrawn
+
+The first write-up of these two was wrong in both entries, and the correction
+is more useful than the fix.
+
+**What I recorded.** That a run's head SHA came from the bare repository's
+`HEAD` symbolic ref, and that the git transport was stricter than GitHub about
+unadvertised objects. Both were inferred from an error message and a plausible
+code path, without checking either.
+
+**What the evidence said.** The two failing runs were `pull_request_target`,
+not `issues`, so `_get_head_sha` was never involved. Their real cause was the
+pull-request synchronize dispatch, in two parts. The query had no state filter,
+so a push raised synchronize activity for every pull request that branch had
+ever been the head of; this repository has a closed pull request whose head ref
+is `main`, so every push to the default branch dispatched one. And the run was
+stamped with the base commit recorded when that pull request was opened, rather
+than the base branch's current tip. GitHub runs `pull_request_target` against
+the base branch as it is now, which is the whole point of the event.
+
+**And the second one was not a gap at all.** Driving real git directly:
+
+| Commit asked for | Stock `git-upload-pack` |
+| --- | --- |
+| Reachable from a ref, not a branch tip | served, with no configuration |
+| Reachable from nothing | refused, `not our ref` |
+
+The case Actions needs already works. The commit in the failing run was
+reachable from nothing, which GitHub also refuses. Enabling
+`uploadpack.allowAnySHA1InWant` would have made this emulator more permissive
+than GitHub and buried G20 under a transport that answers anything. The change
+was written and then reverted.
+
+This is the same mistake as the first B9 recommendation, where a proposal that
+felt like a safe subset turned out to be looser than GitHub's documented
+behaviour. That one was caught by the reviewer asking for the documented
+behaviour. This one was caught by measuring before shipping, which is the habit
+that should have been there the first time.
+
+**What shipped.** Only open, unmerged pull requests synchronize on a push, and
+the resulting run resolves the base branch's current tip. `get_ref_sha` now
+looks a bare name up as a branch first, because `git rev-parse main` is
+ambiguous when a tag shares the name, and resolving a branch event to a tag's
+commit is not something anything downstream would report.
+
+**Tests.** 448 pass. Four cover the synchronize dispatch: a closed pull request
+is not synchronized, a merged one is not, an open one still is, and the run
+carries the branch tip rather than the recorded base. Three pin the transport,
+including one asserting that neither transport module enables
+`allowAnySHA1InWant`, so the shortcut cannot quietly return.
+
+### 2026-09-20 B4 is ready for a verdict
+
+Two thirds of B4 were already demonstrable from an ordinary triage run: the
+exchange happens, and the credential checks out the target repository. The
+other two thirds were not. The log masks the token, so nothing showed the
+claims, and the cross-repository refusal was covered by unit tests rather than
+shown. Both are closed.
+
+**What was seeded.** `deploy/fullsend/seed/seed-trust-check.py` creates a
+private repository, `fullsend-dev/off-limits`, that no agent role collaborates
+on, so "another repository" is a real thing rather than a hypothetical, and
+installs a `Fullsend trust check` workflow in the target repository. The
+workflow asserts rather than narrates: every probe has an expected status and
+fails the job when it does not match, so a boundary that quietly stops holding
+becomes a red run instead of a paragraph nobody rereads.
+
+**Run 1174, triggered by workflow_dispatch, all steps green.**
+
+| Step | Result |
+| --- | --- |
+| Show this job's OIDC claims | 16 claims printed, token masked |
+| Exchange the assertion | `contents=read, issues=write, metadata=read` on its own repository |
+| Mint refuses another repository | 403, `token was issued for fullsend-dev/triage-target and cannot mint for fullsend-dev/off-limits` |
+| Credential on its own repository | 200 |
+| Credential on another repository | 404 |
+| Known gap, shown not hidden | 200, warned |
+
+The claims are the part worth reading. `sub`, `repository`, `workflow_ref`,
+`job_workflow_ref`, `ref`, `sha`, `event_name`, `actor` and `run_id` all
+describe the run that asked, which is what makes the mint's refusal meaningful
+rather than decorative. `runner_environment` reads `self-hosted`, honestly.
+
+**Two gaps found by building it, recorded as G22 and G23.**
+
+G23 was immediate: the first run died on
+`ACTIONS_ID_TOKEN_REQUEST_TOKEN: unbound variable` even though the workflow
+declares `id-token: write`, because workflow-level `permissions:` were never
+inherited by jobs. Fixed, and worth noting that every Fullsend workflow so far
+happened to declare permissions per job, which is why this survived B9.
+
+G22 is left open deliberately and is *in* the demonstration rather than
+omitted from it. The emulator serves a private repository's issues to a token
+with no access. The repository metadata check holds, so B4's refusal is real
+for that endpoint, but a demonstration that quietly picked only the endpoints
+that behave would answer B4's question dishonestly. The fix is a shared
+repository-read authorization helper applied across every endpoint that
+resolves a repository by name, which is wider than one gap and should be
+scoped separately.
+
+**The question B4 asks** is whether this is the trust model you want before an
+agent ever runs. What it can now be judged on: the assertion describes the run
+and nothing else, the mint verifies it against the emulator's published keys
+and refuses to cross a repository boundary, and the credential it returns is
+scoped to three permissions on one repository. What it cannot yet claim: the
+job token still authenticates as the run's actor rather than a separate
+workflow identity, and G22 means repository isolation is enforced for
+repository metadata but not yet for every endpoint.
+
+**Tests.** 451 pass, including three new ones for permission inheritance:
+the workflow block is inherited, a job's own block replaces rather than merges,
+and a workflow declaring nothing is unchanged.
+
+### 2026-09-21 G22, and the caveat removed from B4
+
+B4 was demonstrable but carried one caveat: the trust check's last step probed
+a private repository's issues with a credential that had no access to it, got
+200, and warned. That is now a 404, and the step asserts instead of warning.
+
+**Where the fix went.** The visibility check lived inline in
+`GET /repos/{owner}/{repo}` and nowhere else, which made it wrong in both
+directions at once. Every other endpoint that resolves a repository by name
+served private content to any authenticated token, and the one endpoint that
+did check tested ownership, so a collaborator added to a private repository was
+refused by the only locked door.
+
+`app/services/repository_access.py` now holds the single answer: public to
+everyone, private to the owner, a site admin, a collaborator, or a member of
+the owning organisation. It is enforced in `deps.get_current_user`, not at 165
+route handlers. That placement is not new here; the job-token permission check
+sits in the same function and its comment already argues for it.
+
+**Three things were not obvious going in.**
+
+The unauthenticated branch is the one that matters most. `get_current_user`
+had five early returns, and the first of them is `if not auth_header: return
+None`. A check appended after a single return would have refused authenticated
+outsiders while serving anonymous ones, which is worse than not checking.
+Authentication is now a private function and the check wraps every exit.
+
+A refusal has to be 404. Returning 403 confirms that a private repository
+exists to someone who cannot see it, which is precisely the fact being hidden.
+
+The check costs a repository query on every repository request, and a test
+pinning the readme endpoint to exactly one such query caught that within a
+minute. The resolved row is cached on the session and reused by both resolvers,
+so the count is unchanged rather than argued about.
+
+**Live result, run 1176, all six steps green.** The last step now walks the
+endpoints that used to leak, `issues`, `contents`, `commits`, `branches` and
+`labels`, and requires 404 from each. Repository metadata was historically the
+only endpoint that checked anything, so those five are where a regression would
+appear first, and asserting them keeps the boundary honest rather than taking
+the front door's word for it.
+
+**Tests.** 466 pass, 15 of them new: seven endpoints refused to an outsider,
+the unauthenticated case, the 404-not-403 shape, a refused write, the owner
+still served, a collaborator now served, public repositories unaffected,
+anonymous reads of public repositories unaffected, and the path matcher
+governing only repository paths.
+
+**B4 now has no caveat left in it.** What it still cannot claim is unchanged
+and is about identity, not isolation: the job token authenticates as the run's
+actor rather than a separate workflow identity.
+
+### 2026-09-21 the host-setup decision is smaller than I said
+
+Asked to explain the host-setup blocker plainly, I checked the stack instead of
+restating my earlier framing, and the framing was wrong in a way that matters.
+
+**What the steps are for.** After installing the CLI, the agent action spends
+four steps turning the machine into one that can launch sandboxed containers:
+install Podman, configure it rootless, write an OpenShell gateway config, and
+install the OpenShell CLI. Those exist because a GitHub-hosted runner is a
+fresh virtual machine with none of it, and the agent must run inside a sandbox
+rather than on the runner.
+
+**What this stack already has.** An OpenShell gateway runs as a cluster
+service, `openshell-0` in `openshell-system`, and has been up for 31 days. The
+long-lived Actions runner already carries `OPENSHELL_GATEWAY_ENDPOINT` and
+`OPENSHELL_GATEWAY_NAME` in its environment, and the runner image already ships
+the OpenShell CLI. The existing direct-token smoke runs
+`fullsend run triage` against exactly that gateway.
+
+**And Fullsend supports it.** `internal/sandbox/gateway_endpoint.go` documents
+the case explicitly: an explicit `OPENSHELL_GATEWAY_ENDPOINT` connects directly
+to an already-running gateway, and an explicit setting is honoured over any
+override. Pointing at a shared gateway is a supported mode, not a workaround.
+
+**So the three options are not equal.** What I called "treat host setup as
+satisfied by the image" is really "this environment provides the sandbox as a
+service, which Fullsend supports, and the four steps build a local copy of
+something that already exists". Making the pod capable of rootless Podman and
+systemd would build a second, worse copy of a working service. Moving the
+boundary would give up a capability the stack already has.
+
+The remaining question is narrow and is still the reviewer's: whether a
+conformance run may treat those four steps as satisfied by the environment, and
+how that is recorded so the run does not appear to certify host setup it never
+executed. Everything else about the decision was me over-stating the cost.

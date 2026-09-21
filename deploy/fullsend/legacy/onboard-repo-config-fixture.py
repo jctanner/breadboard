@@ -1,16 +1,66 @@
 #!/usr/bin/env python3
-"""Enroll one existing GitHub-emulator repository in the Fullsend demo."""
+"""Enroll one existing GitHub-emulator repository in the config-repo fixture
+(formerly "M11"'s `onboard_repo.py`).
+
+This is a named legacy compatibility fixture, not the conformance onboarding
+path. It hand-rolls fake per-role GitHub App installations and grants bot
+collaborators, which is the deprecated per-organization installation shape
+(Fullsend ADR 0044). Breakpoint B7 in
+`.ledger/plans/fullsend-integration-conformance-plan.md` requires the real
+dashboard onboarding action to invoke the actual `fullsend` CLI
+(`fullsend github setup OWNER/REPO`) against the emulator, not this script.
+Do not reuse this file for work package 7.
+
+The shim workflow content below is inlined from the former
+`m11_seed.py` (deleted by work package 8) since this is now the only
+consumer.
+"""
 
 from __future__ import annotations
 
 import argparse
 import base64
 import json
+import sys
+from pathlib import Path
 from urllib.parse import quote
 
-from m1_seed import api_request
-from m11_seed import SHIM_WORKFLOW, TARGET_WORKFLOW
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "seed"))
+from emulator import api_request  # noqa: E402
 
+
+TARGET_WORKFLOW = ".github/workflows/fullsend.yaml"
+SHIM_WORKFLOW = r'''---
+# This file is managed by Fullsend. Do not edit it directly.
+# Development mirror of the production workflow-call shim.
+name: fullsend
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+  issue_comment:
+    types: [created]
+  pull_request_target:
+    types: [opened, synchronize, ready_for_review, closed, labeled, unlabeled]
+  pull_request_review:
+    types: [submitted]
+
+permissions: {}
+
+jobs:
+  dispatch:
+    concurrency:
+      group: >-
+        fullsend-dispatch-${{ github.event.issue.number || github.event.pull_request.number }}-${{
+          github.event.action == 'labeled' && format('label-{0}', github.event.label.name) || 'dispatch'
+        }}
+      cancel-in-progress: false
+    if: >-
+      (github.event_name != 'pull_request_target' && github.event_name != 'pull_request_review') ||
+      github.event.pull_request.state == 'open' || github.event.action == 'closed'
+    uses: fullsend-ai/fullsend/.github/workflows/reusable-dispatch.yml@main
+    secrets: inherit
+'''
 
 ROLE_APPS = {
     "triage": (

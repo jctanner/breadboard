@@ -49,6 +49,13 @@ The development deployment uses a local OIDC broker backed by
 `fullsend-mint-dev-credentials` Secret. This preserves the workflow contract
 without requiring an external GitHub or cloud control plane.
 
+The GitHub emulator also exposes an ephemeral RS256 OIDC issuer and JWKS at
+`https://github.local`, and a GitHub App fixture whose private key is kept
+only in the emulator's local database. Real Actions OIDC claim validation
+against that issuer, rather than the opaque development token above, is the
+conformance target described in
+[`.ledger/plans/fullsend-integration-conformance-plan.md`](../.ledger/plans/fullsend-integration-conformance-plan.md).
+
 See [fullsend-event-flow.mmd](architecture/diagrams/fullsend-event-flow.mmd)
 for the sequence diagram.
 
@@ -70,7 +77,12 @@ See [fullsend-agent-sandbox.mmd](architecture/diagrams/fullsend-agent-sandbox.mm
 for the sandbox boundary and data paths.
 
 The source deployment definitions are in `deploy/k8s/23*.yaml`,
-`deploy/k8s/24-fullsend-mint-dev.yaml`, `deploy/k8s/25-fullsend-m4-smoke.yaml`,
-and `deploy/k8s/26-fullsend-dashboard.yaml`. The build and bootstrap scripts
-are under `deploy/scripts/05h-*`, `deploy/scripts/05i-*`,
-`deploy/scripts/05j-*`, `deploy/scripts/17-*`, and `deploy/scripts/18-*`.
+`deploy/k8s/24-fullsend-mint-dev.yaml`,
+`deploy/k8s/25-fullsend-direct-token-smoke.yaml`, and
+`deploy/k8s/26-fullsend-dashboard.yaml`. The build and bootstrap scripts are
+under `deploy/scripts/05h-*`, `deploy/scripts/05i-*`, `deploy/scripts/05j-*`,
+`deploy/scripts/17-*`, `deploy/scripts/18-*`, and `deploy/scripts/22-seed-fullsend.sh`.
+Fullsend's own patches, policies, and seed scripts live under
+`deploy/fullsend/`; named legacy compatibility smokes (`19-run-fullsend-direct-token-smoke.sh`,
+`20-run-fullsend-vertex-smoke.sh`, `21-run-fullsend-result-smoke.sh`) are
+separate from this deployed path and are not run by `deploy-all.sh`.

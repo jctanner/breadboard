@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
-"""Mirror the small Fullsend action/workflow fixture used by M8.
+"""Mirror the small Fullsend action/workflow fixture used by the default
+seeded-fixture path (formerly the "M8" mirror).
 
-This deliberately mirrors only files needed by emulator tests.  It does not
+This deliberately mirrors only files needed by emulator tests. It does not
 pretend to mirror the whole upstream repository or fetch from the network.
+This fixture is a named compatibility test, not the conformance path. See
+`.ledger/plans/fullsend-integration-conformance-plan.md` decision 1.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+import tempfile
 import time
 
-from m1_seed import ORG, REPO, TOKEN, run_git
+from emulator import ORG, REPO, TOKEN, run_git
 
 
-ROOT = Path(__file__).resolve().parents[4]
-SOURCE = ROOT / "checkouts.tmp" / "fullsend"
+# deploy/fullsend/seed/mirror-fullsend-workflows.py -> parents[3] is the project root.
+ROOT = Path(__file__).resolve().parents[3]
+SOURCE = ROOT / "checkouts" / "fullsend-ai" / "fullsend"
 FILES = (
     ".github/actions/mint-token/action.yml",
     ".github/actions/prepare-workspace/action.yml",
@@ -57,11 +62,11 @@ jobs:
 
 def main() -> None:
     remote = f"https://x-access-token:{TOKEN}@github.local/{ORG}/{REPO}.git"
-    with __import__("tempfile").TemporaryDirectory(prefix="fullsend-m8-mirror-") as temp:
+    with tempfile.TemporaryDirectory(prefix="fullsend-seed-mirror-") as temp:
         directory = Path(temp)
         run_git(directory, "init", "--initial-branch=main")
-        run_git(directory, "config", "user.name", "Breadboard M8 Mirror")
-        run_git(directory, "config", "user.email", "breadboard-m8@localhost")
+        run_git(directory, "config", "user.name", "Breadboard Fullsend Seed")
+        run_git(directory, "config", "user.email", "breadboard-fullsend-seed@localhost")
         run_git(directory, "remote", "add", "origin", remote)
         fetched = None
         for _ in range(10):
@@ -87,7 +92,7 @@ def main() -> None:
         mirrored.append(WORKFLOW)
         run_git(directory, "add", *mirrored)
         if run_git(directory, "diff", "--cached", "--quiet", check=False).returncode != 0:
-            run_git(directory, "commit", "-m", "Mirror M8 Fullsend action and event fixtures")
+            run_git(directory, "commit", "-m", "Mirror Fullsend action and event fixtures")
             pushed = None
             for _ in range(10):
                 pushed = run_git(directory, "push", "-u", "origin", "main", check=False)

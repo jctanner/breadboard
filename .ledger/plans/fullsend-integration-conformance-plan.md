@@ -9,10 +9,9 @@ verifies, the mint is served over internal TLS, and G17 is fixed. A real event
 now mints a triage credential, checks out the target repository with it, sets up
 credentials and the agent environment, and reaches the agent step itself. The
 trace reaches the agent step, resolves releases against the emulator, and
-installs the Fullsend CLI from a vendored binary, and reaches host setup,
-where it stops on `sudo: command not found`. Install is no longer in the way.
-The remaining wall is the agent action's host setup, which wants sudo, systemd
-and rootless Podman in a pod that has none of them. See status notes. See status notes.
+installs the Fullsend CLI from a vendored binary, and stands down the agent
+action's local sandbox host setup in favour of this cluster's OpenShell
+gateway, which is the decision taken on 2026-09-21. See status notes. See status notes.
 
 ## Goal
 
@@ -879,6 +878,23 @@ called workflow could not be resolved. Nothing past that boundary ran.
     pinning the readme endpoint to one repository query caught immediately. The
     resolved row is cached on the session and reused by both repository
     resolvers, so the count is unchanged.
+
+- [x] **[W4] G24. A composite action's condition error failed the job with an
+  empty log.** `_composite_step` returned its message as the step output, but
+  `execute_job` discards that when it is streaming through `log_callback`, so
+  a step whose `if:` could not be evaluated inside a composite action produced
+  a red run and no reason. Found on the first run after the host-setup
+  decision, where the log simply stopped. Fixed by logging through the
+  callback, which is the same class of quiet failure as C1 and G16.
+
+- [x] **[W4] G25. `format()` was not implemented.** The agent action gates its
+  target-repository Go setup on
+  `hashFiles(format('{0}/go.mod', inputs.target-repo))`, and both expression
+  parsers refused the call. Implemented on the runner and on the server, along
+  with `startsWith`, `endsWith` and `contains` on the runner, which the server
+  already had. It is deliberately not `str.format`: Python would honour
+  attribute and index access inside a placeholder, which Actions does not, and
+  offering that to workflow text by accident is not a small mistake.
 
 *Group F - Fullsend-side, not emulator gaps. Decision 5 does not cover these.*
 

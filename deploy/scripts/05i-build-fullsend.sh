@@ -22,6 +22,7 @@ FULLSEND_PATCHES=(
   "${PROJECT_ROOT}/deploy/fullsend/patches/0007-parse-enterprise-raw-content-urls.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0008-scope-the-minted-token-on-enterprise-forges.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0009-load-the-harness-environment-for-behaviour-ops.patch"
+  "${PROJECT_ROOT}/deploy/fullsend/patches/0010-do-not-cache-a-profile-import-that-never-replaced-anything.patch"
 )
 RUNNER_CONTEXT="${PROJECT_ROOT}/deploy/fullsend-runner-dev"
 SANDBOX_CONTEXT="${PROJECT_ROOT}/deploy/fullsend-sandbox-dev"

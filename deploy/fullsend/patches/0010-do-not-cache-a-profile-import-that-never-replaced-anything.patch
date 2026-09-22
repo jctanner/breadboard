@@ -1,0 +1,241 @@
+Subject: fix(sandbox): do not report success for a profile import that replaced nothing
+
+A provider profile can silently stop tracking its source file, permanently,
+and the only symptom is an agent denied access the profile grants.
+
+ImportProfile deletes the existing profile and reimports it. The delete result
+is discarded, and an import refused with "already exists" is treated as a
+parallel-import race: success, and the new file's hash is written to the local
+cache. That is right only when the delete succeeded.
+
+A gateway refuses to delete a profile a live sandbox still references. There
+the delete fails, the import is refused because the old profile is still
+there, and the gateway keeps serving it — while ImportProfile reports success
+and caches the *new* file's hash. Every later run then takes the fast path,
+skips the import entirely, and reports success against a profile that was
+never replaced. Nothing mentions the profile again.
+
+The consequence is not cosmetic: a profile is a sandbox's network and binary
+policy. Observed on a long-lived shared gateway where an unrelated sandbox
+from weeks earlier held a reference. The installed profile still allowed
+binaries under /usr/local/lib/node_modules while the agent runs from
+/usr/lib/node_modules, so every model call was denied, and the source file on
+disk said otherwise.
+
+Keep the delete result and use it to tell the two cases apart. A refused
+import after a successful delete is still a race and still succeeds. A refused
+import after a failed delete returns an error naming the delete failure, and
+leaves the cache alone so the next run retries rather than skipping. The error
+names `openshell provider profile update`, which replaces a profile in place
+and is the way out when delete is refused.
+
+One existing test's fake openshell failed *every* invocation with "already
+exists", including the delete, which conflated the two cases this change
+separates. Its fake now fails only the import, which is the race it describes.
+
+Breadboard note: patches Go source, so it belongs to the build patch list in
+deploy/scripts/05i-build-fullsend.sh rather than the mirror list. Written to
+be sent upstream as-is. Add a DCO sign-off before submitting it as a
+human-authored change.
+
+diff --git a/internal/sandbox/sandbox.go b/internal/sandbox/sandbox.go
+index 7cf9e55..8ca1024 100644
+--- a/internal/sandbox/sandbox.go
++++ b/internal/sandbox/sandbox.go
+@@ -206,8 +206,12 @@ func inGitDir(path, root string) bool {
+ // the import if the winner already wrote the cache.
+ //
+ // When content has changed (hash mismatch or no cache), the existing profile
+-// is deleted and reimported. If the reimport fails because a parallel process
+-// already imported it, the error is treated as success.
++// is deleted and reimported. A reimport refused with "already exists" is
++// treated as success only when the delete succeeded, which means a parallel
++// process imported the same file. When the delete failed the gateway still
++// holds its previous copy, so the import is reported as a failure and the
++// cache is left alone — caching there would make every later run skip the
++// import and report success against a profile that was never replaced.
+ func ImportProfile(ctx context.Context, id, profilePath string) error {
+ 	currentHash, err := hashProfileFile(profilePath)
+ 	if err != nil {
+@@ -250,9 +254,11 @@ func ImportProfile(ctx context.Context, id, profilePath string) error {
+ 		}
+ 	}
+ 
+-	// Best-effort delete so content changes propagate.
++	// Delete so content changes propagate. The outcome decides how to read
++	// an "already exists" response from the import below, so it is kept
++	// rather than discarded.
+ 	delCtx, delCancel := context.WithTimeout(ctx, providerTimeout)
+-	exec.CommandContext(delCtx, "openshell", "provider", "profile", "delete", id).CombinedOutput() //nolint:errcheck
++	delOut, delErr := exec.CommandContext(delCtx, "openshell", "provider", "profile", "delete", id).CombinedOutput()
+ 	delCancel()
+ 
+ 	importCtx, importCancel := context.WithTimeout(ctx, providerTimeout)
+@@ -262,7 +268,34 @@ func ImportProfile(ctx context.Context, id, profilePath string) error {
+ 	if err != nil {
+ 		outStr := strings.ToLower(string(out))
+ 		if strings.Contains(outStr, "already exists") {
+-			// A parallel process imported the profile — safe to continue.
++			if delErr != nil {
++				// The profile was not replaced and the gateway still holds
++				// whatever it held before, which may be older than this file.
++				//
++				// Caching the new hash here is what made this permanent: every
++				// later run takes the fast path, skips the import, and reports
++				// success while the gateway keeps serving a stale profile. A
++				// profile is a sandbox's network and binary policy, so the
++				// visible symptom is an agent denied access it was granted in
++				// the file — with nothing anywhere mentioning the profile.
++				//
++				// The gateway refuses to delete a profile that a live sandbox
++				// still references, so this is reachable on any shared gateway
++				// rather than being a rare race.
++				return fmt.Errorf(
++					"profile %q could not be replaced: deleting it failed and importing it was refused because it already exists, "+
++						"so the gateway is still serving its previous copy.\n"+
++						"delete error: %v\ndelete output: %s\nimport output: %s\n"+
++						"Update it in place instead: openshell provider profile export %s > /tmp/%s.yaml, "+
++						"copy the resource_version from that export into %s, then "+
++						"openshell provider profile update --file %s %s",
++					id, delErr, bytes.TrimSpace(delOut), bytes.TrimSpace(out),
++					id, id, filepath.Base(profilePath), profilePath, id,
++				)
++			}
++			// The delete succeeded and the import lost a race with a parallel
++			// process importing the same file, so the gateway holds this
++			// content either way.
+ 			os.WriteFile(cachePath, []byte(currentHash), 0o600) //nolint:errcheck
+ 			return nil
+ 		}
+diff --git a/internal/sandbox/sandbox_test.go b/internal/sandbox/sandbox_test.go
+index 694e652..5fd2f74 100644
+--- a/internal/sandbox/sandbox_test.go
++++ b/internal/sandbox/sandbox_test.go
+@@ -1476,9 +1476,17 @@ func TestImportProfile_AlreadyExists(t *testing.T) {
+ 	profilePath := filepath.Join(dir, "my-profile.yaml")
+ 	require.NoError(t, os.WriteFile(profilePath, []byte("id: my-profile"), 0o644))
+ 
++	// The delete succeeds and only the import is refused. That is the
++	// scenario this test is about — a parallel process importing the same
++	// file first. A fake that also failed the delete would instead describe a
++	// gateway that would not let the profile be replaced at all, which is a
++	// different case and is not success.
+ 	script := `#!/bin/sh
+-echo "profile already exists" >&2
+-exit 1
++if [ "$3" = "import" ]; then
++  echo "profile already exists" >&2
++  exit 1
++fi
++exit 0
+ `
+ 	fakePath := filepath.Join(dir, "openshell")
+ 	require.NoError(t, os.WriteFile(fakePath, []byte(script), 0o755))
+@@ -1576,9 +1584,17 @@ func TestImportProfile_WritesCacheOnAlreadyExists(t *testing.T) {
+ 	profilePath := filepath.Join(dir, "test.yaml")
+ 	require.NoError(t, os.WriteFile(profilePath, []byte("id: exists\nname: test"), 0o644))
+ 
++	// The delete succeeds and only the import is refused. That is the
++	// scenario this test is about — a parallel process importing the same
++	// file first. A fake that also failed the delete would instead describe a
++	// gateway that would not let the profile be replaced at all, which is a
++	// different case and is not success.
+ 	script := `#!/bin/sh
+-echo "profile already exists" >&2
+-exit 1
++if [ "$3" = "import" ]; then
++  echo "profile already exists" >&2
++  exit 1
++fi
++exit 0
+ `
+ 	fakePath := filepath.Join(dir, "openshell")
+ 	require.NoError(t, os.WriteFile(fakePath, []byte(script), 0o755))
+@@ -2130,3 +2146,87 @@ func TestResolvedBasename(t *testing.T) {
+ 		assert.Equal(t, "gone.txt", resolvedBasename("/no/such/gone.txt"))
+ 	})
+ }
++
++// scriptableOpenshell writes a fake "openshell" whose provider-profile
++// delete and import outcomes are controlled by environment variables, so a
++// test can reproduce a gateway that refuses to delete a profile still in use.
++func scriptableOpenshell(t *testing.T, binDir, logPath string) {
++	t.Helper()
++	script := "#!/bin/sh\n" +
++		"echo \"$@\" >> " + shellQuote(logPath) + "\n" +
++		"case \"$3\" in\n" +
++		"  delete)\n" +
++		"    if [ -n \"${FAKE_DELETE_FAILS:-}\" ]; then\n" +
++		"      echo 'rpc error: code = FailedPrecondition desc = profile is referenced by a sandbox' >&2\n" +
++		"      exit 1\n" +
++		"    fi\n" +
++		"    exit 0 ;;\n" +
++		"  import)\n" +
++		"    if [ -n \"${FAKE_IMPORT_EXISTS:-}\" ]; then\n" +
++		"      echo \"custom provider profile 'probe' already exists\" >&2\n" +
++		"      exit 1\n" +
++		"    fi\n" +
++		"    exit 0 ;;\n" +
++		"esac\n" +
++		"exit 0\n"
++	require.NoError(t, os.WriteFile(filepath.Join(binDir, "openshell"), []byte(script), 0o755))
++}
++
++func importProfileFixture(t *testing.T) (profilePath, logPath string) {
++	t.Helper()
++	// os.TempDir() honours TMPDIR, which is where the hash cache and lock
++	// live; isolate them so these tests cannot see each other's state.
++	t.Setenv("TMPDIR", t.TempDir())
++	dir := t.TempDir()
++	profilePath = filepath.Join(dir, "probe.yaml")
++	require.NoError(t, os.WriteFile(profilePath, []byte("id: probe\nbinaries:\n  - '**/claude'\n"), 0o644))
++	binDir := t.TempDir()
++	logPath = filepath.Join(binDir, "openshell.log")
++	scriptableOpenshell(t, binDir, logPath)
++	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
++	return profilePath, logPath
++}
++
++// A gateway refuses to delete a profile a live sandbox still references. The
++// import is then refused as already existing, and the gateway keeps serving
++// its previous copy. Treating that as success and caching the new hash makes
++// it permanent: every later run takes the fast path and reports success while
++// the profile is never replaced.
++func TestImportProfile_DeleteRefusedAndAlreadyExistsIsNotSuccess(t *testing.T) {
++	profilePath, _ := importProfileFixture(t)
++	t.Setenv("FAKE_DELETE_FAILS", "1")
++	t.Setenv("FAKE_IMPORT_EXISTS", "1")
++
++	err := ImportProfile(context.Background(), "probe", profilePath)
++	require.Error(t, err, "a profile that was never replaced must not report success")
++	assert.Contains(t, err.Error(), "could not be replaced")
++	assert.Contains(t, err.Error(), "FailedPrecondition", "the delete failure is the reason and must be reported")
++	assert.Contains(t, err.Error(), "provider profile update", "the error should name the supported way out")
++
++	_, statErr := os.Stat(profileFileCachePath("probe"))
++	assert.True(t, os.IsNotExist(statErr),
++		"the hash cache must not be written, or every later run skips the import and reports success")
++}
++
++// The same "already exists" response is benign when the delete succeeded: a
++// parallel process imported the same file, so the gateway holds this content.
++func TestImportProfile_AlreadyExistsAfterSuccessfulDeleteIsARace(t *testing.T) {
++	profilePath, _ := importProfileFixture(t)
++	t.Setenv("FAKE_IMPORT_EXISTS", "1")
++
++	require.NoError(t, ImportProfile(context.Background(), "probe", profilePath))
++	_, statErr := os.Stat(profileFileCachePath("probe"))
++	assert.NoError(t, statErr, "a genuine parallel import should still be cached")
++}
++
++func TestImportProfile_CleanImportCachesAndSkipsOnSecondCall(t *testing.T) {
++	profilePath, logPath := importProfileFixture(t)
++
++	require.NoError(t, ImportProfile(context.Background(), "probe", profilePath))
++	first, err := os.ReadFile(logPath)
++	require.NoError(t, err)
++	require.NoError(t, ImportProfile(context.Background(), "probe", profilePath))
++	second, err := os.ReadFile(logPath)
++	require.NoError(t, err)
++	assert.Equal(t, string(first), string(second), "an unchanged profile must not be reimported")
++}

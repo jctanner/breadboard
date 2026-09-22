@@ -1305,7 +1305,7 @@ called workflow could not be resolved. Nothing past that boundary ran.
   first-error headline or the comment the post-script leaves on the issue.
   Emulating the upload is what makes all of it durable.
 
-- [ ] **[W4] G42. The sandbox policy denies Claude Code's Vertex token refresh,
+- [x] **[W4] G42. The sandbox policy denies Claude Code's Vertex token refresh,
   blocking the first real-model run.** With `runtime: claude, model: haiku` the
   agent reaches the sandbox, starts Claude Code, and cannot get a Google access
   token: `API Error: Could not refresh access token: policy_denied`, twice,
@@ -1335,6 +1335,33 @@ called workflow could not be resolved. Nothing past that boundary ran.
   [`.ledger/bugs/vertex-token-refresh-policy-denied.md`](../bugs/vertex-token-refresh-policy-denied.md),
   including how to download the sandbox logs from the artifact store rather
   than reproduce them, and a probe that failed on DNS so it is not repeated.
+
+  **Root-caused by another agent, and my central claim was wrong.** The
+  gateway was not serving the profile in the agents repository. Its installed
+  copy was `resource_version: 1`, named `Fullsend Vertex AI`, allowing
+  binaries under `/usr/local/lib/node_modules/` while the agent runs from
+  `/usr/lib/node_modules/`, with no `**/claude.exe` rule at all. I read the
+  source file and asserted it about the running system. An offline glob
+  control settles the rest: `**/claude.exe` does match the real path, so there
+  was no engine defect - the rule simply was not installed. `policy:-` also
+  does not mean "no policy attached", which was my other stated lead.
+
+  **Why it was stale, and why it would have stayed stale.**
+  `ImportProfile` discards the delete result, treats an import refused with
+  "already exists" as a parallel-import race, and caches the *new* file's hash.
+  A gateway refuses to delete a profile a live sandbox still references - here
+  a 26-day-old `agent-review-*` sandbox - so the delete failed, the import was
+  refused, the gateway kept its old copy, and every run since reported success
+  while skipping the import entirely.
+
+  Reconciled on the gateway with `provider profile update`, which replaces in
+  place and so sidesteps the refused delete; backed up first and carried the
+  `resource_version` across as a compare-and-swap. No sandboxes were deleted
+  and the allowlist was not widened. Verified: `resource_version: 2`,
+  `Fullsend Inference`, the four glob rules present.
+
+  Fixed upstream-bound in
+  `0010-do-not-cache-a-profile-import-that-never-replaced-anything.patch`.
 
 *Group F - Fullsend-side, not emulator gaps. Decision 5 does not cover these.*
 
@@ -3050,3 +3077,66 @@ GH_ENTERPRISE_TOKEN=<admin token> ->
 
 and exit 0 with all four reported unset on a clean environment. So the check
 distinguishes the two states rather than passing regardless.
+
+### 2026-09-22 B5 is met, and the bug behind it was a stale profile
+
+Run 1287, issue 94, `runtime: claude`, `model: haiku`:
+
+```text
+  ✓ Agent exited with code 0 (89.6s)
+  Runtime: claude · Model: haiku → claude-haiku-4-5@20251001 · Effort: high · Cost: $0.16
+```
+
+The agent labelled the issue `duplicate` and wrote that it duplicates #92,
+citing the earlier filing time and naming #93 as the same problem. That is
+correct and I did not plant it: I had created 92, 93 and 94 with near-identical
+text while debugging the policy failure, without noticing. The first real-model
+run caught something the person running it had missed, which is the only
+honest way to answer B5's question about whether the output is useful.
+
+The evidence bundle is 628 KB across 12 files - both iterations' transcripts,
+`output.jsonl`, the validation feedback that drove the retry, the security
+findings, both OpenShell logs, `metrics.json` - all retrievable by URL from a
+run whose workspace was deleted minutes earlier.
+
+**Caveat on the verdict.** Because `duplicate` was the right action, the
+`insufficient` branch with `clarity_scores` was never exercised against a real
+model. A genuinely novel issue would test it.
+
+**The blocker was not what I said it was.** I reported that the profile listed
+`**/claude.exe` and the glob therefore had to be failing. I had read the
+profile in the agents repository, not the one the gateway was serving. The
+installed copy was `resource_version: 1`, allowing binaries under
+`/usr/local/lib/node_modules/` while the agent runs from `/usr/lib/node_modules/`.
+An offline glob control confirms `**/claude.exe` matches the real path. There
+was no glob defect; the rule was not installed. My other stated lead - that
+`policy:-` meant no policy was attached - was also wrong: it means no complete
+endpoint-plus-binary match.
+
+That is the fourth time in this chain I have asserted something about the
+running system from a file on disk. It is also the reason the bug document now
+opens with how to export the *installed* profile.
+
+**Why it was stale.** `ImportProfile` discards the delete result and treats an
+import refused with "already exists" as a benign race, caching the new file's
+hash. A gateway refuses to delete a profile a live sandbox still references -
+here an `agent-review-*` sandbox from 26 days earlier. So the delete failed,
+the import was refused, the gateway kept its old copy, and every run since
+skipped the import on the cache and reported success. A profile is a sandbox's
+network and binary policy, so the visible symptom was an agent denied access
+its own policy file granted.
+
+Reconciled with `provider profile update`, which replaces in place and so does
+not need the refused delete. Backed up first; carried the `resource_version`
+across as a compare-and-swap against the copy just inspected. No sandboxes
+deleted, no allowlist widened - both explicitly warned against in the handover.
+
+`0010-do-not-cache-a-profile-import-that-never-replaced-anything.patch` keeps
+the delete result and uses it to separate the two cases: a refused import
+after a *successful* delete is still a race and still succeeds; after a
+*failed* delete it is an error naming the delete failure, and the cache is left
+alone so the next run retries instead of skipping. One existing test's fake
+failed every invocation including the delete, conflating exactly the two cases
+this separates; its fake now fails only the import, which is the race it
+describes. `internal/sandbox`, `internal/cli` and `internal/runtime` all pass,
+and all seven patches apply in sequence and build.

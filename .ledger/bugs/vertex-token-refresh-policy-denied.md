@@ -2,6 +2,89 @@
 
 ## Status: Open — blocks B5 (the first real-model run)
 
+## Investigation: stale gateway profile (2026-09-22)
+
+The installed `fullsend-vertex-ai` profile is **not** the profile in the agents
+repository. Read-only export from the running gateway returned resource version
+1, display name `Fullsend Vertex AI`, and these binary rules:
+
+```yaml
+binaries:
+  - /usr/bin/node
+  - /usr/local/bin/node
+  - /usr/local/lib/node_modules/@anthropic-ai/claude-code/**
+```
+
+The actual Claude executable is under `/usr/lib/node_modules/`, not
+`/usr/local/lib/node_modules/`. Neither that executable nor its logged ancestors
+matches the installed rules. The expected `**/claude.exe` rule is absent.
+The source profile instead says `Fullsend Inference` and contains the four
+glob rules described below. Therefore the original premise that those rules
+were active in the gateway was not established by inspecting the source file.
+
+### Why the old profile survives import
+
+`internal/sandbox/sandbox.go:211`, `ImportProfile`, in Fullsend:
+
+1. Checks a local hash cache keyed only by profile ID.
+2. Attempts to delete the gateway profile, discarding its error/output.
+3. Imports the source file.
+4. Treats any import output containing `already exists` as success and writes
+   the **new source file's hash** to the cache without comparing gateway content.
+
+`ImportProfileVerified` clears the cache first but then only checks profile
+existence. It does not check that the content matches.
+
+OpenShell v0.0.110 rejects deletion when a sandbox uses the profile. A read-only
+query confirmed the retained `agent-review-ca597` sandbox still attaches
+`vertex-ai`, whose type is `fullsend-vertex-ai`. Gateway logs at
+2026-09-22 12:21:28 and 12:40:47 UTC show `DeleteProviderProfile` returning gRPC
+status 9 (`FAILED_PRECONDITION`), followed immediately by
+`ImportProviderProfiles`. The source deletion guard and existing reference
+explain why delete-and-reimport cannot replace this shared profile. The log
+lines do not expose the profile ID or import diagnostics individually; the
+installed profile export and retained provider reference provide that context.
+
+### Policy selection and glob checks
+
+The retained run-1283 sandbox artifact confirms the original denials. Rego's
+`deny_reason` generates that binary-mismatch text only when an endpoint policy
+exists but its binary check fails. `policy:-` means no complete endpoint-plus-
+binary match, not that the provider was unattached. The separate `claude_code`
+policy need not match a Google endpoint.
+
+An offline gobwas/glob v0.2.3 control with `/` as delimiter produced:
+
+```text
+**/claude.exe                                       -> true
+/usr/local/lib/node_modules/@anthropic-ai/claude-code/** -> false
+```
+
+Both were evaluated against the exact `/usr/lib/.../claude.exe` path. This is
+a standalone glob control, not a test of the deployed Regorus engine. No
+engine-level glob defect is needed to explain the denial: the desired glob
+never appears in the installed profile.
+
+### Fix direction and verification
+
+Reconcile the gateway profile with the intended source using a supported
+profile update, checking effects on existing consumers. Fix Fullsend's import
+logic to propagate deletion failures and compare existing profile content
+before accepting an `already exists` response or caching success. Existence
+alone is insufficient on a shared gateway. Do not delete the unrelated review
+sandboxes merely to make import succeed, or broaden the binary allowlist as
+a substitute for fixing synchronization.
+
+After reconciliation, export the profile to verify its binary rules, then run
+the real-model scenario and verify allowed OAuth/inference requests. Retain the
+dummy regression check separately. No live profile, provider, sandbox, or
+deployment was changed during this investigation, and no model call was made.
+The old run's logs were read from the retained artifact, not recreated.
+
+The rest of this report is the original evidence and hypotheses; its claim
+that the desired binary glob was active is superseded by the installed-profile
+export above.
+
 ## Summary
 
 With `runtime: claude` and `model: haiku`, the agent reaches the sandbox, starts

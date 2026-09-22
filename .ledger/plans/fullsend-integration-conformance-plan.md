@@ -1152,6 +1152,12 @@ called workflow could not be resolved. Nothing past that boundary ran.
   supervisor running 0.0.110 against a CLI pinned to 0.0.116, and a first step
   that keeps the OpenShell logs the run already collects and then throws away.
 
+  **Closed 2026-09-22.** The supervisor reads its upstream TLS roots once at
+  startup, so the internal CA had to be in the sandbox image rather than
+  mounted afterwards. `deploy/fullsend-sandbox-local/` layers it onto
+  Fullsend's pinned digest, and the sandbox pre-flight has reached the forge on
+  every run since.
+
 - [x] **[W4] G39. An ambient admin token silently outranked every minted
   credential.** Issue 86 came back carrying two
   identities: the status comments from `fullsend-triage[bot]`, the triage
@@ -1212,6 +1218,12 @@ called workflow could not be resolved. Nothing past that boundary ran.
   `setup-agent-env.sh` were 404s, and `runtime_env` is applied *after* the
   block that sets `GH_HOST`, so a `GITHUB_ENV` write there would win. That is
   the untested lead.
+
+  **Closed 2026-09-22 by patch 0009, and the lead above was not the cause.**
+  Behaviour operations run through `sandbox.Exec`, which starts a fresh shell
+  per call, and none of them sourced the harness environment file that the
+  real runtimes source on launch. The value was delivered correctly all along
+  and the assertion could not see it. All ten assertions pass from run 1271 on.
 
   **Root-caused by another agent, and none of my three candidates was it.**
   The harness environment is a *file* in the sandbox, not process state. Real

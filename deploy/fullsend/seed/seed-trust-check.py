@@ -123,6 +123,65 @@ jobs:
             exit 1
           }
 
+      - name: No credential this job never asked for is present
+        shell: bash
+        run: |
+          set -euo pipefail
+          # This is the step that would have caught G39.
+          #
+          # Everything above authenticates with an explicit Authorization
+          # header, which is the one way of calling the forge that cannot be
+          # influenced by the environment. Agents do not work that way: they
+          # run gh, and gh picks its credential from an environment variable.
+          # If the runner puts a broader credential in that variable, every
+          # call an agent makes is made with the broader credential and
+          # nothing in the log says so - the mint still succeeds, the scoped
+          # token is still issued, and it is simply never used.
+          #
+          # GitHub puts no credential in a step's environment unless the
+          # workflow asks for one. This job asks for none, so all four must be
+          # empty.
+          LEAKED=""
+          for VAR in GH_TOKEN GITHUB_TOKEN GH_ENTERPRISE_TOKEN GITHUB_ENTERPRISE_TOKEN; do
+            VALUE="$(printenv -- "$VAR" || true)"
+            if [ -n "$VALUE" ]; then
+              LEAKED="${LEAKED} ${VAR}"
+              echo "  ${VAR} is set, and this job never asked for it"
+            else
+              echo "  ${VAR} is unset, as it should be"
+            fi
+          done
+          test -z "$LEAKED" || {
+            echo "::error::the runner put a credential in this step that the workflow never requested:${LEAKED}"
+            exit 1
+          }
+
+      - name: gh sends the minted credential, not something broader
+        shell: bash
+        run: |
+          set -euo pipefail
+          CREDENTIAL=$(cat "$RUNNER_TEMP/credential")
+          echo "::add-mask::$CREDENTIAL"
+          # gh selects its credential by host: GH_TOKEN on github.com,
+          # GH_ENTERPRISE_TOKEN anywhere else. Set both, which is what a tool
+          # scoping a freshly minted token has to do to be certain gh reads
+          # the one it just minted.
+          export GH_HOST="${GH_HOST:-$(echo "${GITHUB_SERVER_URL}" | sed -e 's#^https://##' -e 's#^http://##' -e 's#/.*$##')}"
+          export GH_TOKEN="$CREDENTIAL"
+          export GH_ENTERPRISE_TOKEN="$CREDENTIAL"
+
+          # The positive half matters as much as the negative one: without it
+          # a refusal below could mean gh had no usable credential at all,
+          # which would pass this check while proving nothing.
+          gh api "repos/${OWN_REPO}" --jq '.full_name' > /dev/null
+          echo "  gh api repos/${OWN_REPO} -> ok"
+
+          if gh api "repos/${OTHER_REPO}" > /dev/null 2>&1; then
+            echo "::error::gh reached a repository the minted credential cannot: it is authenticating as something else"
+            exit 1
+          fi
+          echo "  gh api repos/${OTHER_REPO} -> refused, as it should be"
+
       - name: The credential works on its own repository
         shell: bash
         run: |

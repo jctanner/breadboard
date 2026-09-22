@@ -2956,4 +2956,51 @@ it is:
   That is exactly what G39 was. The runner no longer grants a credential to a
   step that did not ask for one, and patch 0008 scopes both variables `gh`
   reads, but this is a property of the surrounding environment rather than of
-  the mint, and it can regress without the trust check noticing.
+  the mint.
+
+  *Closed 2026-09-22.* The trust check now asserts it. Run 1278, eight steps.
+  See the entry below.
+
+### 2026-09-22 the trust check now guards the gap it could not see
+
+B4's verdict named one thing the check could not catch: a G39-style
+regression, where something puts a broader credential in the environment and
+every call an agent makes silently uses it instead of the minted one. Every
+assertion in the check authenticated with an explicit `Authorization` header,
+which is the one way of calling the forge that the environment cannot
+influence - so it could never have noticed.
+
+Two steps close it, and they do different jobs.
+
+**Step 4, "No credential this job never asked for is present"**, is the
+detector. GitHub puts no credential in a step's environment unless the
+workflow asks; this job asks for none, so all four variables `gh` might read
+must be empty. That states G39's root cause as an assertion rather than as a
+fix someone has to remember not to undo.
+
+**Step 5, "gh sends the minted credential, not something broader"**, exercises
+the path agents actually use. It sets both variables to the minted token and
+checks the own-repository call succeeds *and* the off-limits call is refused.
+The positive half is deliberate: a refusal on its own could mean `gh` had no
+usable credential at all, which would pass while proving nothing - the same
+trivially-green trap that made run 1265 look finished while uploading nothing.
+
+Step 5 alone would not have caught G39: it exports both variables explicitly,
+so it overrides whatever the runner injected. Step 4 is the detector, step 5
+is the proof the credential works through the real code path. That division is
+written into the step comments, not just here.
+
+**The guard was verified by making it fail.** A passing assertion is not
+evidence it can fail. Extracting step 4's script and running it against a
+reintroduced G39 condition:
+
+```text
+GH_ENTERPRISE_TOKEN=<admin token> ->
+  GH_ENTERPRISE_TOKEN is set, and this job never asked for it
+  ::error::the runner put a credential in this step that the workflow never
+  requested: GH_ENTERPRISE_TOKEN
+  exit=1
+```
+
+and exit 0 with all four reported unset on a clean environment. So the check
+distinguishes the two states rather than passing regardless.

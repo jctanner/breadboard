@@ -289,6 +289,13 @@ host-kubeconfig: ## Copy k3s kubeconfig to ~/.kube/config for non-sudo kubectl
 host-deploy-all: ## Run full deployment from scratch on host
 	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/deploy-all.sh
 
+host-conformance: ## Run the Fullsend conformance triage and leave an evidence folder
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/24-run-conformance-triage.sh
+
+host-conformance-all: ## Deploy from scratch, then run the conformance triage
+	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/deploy-all.sh
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/24-run-conformance-triage.sh
+
 host-push-vertex-env: ## Update Vertex/Jira secrets from .env and restart resident consumers
 	@test -f "$(HOST_PROJECT_ROOT)/.env" || { echo "ERROR: $(HOST_PROJECT_ROOT)/.env not found"; exit 1; }
 	@echo "==> Updating pipeline secrets from .env..."

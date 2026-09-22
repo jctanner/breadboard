@@ -109,3 +109,6 @@ deploy/fullsend/vendor/
 
 # Extracted from the cluster at build time by 05i-build-fullsend.sh.
 deploy/fullsend-sandbox-local/internal-ca.crt
+
+# Generated evidence from deploy/scripts/24-run-conformance-triage.sh.
+var/conformance/

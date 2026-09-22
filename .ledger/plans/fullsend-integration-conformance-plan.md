@@ -1563,10 +1563,10 @@ Feeds breakpoint B6.
 - [ ] Reset and seed the emulator with no manual UI steps.
 - [ ] Build or import every image from the canonical checkouts.
 - [ ] Deploy the runner, mint, OpenShell, DNS, and policy prerequisites.
-- [ ] Run the triage-on-issue scenario from a clean state.
-- [ ] Collect revisions, run and job IDs, sandbox logs, agent output, forge
+- [x] Run the triage-on-issue scenario from a clean state.
+- [x] Collect revisions, run and job IDs, sandbox logs, agent output, forge
   changes, and failure evidence.
-- [ ] Add one make target that does all of the above.
+- [x] Add one make target that does all of the above.
 
 **Done when:** the scenario passes after a reset, and its evidence lets
 another agent reproduce or diagnose a failure without chat history.
@@ -3248,3 +3248,66 @@ package 2 will replace what this script installs with the real per-repo
 scaffold". That already happened - the conformance path runs the mirrored
 `reusable-dispatch.yml` with `FULLSEND_PER_REPO_INSTALL=true`, and what this
 script seeds is the named compatibility fixture beside it.
+
+### 2026-09-22 B6 first half: the check exists and passes from a clean baseline
+
+`deploy/scripts/24-run-conformance-triage.sh`, wired as `make host-conformance`
+and `make host-conformance-all`. Run 1401, against a repository with zero open
+issues and a gateway with zero sandboxes:
+
+```text
+==> Checking installed provider profiles against the mirrored source
+  fullsend-vertex-ai: matches source
+  fullsend-github-ro: matches source
+==> Issue #101 ... Run 1401 finished: success
+==> Closed issue #101 (evidence retained)
+  conclusion      success
+  artifact        1 (69332 bytes)
+  labels          ['documentation', 'ready-to-code']
+  comment authors ['fullsend-triage[bot]']
+```
+
+The bundle holds `action: sufficient`, overall clarity 0.89, and a structured
+summary. The action was `duplicate` on the two runs before this one, which was
+correct - there were 41 open issues from this work, several on the same
+subject. Clearing them changed the answer, which is the evidence that those
+duplicates were repository state rather than the agent taking a shortcut.
+
+**What it asserts, and why each one.** Every item is something that failed
+silently during this work:
+
+| Assertion | The run it would have caught |
+| --- | --- |
+| an artifact exists and downloads | 1265, green with zero artifacts |
+| every comment author is the bot | 1236, where the post-script wrote as the run actor (G39) |
+| no `policy_denied` in the job log | 1279 and 1293 (G42, G43) |
+| `Agent exited with code 0` | 1247 and 1253, success while the agent exited 1 |
+| a label was applied | - |
+| the run concluded success | necessary, and on its own worth little |
+
+**What it deliberately does not assert:** the triage action. It depends on what
+else is open, every action exercises the same path, and asserting it would make
+the check fail on a correct result.
+
+**The profile precondition is the one that repays the most.** A stale profile
+is the failure that cost a day and produced no symptom where it failed. It now
+fails before an issue is filed, naming the missing rules and the in-place
+`provider profile update` recipe - delete being refused while a sandbox holds a
+reference is exactly how it went stale. Verified in both directions: it reports
+`matches source` against the live gateway, and reconstructing the morning's
+stale shape makes it fail and name
+`('github.local', 443, 'graphql', 'read-only', '/api/graphql')` as missing,
+which is the rule whose absence caused G43.
+
+**It is self-cleaning.** The issue it files is closed once evidence is
+collected, so repeated runs neither accumulate open issues nor become a chain
+of duplicates of one another. That is what makes it a check rather than a
+one-shot.
+
+**Still open for B6, stated rather than quietly satisfied.** `host-conformance-all`
+deploys and runs; it does not *reset*. `deploy-all.sh` does not call
+`clean-all.sh`, and chaining a PVC wipe into a target with "all" in its name is
+not something that should happen because someone typed it. Reset needs either
+its own explicitly named target with a confirmation, or to stay a deliberate
+separate step. And `clean-all.sh` still does not touch `openshell-system` at
+all, so it would not clear the gateway state that caused G42 even if it ran.

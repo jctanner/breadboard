@@ -1069,7 +1069,7 @@ called workflow could not be resolved. Nothing past that boundary ran.
   `b2ea8182` should it need restoring. `--detach` is accepted there, confirmed
   in the CLI's own argument tests.
 
-- [ ] **[W4] G36. `openshell sandbox create` is killed, and I do not yet know
+- [x] **[W4] G36. `openshell sandbox create` is killed, and I do not yet know
   by what.** With the pinned OpenShell in place the sandbox is genuinely
   created: the CLI reports `Created sandbox: fs-tri-...`, `Requesting
   compute`, `Sandbox allocated`, `Image pulled`, and the cluster shows a real
@@ -1093,6 +1093,9 @@ called workflow could not be resolved. Nothing past that boundary ran.
   noting the timings vary with the CLI's own progress rather than sitting at a
   fixed wall clock, which argues against a simple timer.
 
+  **Closed 2026-09-22.** Root-caused to `sandboxImagePullPolicy: Never` with
+  the Fullsend image absent from the node; the image is now imported by
+  `05i-build-fullsend.sh` and sandboxes create in seconds (run 1271 and after).
   Written up for handover in
   [`.ledger/bugs/openshell-sandbox-create-killed.md`](../bugs/openshell-sandbox-create-killed.md),
   with the ruled-out causes, the exact code paths, a reproduction, and a first
@@ -1126,7 +1129,7 @@ called workflow could not be resolved. Nothing past that boundary ran.
   `https://github.local/api/v3/rate_limit` rather than github.com, and the
   proxy no longer refuses it.
 
-- [ ] **[W4] G38. The sandbox egress proxy resets the connection to the local
+- [x] **[W4] G38. The sandbox egress proxy resets the connection to the local
   forge.** With the host and the allowlist both correct, the pre-flight now
   fails differently:
   `read tcp 10.200.0.2:35364->10.200.0.1:3128: read: connection reset by peer`.
@@ -1187,7 +1190,7 @@ called workflow could not be resolved. Nothing past that boundary ran.
   from the host, restores both in the existing cleanup, and refreshes both on
   a remint. Upstream-bound, with a unit test on the host predicate.
 
-- [ ] **[W4] G40. `GH_HOST` reaches the sandbox empty, so the agent step always
+- [x] **[W4] G40. `GH_HOST` reaches the sandbox empty, so the agent step always
   fails.** The agent gets into a real sandbox with a real minted credential and
   then fails the behaviour script's first host assertion:
   `! Dummy runtime: assert_env GH_HOST unset or empty:`, exit 1.

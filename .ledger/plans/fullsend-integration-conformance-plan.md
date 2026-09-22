@@ -3326,3 +3326,45 @@ not something that should happen because someone typed it. Reset needs either
 its own explicitly named target with a confirmation, or to stay a deliberate
 separate step. And `clean-all.sh` still does not touch `openshell-system` at
 all, so it would not clear the gateway state that caused G42 even if it ran.
+
+### 2026-09-22 the run churn, measured before and after
+
+The reviewer saw repeated triage jobs in the runner pod logs. It was a
+cascade, not a loop: it terminated on its own, and no follow-on run executed a
+Triage job, so there was no sandbox and no model spend. Checked rather than
+assumed - every `fullsend` run in the cascade ran only `Route` and
+`Harness dispatch`, or nothing.
+
+The cause is that each thing the agent does is itself an event. One
+conformance run fires: issue opened, status comment, label applied, triage
+comment, terminal status comment, issue closed. Six waves, and until today two
+workflows answered each one.
+
+| | before | after |
+| --- | --- | --- |
+| follow-on runs per conformance run | 11 | 5 |
+| of which the M8 fixture | 6 | 0 |
+| runs doing agent work | 1 | 1 |
+
+Retiring the fixture removed exactly the half that did nothing. What remains
+is upstream Fullsend's shim reacting to Fullsend's own forge writes, routing
+and stopping without an agent. That is real behaviour on a real forge and is
+left alone.
+
+The second gain is not visible in the count. There is now exactly one workflow
+answering an `issues` event, so a run can no longer be selected by mistake -
+the trap that cost a cycle earlier today, and the reason
+`24-run-conformance-triage.sh` selects on workflow name. The script keeps
+doing that, because selecting by name is correct whether or not a second
+workflow exists.
+
+Verified after the change: run 1423 passes with the profile precondition
+matching source, one artifact, a label applied, and `fullsend-triage[bot]` as
+the only comment author.
+
+**B6 now has:** a check that asserts artefacts and identities rather than the
+run conclusion, a reset that includes gateway state, and three make targets.
+What it does not have is the thing the breakpoint actually asks - somebody
+other than the agent that wrote it running
+`make host-conformance-reset && make host-conformance` and getting a green
+result plus an evidence folder they can read without this conversation.

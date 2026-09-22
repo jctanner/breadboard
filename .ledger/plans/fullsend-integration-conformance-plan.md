@@ -1403,7 +1403,7 @@ called workflow could not be resolved. Nothing past that boundary ran.
 
 *Group F - Fullsend-side, not emulator gaps. Decision 5 does not cover these.*
 
-- [ ] **[Track F] F1. `fullsend github setup` cannot target the emulator.** It and
+- [x] **[Track F] F1. `fullsend github setup` cannot target the emulator.** It and
   `github set|status|uninstall|sync-scaffold` build their client with bare
   `gh.New(token)`, ignoring `GITHUB_API_URL`, so they always reach
   api.github.com (observed: `401 Bad credentials` from real GitHub).
@@ -1411,6 +1411,17 @@ called workflow could not be resolved. Nothing past that boundary ran.
   point. **This blocks B7 as written**, since the reviewer required the
   dashboard button to run the real CLI - it must either use `repos install` or
   this must be fixed upstream.
+
+  **Fixed upstream-bound in
+  `0011-address-the-configured-forge-in-the-github-commands.patch`.** The fix
+  was already in the package: every other command builds its client through
+  `newGitHubLiveClient`, which honours the manifest's `forge.github.url` and
+  falls back to `GITHUB_API_URL`. These five were the remaining bare
+  `gh.New(token)` call sites, and 0005 had already applied the same fix to the
+  agents-repo lookup and the status-comment client. Behaviour on github.com is
+  unchanged. B7 is no longer blocked on choosing `repos install` as a
+  workaround; the dashboard button can run `github setup` as the reviewer
+  required.
 - [ ] **[Track F] F2. The CLI rejects a non-HTTPS `--mint-url` at install time**, a check
   separate from the runtime patch. It reinforces the work package 3 item to
   serve the conformance mint over TLS.

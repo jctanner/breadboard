@@ -1,0 +1,136 @@
+Subject: fix(github): address the configured forge in the github subcommands
+
+`fullsend github setup|set|status|uninstall|sync-scaffold` build their API
+client with a bare `gh.New(token)`, which addresses api.github.com by name. On
+a GitHub Enterprise Server install, or against any other forge, every one of
+these commands leaves the appliance and is refused with credentials that were
+never meant for the host they reached — observed as `401 Bad credentials` from
+the public API while pointed at a private one.
+
+Every other command in the package already builds its client through
+newGitHubLiveClient, which honours the manifest's forge.github.url and falls
+back to GITHUB_API_URL. These five now do the same. The fix is the same one
+0005 applied to the agents-repo lookup and the status-comment client; this is
+the rest of the call sites.
+
+Behaviour on github.com is unchanged: with no manifest URL and no
+GITHUB_API_URL the client keeps its default endpoint.
+
+The `gh` import alias is dropped from github.go because these were its only
+uses in that file.
+
+Breadboard note: patches Go source, so it belongs to the build patch list in
+deploy/scripts/05i-build-fullsend.sh rather than the mirror list. Written to
+be sent upstream as-is. Add a DCO sign-off before submitting it as a
+human-authored change.
+
+diff --git a/internal/cli/github.go b/internal/cli/github.go
+index b5e7883..76c8609 100644
+--- a/internal/cli/github.go
++++ b/internal/cli/github.go
+@@ -13,7 +13,6 @@ import (
+ 	"github.com/fullsend-ai/fullsend/internal/appsetup"
+ 	"github.com/fullsend-ai/fullsend/internal/config"
+ 	"github.com/fullsend-ai/fullsend/internal/forge"
+-	gh "github.com/fullsend-ai/fullsend/internal/forge/github"
+ 	"github.com/fullsend-ai/fullsend/internal/inference"
+ 	"github.com/fullsend-ai/fullsend/internal/inference/vertex"
+ 	"github.com/fullsend-ai/fullsend/internal/layers"
+@@ -179,7 +178,12 @@ values (mint URL, WIF provider, project ID) are provided as flags.`,
+ 				return err
+ 			}
+ 
+-			client := gh.New(token)
++			// newGitHubLiveClient honours the manifest's forge URL and, failing
++			// that, GITHUB_API_URL. A bare gh.New addresses api.github.com by
++			// name, so on an enterprise install or an emulator every one of these
++			// commands leaves the appliance and is refused with credentials that
++			// were never meant for it.
++			client := newGitHubLiveClient(token, "")
+ 			printer := ui.New(os.Stdout)
+ 			ctx := cmd.Context()
+ 
+@@ -1062,7 +1066,12 @@ Valid keys:
+ 				return err
+ 			}
+ 
+-			client := gh.New(token)
++			// newGitHubLiveClient honours the manifest's forge URL and, failing
++			// that, GITHUB_API_URL. A bare gh.New addresses api.github.com by
++			// name, so on an enterprise install or an emulator every one of these
++			// commands leaves the appliance and is refused with credentials that
++			// were never meant for it.
++			client := newGitHubLiveClient(token, "")
+ 			printer := ui.New(os.Stdout)
+ 
+ 			return runGitHubSet(cmd.Context(), client, printer, target, key, value)
+@@ -1153,7 +1162,12 @@ func newGitHubStatusCmd() *cobra.Command {
+ 				return err
+ 			}
+ 
+-			client := gh.New(token)
++			// newGitHubLiveClient honours the manifest's forge URL and, failing
++			// that, GITHUB_API_URL. A bare gh.New addresses api.github.com by
++			// name, so on an enterprise install or an emulator every one of these
++			// commands leaves the appliance and is refused with credentials that
++			// were never meant for it.
++			client := newGitHubLiveClient(token, "")
+ 			printer := ui.New(os.Stdout)
+ 
+ 			return runGitHubStatus(cmd.Context(), client, printer, org)
+@@ -1276,7 +1290,12 @@ func newGitHubUninstallCmd() *cobra.Command {
+ 				return err
+ 			}
+ 
+-			client := gh.New(token)
++			// newGitHubLiveClient honours the manifest's forge URL and, failing
++			// that, GITHUB_API_URL. A bare gh.New addresses api.github.com by
++			// name, so on an enterprise install or an emulator every one of these
++			// commands leaves the appliance and is refused with credentials that
++			// were never meant for it.
++			client := newGitHubLiveClient(token, "")
+ 			printer := ui.New(os.Stdout)
+ 
+ 			if !yolo {
+@@ -1447,7 +1466,12 @@ func newGitHubSyncScaffoldCmd() *cobra.Command {
+ 				return err
+ 			}
+ 
+-			client := gh.New(token)
++			// newGitHubLiveClient honours the manifest's forge URL and, failing
++			// that, GITHUB_API_URL. A bare gh.New addresses api.github.com by
++			// name, so on an enterprise install or an emulator every one of these
++			// commands leaves the appliance and is refused with credentials that
++			// were never meant for it.
++			client := newGitHubLiveClient(token, "")
+ 			printer := ui.New(os.Stdout)
+ 
+ 			// Default is PR delivery; --direct overrides to direct push.
+diff --git a/internal/cli/github_client_test.go b/internal/cli/github_client_test.go
+index 441fcd2..7a9d116 100644
+--- a/internal/cli/github_client_test.go
++++ b/internal/cli/github_client_test.go
+@@ -230,3 +230,23 @@ func TestCLIGitHubAuth_NoDirectCredentialReads(t *testing.T) {
+ 	assert.Empty(t, violations,
+ 		"CLI command files must not read GitHub credentials directly; use resolveGitHubToken or newAuthenticatedGitHubClient")
+ }
++
++// The github setup/set/status/uninstall/sync-scaffold commands addressed
++// api.github.com by name, so on an enterprise install or an emulator they
++// left the appliance and were refused with credentials meant for somewhere
++// else. They now build their client the same way every other command does.
++func TestGitHubCommandsHonourTheConfiguredAPIURL(t *testing.T) {
++	t.Setenv("GITHUB_API_URL", "https://github.local/api/v3")
++	client := newGitHubLiveClient("token", "")
++	if got := client.BaseURL(); got != "https://github.local/api/v3" {
++		t.Fatalf("BaseURL() = %q, want the configured API URL", got)
++	}
++}
++
++func TestGitHubClientStillDefaultsToThePublicAPI(t *testing.T) {
++	t.Setenv("GITHUB_API_URL", "")
++	client := newGitHubLiveClient("token", "")
++	if got := client.BaseURL(); got != "" && got != "https://api.github.com" {
++		t.Fatalf("BaseURL() = %q, want the client default on github.com", got)
++	}
++}

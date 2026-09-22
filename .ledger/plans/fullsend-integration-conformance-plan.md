@@ -1603,7 +1603,7 @@ own task, bug, or ADR file.
 | B1 | 2026-09-16 | **go** | WP8 and WP1 executed and checked against the running stack by Sonnet 5. Verdict given by the reviewer moving work on to B2. See the 2026-09-16 execution entry below. |
 | B2 | 2026-09-17 | **go** | 25 gaps found. Reviewer accepted the proposed fix order unchanged: W1 A1/B1/B2/C1/E1, W2 B3/B4/B5/C2/A2, W3 B9/D1/D2/D3, W4 the remaining nine, Track F the two Fullsend-side items. Instruction: do wave 1, stop at B3. |
 | B3 | 2026-09-17 | **go** | Both halves demonstrated with non-admin actors: `fullsend-triager` (triage) routes to the Triage job; `fullsend-reader` (read) and `fullsend-outsider` (no access) are both refused. Reviewer approved proceeding to wave 2. |
-| B4 | | *awaiting verdict* | Demonstrable end to end as of run 1176, with no caveat left in it. `Fullsend trust check` prints the job's own OIDC claims, exchanges them, and asserts the boundary in both directions across six endpoints. Seeded and repeatable via `deploy/fullsend/seed/seed-trust-check.py`. |
+| B4 | 2026-09-22 | **go** | Reviewer deferred to the executing agent's judgement. Re-demonstrated on the current stack as run 1277 after the credential-handling changes, rather than resting on run 1176: claims printed, exchange scoped to the calling repository, mint refuses to mint for another (403), credential works on its own repository (200) and is refused on another across six endpoints (404). Repeatable via `deploy/fullsend/seed/seed-trust-check.py`. Scoping is by repository, not by actor - identity separation remains open as WP3. |
 | B5 | | | |
 | B6 | | | |
 | B7 | | | |
@@ -2913,3 +2913,47 @@ Also fixed in passing: `deploy/scripts/05a-build-github-emulator.sh` defaults
 so the first emulator build did nothing - and `| tail` reported success
 because a pipeline's exit status is the last command's. Third time in this
 project a pipeline has masked a failure.
+
+### 2026-09-22 B4 verdict, and what it does not cover
+
+The reviewer deferred the verdict to me. Before taking it I checked the one
+thing that could have undermined it, because B4 was staged on run 1176 and
+G39 was found afterwards.
+
+**G39 does not invalidate the demonstration.** The trust check authenticates
+with `curl -H "Authorization: token $CREDENTIAL"` using the credential the
+mint returned, and never calls `gh`. So the ambient admin token that G39 found
+outranking minted credentials - which only applied because `gh` prefers
+`GH_ENTERPRISE_TOKEN` - was never consulted here. Had it been, the refusal
+assertions would have been meaningless: an administrator token is refused
+nowhere, and steps 5 and 6 would have returned 200 rather than 404. They
+returned 404. G39 affected the agent path downstream of this boundary, not the
+exchange.
+
+**Re-demonstrated rather than assumed.** Run 1176 predates the runner's
+credential handling changing twice. A boundary test whose evidence is two days
+and several credential changes old is not evidence worth signing off, so the
+workflow was dispatched again: run 1277, all six steps, on the current stack.
+
+What B4 now establishes: a job can prove what it is, the mint scopes the
+credential to the calling repository and refuses to mint for another, and the
+issued credential is accepted on its own repository and refused on five
+separate endpoints of another. It fails closed, and it does so after the
+credential path was rebuilt underneath it.
+
+What it does not establish, stated so the verdict is not read as broader than
+it is:
+
+- **Scoping is by repository, not by identity.** The claims show
+  `actor admin`; the job token authenticates as the run's actor rather than a
+  separate workflow identity. The mint does not care who the actor is, only
+  which repository the assertion names. That is WP3 and remains open.
+- **The permission set is a fixed policy, not a tested one.** The mint grants
+  `contents=read, issues=write, metadata=read` for the triage role. The check
+  proves the grant is honoured and bounded; whether that is the right grant is
+  a judgement about the model, not something a test can answer.
+- **The boundary holds only while nothing else injects a broader credential.**
+  That is exactly what G39 was. The runner no longer grants a credential to a
+  step that did not ask for one, and patch 0008 scopes both variables `gh`
+  reads, but this is a property of the surrounding environment rather than of
+  the mint, and it can regress without the trust check noticing.

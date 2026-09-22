@@ -271,6 +271,21 @@ All decided on 2026-09-16.
 
 1. The default deployment targets Fullsend's current per-repo layout. The
    three legacy fixtures stay as named tests only.
+   **Amended 2026-09-22:** the M8 role-and-event fixture is retired rather
+   than kept as a named test, and `mirror-fullsend-workflows.py` now removes
+   it from the target repository. The decision was made when the conformance
+   path did not work and the fixtures were the only evidence anything
+   functioned; that premise is gone. The fixture echoed a string into a log
+   nothing read while firing on `issues: [opened, labeled]` and
+   `issue_comment: [created]`, so every agent comment and every label the
+   agent applied re-triggered it - six runs per conformance run - and it
+   appeared ahead of the real run on the same event, which is the reason
+   selecting a run by event alone picks the wrong one. Everything it could
+   have covered is covered better: `reusable-dispatch.yml` uses a matrix
+   itself, and array `runs-on`, matrix expansion and event triggers have
+   emulator unit tests in `tests/actions/`. The other two legacy fixtures are
+   untouched; if a primitive turns out to be genuinely uncovered it belongs in
+   a unit test, not a live workflow.
 2. Breadboard uses the `fullsend-ai/fullsend` and `fullsend-ai/agents`
    checkouts directly, at `checkouts/fullsend-ai/*`, kept pristine, with only
    the small patch set the dev stack truly needs.
@@ -429,7 +444,7 @@ package as a checklist item and fixed during execution.
 - [x] Trace one event through every box in the target flow and record the
   API call and resulting ID at each step. The trace stops at the first
   boundary; see the gap list below.
-- [ ] Keep the legacy fixtures out of the conformance deployment path.
+- [x] Keep the legacy fixtures out of the conformance deployment path.
 
 #### Gap list (B2 deliverable, 2026-09-16)
 

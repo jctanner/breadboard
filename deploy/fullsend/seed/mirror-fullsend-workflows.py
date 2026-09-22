@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
-"""Mirror the small Fullsend action/workflow fixture used by the default
-seeded-fixture path (formerly the "M8" mirror).
+"""Mirror the composite actions the Fullsend workflows call.
 
-This deliberately mirrors only files needed by emulator tests. It does not
-pretend to mirror the whole upstream repository or fetch from the network.
-This fixture is a named compatibility test, not the conformance path. See
-`.ledger/plans/fullsend-integration-conformance-plan.md` decision 1.
+These three actions are used by the conformance path itself: reusable-dispatch
+calls prepare-workspace, mint-token and install-fullsend-cli. They are
+mirrored from the local checkout rather than fetched from the network.
+
+This script used to also write an "M8 role and event" fixture workflow into
+the target repository. It no longer does, and it removes that file if it finds
+one. The fixture echoed a string into a log nothing read, while firing on
+`issues: [opened, labeled]` and `issue_comment: [created]` - so every agent
+comment and every label the agent applied triggered it again. One conformance
+run produced six of them. Worse, it appeared ahead of the real run in the runs
+list on the same event, which is why selecting a run by event alone picks the
+wrong one.
+
+What it could have covered is covered better elsewhere: reusable-dispatch uses
+a matrix itself, and array `runs-on`, matrix expansion and event triggers all
+have emulator unit tests in tests/actions/. See decision 1 in
+`.ledger/plans/fullsend-integration-conformance-plan.md`, amended 2026-09-22.
 """
 
 from __future__ import annotations
@@ -25,39 +37,7 @@ FILES = (
     ".github/actions/prepare-workspace/action.yml",
     ".github/actions/install-fullsend-cli/action.yml",
 )
-WORKFLOW = ".github/workflows/m8-role-events.yml"
-WORKFLOW_CONTENT = """name: M8 Fullsend role and event fixture
-
-on:
-  workflow_dispatch:
-    inputs:
-      role:
-        required: true
-        default: triage
-        type: string
-  issues: [opened, labeled]
-  issue_comment: [created]
-
-concurrency:
-  group: fullsend-m8-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  role:
-    name: Fullsend ${{ matrix.role }} fixture
-    runs-on: [self-hosted, linux, fullsend]
-    strategy:
-      matrix:
-        role: [triage, review, coder]
-    permissions:
-      contents: read
-      issues: write
-    steps:
-      - name: Record role and event
-        run: |
-          set -eu
-          printf 'm8-role=%s event=%s\\n' '${{ matrix.role }}' '${{ github.event_name }}'
-"""
+RETIRED_WORKFLOW = ".github/workflows/m8-role-events.yml"
 
 
 def main() -> None:
@@ -86,13 +66,16 @@ def main() -> None:
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(source.read_bytes())
             mirrored.append(relative)
-        destination = directory / WORKFLOW
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(WORKFLOW_CONTENT, encoding="utf-8")
-        mirrored.append(WORKFLOW)
         run_git(directory, "add", *mirrored)
+        # Converge rather than merely stop writing it: a repository seeded
+        # before this change still carries the fixture, and it keeps firing.
+        retired = directory / RETIRED_WORKFLOW
+        if retired.is_file():
+            retired.unlink()
+            run_git(directory, "rm", "--cached", "--quiet", RETIRED_WORKFLOW)
+            mirrored.append(f"-{RETIRED_WORKFLOW}")
         if run_git(directory, "diff", "--cached", "--quiet", check=False).returncode != 0:
-            run_git(directory, "commit", "-m", "Mirror Fullsend action and event fixtures")
+            run_git(directory, "commit", "-m", "Mirror Fullsend composite actions")
             pushed = None
             for _ in range(10):
                 pushed = run_git(directory, "push", "-u", "origin", "main", check=False)

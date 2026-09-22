@@ -1,0 +1,128 @@
+Subject: fix(triage): accept an issue URL on the configured GitHub host
+
+tracker_validate_issue_url matches https://github.com by name, so a valid
+issue URL on any enterprise install is rejected before the triage agent does
+anything:
+
+  ERROR: ISSUE_URL does not match expected pattern: https://forge.internal/acme/widgets/issues/79
+
+tracker_parse_issue_url strips the same literal host, so even where validation
+passed the repository would be parsed wrongly.
+
+Take the host from GITHUB_SERVER_URL, defaulting to https://github.com, which
+is what scripts/pre-code-jira.sh already does for its run URLs. Behaviour on
+github.com is unchanged.
+
+The host is compared as a literal prefix rather than interpolated into the
+regex, so a server URL containing regex metacharacters cannot change what the
+pattern means, and the path is still matched exactly as strictly as before.
+Parsing uses parameter expansion for the same reason.
+
+The change is made in scripts/lib/github-triage-ops.lib.sh and mirrored into
+the two generated scripts that embed it, scripts/pre-triage.sh and
+scripts/post-triage.sh, which a build would otherwise regenerate.
+
+Breadboard note: this patches fullsend-ai/agents, not fullsend-ai/fullsend, and
+is applied to the agents mirror by deploy/fullsend/seed/seed-upstream-agents.py.
+Written to be sent upstream as-is. Add a DCO sign-off before submitting it as a
+human-authored change.
+
+diff --git a/scripts/lib/github-triage-ops.lib.sh b/scripts/lib/github-triage-ops.lib.sh
+index db7908e..9aef3e3 100755
+--- a/scripts/lib/github-triage-ops.lib.sh
++++ b/scripts/lib/github-triage-ops.lib.sh
+@@ -19,14 +19,26 @@ GITHUB_TRIAGE_OPS_SH_LOADED=1
+ # --- URL handling ---
+ 
+ tracker_validate_issue_url() {
+-  if [[ ! "${ISSUE_URL}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
++  # The issue lives on whichever GitHub the run is executing against, which
++  # GITHUB_SERVER_URL names. Matching github.com by name rejects a valid URL on
++  # any enterprise install. The host is compared as a literal prefix rather
++  # than interpolated into the regex, so a server URL containing regex
++  # metacharacters cannot change what the pattern means.
++  local server="${GITHUB_SERVER_URL:-https://github.com}"
++  server="${server%/}"
++  local rest="${ISSUE_URL#"${server}/"}"
++  if [[ "${rest}" == "${ISSUE_URL}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
+     echo "ERROR: ISSUE_URL does not match expected pattern: ${ISSUE_URL}" >&2
+     return 1
+   fi
+ }
+ 
+ tracker_parse_issue_url() {
+-  REPO=$(echo "${ISSUE_URL}" | sed 's|https://github.com/||; s|/issues/.*||')
++  local server="${GITHUB_SERVER_URL:-https://github.com}"
++  server="${server%/}"
++  REPO="${ISSUE_URL#"${server}/"}"
++  REPO="${REPO%%/issues/*}"
+   ISSUE_NUMBER=$(basename "${ISSUE_URL}")
+ }
+ 
+diff --git a/scripts/post-triage.sh b/scripts/post-triage.sh
+index c2c4914..3119e55 100755
+--- a/scripts/post-triage.sh
++++ b/scripts/post-triage.sh
+@@ -65,14 +65,26 @@ GITHUB_TRIAGE_OPS_SH_LOADED=1
+ # --- URL handling ---
+ 
+ tracker_validate_issue_url() {
+-  if [[ ! "${ISSUE_URL}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
++  # The issue lives on whichever GitHub the run is executing against, which
++  # GITHUB_SERVER_URL names. Matching github.com by name rejects a valid URL on
++  # any enterprise install. The host is compared as a literal prefix rather
++  # than interpolated into the regex, so a server URL containing regex
++  # metacharacters cannot change what the pattern means.
++  local server="${GITHUB_SERVER_URL:-https://github.com}"
++  server="${server%/}"
++  local rest="${ISSUE_URL#"${server}/"}"
++  if [[ "${rest}" == "${ISSUE_URL}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
+     echo "ERROR: ISSUE_URL does not match expected pattern: ${ISSUE_URL}" >&2
+     return 1
+   fi
+ }
+ 
+ tracker_parse_issue_url() {
+-  REPO=$(echo "${ISSUE_URL}" | sed 's|https://github.com/||; s|/issues/.*||')
++  local server="${GITHUB_SERVER_URL:-https://github.com}"
++  server="${server%/}"
++  REPO="${ISSUE_URL#"${server}/"}"
++  REPO="${REPO%%/issues/*}"
+   ISSUE_NUMBER=$(basename "${ISSUE_URL}")
+ }
+ 
+diff --git a/scripts/pre-triage.sh b/scripts/pre-triage.sh
+index ee10d55..9f51f53 100755
+--- a/scripts/pre-triage.sh
++++ b/scripts/pre-triage.sh
+@@ -61,14 +61,26 @@ GITHUB_TRIAGE_OPS_SH_LOADED=1
+ # --- URL handling ---
+ 
+ tracker_validate_issue_url() {
+-  if [[ ! "${ISSUE_URL}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
++  # The issue lives on whichever GitHub the run is executing against, which
++  # GITHUB_SERVER_URL names. Matching github.com by name rejects a valid URL on
++  # any enterprise install. The host is compared as a literal prefix rather
++  # than interpolated into the regex, so a server URL containing regex
++  # metacharacters cannot change what the pattern means.
++  local server="${GITHUB_SERVER_URL:-https://github.com}"
++  server="${server%/}"
++  local rest="${ISSUE_URL#"${server}/"}"
++  if [[ "${rest}" == "${ISSUE_URL}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
+     echo "ERROR: ISSUE_URL does not match expected pattern: ${ISSUE_URL}" >&2
+     return 1
+   fi
+ }
+ 
+ tracker_parse_issue_url() {
+-  REPO=$(echo "${ISSUE_URL}" | sed 's|https://github.com/||; s|/issues/.*||')
++  local server="${GITHUB_SERVER_URL:-https://github.com}"
++  server="${server%/}"
++  REPO="${ISSUE_URL#"${server}/"}"
++  REPO="${REPO%%/issues/*}"
+   ISSUE_NUMBER=$(basename "${ISSUE_URL}")
+ }
+ 

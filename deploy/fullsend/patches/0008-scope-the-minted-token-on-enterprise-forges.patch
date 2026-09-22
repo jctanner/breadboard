@@ -1,0 +1,142 @@
+Subject: fix(run): scope the minted token on forges that are not github.com
+
+A run that mints a narrowly scoped token keeps calling the forge with the
+ambient credential it was launched with, on any GitHub Enterprise Server
+install. The log shows the mint succeeding, the request carries the wrong
+identity, and nothing distinguishes the two.
+
+gh chooses which environment variable it reads a credential from by host:
+GH_TOKEN and GITHUB_TOKEN for github.com, GH_ENTERPRISE_TOKEN and
+GITHUB_ENTERPRISE_TOKEN for everything else. mintAgentToken sets only
+GH_TOKEN, so off github.com it writes to a variable gh will not read, and
+whatever the environment already carries in GH_ENTERPRISE_TOKEN stays in
+charge for the sandbox stream, the post-script, and every host_files
+expansion that follows.
+
+Set both, chosen from the host, and restore both in the existing cleanup.
+syncRunnerEnvTokens refreshes them too, so a remint does not leave the first
+mint's token snapshotted in RunnerEnv (the same bug as #7231, one variable
+over).
+
+The host comes from GH_HOST, falling back to GITHUB_SERVER_URL. GH_HOST is
+consulted first because gh itself prefers it. On github.com the function
+returns nothing and behaviour is unchanged.
+
+Found against a GitHub API emulator serving a private host, where a status
+comment posted by the minted bot identity sat next to an agent comment posted
+as the run actor, which is what made the split visible.
+
+Breadboard note: patches Go source, so it belongs to the build patch list in
+deploy/scripts/05i-build-fullsend.sh rather than the mirror list. Written to
+be sent upstream as-is. Add a DCO sign-off before submitting it as a
+human-authored change.
+
+diff --git a/internal/cli/minttoken_test.go b/internal/cli/minttoken_test.go
+index 7caf3cb..30a3a98 100644
+--- a/internal/cli/minttoken_test.go
++++ b/internal/cli/minttoken_test.go
+@@ -391,3 +391,34 @@ func TestMintTokenCmd_MintTokenError(t *testing.T) {
+ 		t.Errorf("error = %q, want to contain ACTIONS_ID_TOKEN_REQUEST_URL", err.Error())
+ 	}
+ }
++
++func TestGHEnterpriseTokenVars(t *testing.T) {
++	enterprise := []string{"GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN"}
++	tests := []struct {
++		name      string
++		ghHost    string
++		serverURL string
++		want      []string
++	}{
++		{"unset", "", "", nil},
++		{"public server url", "", "https://github.com", nil},
++		{"public gh host", "github.com", "", nil},
++		{"public subdomain", "", "https://www.github.com", nil},
++		// GH_HOST wins over GITHUB_SERVER_URL, matching gh's own precedence.
++		{"gh host overrides server url", "github.com", "https://ghe.example.com", nil},
++		{"enterprise server url", "", "https://ghe.example.com", enterprise},
++		{"enterprise gh host", "ghe.example.com", "", enterprise},
++		{"enterprise with port", "ghe.example.com:8443", "", enterprise},
++		{"mixed case is not a different host", "GitHub.COM", "", nil},
++	}
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			t.Setenv("GH_HOST", tt.ghHost)
++			t.Setenv("GITHUB_SERVER_URL", tt.serverURL)
++			got := ghEnterpriseTokenVars()
++			if strings.Join(got, ",") != strings.Join(tt.want, ",") {
++				t.Fatalf("ghEnterpriseTokenVars() = %v, want %v", got, tt.want)
++			}
++		})
++	}
++}
+diff --git a/internal/cli/run.go b/internal/cli/run.go
+index eceb406..b3bc76d 100644
+--- a/internal/cli/run.go
++++ b/internal/cli/run.go
+@@ -5230,6 +5230,39 @@ func remintAgentTokenForPostScript(ctx context.Context, h *harness.Harness, mint
+ 	return cleanup
+ }
+ 
++// ghEnterpriseTokenVars returns the environment variables gh reads a
++// credential from for this run's forge, or nil when that forge is github.com.
++//
++// gh chooses the variable by host: GH_TOKEN and GITHUB_TOKEN for github.com,
++// GH_ENTERPRISE_TOKEN and GITHUB_ENTERPRISE_TOKEN for everything else. On a
++// GitHub Enterprise Server install, setting GH_TOKEN alone therefore changes
++// nothing gh will read, and whatever the environment already carries in
++// GH_ENTERPRISE_TOKEN stays in charge. A run that mints a narrowly scoped
++// token then keeps calling the forge with the ambient credential the mint was
++// supposed to replace, and nothing in the log distinguishes the two.
++//
++// GH_HOST is consulted first because gh itself prefers it; GITHUB_SERVER_URL
++// is the standard Actions variable naming the host the workflow runs against.
++func ghEnterpriseTokenVars() []string {
++	host := strings.TrimSpace(os.Getenv("GH_HOST"))
++	if host == "" {
++		server := strings.TrimSpace(os.Getenv("GITHUB_SERVER_URL"))
++		if server == "" {
++			return nil
++		}
++		host = server
++		if parsed, err := url.Parse(server); err == nil && parsed.Host != "" {
++			host = parsed.Host
++		}
++	}
++	// Host may carry a port, which is not part of the name being matched.
++	host = strings.ToLower((&url.URL{Host: host}).Hostname())
++	if host == "" || host == "github.com" || strings.HasSuffix(host, ".github.com") {
++		return nil
++	}
++	return []string{"GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN"}
++}
++
+ // syncRunnerEnvTokens copies the current process-env token vars into
+ // h.RunnerEnv so childScriptEnv's last-wins merge does not restore the
+ // values expanded at the start of the run. Without this, a remint would
+@@ -5240,6 +5273,7 @@ func syncRunnerEnvTokens(h *harness.Harness) {
+ 		return
+ 	}
+ 	names := []string{"GH_TOKEN"}
++	names = append(names, ghEnterpriseTokenVars()...)
+ 	for _, tv := range roleTokenVars[resolveRole(h.Role)] {
+ 		names = append(names, tv.Name)
+ 	}
+@@ -5295,6 +5329,17 @@ func mintAgentToken(ctx context.Context, role, mintURL, forgePlatform string, pr
+ 	}
+ 	os.Setenv("GH_TOKEN", result.Token)
+ 
++	// On any forge other than github.com, GH_TOKEN is not the variable gh
++	// reads, so scoping it alone would leave the ambient credential in
++	// charge. See ghEnterpriseTokenVars.
++	for _, name := range ghEnterpriseTokenVars() {
++		if v, ok := os.LookupEnv(name); ok {
++			originals[name] = v
++		}
++		os.Setenv(name, result.Token)
++		envVars = append(envVars, name)
++	}
++
+ 	for _, tv := range roleTokenVars[role] {
+ 		if v, ok := os.LookupEnv(tv.Name); ok {
+ 			originals[tv.Name] = v

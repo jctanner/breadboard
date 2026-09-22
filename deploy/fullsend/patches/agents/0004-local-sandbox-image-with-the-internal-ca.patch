@@ -1,0 +1,47 @@
+Subject: local: run the triage sandbox on a CA-bearing image
+
+NOT FOR UPSTREAM. Breadboard-local substitution, recorded under decision 3 of
+the Fullsend integration conformance plan.
+
+The sandbox supervisor builds its upstream TLS trust from the system bundle
+when it starts. The conformance forge is served by a cert-manager CA that
+exists only in this cluster, so without that CA present before the supervisor
+starts, every proxied HTTPS request to the forge fails its handshake and the
+agent sees a connection reset. Uploading a CA afterwards does not help: the
+roots are read once.
+
+The OpenShell chart at the deployed version exposes no way to inject a CA into
+sandbox pods, so the CA has to be in the image.
+
+fullsend-sandbox-local:k3s is built FROM the exact digest this file pinned,
+adding only ca-certificates and the cluster CA. It is that image plus one
+recorded layer, not a substitute assembled elsewhere. See
+deploy/fullsend-sandbox-local/Containerfile and the build step in
+deploy/scripts/05i-build-fullsend.sh, which fails rather than shipping an image
+whose trust store is wrong.
+
+Drop this patch if the chart gains sandbox CA injection, or if the forge is
+ever served by a publicly trusted certificate.
+
+Breadboard note: applied to the agents mirror by
+deploy/fullsend/seed/seed-upstream-agents.py.
+
+diff --git a/harness/triage.yaml b/harness/triage.yaml
+index 889e41c..b2bf3d0 100644
+--- a/harness/triage.yaml
++++ b/harness/triage.yaml
+@@ -9,7 +9,13 @@ model: opus
+ # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
+ # when the model: above moves to a generation with a different default.
+ effort: high
+-image: ghcr.io/fullsend-ai/fullsend-sandbox@sha256:259605fea321353552fdefd3a6a55e8b5c260998dfc5a622ed143e41a429995a
++# Breadboard-local: the image above, plus this cluster's internal CA. The
++# sandbox supervisor reads its upstream TLS roots from the system bundle
++# once at startup, and the conformance forge is served by a CA that exists
++# only here, so without it every proxied HTTPS request to the forge fails
++# its handshake. Built by deploy/scripts/05i-build-fullsend.sh FROM the
++# digest above, so this is that image plus one layer.
++image: fullsend-sandbox-local:k3s
+ policy: policies/base.yaml
+ openshell:
+   profiles:

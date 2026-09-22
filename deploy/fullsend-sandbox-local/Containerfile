@@ -1,0 +1,47 @@
+# Fullsend's own sandbox image, plus this cluster's internal CA.
+#
+# The sandbox supervisor builds its upstream TLS trust from the system bundle
+# when it starts. The conformance forge is served by a cert-manager CA that
+# only exists in this cluster, so without that CA present *before the
+# supervisor starts*, every proxied HTTPS request to the forge fails its
+# handshake and the agent sees a connection reset. Uploading a CA afterwards
+# does not help: the roots are read once.
+#
+# The base is the exact digest the Fullsend triage harness pins, so this image
+# is that image plus one recorded layer, not a substitute assembled from
+# somewhere else. Bump BASE_DIGEST when the harness moves.
+ARG BASE_DIGEST=sha256:259605fea321353552fdefd3a6a55e8b5c260998dfc5a622ed143e41a429995a
+FROM ghcr.io/fullsend-ai/fullsend-sandbox@${BASE_DIGEST}
+
+USER root
+
+# ca-certificates provides update-ca-certificates, which the base image lacks.
+# Appending to the bundle by hand would fix only that one file; this also
+# regenerates the hashed symlinks in /etc/ssl/certs that OpenSSL's directory
+# lookup uses, so tools that consult the directory rather than the bundle
+# trust the CA too.
+RUN if command -v apt-get >/dev/null 2>&1; then \
+      apt-get update -qq \
+      && apt-get install -y -qq --no-install-recommends ca-certificates \
+      && rm -rf /var/lib/apt/lists/*; \
+    elif command -v microdnf >/dev/null 2>&1; then \
+      microdnf install -y ca-certificates && microdnf clean all; \
+    elif command -v dnf >/dev/null 2>&1; then \
+      dnf install -y ca-certificates && dnf clean all; \
+    fi \
+    && UPDATE_CA="$(command -v update-ca-certificates || true)" \
+    && [ -n "${UPDATE_CA}" ] || UPDATE_CA=/usr/sbin/update-ca-certificates \
+    && [ -x "${UPDATE_CA}" ] \
+       || { echo "update-ca-certificates is still missing after install" >&2; exit 1; }
+
+# Written into the build context by deploy/scripts/05i-build-fullsend.sh from
+# the cluster's internal-ca-cert ConfigMap. Public certificate only.
+COPY internal-ca.crt /usr/local/share/ca-certificates/breadboard-internal-ca.crt
+# /usr/sbin is not on this image's PATH, so call it by path rather than name.
+RUN /usr/sbin/update-ca-certificates \
+    && openssl x509 -in /usr/local/share/ca-certificates/breadboard-internal-ca.crt \
+         -noout -subject \
+    && grep -c "BEGIN CERTIFICATE" /etc/ssl/certs/ca-certificates.crt
+
+# Marks the one thing this layer changes, for anything that wants to assert it.
+ENV BREADBOARD_SANDBOX_CA=/usr/local/share/ca-certificates/breadboard-internal-ca.crt

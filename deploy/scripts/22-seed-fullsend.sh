@@ -17,6 +17,14 @@ export PYTHONPATH="${PROJECT_ROOT}/deploy/fullsend/seed"
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-upstream-fullsend.py"
 # Non-admin actors, so the authorization gate can be exercised in both
 # directions rather than only ever admitting the repository owner.
+# The CLI resolves its agent definitions from fullsend-ai/agents at run time,
+# so that repository has to exist here too or the run reaches the internet.
+python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-upstream-agents.py"
+# ...and the repository has to allow fetching from it.
+python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-config-allowlist.py"
+# The dummy runtime runs a scripted scenario instead of a model, and hard-fails
+# without it. This is what the conformance run actually asserts.
+python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-behaviour-script.py"
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-conformance-actors.py" > /dev/null
 # The agent action installs the CLI from the workspace, a release, or a source
 # build, in that order. Seeding the first stops every run falling through to the

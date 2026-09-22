@@ -125,12 +125,16 @@ spec:
           mountPath: /etc/ssl/certs/internal
           readOnly: true
 
+        # Git pushes are the memory-hungry part: the conformance seed commits a
+        # 28 MiB binary and mirrors a whole repository, and at 512Mi the
+        # container was OOMKilled mid-push. That surfaced as a 502 from the
+        # proxy, with nothing anywhere mentioning memory.
         resources:
           requests:
-            memory: "256Mi"
+            memory: "512Mi"
             cpu: "100m"
           limits:
-            memory: "512Mi"
+            memory: "1536Mi"
             cpu: "500m"
 
       volumes:

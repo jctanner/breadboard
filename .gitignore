@@ -106,3 +106,6 @@ checkouts.dev/
 # Built artifact published by deploy/scripts/05i-build-fullsend.sh for the
 # conformance vendored-install seed. Rebuilt, never committed.
 deploy/fullsend/vendor/
+
+# Extracted from the cluster at build time by 05i-build-fullsend.sh.
+deploy/fullsend-sandbox-local/internal-ca.crt

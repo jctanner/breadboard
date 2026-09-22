@@ -1,0 +1,182 @@
+Subject: fix(run): resolve the agents repo and status comments against the configured host
+
+Several places address github.com by name, so on any other host they leave the
+appliance and are refused with credentials that were never meant for them:
+
+  ! Could not resolve fullsend-ai/agents@main: 401 Bad credentials
+  Error: resolving agent "triage": no config and agents-repo fallback unavailable
+  ! Failed to post completion status: create issue comment on #79: 401 Bad credentials
+
+An agent with no local definition is fetched from fullsend-ai/agents at run
+time: the CLI resolves the repository to a commit through the forge API, then
+downloads the harness from a raw URL. The API half used a bare gh.New, which
+targets api.github.com regardless of GITHUB_API_URL. The status comment a run
+posts about itself used the same constructor. Both now use
+newGitHubLiveClient, which honours that variable and still leaves the token
+optional, as the agents fallback requires because that repository is public.
+
+The raw half is not the same host swap. github.com serves raw bytes from
+raw.githubusercontent.com, while an enterprise install has no second hostname
+and serves them from the appliance at <host>/<owner>/<repo>/raw/<ref>/<path>.
+Derive the prefix from GITHUB_SERVER_URL using that convention.
+
+The fetch policy's domain allowlist named only github.com's two hosts, so even
+a correctly built URL was refused. Add the configured forge host to the default
+allowlist, derived from the same variable, so the allowlist follows the forge
+the run is already pointed at rather than widening independently.
+
+All of these keep the public hosts, so behaviour on github.com is unchanged.
+
+Breadboard note: patches Go source, so it belongs to the build patch list in
+deploy/scripts/05i-build-fullsend.sh rather than the mirror list; the mirror
+patches files a workflow reads at run time, and these do not survive
+compilation. Written to be sent upstream as-is. Add a DCO sign-off before
+submitting it as a human-authored change.
+
+diff --git a/internal/cli/run.go b/internal/cli/run.go
+index ab143262..eceb406f 100644
+--- a/internal/cli/run.go
++++ b/internal/cli/run.go
+@@ -11,6 +11,7 @@ import (
+ 	"io"
+ 	"math"
+ 	"net/http"
++	"net/url"
+ 	"os"
+ 	"os/exec"
+ 	"path/filepath"
+@@ -35,7 +36,6 @@ import (
+ 	"github.com/fullsend-ai/fullsend/internal/fetch"
+ 	"github.com/fullsend-ai/fullsend/internal/fetchsvc"
+ 	"github.com/fullsend-ai/fullsend/internal/forge"
+-	gh "github.com/fullsend-ai/fullsend/internal/forge/github"
+ 	gl "github.com/fullsend-ai/fullsend/internal/forge/gitlab"
+ 	"github.com/fullsend-ai/fullsend/internal/gitfetch"
+ 	"github.com/fullsend-ai/fullsend/internal/harness"
+@@ -120,6 +120,33 @@ var remintForPostScriptTimeout = mintclient.MaxMintDuration
+ // from the agents repository. It is a var (not const) to allow test overrides.
+ var defaultAgentsRepoURLPrefix = "https://raw.githubusercontent.com/fullsend-ai/agents/"
+ 
++// agentsRepoRawURLPrefix returns the base URL to fetch agent harnesses from.
++//
++// github.com serves raw file bytes from a separate hostname. An enterprise
++// install has no second hostname and serves them from the appliance itself,
++// at <host>/<owner>/<repo>/raw/<ref>/<path>. Addressing raw.githubusercontent.com
++// by name therefore leaves the appliance, and the credential presented is not
++// valid wherever it lands.
++//
++// GITHUB_SERVER_URL is the standard Actions variable naming the host the
++// workflow is running against, so it is what decides. Anything on github.com
++// keeps the public host, so behaviour there is unchanged.
++func agentsRepoRawURLPrefix() string {
++	server := strings.TrimSpace(os.Getenv("GITHUB_SERVER_URL"))
++	if server == "" {
++		return defaultAgentsRepoURLPrefix
++	}
++	host := server
++	if parsed, err := url.Parse(server); err == nil && parsed.Host != "" {
++		host = parsed.Host
++	}
++	if host == "github.com" || strings.HasSuffix(host, ".github.com") {
++		return defaultAgentsRepoURLPrefix
++	}
++	return strings.TrimRight(server, "/") + "/" +
++		defaultAgentsRepoOwner + "/" + defaultAgentsRepoName + "/raw/"
++}
++
+ // defaultAgentsRepoKnownAgents lists first-party agents available in the
+ // fullsend-ai/agents repository. Only these agents are eligible for the
+ // runtime fallback — custom agents are never tried against the agents repo.
+@@ -645,7 +672,11 @@ func runAgent(ctx context.Context, agentName, fullsendDir, outputBase, targetRep
+ 	// fallback. Always create a GitHub client for the agents-repo fallback —
+ 	// fullsend-ai/agents is public, so unauthenticated requests work when no
+ 	// GitHub token is available (e.g., on GitLab pipelines).
+-	fallbackForgeClient := gh.New(composeGitToken)
++	// newGitHubLiveClient keeps the token optional, as this fallback requires,
++	// while honouring GITHUB_API_URL. A bare gh.New addresses api.github.com by
++	// name, so on any other host the agents lookup leaves the appliance and is
++	// refused with credentials that were never meant for it.
++	fallbackForgeClient := newGitHubLiveClient(composeGitToken, "")
+ 	harnessPath, fetchDeps, err := resolveAgentSource(ctx, absFullsendDir, agentName, fallbackForgeClient, orgCfg, composeOpts, printer)
+ 	if err != nil {
+ 		return err
+@@ -4894,7 +4925,11 @@ func setupStatusNotifierGitHub(notifyCfg config.StatusNotificationConfig, owner,
+ 		if os.Getenv("GITHUB_ACTIONS") == "true" {
+ 			fmt.Fprintf(os.Stderr, "::add-mask::%s\n", result.Token)
+ 		}
+-		return tracker.NewForgeClient(gh.New(result.Token)), nil
++		// Same reason as the agents fallback above: a bare gh.New addresses
++		// api.github.com by name, so the status comment this run posts about
++		// itself would go to the public site rather than the forge the run is
++		// executing against.
++		return tracker.NewForgeClient(newGitHubLiveClient(result.Token, "")), nil
+ 	})
+ 
+ 	return n, nil
+@@ -5549,7 +5584,7 @@ func fetchPinnedAgentsRepoFile(ctx context.Context, relPath string, forgeClient
+ 		return "", none, false
+ 	}
+ 
+-	rawURL := defaultAgentsRepoURLPrefix + resolvedSHA + "/" + relPath
++	rawURL := agentsRepoRawURLPrefix() + resolvedSHA + "/" + relPath
+ 
+ 	if harness.MatchingAllowedPrefixInList(rawURL, allowlist) == "" {
+ 		printer.StepWarn(fmt.Sprintf("Agents repo fallback skipped for %s: URL not in allowed_remote_resources", noun))
+diff --git a/internal/fetch/fetch.go b/internal/fetch/fetch.go
+index 3b15ad75..63191f82 100644
+--- a/internal/fetch/fetch.go
++++ b/internal/fetch/fetch.go
+@@ -17,6 +17,7 @@ import (
+ 	"net"
+ 	"net/http"
+ 	"net/url"
++	"os"
+ 	"strings"
+ 	"syscall"
+ 	"time"
+@@ -99,9 +100,43 @@ func NewTestPolicy(tlsConfig *tls.Config, allowedDomains, allowedPorts []string)
+ 	}
+ }
+ 
+-// DefaultPolicy is a sensible default policy allowing GitHub content hosts.
++// defaultAllowedDomains returns the hosts a fetch may reach by default:
++// GitHub's own content hosts, plus the forge this process is configured
++// against.
++//
++// An enterprise install has no raw.githubusercontent.com. It serves repository
++// content from its own hostname, so a policy naming only github.com's hosts
++// blocks every fetch there, including the agent harnesses the run needs.
++// GITHUB_SERVER_URL is the standard Actions variable naming that host, and the
++// CLI already reads it and GITHUB_API_URL elsewhere to decide where the forge
++// is; this keeps the allowlist consistent with that choice rather than
++// widening it independently.
++func defaultAllowedDomains() []string {
++	domains := []string{"github.com", "raw.githubusercontent.com"}
++	server := strings.TrimSpace(os.Getenv("GITHUB_SERVER_URL"))
++	if server == "" {
++		return domains
++	}
++	parsed, err := url.Parse(server)
++	if err != nil {
++		return domains
++	}
++	host := strings.ToLower(parsed.Hostname())
++	if host == "" {
++		return domains
++	}
++	for _, existing := range domains {
++		if existing == host {
++			return domains
++		}
++	}
++	return append(domains, host)
++}
++
++// DefaultPolicy is a sensible default policy allowing GitHub content hosts
++// and the configured forge.
+ var DefaultPolicy = FetchPolicy{
+-	AllowedDomains: []string{"github.com", "raw.githubusercontent.com"},
++	AllowedDomains: defaultAllowedDomains(),
+ 	MaxSizeBytes:   10 * 1024 * 1024, // 10 MB
+ 	Timeout:        30 * time.Second,
+ 	// MaxRetries: nil → uses default (4 total attempts).

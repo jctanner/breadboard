@@ -1,0 +1,49 @@
+Subject: fix(triage): pass the forge host into the sandbox
+
+An agent running inside the sandbox reaches GitHub through gh, which takes its
+host from GH_HOST and, for any host that is not github.com, its credential from
+GH_ENTERPRISE_TOKEN rather than GH_TOKEN. The GitHub overlay passes neither, so
+every call the agent makes goes to github.com regardless of where the run is
+executing, and on an enterprise install the pre-flight connectivity check fails
+before the agent starts.
+
+Both values are already resolved on the host by the time the sandbox env file
+is built. Pass them through rather than rederiving them: that file is expanded
+before it is copied in, so it cannot carry shell logic to work them out itself.
+
+Passing GH_TOKEN alone is not a partial fix but a wrong one. gh will not read
+it on an enterprise host, so the agent authenticates with whatever the
+environment already held in GH_ENTERPRISE_TOKEN - which is the credential the
+run was launched with, not the one minted for the agent's role. It looks
+identical in the log.
+
+On github.com both expand to empty, which gh treats as unset, so behaviour
+there is unchanged.
+
+Scoped to the triage harness, which is the one exercised here. The same overlay
+shape appears in the other agent harnesses and would need the same two lines.
+
+Breadboard note: this patches fullsend-ai/agents and is applied to the agents
+mirror by deploy/fullsend/seed/seed-upstream-agents.py. Written to be sent
+upstream as-is. Add a DCO sign-off before submitting it as a human-authored
+change.
+
+diff --git a/harness/triage.yaml b/harness/triage.yaml
+index 889e41c..5e521c6 100644
+--- a/harness/triage.yaml
++++ b/harness/triage.yaml
+@@ -67,6 +67,14 @@ overlays:
+       sandbox:
+         ISSUE_URL: "${GITHUB_ISSUE_URL}"
+         GH_TOKEN: "${GH_TOKEN}"
++        # gh reads its host from GH_HOST and, for any host that is not
++        # github.com, its credential from GH_ENTERPRISE_TOKEN rather than
++        # GH_TOKEN. Without both, every call the agent makes inside the
++        # sandbox goes to github.com no matter where the run is executing.
++        # GH_TOKEN alone would leave the agent authenticating as whatever the
++        # environment already held rather than as the minted role.
++        GH_HOST: "${GH_HOST}"
++        GH_ENTERPRISE_TOKEN: "${GH_ENTERPRISE_TOKEN}"
+         FULLSEND_FORGE: github
+   - when: '(has(event.source) && event.source.system == "gitlab") || (!has(event.source) && runtime.forge == "gitlab")'
+     providers:

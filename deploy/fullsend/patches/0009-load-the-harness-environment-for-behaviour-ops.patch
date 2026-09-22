@@ -1,0 +1,234 @@
+Subject: fix(runtime): load the harness environment for dummy behaviour operations
+
+A scripted behaviour operation cannot see the harness environment, so
+assert_env reports a correctly delivered variable as unset:
+
+  ! Dummy runtime: assert_env GH_HOST unset or empty:
+  ! Agent exited with code 1
+
+The harness environment is not process state in the sandbox. It is a file,
+written once during setup from env.sandbox and whatever host_files
+contributed, and the real runtimes source it when they launch — buildRunCommand
+does it for the Claude runtime, and checkSandboxGitHubConnectivity does it for
+the GitHub pre-flight. Behaviour operations go through sandbox.Exec, which
+starts a fresh shell per call that inherits nothing from earlier ones, and none
+of them sourced that file. So every operation ran with an environment no real
+runtime would ever see.
+
+assert_env is where it shows up first, but it is not the only one affected: any
+operation needing a credential or a PATH entry from the harness was failing, or
+would fail, for a reason unrelated to what it was checking. Load the file for
+each operation that runs a command on the scenario's behalf. write_fixture's
+mkdir and its upload stay independent, since that plumbing can legitimately run
+before the environment matters.
+
+A missing or unreadable file is reported as itself rather than tolerated. If
+the harness environment is absent then the scenario is not exercising what it
+claims to, and continuing silently would attribute that to the operation.
+
+The environment file path becomes overridable on DummyRuntime, next to ExecFn,
+UploadFn and WriteResultsFn, so the existing tests that run generated commands
+in a real host shell can point at a file that exists there. Those tests are
+about checkout semantics and were previously passing only because nothing
+sourced anything.
+
+Diagnosed by reproducing it in a live sandbox: the identical assertion fails
+unsourced and passes sourced against a correct environment file, and a
+subsequent exec sees nothing the previous one set.
+
+Breadboard note: patches Go source, so it belongs to the build patch list in
+deploy/scripts/05i-build-fullsend.sh rather than the mirror list. Written to
+be sent upstream as-is. Add a DCO sign-off before submitting it as a
+human-authored change.
+
+diff --git a/internal/runtime/dummy.go b/internal/runtime/dummy.go
+index 9904d8e..8f0f4fb 100644
+--- a/internal/runtime/dummy.go
++++ b/internal/runtime/dummy.go
+@@ -70,6 +70,17 @@ type DummyRuntime struct {
+ 	ExecFn         sandboxExecFunc
+ 	UploadFn       sandboxUploadFunc
+ 	WriteResultsFn writeBehaviourResultsFunc
++	// EnvFile overrides the harness environment file behaviour operations
++	// source. Tests that run generated commands in a real host shell set it;
++	// production leaves it empty and uses defaultBehaviourEnvFile.
++	EnvFile string
++}
++
++func (r DummyRuntime) envFile() string {
++	if r.EnvFile != "" {
++		return r.EnvFile
++	}
++	return defaultBehaviourEnvFile
+ }
+ 
+ func (r DummyRuntime) execFn() sandboxExecFunc {
+@@ -223,6 +234,36 @@ func executeBehaviourScript(ctx context.Context, rt DummyRuntime, sandboxName, r
+ 	return results, firstErr
+ }
+ 
++// defaultBehaviourEnvFile is the harness environment file the sandbox is given
++// during setup: env.sandbox values plus everything host_files contributed.
++var defaultBehaviourEnvFile = sandbox.SandboxWorkspace + "/.env"
++
++// withHarnessEnv prefixes a behaviour command so it runs with the harness
++// environment loaded.
++//
++// Every behaviour operation goes through sandbox.Exec, which starts a fresh
++// shell that inherits nothing from earlier calls. The harness environment is
++// not process state in the sandbox; it is a file, and the real runtimes source
++// it when they launch — see buildRunCommand for the Claude runtime and
++// checkSandboxGitHubConnectivity for the GitHub pre-flight. A behaviour
++// operation that skips that step sees none of it, so assert_env reports a
++// correctly delivered variable as unset and any operation needing a credential
++// or a PATH entry from the harness fails for a reason unrelated to what it was
++// checking.
++//
++// A missing or unreadable file is reported as itself rather than tolerated. If
++// the harness environment is absent the scenario is not exercising what it
++// claims to, and silently continuing would turn that into a confusing failure
++// attributed to the operation.
++func (r DummyRuntime) withHarnessEnv(command string) string {
++	envFile := r.envFile()
++	quoted := shellQuote(envFile)
++	return fmt.Sprintf(
++		"if [ ! -r %s ]; then echo 'harness environment file not readable: %s' >&2; exit 1; fi; . %s; %s",
++		quoted, envFile, quoted, command,
++	)
++}
++
+ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op BehaviourOperation) error {
+ 	switch op.Op {
+ 	case "read_file":
+@@ -234,7 +275,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
+ 		if err != nil {
+ 			return err
+ 		}
+-		cmd := fmt.Sprintf("test -r %s", shellQuote(remotePath))
++		cmd := rt.withHarnessEnv(fmt.Sprintf("test -r %s", shellQuote(remotePath)))
+ 		_, stderr, exitCode, err := rt.execFn()(sandboxName, cmd, 30*time.Second)
+ 		if err != nil {
+ 			return fmt.Errorf("read_file exec: %w", err)
+@@ -251,7 +292,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
+ 		if err := validateHTTPURL(rawURL); err != nil {
+ 			return err
+ 		}
+-		cmd := fmt.Sprintf("curl -sf -- %s -o /dev/null", shellQuote(rawURL))
++		cmd := rt.withHarnessEnv(fmt.Sprintf("curl -sf -- %s -o /dev/null", shellQuote(rawURL)))
+ 		_, stderr, exitCode, err := rt.execFn()(sandboxName, cmd, 60*time.Second)
+ 		if err != nil {
+ 			return fmt.Errorf("url_get exec: %w", err)
+@@ -296,7 +337,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
+ 		if !branchNamePattern.MatchString(name) || strings.Contains(name, "..") {
+ 			return fmt.Errorf("checkout_branch invalid branch name %q", name)
+ 		}
+-		cmd := checkoutBranchCommand(repoDir, name)
++		cmd := rt.withHarnessEnv(checkoutBranchCommand(repoDir, name))
+ 		_, stderr, exitCode, err := rt.execFn()(sandboxName, cmd, 120*time.Second)
+ 		if err != nil {
+ 			return fmt.Errorf("checkout_branch exec: %w", err)
+@@ -313,7 +354,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
+ 		if !envVarNamePattern.MatchString(varName) {
+ 			return fmt.Errorf("assert_env invalid variable name %q", varName)
+ 		}
+-		cmd := fmt.Sprintf("v=$(printenv -- %s); test -n \"$v\"", shellQuote(varName))
++		cmd := rt.withHarnessEnv(fmt.Sprintf("v=$(printenv -- %s); test -n \"$v\"", shellQuote(varName)))
+ 		_, stderr, exitCode, err := rt.execFn()(sandboxName, cmd, 30*time.Second)
+ 		if err != nil {
+ 			return fmt.Errorf("assert_env exec: %w", err)
+@@ -331,7 +372,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
+ 		if err != nil {
+ 			return err
+ 		}
+-		cmd := fmt.Sprintf("test -r %s", shellQuote(remotePath))
++		cmd := rt.withHarnessEnv(fmt.Sprintf("test -r %s", shellQuote(remotePath)))
+ 		_, stderr, exitCode, err := rt.execFn()(sandboxName, cmd, 30*time.Second)
+ 		if err != nil {
+ 			return fmt.Errorf("assert_file exec: %w", err)
+@@ -354,7 +395,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
+ 		if err != nil {
+ 			return err
+ 		}
+-		cmd := fmt.Sprintf("jq -e %s %s >/dev/null", shellQuote("."+jsonPath), shellQuote(remotePath))
++		cmd := rt.withHarnessEnv(fmt.Sprintf("jq -e %s %s >/dev/null", shellQuote("."+jsonPath), shellQuote(remotePath)))
+ 		_, stderr, exitCode, err := rt.execFn()(sandboxName, cmd, 30*time.Second)
+ 		if err != nil {
+ 			return fmt.Errorf("assert_json exec: %w", err)
+diff --git a/internal/runtime/dummy_test.go b/internal/runtime/dummy_test.go
+index 917790d..d2b4f65 100644
+--- a/internal/runtime/dummy_test.go
++++ b/internal/runtime/dummy_test.go
+@@ -581,7 +581,12 @@ func TestExecuteBehaviourOp_CheckoutBranchSuccess(t *testing.T) {
+ // the command via sh -c instead of a sandbox.
+ func runCheckoutBranchForReal(t *testing.T, repoDir, branch string) error {
+ 	t.Helper()
+-	rt := DummyRuntime{ExecFn: func(_ string, cmd string, _ time.Duration) (string, string, int, error) {
++	// These tests run the generated command in a real host shell, where the
++	// sandbox's harness environment file does not exist. They are about
++	// checkout semantics, so give them an empty one that is readable.
++	envFile := filepath.Join(t.TempDir(), ".env")
++	require.NoError(t, os.WriteFile(envFile, []byte(""), 0o644))
++	rt := DummyRuntime{EnvFile: envFile, ExecFn: func(_ string, cmd string, _ time.Duration) (string, string, int, error) {
+ 		out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
+ 		if err != nil {
+ 			var exitErr *exec.ExitError
+@@ -811,3 +816,59 @@ func TestDummyRuntime_ClearIterationArtifacts_SweepFailureIsNotAnError(t *testin
+ 	require.Len(t, cmds, 2)
+ 	assert.Contains(t, cmds[1], "rm -rf")
+ }
++
++// Behaviour operations run in a fresh shell per call, so a value delivered
++// through the harness environment file is invisible unless the operation
++// sources it. This is what made assert_env report a correctly delivered
++// GH_HOST as unset.
++func TestExecuteBehaviourOpLoadsHarnessEnv(t *testing.T) {
++	t.Parallel()
++
++	ops := []BehaviourOperation{
++		{Op: "assert_env", Args: "GH_HOST"},
++		{Op: "assert_file", Args: "README.md"},
++		{Op: "assert_json", Args: "output/agent-result.json,action"},
++		{Op: "read_file", Args: "README.md"},
++		{Op: "checkout_branch", Args: "agent/42-fix-widget"},
++		{Op: "url_get", Args: "http://example.invalid/probe"},
++	}
++	for _, op := range ops {
++		t.Run(op.Op, func(t *testing.T) {
++			var got string
++			rt := DummyRuntime{
++				ExecFn: func(_, cmd string, _ time.Duration) (string, string, int, error) {
++					got = cmd
++					return "", "", 0, nil
++				},
++			}
++			require.NoError(t, executeBehaviourOp(rt, "sb", sandbox.SandboxWorkspace+"/target-repo", op))
++			assert.Contains(t, got, ". '"+sandbox.SandboxWorkspace+"/.env'",
++				"%s must source the harness environment", op.Op)
++		})
++	}
++}
++
++// A scenario whose harness environment is missing is not testing what it
++// claims to, so the operation says that rather than reporting the assertion
++// itself as the failure.
++func TestExecuteBehaviourOpReportsMissingHarnessEnv(t *testing.T) {
++	t.Parallel()
++
++	rt := DummyRuntime{
++		ExecFn: func(_, cmd string, _ time.Duration) (string, string, int, error) {
++			// Stand in for a sandbox with no environment file: run the
++			// generated command and let its own guard decide.
++			out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
++			code := 0
++			var ee *exec.ExitError
++			if errors.As(err, &ee) {
++				code = ee.ExitCode()
++			}
++			return "", string(out), code, nil
++		},
++	}
++	err := executeBehaviourOp(rt, "sb", sandbox.SandboxWorkspace+"/target-repo",
++		BehaviourOperation{Op: "assert_env", Args: "GH_HOST"})
++	require.Error(t, err)
++	assert.Contains(t, err.Error(), "harness environment file not readable")
++}

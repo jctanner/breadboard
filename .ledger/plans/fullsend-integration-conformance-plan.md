@@ -11,7 +11,13 @@ credentials and the agent environment, and reaches the agent step itself. The
 trace reaches the agent step, resolves releases against the emulator, and
 installs the Fullsend CLI from a vendored binary, and stands down the agent
 action's local sandbox host setup in favour of this cluster's OpenShell
-gateway, which is the decision taken on 2026-09-21. See status notes. See status notes.
+gateway. The agent now loads its whole harness from the local forge, runs its
+pre-script, and **posts a status comment to the issue as `fullsend-triage[bot]`
+using its minted credential**, which is the first forge write by an agent in
+this stack. With OpenShell moved to the pinned revision it now creates a real
+sandbox, with a Kubernetes `Sandbox` resource and Pod, and pulls its image. It
+stops there: the CLI is killed seconds later and the cause is not yet known,
+recorded as G36. See status notes. See status notes.
 
 ## Goal
 
@@ -896,6 +902,394 @@ called workflow could not be resolved. Nothing past that boundary ran.
   attribute and index access inside a placeholder, which Actions does not, and
   offering that to workflow text by accident is not a small mistake.
 
+- [x] **[W4] G26. A crashing job was abandoned, not failed.** An exception
+  escaping `execute_job` was caught by the runner's poll loop, logged as
+  `Error in poll loop`, and forgotten. The job stayed `in_progress` for ever:
+  no conclusion, no line in the run's own log, and a workflow that simply never
+  finished. The reviewer spotted it as "seems like it was stuck", which is
+  exactly how it presents. Fixed: a crash now fails the job and writes the
+  reason into the run's log, and a failure to report that does not mask the
+  crash. This is the worst form of the quiet failure this trace keeps turning
+  up, because there is nothing at all to read.
+
+- [x] **[W4] G27. `hashFiles` refused an absolute pattern.** It globbed from
+  the workspace, and `Path.glob` rejects an absolute pattern outright. The
+  agent action builds one with `format('{0}/go.mod', inputs.target-repo)`, so
+  the first run after `format()` was implemented raised there. An absolute
+  pattern is now anchored to the workspace, and one pointing outside it matches
+  nothing, which is what GitHub does. This was the exception G26 was hiding.
+
+- [x] **[W4] G28. The emulator served no raw file content.** github.com puts
+  raw bytes on a second hostname; an enterprise install has none and serves
+  them from the appliance at `<host>/<owner>/<repo>/raw/<ref>/<path>`. The
+  emulator implemented neither, so a tool that fetches a file by raw URL rather
+  than through the contents API had nowhere local to look and reached the
+  public internet. Fullsend's CLI does exactly that for agent definitions.
+  Implemented in the enterprise shape, plain bytes with `text/plain` rather
+  than the contents API's JSON envelope. It sits outside `/repos/`, so it asks
+  the visibility question itself rather than leaving a second door into a
+  private repository.
+
+- [x] **[W4] G29. `fullsend-ai/agents` did not exist in the emulator.** The CLI
+  carries no agent definitions; it resolves that repository to a commit and
+  downloads the harness from it. Mirrored whole, unlike the narrow Fullsend
+  mirror beside it: there only a handful of paths are read, while here the CLI
+  picks a file by agent name, and mirroring selectively would move the failure
+  to the first agent nobody anticipated.
+
+- [x] **[W4] G30. The agents-repo fetch is refused by SSRF protection, and
+  that protection is right.** With the three hardcoded hosts fixed, the CLI
+  resolves `fullsend-ai/agents@a75305ea` against the emulator and builds the
+  correct raw URL. The fetch then fails with
+  `resolved IP is internal/reserved: github.local resolved to 10.43.17.62`.
+
+  `internal/fetch` is an SSRF-hardened client: it pre-resolves DNS and refuses
+  private addresses. Every service in this cluster has one, so the guard fires
+  on all of them. Upstream anticipated the temptation and closed it off, since
+  the only way to skip the check is an **unexported** field set by
+  `NewTestPolicy`, whose comment says the overrides "are unexported to prevent
+  direct bypass of SSRF protections".
+
+  So this is not another hardcoded-host bug and should not be patched like one.
+  Patching it out would delete a deliberate control and would rightly be
+  refused upstream. The supported alternative needs no patch at all: an
+  `agents:` entry in `.fullsend/config.yaml` may name a **local path**, and a
+  config agent takes precedence over the agents-repo fallback, so committing
+  the harness to the repository removes the fetch entirely.
+
+  Presented as A, vendor the harness locally, or B, patch the guard. The
+  reviewer asked for a third: could it be feature-flagged? It can, and the
+  result is better than either, because the flag does not have to be a switch.
+
+  Patch `0006-allow-a-privately-reachable-forge.patch` adds `PrivateHosts` to
+  the fetch policy: an **exception list**, not a bypass. A host named there
+  skips internal-IP validation; every other host is validated exactly as
+  before; and a host must also appear in `AllowedDomains` to be fetched at all,
+  so two separate lists have to name it. Matching is exact, because a wildcard
+  exemption is how a narrow allowance becomes a broad one.
+
+  The default list is empty unless an operator sets
+  `FULLSEND_ALLOW_PRIVATE_FORGE=1`, and even then it holds at most one entry:
+  the host `GITHUB_SERVER_URL` already names. The flag names no host itself, so
+  it cannot reach an arbitrary internal service. github.com and its subdomains
+  are never exempt, since they have public addresses and exempting them could
+  only help an attacker who could make them resolve privately. The unexported
+  `skipIPCheck` is untouched.
+
+  Three Go tests cover it, which a security relaxation without would rightly be
+  refused for: the exception list is exact and case-insensitive and refuses an
+  unnamed host or a subdomain; the default requires both the opt-in and a forge
+  and never exempts github.com; and a private address is still refused for a
+  host that was not exempted.
+
+- [x] **[W4] G31. The raw-URL parser accepted only the public host.** With the
+  agent harness finally fetched and resolved, loading it failed on
+  `not a raw.githubusercontent.com URL: github.local`. A harness sources its
+  skills by URL, and `ParseRawContentURL` recognises exactly one layout, so a
+  URL this same CLI had just built for this forge was rejected by it.
+
+  Patch `0007-parse-enterprise-raw-content-urls.patch` accepts the enterprise
+  layout, `/{owner}/{repo}/raw/{ref}/{path}`, when the host is the one
+  `GITHUB_SERVER_URL` names. The `raw` segment is **required** rather than
+  optional: without it the ref would be read one position early and the parse
+  would succeed while pointing at a path that does not exist, which is worse
+  than refusing.
+
+  It also carries the host through as the **forge name**. A directory source is
+  fetched over git rather than HTTP, and `CloneURL` turns the forge name back
+  into a host, where "github" means github.com. Labelling an enterprise URL
+  "github" sent that fetch to the public site, which failed with `not our ref`
+  against a commit that exists only on the emulator. That was the fifth
+  hardcoded host, and it was invisible until the fourth was fixed.
+
+  An existing test pins the rejection message for the public host, so that
+  wording is preserved rather than rewritten; the message only changes when a
+  forge is actually configured.
+
+- [x] **[W4] G32. A composite action's steps did not inherit the calling
+  step's `env`.** GitHub applies a calling step's `env:` to every step of the
+  action it calls. The runner built each inner step's environment from the
+  action's own `env` and the job's, and dropped the caller's, so a value the
+  workflow set for the action to read never arrived.
+
+  Found once the harness finally loaded: the agent step failed with
+  `MINT_REPOS or REPO_FULL_NAME must be set for token minting`, although the
+  dispatch sets `REPO_FULL_NAME` on exactly that step. The failure surfaces
+  inside the action as a missing variable with no hint that a caller supplied
+  one, which is why it looked like a Fullsend configuration problem rather than
+  a runner gap.
+
+  Fixed, with the action's own `env` winning over the caller's so an action
+  that sets a value deliberately is not overridden.
+
+- [x] **[W4] G33. `GITHUB_OUTPUT` understood only `name=value`.** GitHub
+  accepts a second form for values that span lines or contain `=`:
+
+  ```
+  name<<DELIMITER
+  ...anything...
+  DELIMITER
+  ```
+
+  The runner's parser ignored it, so a step that used it **succeeded and
+  produced nothing**. That is how the routing payload went missing: the
+  dispatch writes `event_payload` with a random heredoc delimiter, the step
+  passed, its output was dropped, and the failure surfaced two jobs later as an
+  empty `ISSUE_URL` inside the agent's pre-script. Nothing in between said a
+  word.
+
+  Both forms are now read. An unclosed delimiter is dropped and logged rather
+  than guessed at, because inventing a value from a truncated file is worse
+  than having none.
+
+- [x] **[W4] G34. The emulator was OOMKilled by the conformance seed.** Its
+  memory limit was 512Mi, and the seed commits a 28 MiB binary and mirrors a
+  whole repository. The container died mid-push four times. Nothing said
+  "memory": the push failed with a 502 from the proxy, and the pod simply
+  restarted. Raised to 1536Mi with the reason written next to the numbers,
+  because the next person to see a 502 here should not have to find this twice.
+
+- [x] **[W4] G35. The OpenShell build is not pinned to what Fullsend expects.**
+  Fullsend pins OpenShell `0.0.116` at `d1155aa7` in
+  `.github/scripts/openshell-version.sh`, and its sandbox code passes
+  `--detach` to `openshell sandbox create`. The image was built from whatever
+  `checkouts/openshell` happened to be, `0.0.111-dev.6+gb2ea8182`, which does
+  not accept that argument. The agent therefore reached sandbox creation and
+  failed three times with
+  `error: unexpected argument '--detach' found`.
+
+  The build now compares the checkout against the pin and refuses, naming both
+  revisions, with `FULLSEND_ALLOW_OPENSHELL_SKEW=1` to override. This is
+  precisely the class of problem Fullsend ADR 0062 exists to prevent, and the
+  guard is the durable half of the fix: the next skew fails at build time
+  naming both revisions, rather than inside an agent after three retries.
+
+  The checkout was then moved to the pinned revision on the reviewer's
+  instruction. It was clean beforehand, and the previous revision was
+  `b2ea8182` should it need restoring. `--detach` is accepted there, confirmed
+  in the CLI's own argument tests.
+
+- [ ] **[W4] G36. `openshell sandbox create` is killed, and I do not yet know
+  by what.** With the pinned OpenShell in place the sandbox is genuinely
+  created: the CLI reports `Created sandbox: fs-tri-...`, `Requesting
+  compute`, `Sandbox allocated`, `Image pulled`, and the cluster shows a real
+  `Sandbox` custom resource and Pod in `ai-pipeline` lasting about two minutes.
+  Then the CLI process dies with `signal: killed`, three attempts running, each
+  three to five seconds in, right after the image pull line.
+
+  What it is **not**, checked rather than assumed:
+
+  - not the runner's memory limit: the cgroup peaked at 168 MiB of 1 GiB with
+    `oom_kill 0`;
+  - not node pressure: the node is at 15% memory;
+  - not the kernel OOM killer picking it off: the only recent kills in the
+    kernel log are the emulator's own cgroup from G34, already fixed; and
+  - not the create timeout: that context is `readyTimeout` plus a buffer, two
+    minutes, and this dies in seconds.
+
+  `signal: killed` is SIGKILL, and Go's `exec.CommandContext` sends exactly
+  that on context cancellation, so a cancelled parent context remains the best
+  hypothesis. What would cancel it that early is not yet established. Worth
+  noting the timings vary with the CLI's own progress rather than sitting at a
+  fixed wall clock, which argues against a simple timer.
+
+  Written up for handover in
+  [`.ledger/bugs/openshell-sandbox-create-killed.md`](../bugs/openshell-sandbox-create-killed.md),
+  with the ruled-out causes, the exact code paths, a reproduction, and a first
+  step that splits "the CLI dies on its own" from "Fullsend kills it".
+
+- [x] **[W4] G37. The sandbox could not reach the forge, for two reasons.**
+  With the pinned sandbox image imported, the agent's sandbox bootstraps,
+  receives the project code, passes its context scan and its pre-agent security
+  scan, and then fails a pre-flight connectivity check.
+
+  Two causes, both in the agents repository, both now patched:
+
+  - the GitHub overlay passed `GH_TOKEN` into the sandbox but not `GH_HOST`,
+    and `gh` reads its host from that. Every call went to github.com. For any
+    host that is not github.com `gh` also wants `GH_ENTERPRISE_TOKEN` rather
+    than `GH_TOKEN`, which the runner already resolves, so the patch passes
+    both through rather than deriving them again. It cannot be derived in the
+    env file: that file is expanded on the host before it is copied in, and the
+    expander consumes `${VAR}` and `$VAR` alike, so no runtime shell logic can
+    survive there. Upstream-bound.
+  - the sandbox's network allowlist listed only `api.github.com` and
+    `github.com`, so the proxy refused the CONNECT with 403. Adding the local
+    forge is a **local substitution, not upstream-bound**: a provider profile
+    *is* the network policy, Fullsend imports profiles verbatim and expands
+    nothing in them, and that is correct. An environment variable should not be
+    able to widen what a sandbox may reach. The read-only posture and the
+    binary allowlist are unchanged, including the deliberate exclusion of
+    `curl` so the agent cannot make raw HTTP calls with the injected token.
+
+  Both confirmed working: the check now addresses
+  `https://github.local/api/v3/rate_limit` rather than github.com, and the
+  proxy no longer refuses it.
+
+- [ ] **[W4] G38. The sandbox egress proxy resets the connection to the local
+  forge.** With the host and the allowlist both correct, the pre-flight now
+  fails differently:
+  `read tcp 10.200.0.2:35364->10.200.0.1:3128: read: connection reset by peer`.
+
+  The proxy inside the sandbox network namespace accepts the request and then
+  resets it, which is a layer below the allowlist. The two candidates are name
+  resolution, since the proxy may not resolve a cluster name the way the rest
+  of the namespace does, and TLS, since the proxy intercepts and the forge is
+  served by the internal CA. The second is the concern raised before the image
+  import and it has still not been reached or ruled out.
+
+  Note the gateway pod is distroless, so it cannot be inspected with `kubectl
+  exec`. The run collects OpenShell logs to the job workspace, but the runner
+  deletes that directory when the job ends, so they have to be captured during
+  the run or the collection step redirected.
+
+  Written up for handover in
+  [`.ledger/bugs/sandbox-proxy-resets-local-forge.md`](../bugs/sandbox-proxy-resets-local-forge.md),
+  including what has already been fixed so it is not redone, the gateway and
+  supervisor running 0.0.110 against a CLI pinned to 0.0.116, and a first step
+  that keeps the OpenShell logs the run already collects and then throws away.
+
+- [x] **[W4] G39. An ambient admin token silently outranked every minted
+  credential.** Issue 86 came back carrying two
+  identities: the status comments from `fullsend-triage[bot]`, the triage
+  comment itself from `admin`. The split was not cosmetic.
+
+  `gh` picks the variable it reads a credential from by host - `GH_TOKEN` on
+  github.com, `GH_ENTERPRISE_TOKEN` on anything else. Two things met there.
+  The emulator runner injected its own admin token into every step that
+  declared none, and then mirrored it into `GH_ENTERPRISE_TOKEN` so `gh` would
+  work against a `.local` host at all. Fullsend, minting a role-scoped token
+  mid-step, overwrote `GH_TOKEN` - the variable `gh` was not reading. The
+  ambient admin token in `GH_ENTERPRISE_TOKEN` stayed in charge for the
+  post-script, so the forge write that the mint exists to scope was made with
+  an administrator credential, and the job log recorded a successful mint
+  either way.
+
+  Both halves are fixed. The runner no longer grants a credential to a step
+  that did not ask for one, which is what GitHub does; only a
+  workflow-declared token is mirrored. Every `gh` call in
+  `reusable-dispatch.yml` already declares its own token, and no workflow this
+  stack dispatches relies on the ambient one.
+
+  It reached further than the comment authorship. The triage harness overlay
+  builds the sandbox environment by expanding `${GH_ENTERPRISE_TOKEN}` on the
+  host, so the credential handed to the agent *inside* the sandbox was the
+  same ambient admin token. The sandbox boundary held - the provider profile,
+  the binary allowlist and the egress proxy all did their jobs - but what it
+  was holding was an administrator credential. The comment on agents patch
+  0002 said "the runner already sets these", which was true and was exactly
+  the problem; it now says where the value is supposed to come from.
+
+  The Fullsend half is a real bug on any GitHub Enterprise Server install, not
+  a local artefact: a stale `GH_ENTERPRISE_TOKEN` outranks the minted token
+  there too, with nothing in the log to say so.
+  `0008-scope-the-minted-token-on-enterprise-forges.patch` sets both variables
+  from the host, restores both in the existing cleanup, and refreshes both on
+  a remint. Upstream-bound, with a unit test on the host predicate.
+
+- [ ] **[W4] G40. `GH_HOST` reaches the sandbox empty, so the agent step always
+  fails.** The agent gets into a real sandbox with a real minted credential and
+  then fails the behaviour script's first host assertion:
+  `! Dummy runtime: assert_env GH_HOST unset or empty:`, exit 1.
+
+  Never worked, and not caused by G39: identical in run 1236 (job 2505) and run
+  1247 (job 2565), which bracket that fix. It went unnoticed because Fullsend
+  runs the post-script regardless of agent exit code, so the issue still gets
+  its label and its triage comment and the terminal status comment still says
+  success. Only the job log and the run's `conclusion` show the failure.
+
+  Established: `env.sandbox` is delivered after `.env.d` sourcing and takes
+  precedence; no reserved-key warning was emitted, so the value was exported
+  empty rather than skipped; the harness fetched for the run does carry patch
+  `agents/0002`'s two lines; expansion is plain `os.Getenv` and the mint
+  completes before it; nothing in the live path assigns `GH_HOST`.
+
+  Not established: whether the runner's `GH_HOST` reaches the composite
+  action's inner step at all. Two early greps that appeared to exonerate
+  `setup-agent-env.sh` were 404s, and `runtime_env` is applied *after* the
+  block that sets `GH_HOST`, so a `GITHUB_ENV` write there would win. That is
+  the untested lead.
+
+  **Root-caused by another agent, and none of my three candidates was it.**
+  The harness environment is a *file* in the sandbox, not process state. Real
+  runtimes source it on launch; behaviour operations go through `sandbox.Exec`,
+  which starts a fresh shell per call, and none of them sourced it. So the
+  value was delivered correctly and the assertion could never see it. They
+  reproduced it in a live sandbox: the identical assertion fails unsourced and
+  passes sourced against a correct file.
+
+  That also invalidates two things I had leaned on. `GH_TOKEN` passing did not
+  witness `env.sandbox` working - provider configuration supplies it
+  independently. And the headline names only the *first* failed operation, so
+  other assertions may have been failing the whole time; the full set is in
+  `output/behaviour-results.json`.
+
+  Fixed upstream-bound in
+  `0009-load-the-harness-environment-for-behaviour-ops.patch`, with the
+  behaviour script corrected in the same pass and its `GH_ENTERPRISE_TOKEN`
+  assertion restored - it had been dropped on reasoning that was wrong for
+  this same reason. Written up in
+  [`.ledger/bugs/gh-host-empty-in-sandbox.md`](../bugs/gh-host-empty-in-sandbox.md).
+
+- [x] **[W4] G41. `actions/upload-artifact` is not emulated, so a fully
+  successful run still concludes `failure`.** Run 1259's agent exited 0 and
+  every assertion passed; the Triage job then failed on the composite action's
+  last step:
+  `Unsupported action: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a`.
+
+  The runner refuses unsupported actions rather than reporting them as success
+  (G17), so this is an honest failure rather than a hidden one — but it is now
+  the only thing between this chain and a conformance run that concludes
+  `success` on its own terms.
+
+  **Content belongs on disk, not in the database.** `src/app/api/actions.py`
+  already serves upload, list, get and delete, but it stores the files as a
+  JSON column on `WorkflowArtifact` — and the `archive_download_url` it
+  advertises,
+  `/repos/{owner}/{repo}/actions/artifacts/{artifact_id}/{name}`, has no route.
+  Confirmed against the live emulator's OpenAPI: only
+  `.../artifacts/{artifact_id}` (get, delete) and `.../runs/{id}/artifacts`
+  (get, post) exist. So the write path works and the read path 404s; the API
+  can store an artifact and cannot serve one.
+
+  The emulator already solves this problem once, for job logs: the row is the
+  index and the bytes live at `DATA_DIR/logs/jobs/{job_id}.log`, streamed back
+  on request. `DATA_DIR` is backed by the `github-emulator-data` PVC, so that
+  is durable across restarts. Artifacts should follow it —
+  `DATA_DIR/artifacts/{artifact_id}/...` with name, size and relative paths on
+  the row.
+
+  That choice removes three problems rather than managing them. Blobs stop
+  bloating a SQLite database that has already been OOM-killed once by a large
+  push (G34); binary content needs no base64; and the advertised download URL
+  becomes something that can actually stream.
+
+  Changing the upload contract is cheap here: nothing in Breadboard calls this
+  API, and the only consumer in the emulator is its own
+  `tests/actions/test_fidelity.py`. Worth deciding deliberately whether the
+  download serves a zip, as real GitHub does, or individual files — the current
+  URL shape implies the latter.
+
+  The runner side is then a shim in `_ACTION_SHIMS` that collects the step's
+  `path` input and uploads it.
+
+  **Done, verified by run 1271.** Emulator storage reworked per ADR-0002 in the
+  github-emulator repo; runner shim added; `github` expression context
+  populated, which was the bug that made the first attempt upload nothing. Six
+  files and 64 KB stored, both download shapes serving, and
+  `behaviour-results.json` retrievable from a run whose workspace is long
+  gone - all ten operations `success: true`.
+
+  **It is also the observability fix two investigations have asked for.** Both
+  [`openshell-sandbox-create-killed.md`](../bugs/openshell-sandbox-create-killed.md)
+  and [`sandbox-proxy-resets-local-forge.md`](../bugs/sandbox-proxy-resets-local-forge.md)
+  record that the evidence needed to diagnose a run — the collected OpenShell
+  logs — is written into the job workspace and deleted when the runner tears it
+  down. G40 added `behaviour-results.json` to that list, and made the stronger
+  point that a run must be judged by that file rather than by the job log's
+  first-error headline or the comment the post-script leaves on the issue.
+  Emulating the upload is what makes all of it durable.
+
 *Group F - Fullsend-side, not emulator gaps. Decision 5 does not cover these.*
 
 - [ ] **[Track F] F1. `fullsend github setup` cannot target the emulator.** It and
@@ -939,6 +1333,49 @@ called workflow could not be resolved. Nothing past that boundary ran.
   OpenShell. Vendoring the binary remains available and is complementary rather
   than an alternative; it short-circuits before any of that and is upstream's
   own mechanism. That is a separate decision from this patch.
+
+- [x] **[Track F] F5. The agents-repo lookup addressed github.com by name.**
+  Both halves did: the ref resolution used a bare `gh.New`, which targets
+  api.github.com regardless of `GITHUB_API_URL`, and the file download used a
+  hardcoded `raw.githubusercontent.com` prefix. On any other host both leave
+  the appliance and are refused with credentials never meant for them, which
+  surfaces as `401 Bad credentials` and
+  `no config and agents-repo fallback unavailable`.
+
+  There turned out to be **three** such places, not two, and the third only
+  became visible once the first two were fixed: the fetch layer's own domain
+  allowlist names github.com's two hosts and nothing else, so even a correctly
+  built URL was refused with `fetch: domain not in allowlist`.
+
+  Patch `0005-resolve-agents-repo-against-configured-host.patch` covers all
+  three: the base-URL-aware client for the API half, a raw prefix derived from
+  `GITHUB_SERVER_URL` for the download half, and the configured forge host
+  added to the default fetch allowlist from the same variable. All three keep
+  the public hosts, so github.com is unchanged.
+
+  This one patches **Go source**, so it joins the build patch list rather than
+  the mirror list; the two lists are now both commented to say which is which,
+  because a patch in the wrong list does nothing and does it silently. It also
+  means the vendored binary has to be re-seeded after every rebuild, since the
+  repository holds a copy of the compiled CLI.
+
+- [x] **[Track F] F6. The status-comment client is another bare `gh.New`.**
+  `run.go:4897` builds the client that posts a run's status comment with
+  `gh.New(result.Token)`, which targets api.github.com regardless of
+  `GITHUB_API_URL`. Observed as
+  `Failed to post completion status: create issue comment on #79: 401 Bad
+  credentials` while the same run talked to the emulator successfully
+  everywhere else. It is the identical one-line change patch 0005 already makes
+  at `run.go:648`, and belongs in that patch.
+
+- [x] **[Track F] F7. The triage harness requires a github.com issue URL.**
+  `tracker_validate_issue_url` in `scripts/pre-triage.sh` matches
+  `^https://github\.com/...`, so a valid issue URL on any other host is
+  rejected: `ISSUE_URL does not match expected pattern`. That script lives in
+  **`fullsend-ai/agents`**, not in the Fullsend repository, so fixing it needs
+  a third patch target and a patch list on the agents mirror seeder, which does
+  not have one yet. The fix itself is small: derive the expected host from
+  `GITHUB_SERVER_URL` rather than hardcoding it.
 
 - [ ] **[Track F] F4. The runner pod has egress to the public internet.** The
   401 above is evidence: the request reached `api.github.com` and was answered.
@@ -2241,3 +2678,238 @@ The remaining question is narrow and is still the reviewer's: whether a
 conformance run may treat those four steps as satisfied by the environment, and
 how that is recorded so the run does not appear to certify host setup it never
 executed. Everything else about the decision was me over-stating the cost.
+
+### 2026-09-21 the successful run was authenticating as an administrator
+
+Issue 86 came back labelled and commented on, with a terminal status comment
+from `fullsend-triage[bot]`. The triage comment was posted by `admin`.
+
+Two corrections to what I reported at the time, both found while verifying the
+fix. The run I credited was 1240, which skipped the Triage job entirely and was
+`success` because every job in it was skipped; the work was done by run 1236.
+And 1236's agent step did not pass - it failed the behaviour script's
+`assert_env GH_HOST` and exited 1. Fullsend runs the post-script regardless, so
+the label and the comment appeared anyway and I read them as a completed run.
+The post-script path was real; the agent path was not.
+
+That was worth more scrutiny than celebration, and the answer is that the run
+was not demonstrating what it appeared to demonstrate.
+
+**`gh` does not read `GH_TOKEN` on this forge.** It selects the credential
+variable by host: `GH_TOKEN` and `GITHUB_TOKEN` for github.com,
+`GH_ENTERPRISE_TOKEN` and `GITHUB_ENTERPRISE_TOKEN` for everything else.
+`github.local` is everything else.
+
+**Two independent conveniences met there.** The emulator runner injected its
+admin token into any step that declared none, then mirrored whatever token was
+present into `GH_ENTERPRISE_TOKEN` so `gh` would authenticate to a `.local`
+host at all. Fullsend's `mintAgentToken` overwrote `GH_TOKEN` with the minted
+role credential, with a comment stating that minting must complete before the
+post-script runs - which is exactly right, and had no effect, because
+`GH_TOKEN` is not the variable in use here.
+
+**So the scoping was defeated without a symptom.** The mint succeeded, the log
+said so, the bot posted status, and the actual forge write went out with an
+administrator token. Nothing distinguished that from the intended behaviour.
+This is the fourth time in this chain that the interesting failure was a quiet
+one, and the first where the quiet failure produced a *passing* run.
+
+Both halves are now fixed, and they are different kinds of fix.
+
+The runner's is a correctness fix against GitHub's own behaviour: GitHub puts
+no credential in a step's environment unless the workflow writes one. Ours
+did, so every step ran as an administrator whether or not it asked. Now only a
+workflow-declared token is mirrored. Checked before removing it: every `gh`
+call in `reusable-dispatch.yml` declares its own `GH_TOKEN`, the locally seeded
+workflows use `gh` not at all, and the only bare-`gh` workflows in the tree are
+backup copies of third-party repos under `deploy/repos.bak/` that this runner
+never dispatches. `actions/checkout`'s own admin fallback is a separate path
+and is untouched.
+
+Fullsend's is an upstream bug report with a patch. On any GitHub Enterprise
+Server install, a `GH_ENTERPRISE_TOKEN` already in the environment outranks the
+token the run just minted, for the sandbox stream, the post-script, and every
+`host_files` expansion after it. `0008-scope-the-minted-token-on-enterprise-forges.patch`
+derives the host from `GH_HOST`, falling back to `GITHUB_SERVER_URL`, sets both
+variables when it is not github.com, restores both in the existing cleanup, and
+adds them to `syncRunnerEnvTokens` so a remint does not leave the first mint's
+token snapshotted in `RunnerEnv` - the same bug as upstream #7231, one variable
+over. Behaviour on github.com is unchanged. A unit test covers the host
+predicate; the wiring is three lines mirroring the `roleTokenVars` loop
+directly above it. All five patches apply in sequence against the pinned
+revision and the result builds and passes `internal/cli`.
+
+**It was not only the comment.** The triage harness overlay builds the sandbox
+environment by expanding `${GH_ENTERPRISE_TOKEN}` on the host before copying it
+in, so the agent inside the sandbox received the ambient admin token too. The
+sandbox boundary itself held - provider profile, binary allowlist and egress
+proxy all behaved - but the credential inside it was an administrator's. The
+inline comment I wrote on agents patch 0002 said "the runner already sets
+these", which was true, and was the bug stated as a justification. Both that
+comment and the patch header now say where the value is meant to come from.
+
+**What this costs.** B4's verdict was requested on the strength of runs that
+were, on this point, not proving what they claimed. The chain up to the mint is
+unaffected - event routing, authorization, OIDC, the exchange itself all still
+hold, and the mint really did return a scoped bot token. What was not proven is
+that the scoped token was the one used afterwards. Re-running is the only way
+to establish it, and the identity on the triage comment is now a real
+assertion: if it says `fullsend-triage[bot]`, the scoping held.
+
+### 2026-09-21 the identity fix verified, and a gap it uncovered
+
+Run 1247, with both fixes deployed and the vendored binary re-seeded:
+
+| | run 1236 | run 1247 |
+| --- | --- | --- |
+| status comments | `fullsend-triage[bot]` | `fullsend-triage[bot]` |
+| triage comment | `admin` | `fullsend-triage[bot]` |
+| label | `needs-info` | `needs-info` |
+
+The post-script minted its token and wrote to the forge as the minted role.
+That is the assertion G39 set out to make, and it holds. The log shows the
+mint, the comment, and no fallback to an ambient credential - there is no
+longer an ambient credential to fall back to.
+
+**The run still reports `failure`, for a reason that predates these changes.**
+The agent step fails `assert_env GH_HOST unset or empty`. Run 1236 failed the
+same assertion, so this is not a regression; it is a gap that the earlier run's
+post-script output concealed, because the post-script runs whether the agent
+succeeded or not and its comment is what I was reading as success.
+
+**What is established about it.** `env.sandbox` is delivered - it is written
+after `.env.d` sourcing and takes precedence, and no reserved-key warning
+appears in the log. The harness fetched for this run does carry patch 0002's
+`GH_HOST` and `GH_ENTERPRISE_TOKEN` lines, confirmed by reading the mirrored
+`harness/triage.yaml` at the commit the log names. The expander is plain
+`os.Getenv` and minting completes before expansion runs. So the value was
+exported as an empty string, which means `GH_HOST` was empty in the Fullsend
+process when the sandbox env file was built.
+
+**What is not established is why.** The runner sets `GH_HOST` unconditionally
+for every step, the Route job's `gh api` calls depend on it and succeed, and
+nothing in the mirrored action, its scripts, or the composite wrapper writes
+`GH_HOST` or an empty override. Each variable that did reach the sandbox has
+another explanation - `ISSUE_URL` and `GH_TOKEN` from the `host_files` env
+file, `FULLSEND_FORGE` from the harness forge section - so none of them
+actually witness `env.sandbox` expansion working. I have not found the
+mechanism by reading, and the next step is a direct probe of the step
+environment rather than more inference.
+
+Noting the pattern rather than repeating it: three times now in this chain I
+have inferred a cause from a log that was consistent with several, and twice
+been wrong. The probe is cheaper than the next guess.
+
+### 2026-09-21 the agent path closes, and the one thing left
+
+Run 1259, issue 89: `✓ Agent exited with code 0`. Every behaviour assertion in
+the conformance scenario passes — the minted credential arrived in both the
+variable Fullsend sets and the one `gh` actually reads, the forge host and the
+issue identity arrived, the target repository was copied in and is readable at
+the path an agent's own tooling uses, the result was written inside the sandbox
+and came back out through schema validation to the post-script, which labelled
+the issue and commented on it as `fullsend-triage[bot]`.
+
+That is the first run in this chain where the agent step itself succeeded. Two
+earlier runs looked like this from the issue alone and were not.
+
+**It took two runs, and the second failure was mine.** With `GH_HOST` fixed,
+run 1253 failed on the next assertion down. `read_file` resolves paths against
+the target repository; `write_fixture`, `assert_file` and `assert_json` resolve
+against the workspace, which is its parent. So
+`read_file output/agent-result.json` was looking for
+`target-repo/output/agent-result.json` and had never been able to pass. I wrote
+that operation wrong the day I wrote the script and never found out, because
+`assert_env GH_HOST` always failed first and the headline reports only the
+first failure. This is the trap the G40 investigation named, surfacing one run
+later in my own work. The script now exercises both bases deliberately, one
+operation each, and records the asymmetry.
+
+**What remains is a single step.** The Triage job still concludes `failure`, on
+the last step of the composite action:
+
+```text
+Unsupported action: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+```
+
+The runner refuses unsupported actions rather than reporting them as success —
+a deliberate choice from G17, and the reason none of this chain's failures were
+silent. So the remaining gap is honest rather than hidden, but the run cannot
+conclude `success` until the artifact upload is emulated.
+
+Worth noting that fixing it pays for itself twice. Both open bug documents
+record that the evidence needed to judge a run — `behaviour-results.json`, and
+the OpenShell logs the run already collects — is written into the job workspace
+and then deleted when the runner tears it down. An `upload-artifact` shim is
+the mechanism that would make those durable, which is precisely what the G40
+investigation said this project needs: judge a run by that file, not by the
+headline or by the comment on the issue.
+
+Recorded as G41. It is the last thing between this chain and a conformance run
+that concludes `success` on its own terms, and it is also the observability fix
+two separate investigations have now asked for.
+
+### 2026-09-22 G41, and a green run that proved nothing
+
+Run 1271 concludes `success` with an artifact that actually contains the
+evidence:
+
+```text
+   913  fs-tri-c8e81033b6e7/iteration-1/output/agent-result.json
+  1816  fs-tri-c8e81033b6e7/iteration-1/output/behaviour-results.json
+ 18044  fs-tri-c8e81033b6e7/logs/openshell-gateway.log
+ 39626  fs-tri-c8e81033b6e7/logs/openshell-sandbox.log
+   387  fs-tri-c8e81033b6e7/metrics.json
+  3712  fs-tri-c8e81033b6e7/run-telemetry.jsonl
+```
+
+`behaviour-results.json` now comes back from a single GET against a run whose
+workspace was deleted minutes earlier, and it reports all ten operations
+`success: true`. Both OpenShell log sources are in there too. That is what the
+G36 and G38 investigations each asked for and neither had.
+
+**The storage decision was the user's, and it was the right one.** My first
+write-up of G41 said the emulator side "already exists" and framed the work as
+a runner shim posting a JSON file map, with size caps and base64 as open
+questions. Asked whether content had to live in the database, checking turned
+up that the emulator already solves this for job logs - row as index, bytes on
+a mounted volume - and that the artifact API's advertised
+`archive_download_url` had no route at all. It could store and could not
+serve. Going to disk removed the size cap and the base64 question rather than
+answering them. Recorded as ADR-0002 in the github-emulator repo.
+
+Both download shapes are served, as the user asked: `/artifacts/{id}/zip`
+matching GitHub's URL, with `zip` in the archive-format slot rather than the
+artifact name, and `/artifacts/{id}/files/{path}` as a labelled emulator
+extension for reading one file without unpacking.
+
+**The first attempt produced a green run that uploaded nothing.** Run 1265
+concluded `success` with zero artifacts, because `${{ github.workspace }}`
+rendered empty, `path` became `/output`, nothing matched, and the shim warned
+and passed - faithfully, since `warn` is the real action's default. The runner
+had populated the `github` expression context with `token` and nothing else,
+so a composite action could read `$GITHUB_WORKSPACE` from the shell and got an
+empty string from `${{ github.workspace }}`. Same shape as the `GH_HOST` bug:
+the value is known, exported as an environment variable, and absent from where
+the workflow asks for it. Fixed by building the context from the job and
+threading it through rendering and condition evaluation.
+
+Two things worth keeping from that.
+
+The run conclusion was the wrong thing to judge it by, exactly as the job
+log's first-error headline was in G40. Both times the honest signal was a file:
+the artifact listing here, `behaviour-results.json` there. That is now the
+habit this chain has had to learn three times.
+
+And testing the shim in isolation before deploying caught a fidelity bug that
+a passing run would have hidden: rooting the archive at the common ancestor of
+matched files rather than of the search paths collapses a directory level, so
+`path: output` would have stored `iteration-1/output/...` and silently dropped
+the per-run directory that distinguishes one upload from the next. The stored
+paths above show it kept.
+
+Also fixed in passing: `deploy/scripts/05a-build-github-emulator.sh` defaults
+`PROJECT_ROOT` to `/vagrant` while `05i` derives it from the script location,
+so the first emulator build did nothing - and `| tail` reported success
+because a pipeline's exit status is the last command's. Third time in this
+project a pipeline has masked a failure.

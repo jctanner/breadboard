@@ -1,0 +1,245 @@
+Subject: fix(forge): parse enterprise raw content URLs
+
+ParseRawContentURL accepts only raw.githubusercontent.com. A harness that
+sources a skill or script from the forge it is running on therefore fails to
+load with `not a raw.githubusercontent.com URL: <host>`, even though the URL is
+one this CLI built for that forge.
+
+An enterprise install has no raw.githubusercontent.com. It serves the same
+bytes from the appliance, with a literal "raw" segment after the repository
+instead of a separate hostname:
+
+  https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path...}
+  https://{host}/{owner}/{repo}/raw/{ref}/{path...}
+
+Accept the second when the host is the one GITHUB_SERVER_URL names, which is
+the same variable the rest of the CLI uses to decide where the forge is. The
+"raw" segment is required rather than optional: without it the ref would be
+read from the wrong position and the parse would succeed while pointing at a
+path that does not exist.
+
+Carry the host through as the forge name, too. A directory source is fetched
+over git rather than HTTP, and CloneURL turns the forge name back into a host,
+where "github" means github.com. Labelling an enterprise URL "github" sends
+that fetch to the public site, which fails with "not our ref" against a commit
+that only exists on the appliance.
+
+The public host keeps its behaviour, its forge name, and its original error
+message, which callers match on.
+
+Breadboard note: patches Go source, so it belongs to the build patch list in
+deploy/scripts/05i-build-fullsend.sh, and it applies on top of patches 0005
+and 0006. Written to be sent upstream as-is. Add a DCO sign-off before
+submitting it as a human-authored change.
+
+--- a/internal/forge/url.go
++++ b/internal/forge/url.go
+@@ -3,6 +3,7 @@
+ import (
+ 	"fmt"
+ 	"net/url"
++	"os"
+ 	"strings"
+ )
+ 
+@@ -160,6 +161,24 @@
+ 	}, nil
+ }
+ 
++// configuredForgeHost returns the hostname of GITHUB_SERVER_URL, or "".
++//
++// GITHUB_SERVER_URL is the standard Actions variable naming the host a run is
++// executing against, and the CLI already reads it elsewhere to decide where
++// the forge is. Reading it here keeps raw-URL parsing consistent with that
++// choice instead of recognising only the public host.
++func configuredForgeHost() string {
++	server := strings.TrimSpace(os.Getenv("GITHUB_SERVER_URL"))
++	if server == "" {
++		return ""
++	}
++	parsed, err := url.Parse(server)
++	if err != nil {
++		return ""
++	}
++	return strings.ToLower(parsed.Hostname())
++}
++
+ // hostnameToForge maps a forge hostname to its short name.
+ func hostnameToForge(hostname string) string {
+ 	switch hostname {
+@@ -193,8 +212,25 @@
+ 	if u.Scheme != "https" {
+ 		return nil, fmt.Errorf("unsupported scheme %q: only https is accepted", u.Scheme)
+ 	}
+-	if u.Hostname() != "raw.githubusercontent.com" {
+-		return nil, fmt.Errorf("not a raw.githubusercontent.com URL: %s", u.Hostname())
++	host := u.Hostname()
++	forge := configuredForgeHost()
++	enterprise := false
++	switch {
++	case host == "raw.githubusercontent.com":
++	case host != "" && host == forge:
++		// An enterprise install has no raw.githubusercontent.com. It serves
++		// the same bytes from the appliance, with a "raw" segment after the
++		// repository instead of a separate hostname.
++		enterprise = true
++	default:
++		// Keep the original wording when no forge is configured: it is the
++		// whole truth in that case, and it is what callers already match on.
++		if forge != "" {
++			return nil, fmt.Errorf(
++				"not a raw.githubusercontent.com or %s URL: %s", forge, host,
++			)
++		}
++		return nil, fmt.Errorf("not a raw.githubusercontent.com URL: %s", host)
+ 	}
+ 
+ 	var segments []string
+@@ -204,14 +240,29 @@
+ 		}
+ 	}
+ 
+-	// Need at least 3 segments: owner, repo, ref.
+-	if len(segments) < 3 {
++	// Need at least 3 segments: owner, repo, ref. The enterprise layout adds
++	// a literal "raw" between the repository and the ref.
++	minimum := 3
++	if enterprise {
++		minimum = 4
++	}
++	if len(segments) < minimum {
++		if enterprise {
++			return nil, fmt.Errorf("URL path too short: need at least /{owner}/{repo}/raw/{ref}")
++		}
+ 		return nil, fmt.Errorf("URL path too short: need at least /{owner}/{repo}/{ref}")
+ 	}
+ 
+ 	owner := segments[0]
+ 	repo := segments[1]
+-	ref := segments[2]
++	refIndex := 2
++	if enterprise {
++		if segments[2] != "raw" {
++			return nil, fmt.Errorf("not a raw content URL: expected /{owner}/{repo}/raw/{ref}, got %q", u.Path)
++		}
++		refIndex = 3
++	}
++	ref := segments[refIndex]
+ 
+ 	if owner == "" {
+ 		return nil, fmt.Errorf("empty owner in URL")
+@@ -224,12 +275,21 @@
+ 	}
+ 
+ 	var repoPath string
+-	if len(segments) > 3 {
+-		repoPath = strings.Join(segments[3:], "/")
++	if len(segments) > refIndex+1 {
++		repoPath = strings.Join(segments[refIndex+1:], "/")
++	}
++
++	// CloneURL maps this back to a host, and "github" means github.com. An
++	// enterprise URL must carry its own host or a later git fetch goes to the
++	// public site and fails with "not our ref" against a commit that only
++	// exists on the appliance.
++	forgeName := "github"
++	if enterprise {
++		forgeName = host
+ 	}
+ 
+ 	return &ForgeURLInfo{
+-		Forge:    "github",
++		Forge:    forgeName,
+ 		Owner:    owner,
+ 		Repo:     repo,
+ 		Path:     repoPath,
+--- a/internal/forge/url_test.go
++++ b/internal/forge/url_test.go
+@@ -310,3 +310,87 @@
+ 		})
+ 	}
+ }
++
++func TestParseRawContentURLAcceptsTheEnterpriseLayout(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://forge.internal")
++
++	info, err := ParseRawContentURL(
++		"https://forge.internal/acme/widgets/raw/abc123/skills/triage/SKILL.md",
++	)
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if info.Owner != "acme" || info.Repo != "widgets" {
++		t.Fatalf("got owner=%q repo=%q", info.Owner, info.Repo)
++	}
++	if info.Ref != "abc123" {
++		t.Fatalf("got ref=%q, want abc123", info.Ref)
++	}
++	if info.Path != "skills/triage/SKILL.md" {
++		t.Fatalf("got path=%q", info.Path)
++	}
++}
++
++func TestParseRawContentURLStillAcceptsThePublicHost(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://forge.internal")
++
++	info, err := ParseRawContentURL(
++		"https://raw.githubusercontent.com/acme/widgets/abc123/a/b.md",
++	)
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if info.Ref != "abc123" || info.Path != "a/b.md" {
++		t.Fatalf("got ref=%q path=%q", info.Ref, info.Path)
++	}
++}
++
++func TestParseRawContentURLRejectsAnUnconfiguredHost(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://forge.internal")
++
++	if _, err := ParseRawContentURL(
++		"https://elsewhere.invalid/acme/widgets/raw/abc123/a.md",
++	); err == nil {
++		t.Fatal("a host that is neither the public one nor the configured forge must be refused")
++	}
++}
++
++func TestParseRawContentURLRequiresTheRawSegmentOnTheForge(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://forge.internal")
++
++	// Without the segment this would silently read the ref as "abc123" from
++	// the wrong position and fetch a path that does not exist.
++	if _, err := ParseRawContentURL(
++		"https://forge.internal/acme/widgets/abc123/a.md",
++	); err == nil {
++		t.Fatal("the enterprise layout must require its /raw/ segment")
++	}
++}
++
++func TestEnterpriseRawURLClonesFromTheForgeNotGitHub(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://forge.internal")
++
++	info, err := ParseRawContentURL(
++		"https://forge.internal/acme/widgets/raw/abc123/scripts",
++	)
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if got, want := info.CloneURL(), "https://forge.internal/acme/widgets.git"; got != want {
++		t.Fatalf("CloneURL() = %q, want %q", got, want)
++	}
++}
++
++func TestPublicRawURLStillClonesFromGitHub(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://forge.internal")
++
++	info, err := ParseRawContentURL(
++		"https://raw.githubusercontent.com/acme/widgets/abc123/scripts",
++	)
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if got, want := info.CloneURL(), "https://github.com/acme/widgets.git"; got != want {
++		t.Fatalf("CloneURL() = %q, want %q", got, want)
++	}
++}

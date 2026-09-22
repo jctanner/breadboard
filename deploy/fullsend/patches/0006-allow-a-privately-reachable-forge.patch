@@ -1,0 +1,183 @@
+Subject: feat(fetch): allow a forge that is only reachable privately
+
+The fetcher pre-resolves DNS and refuses any host resolving to a private or
+reserved address. That is the right default, and it makes the CLI unusable
+against an enterprise forge on an internal network: every fetch fails with
+`resolved IP is internal/reserved`, including the agent harnesses a run needs,
+even though the host is precisely the one the run is configured to use.
+
+Add a host-scoped exception rather than a way to turn the check off.
+FetchPolicy gains PrivateHosts, an exception list: a host named there skips
+internal-IP validation, every other host is validated exactly as before, and a
+host must also appear in AllowedDomains to be fetched at all, so two separate
+lists have to name it. Matching is exact, with no wildcards, because a wildcard
+exemption is how a narrow allowance becomes a broad one.
+
+The default list is empty unless an operator sets FULLSEND_ALLOW_PRIVATE_FORGE=1,
+and even then it holds at most one entry, the host GITHUB_SERVER_URL already
+points at. The flag names no host itself, so it cannot be used to reach an
+arbitrary internal service; it can only exempt the forge the run is configured
+against. github.com and its subdomains are never exempt, since they have public
+addresses and exempting them could only ever help an attacker who could make
+them resolve privately.
+
+This is deliberately not NewTestPolicy's skipIPCheck, which remains unexported
+and unreachable from production code.
+
+Breadboard note: patches Go source, so it belongs to the build patch list in
+deploy/scripts/05i-build-fullsend.sh, and it applies on top of patch 0005.
+Written to be sent upstream as-is. Add a DCO sign-off before submitting it as a
+human-authored change.
+
+--- a/internal/fetch/fetch.go
++++ b/internal/fetch/fetch.go
+@@ -65,6 +65,18 @@
+ 	// tests where the test server necessarily listens on 127.0.0.1.
+ 	// Set via NewTestPolicy.
+ 	skipIPCheck bool
++
++	// PrivateHosts names hostnames whose resolved addresses may be private.
++	// It is an exception list, not a switch: every other host is still
++	// validated, so this cannot be used to reach an arbitrary internal
++	// service. A host must also appear in AllowedDomains to be fetched at
++	// all, so both lists have to name it.
++	//
++	// This exists for a forge that is reachable only on a private network,
++	// which is the normal shape of an enterprise install. Without it, every
++	// fetch against such a forge fails DNS validation even though the host
++	// is exactly the one the run is configured to use.
++	PrivateHosts []string
+ }
+ 
+ const (
+@@ -135,8 +147,56 @@
+ 
+ // DefaultPolicy is a sensible default policy allowing GitHub content hosts
+ // and the configured forge.
++// allowPrivateForgeEnv opts the configured forge host out of internal-IP
++// validation. It is deliberately explicit and deliberately narrow: it names no
++// host itself, so it can only ever exempt the forge GITHUB_SERVER_URL already
++// points at, and only when an operator has set it.
++const allowPrivateForgeEnv = "FULLSEND_ALLOW_PRIVATE_FORGE"
++
++// configuredForgeHost returns the hostname of GITHUB_SERVER_URL, or "".
++func configuredForgeHost() string {
++	server := strings.TrimSpace(os.Getenv("GITHUB_SERVER_URL"))
++	if server == "" {
++		return ""
++	}
++	parsed, err := url.Parse(server)
++	if err != nil {
++		return ""
++	}
++	return strings.ToLower(parsed.Hostname())
++}
++
++// defaultPrivateHosts returns the hosts exempt from internal-IP validation.
++//
++// Empty unless an operator opted in, and even then it holds at most the forge
++// host. github.com is never included: it has public addresses, so exempting it
++// would only ever help an attacker who could make it resolve privately.
++func defaultPrivateHosts() []string {
++	if strings.TrimSpace(os.Getenv(allowPrivateForgeEnv)) != "1" {
++		return nil
++	}
++	host := configuredForgeHost()
++	if host == "" || host == "github.com" || strings.HasSuffix(host, ".github.com") {
++		return nil
++	}
++	return []string{host}
++}
++
++// hostAllowsPrivate reports whether this exact host was exempted. Matching is
++// exact: no wildcards, because a wildcard exemption is how one narrow
++// allowance becomes a broad one.
++func hostAllowsPrivate(hostname string, privateHosts []string) bool {
++	for _, candidate := range privateHosts {
++		if strings.EqualFold(strings.TrimSpace(candidate), hostname) {
++			return true
++		}
++	}
++	return false
++}
++
+ var DefaultPolicy = FetchPolicy{
+ 	AllowedDomains: defaultAllowedDomains(),
++	PrivateHosts:   defaultPrivateHosts(),
+ 	MaxSizeBytes:   10 * 1024 * 1024, // 10 MB
+ 	Timeout:        30 * time.Second,
+ 	// MaxRetries: nil → uses default (4 total attempts).
+@@ -204,7 +264,7 @@
+ 	}
+ 
+ 	// 6. Validate ALL resolved IPs.
+-	if !policy.skipIPCheck {
++	if !policy.skipIPCheck && !hostAllowsPrivate(hostname, policy.PrivateHosts) {
+ 		for _, addr := range addrs {
+ 			if netutil.IsInternal(addr.IP) {
+ 				return nil, fmt.Errorf("%w: %s resolved to %s", errInternalIP, hostname, addr.IP)
+--- a/internal/fetch/fetch_test.go
++++ b/internal/fetch/fetch_test.go
+@@ -649,3 +649,62 @@
+ 		t.Fatalf("ComputeSHA256(%q) = %s, want known hash %s", input, got, knownHash)
+ 	}
+ }
++
++func TestPrivateHostsIsAnExceptionListNotASwitch(t *testing.T) {
++	// Only the named host is exempt; every other host is still validated.
++	if !hostAllowsPrivate("forge.internal", []string{"forge.internal"}) {
++		t.Fatal("the named host should be exempt")
++	}
++	if hostAllowsPrivate("other.internal", []string{"forge.internal"}) {
++		t.Fatal("an unnamed host must still be validated")
++	}
++	if hostAllowsPrivate("evil.forge.internal", []string{"forge.internal"}) {
++		t.Fatal("matching must be exact: a subdomain is a different host")
++	}
++	if hostAllowsPrivate("forge.internal", nil) {
++		t.Fatal("no exemption without an explicit list")
++	}
++	if !hostAllowsPrivate("FORGE.internal", []string{"forge.internal"}) {
++		t.Fatal("hostnames are case-insensitive")
++	}
++}
++
++func TestDefaultPrivateHostsRequiresBothOptInAndAForge(t *testing.T) {
++	cases := []struct {
++		name, optIn, server string
++		want                []string
++	}{
++		{"neither", "", "", nil},
++		{"opt-in without a forge", "1", "", nil},
++		{"forge without opt-in", "", "https://forge.internal", nil},
++		{"both", "1", "https://forge.internal", []string{"forge.internal"}},
++		{"github.com is never exempt", "1", "https://github.com", nil},
++		{"a github.com subdomain is never exempt", "1", "https://foo.github.com", nil},
++		{"anything but 1 is not opting in", "true", "https://forge.internal", nil},
++	}
++	for _, tc := range cases {
++		t.Run(tc.name, func(t *testing.T) {
++			t.Setenv(allowPrivateForgeEnv, tc.optIn)
++			t.Setenv("GITHUB_SERVER_URL", tc.server)
++			got := defaultPrivateHosts()
++			if len(got) != len(tc.want) {
++				t.Fatalf("got %v, want %v", got, tc.want)
++			}
++			for i := range got {
++				if got[i] != tc.want[i] {
++					t.Fatalf("got %v, want %v", got, tc.want)
++				}
++			}
++		})
++	}
++}
++
++func TestAPrivateAddressIsStillRefusedForAnUnexemptedHost(t *testing.T) {
++	policy := DefaultPolicy
++	policy.AllowedDomains = []string{"localhost"}
++	policy.PrivateHosts = []string{"some.other.host"}
++	_, err := FetchURL(context.Background(), "https://localhost/x", policy)
++	if !errors.Is(err, errInternalIP) {
++		t.Fatalf("expected an internal-IP refusal, got %v", err)
++	}
++}

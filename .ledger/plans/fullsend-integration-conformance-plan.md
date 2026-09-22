@@ -418,13 +418,13 @@ package as a checklist item and fixed during execution.
 
 - [x] Compare the per-repo scaffold with the two seeded fixtures.
 - [x] Choose the shim plus `reusable-dispatch.yml` chain as the target.
-- [ ] Run the triage-on-issue scaffold against the GitHub emulator and list
+- [x] Run the triage-on-issue scaffold against the GitHub emulator and list
   every gap: workflow-call inputs, permissions, event payloads, reusable
   workflow references, job outputs.
-- [ ] Add each listed gap as a checklist item here, then fix it in the
+- [x] Add each listed gap as a checklist item here, then fix it in the
   emulator that owns it (decision 5). The GitHub emulator first; the GitLab
   and Jira emulators if a forge overlay exercises them.
-- [ ] Generate the scaffold from the Fullsend checkout instead of keeping a
+- [x] Generate the scaffold from the Fullsend checkout instead of keeping a
   hand-written copy.
 - [x] Trace one event through every box in the target flow and record the
   API call and resulting ID at each step. The trace stops at the first
@@ -1508,11 +1508,11 @@ Feeds breakpoints B3 (permission check) and B4 (mint exchange).
   audience, and expiry, and refuses any repository the token was not issued
   for. Keys are fetched in-cluster over plain HTTP and refetched on an unknown
   key id, so an emulator reset does not strand the mint.
-- [ ] Implement Fullsend's collaborator permission check for automatic and
+- [x] Implement Fullsend's collaborator permission check for automatic and
   slash-command dispatch.
-- [ ] Prove a role credential cannot cross repo or role boundaries via
+- [x] Prove a role credential cannot cross repo or role boundaries via
   environment, mounts, logs, or post-script output.
-- [ ] Remove direct `FULLSEND_ROLE_TOKENS` use from the conformance path.
+- [x] Remove direct `FULLSEND_ROLE_TOKENS` use from the conformance path.
 - [ ] Record actor, repo, role, workflow, mint exchange, and downstream
   identity in evidence without secret values.
 
@@ -1527,12 +1527,12 @@ Feeds breakpoint B5.
   of the binaries, entrypoints, providers, and credential paths they expect.
 - [ ] Diff those harnesses against Breadboard's local images, policies,
   profiles, schemas, scripts, and environment variables.
-- [ ] Decide which resources are mirrored locally and how their revision is
+- [x] Decide which resources are mirrored locally and how their revision is
   shown at run time. Keep it simple enough to rebuild often.
-- [ ] Verify filesystem, network, binary, and credential boundaries against
+- [x] Verify filesystem, network, binary, and credential boundaries against
   the OpenShell and Fullsend design records.
 - [ ] Replace broad custom policy with the narrowest policy that passes.
-- [ ] Verify local CA, `.local` routing, and TLS from both the runner and the
+- [x] Verify local CA, `.local` routing, and TLS from both the runner and the
   sandbox.
 - [ ] Write the compatibility profile as a separate document containing only
   what decision 3 allows.
@@ -1546,8 +1546,8 @@ the sandbox boundaries.
 
 Feeds breakpoint B5.
 
-- [ ] Run the harness with its post-script and validation loop enabled.
-- [ ] Keep Fullsend's output schema and status/comment behavior unchanged.
+- [x] Run the harness with its post-script and validation loop enabled.
+- [x] Keep Fullsend's output schema and status/comment behavior unchanged.
 - [ ] Send Fullsend traces and artifacts to MLflow and Observatory where the
   harness supports it.
 - [ ] Show the run's workflow, job, sandbox, result, and failure state in the
@@ -3200,3 +3200,51 @@ expensive model was never needed; every blocker was policy or plumbing.
 
 B5 is staged for a verdict rather than taken. Its question - whether the agent
 output is useful and the evidence bundle enough - is the reviewer's.
+
+### 2026-09-22 tidy-up: what the checklists actually reflect
+
+Eleven work-package items were done and never ticked. Each is ticked here
+against a run or a file, not against recollection:
+
+| Item | Evidence |
+| --- | --- |
+| WP2 run the scaffold and list gaps | B2: 25 gaps found and recorded |
+| WP2 add each gap and fix in order | the gap list, 81 now closed |
+| WP2 generate the scaffold from the checkout | `seed-upstream-fullsend.py` mirrors from `checkouts/fullsend-ai/fullsend` and refuses to run without its `.git` |
+| WP3 collaborator permission check | B3: `fullsend-triager` routes, `fullsend-reader` and `fullsend-outsider` refused |
+| WP3 prove a credential cannot cross boundaries | B4: trust check run 1278, six endpoints, both directions |
+| WP3 remove direct `FULLSEND_ROLE_TOKENS` use | only the mint holds them, which is the design; the direct-token smoke is not in `deploy-all.sh` |
+| WP4 decide what is mirrored and how it is pinned | the two seed scripts mirror with patches and record the source revision in the mirror commit |
+| WP4 verify filesystem, network, binary, credential boundaries | the ten behaviour assertions, plus the profile work of G42/G43 |
+| WP4 verify local CA, `.local` routing and TLS | G38: CA baked into the sandbox image, pre-flight reaches the forge from inside |
+| WP5 run the harness with post-script and validation loop | runs 1307 and 1317: two iterations, validation, post-script, labels and comments |
+| WP5 keep output schema and status behaviour unchanged | schema validation passes on model-generated output; status comments from `fullsend-triage[bot]` |
+
+**Deliberately left open**, with the reason, because ticking these would be
+the optimism this plan keeps having to correct:
+
+- *WP2 keep legacy fixtures out of the conformance path.* Not done, and the
+  evidence is visible on every run: `mirror-fullsend-workflows.py` still seeds
+  `m8-role-events.yml` into the target repository, it fires on every `issues`
+  event, and it is cancelled every time. That is the second run that has
+  confused run selection repeatedly in this work.
+- *WP3 write down what the development mint trusts and covers.* No such
+  document exists. The trust check demonstrates the boundary; nothing states
+  it.
+- *WP3 record actor, repo, role, workflow, mint exchange and downstream calls.*
+  The trust check prints these for one run. There is no durable record.
+- *WP4 collect examples from the review and code harnesses.* Only triage has
+  been exercised.
+- *WP4 compatibility profile as a separate document.* The patch set serves
+  this informally; nothing collects it.
+- *WP4 stage matrix.* Not started.
+- *WP5 traces and artifacts to MLflow and Observatory.* The OTEL variables are
+  passed to the agent step, and nothing has verified anything arrives.
+- *WP5 show workflow, job, sandbox, result and failure in the dashboard.* Not
+  verified.
+
+One stale comment corrected alongside: `22-seed-fullsend.sh` says "work
+package 2 will replace what this script installs with the real per-repo
+scaffold". That already happened - the conformance path runs the mirrored
+`reusable-dispatch.yml` with `FULLSEND_PER_REPO_INSTALL=true`, and what this
+script seeds is the named compatibility fixture beside it.

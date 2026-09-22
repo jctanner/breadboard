@@ -2,8 +2,14 @@
 # Seed the repeatable GitHub App/OIDC/action fixture after the emulators are
 # ready. This is the default seeded fixture (formerly "M8"); it is a named
 # compatibility test, not the per-repo conformance path - see decisions 1 and
-# 5 in .ledger/plans/fullsend-integration-conformance-plan.md. Work package 2
-# will replace what this script installs with the real per-repo scaffold.
+# 5 in .ledger/plans/fullsend-integration-conformance-plan.md.
+#
+# The per-repo scaffold now exists alongside it: the conformance path runs the
+# mirrored reusable-dispatch.yml with FULLSEND_PER_REPO_INSTALL=true, and this
+# fixture is the named compatibility test beside it rather than a placeholder
+# for it. Note its m8-role-events.yml fires on the same issues events and is
+# cancelled every time, which makes run selection ambiguous; see the open
+# work-package-2 item about keeping legacy fixtures out of the path.
 
 set -euo pipefail
 

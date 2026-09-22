@@ -1363,6 +1363,29 @@ called workflow could not be resolved. Nothing past that boundary ran.
   Fixed upstream-bound in
   `0010-do-not-cache-a-profile-import-that-never-replaced-anything.patch`.
 
+- [x] **[W4] G43. The emulator's GraphQL path was not permitted, so the agent
+  could not read the issue it was triaging.** With the vertex profile fixed,
+  run 1293 got a real model into the sandbox and then refused every attempt to
+  fetch the issue: `policy_denied: POST /api/graphql not permitted by policy`.
+
+  Two faults, both mine. Patch `agents/0003` added the emulator host to the
+  read-only profile with `path: "/graphql"`, copied from the `api.github.com`
+  entry - but `gh` posts to `/api/graphql` on any host that is not github.com.
+  That is the same enterprise path assumption patch 0007 exists to correct,
+  made again one patch over. The profile looked like it permitted GraphQL and
+  denied every call.
+
+  The installed `fullsend-github-ro` profile was *also* stale at
+  `resource_version: 1` - and not even the source variant, but a hand-edited
+  one where `api.github.com` had been replaced by `github.local`. Same
+  `ImportProfile` bug as G42. Having found one casualty of that bug, I should
+  have checked the others rather than assuming vertex was the only one.
+
+  Patch regenerated with `/api/graphql` and a comment explaining why the public
+  path is wrong here; agents mirror re-seeded; installed profile reconciled to
+  `resource_version: 2` with all five endpoints. Confirmed by run 1301: no
+  denial, and the agent read the issue through GraphQL.
+
 *Group F - Fullsend-side, not emulator gaps. Decision 5 does not cover these.*
 
 - [ ] **[Track F] F1. `fullsend github setup` cannot target the emulator.** It and
@@ -1677,7 +1700,7 @@ own task, bug, or ADR file.
 | B2 | 2026-09-17 | **go** | 25 gaps found. Reviewer accepted the proposed fix order unchanged: W1 A1/B1/B2/C1/E1, W2 B3/B4/B5/C2/A2, W3 B9/D1/D2/D3, W4 the remaining nine, Track F the two Fullsend-side items. Instruction: do wave 1, stop at B3. |
 | B3 | 2026-09-17 | **go** | Both halves demonstrated with non-admin actors: `fullsend-triager` (triage) routes to the Triage job; `fullsend-reader` (read) and `fullsend-outsider` (no access) are both refused. Reviewer approved proceeding to wave 2. |
 | B4 | 2026-09-22 | **go** | Reviewer deferred to the executing agent's judgement. Re-demonstrated on the current stack as run 1277 after the credential-handling changes, rather than resting on run 1176: claims printed, exchange scoped to the calling repository, mint refuses to mint for another (403), credential works on its own repository (200) and is refused on another across six endpoints (404). Repeatable via `deploy/fullsend/seed/seed-trust-check.py`. Scoping is by repository, not by actor - identity separation remains open as WP3. |
-| B5 | | | |
+| B5 | 2026-09-22 | *awaiting verdict* | Demonstrated on a real model end to end. Run 1287 correctly identified a duplicate; run 1307 returned `sufficient` on a novel issue with all five clarity scores and a structured `triage_summary`, and its assessment checks out against the repository. Evidence bundles are downloadable after the workspace is gone. Total spend across four real runs: $0.42 on haiku. |
 | B6 | | | |
 | B7 | | | |
 
@@ -3140,3 +3163,40 @@ failed every invocation including the delete, conflating exactly the two cases
 this separates; its fake now fails only the import, which is the race it
 describes. `internal/sandbox`, `internal/cli` and `internal/runtime` all pass,
 and all seven patches apply in sequence and build.
+
+### 2026-09-22 the untested branch, and two duplicates of my own making
+
+Run 1307, issue 97, `claude` / `haiku`, $0.08:
+
+```json
+action: "sufficient"
+clarity_scores: {"symptom":0.95,"cause":0.95,"reproduction":0.95,"impact":0.85,"overall":0.92}
+triage_summary: {title, severity:"medium", category:"documentation",
+                 problem, root_cause_hypothesis, reproduction_steps[...]}
+labels applied: documentation, ready-to-code
+```
+
+`sufficient` is the branch that requires both `clarity_scores` and
+`triage_summary`, and no real model had produced either. Both are populated,
+the scores are differentiated rather than flat, and two labels were derived
+from the assessment.
+
+**It is also accurate**, which is the only part worth trusting. `MAINTAINERS.md`
+does describe the role and name nobody; the agent quoted its closing line
+exactly and observed it only becomes actionable once readers know who they are
+addressing. Its point about consistency across `MAINTAINERS.md`, `SUPPORT.md`
+and the README holds - none of the three names a maintainer.
+
+**It took three attempts, and the first two failed on my test setup.** Run 1293
+was blocked by the GraphQL path (G43). Run 1301 returned `duplicate` - and was
+right, because re-running the harness script filed the identical issue a second
+time. That is twice the agent has caught duplicates I created without noticing,
+which says something useful about the output and nothing about the branch I was
+trying to reach. A "novel issue" has to be novel against every issue already in
+the repository, not just against the last one.
+
+**Total spend: $0.42 across four real-model runs**, all haiku. The more
+expensive model was never needed; every blocker was policy or plumbing.
+
+B5 is staged for a verdict rather than taken. Its question - whether the agent
+output is useful and the evidence bundle enough - is the reviewer's.

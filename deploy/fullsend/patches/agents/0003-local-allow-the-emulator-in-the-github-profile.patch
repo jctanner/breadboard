@@ -21,10 +21,10 @@ Breadboard note: applied to the agents mirror by
 deploy/fullsend/seed/seed-upstream-agents.py.
 
 diff --git a/profiles/fullsend-github-ro.yaml b/profiles/fullsend-github-ro.yaml
-index e3d9545..22821d4 100644
+index e3d9545..12e4c51 100644
 --- a/profiles/fullsend-github-ro.yaml
 +++ b/profiles/fullsend-github-ro.yaml
-@@ -22,6 +22,27 @@ endpoints:
+@@ -22,6 +22,33 @@ endpoints:
      protocol: rest
      access: read-only
      enforcement: enforce
@@ -43,12 +43,18 @@ index e3d9545..22821d4 100644
 +    protocol: rest
 +    access: read-only
 +    enforcement: enforce
++  # github.com serves GraphQL from api.github.com/graphql. An enterprise host
++  # has no second hostname and serves it from the appliance at /api/graphql,
++  # which is the path gh posts to for any host that is not github.com. Copying
++  # the public entry's "/graphql" here allowed a path nothing asks for and
++  # denied the one that is used, so every GraphQL call the agent made was
++  # refused with policy_denied while the profile looked like it permitted them.
 +  - host: github.local
 +    port: 443
 +    protocol: graphql
 +    access: read-only
 +    enforcement: enforce
-+    path: "/graphql"
++    path: "/api/graphql"
  binaries:
    - "**/gh"
    - "**/node"

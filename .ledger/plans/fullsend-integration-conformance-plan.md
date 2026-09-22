@@ -1305,6 +1305,37 @@ called workflow could not be resolved. Nothing past that boundary ran.
   first-error headline or the comment the post-script leaves on the issue.
   Emulating the upload is what makes all of it durable.
 
+- [ ] **[W4] G42. The sandbox policy denies Claude Code's Vertex token refresh,
+  blocking the first real-model run.** With `runtime: claude, model: haiku` the
+  agent reaches the sandbox, starts Claude Code, and cannot get a Google access
+  token: `API Error: Could not refresh access token: policy_denied`, twice,
+  then `validation failed after 2 iteration(s)`. Reproduced on runs 1279 and
+  1283.
+
+  All 31 denials are to `oauth2.googleapis.com:443` and carry `policy:-` — no
+  policy matched at all. Zero allowed network calls from claude. The host *is*
+  permitted (`*.googleapis.com`) and the binary *is* listed (`**/claude.exe`),
+  and `**/gh` matches `/usr/bin/gh` in the same sandbox, so globs work
+  generally.
+
+  OpenShell canonicalises policy binary paths at startup, resolving
+  `/usr/local/bin/claude` to
+  `/usr/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe` — all four
+  names are one inode, and nothing invokes Claude by the `.exe` name. Whether
+  the glob then fails to match, or no policy was attached in the first place,
+  is not established; `policy:-` makes the second the stronger lead.
+
+  Ruled out and recorded so it is not chased again: the vertex provider having
+  no credential keys is *correct*, because the harness copies
+  `GOOGLE_APPLICATION_CREDENTIALS` into the sandbox and the provider is pure
+  network policy. The `haiku` alias also resolves correctly, in Claude Code
+  rather than Fullsend.
+
+  Written up in
+  [`.ledger/bugs/vertex-token-refresh-policy-denied.md`](../bugs/vertex-token-refresh-policy-denied.md),
+  including how to download the sandbox logs from the artifact store rather
+  than reproduce them, and a probe that failed on DNS so it is not repeated.
+
 *Group F - Fullsend-side, not emulator gaps. Decision 5 does not cover these.*
 
 - [ ] **[Track F] F1. `fullsend github setup` cannot target the emulator.** It and

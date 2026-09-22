@@ -289,11 +289,15 @@ host-kubeconfig: ## Copy k3s kubeconfig to ~/.kube/config for non-sudo kubectl
 host-deploy-all: ## Run full deployment from scratch on host
 	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/deploy-all.sh
 
+host-conformance-reset: ## Reset conformance state including the OpenShell gateway (prompts)
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/25-reset-conformance.sh
+
 host-conformance: ## Run the Fullsend conformance triage and leave an evidence folder
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/24-run-conformance-triage.sh
 
-host-conformance-all: ## Deploy from scratch, then run the conformance triage
+host-conformance-all: ## Deploy, reset conformance state, then run the triage (prompts)
 	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/deploy-all.sh
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/25-reset-conformance.sh
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/24-run-conformance-triage.sh
 
 host-push-vertex-env: ## Update Vertex/Jira secrets from .env and restart resident consumers

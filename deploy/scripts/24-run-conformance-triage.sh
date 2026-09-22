@@ -77,8 +77,16 @@ if kubectl get deploy/github-actions-runner -n ai-pipeline >/dev/null 2>&1; then
     INSTALLED="$(kubectl exec -n ai-pipeline deploy/github-actions-runner -- \
       openshell provider profile export "${PROFILE}" 2>/dev/null || true)"
     SOURCE="$(api "${FORGE}/fullsend-ai/agents/raw/main/profiles/${PROFILE}.yaml" 2>/dev/null || true)"
-    if [ -z "${INSTALLED}" ] || [ -z "${SOURCE}" ]; then
-      note "  ${PROFILE}: could not compare (skipping)"
+    if [ -z "${SOURCE}" ]; then
+      note "  ${PROFILE}: not in the agents mirror (skipping)"
+      continue
+    fi
+    if [ -z "${INSTALLED}" ]; then
+      # Absent is not the same as unreadable. After a reset the gateway holds
+      # no profile and the run imports it, which is the intended path; saying
+      # "could not compare" for both cases would hide a profile that vanished
+      # for some other reason.
+      note "  ${PROFILE}: absent from the gateway (the run will import it)"
       continue
     fi
     printf '%s' "${INSTALLED}" > /tmp/.conf-installed.yaml

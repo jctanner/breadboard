@@ -721,7 +721,7 @@ called workflow could not be resolved. Nothing past that boundary ran.
   it surfaced immediately. The server's own parser was already written
   correctly, which is what made the contrast obvious.
 
-- [ ] **[W4] G14. The repository default-workflow-permissions setting does not
+- [x] **[W4] G14. The repository default-workflow-permissions setting does not
   exist.** On GitHub, a job that declares no `permissions:` block inherits the
   repository or organisation default, set through
   `GET/PUT /repos/{owner}/{repo}/actions/permissions/workflow` and the org

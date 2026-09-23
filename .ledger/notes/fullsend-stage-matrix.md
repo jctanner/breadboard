@@ -98,16 +98,51 @@ Checked rather than inferred, on 2026-09-23:
    iteration and code 60. A run that needs longer would currently be reported
    as a timeout by the harness rather than by the thing that actually stalled.
 
-## An open thread worth pulling
+## The auto-code chain, traced: it already works
 
 `triage.yaml` sets `TRIAGE_AUTO_CODE: "on"` with
-`TRIAGE_AUTO_CODE_CATEGORIES: "bug,documentation,performance"`, and
-`post-triage.sh` promotes a triaged issue to the code stage when its category
-matches. Run 1436 labelled its issue `documentation`, which is in that list.
+`TRIAGE_AUTO_CODE_CATEGORIES: "bug,documentation,performance"`. Run 1436
+labelled its issue `documentation`, which is on that list, and nothing in the
+triage job log mentioned a promotion — the only role it requested was
+`triage`. That looked like the next silent failure.
 
-No promotion attempt appears anywhere in the job log — the only role requested
-was `triage`. So either the promotion is gated by something that declines
-silently, or it never reached the gate. Given this plan's history, a promotion
-that neither happens nor says why is worth tracing before building anything on
-top of it: it may already be the next defect, sitting inside a run that
-reported success.
+It is not. Promotion is not a dispatch from inside the triage job; it is a
+label. `post-triage.sh` applies `ready-to-code`, and the label event starts a
+separate run. Tracing run 1436's successors:
+
+| run | event | label | outcome |
+| --- | --- | --- | --- |
+| 1438 | `issues` labeled | `documentation` | no stage matched — correct, not a routing label |
+| 1439 | `issues` labeled | `ready-to-code` | **routed to `code`**, then declined at the role gate |
+
+Run 1439's Route job:
+
+```
+Step 3: Determine stage
+Routed to stage: code
+
+Step 8: Check role is enabled
+::notice::Stage 'code' skipped — role 'coder' not in configured roles
+```
+
+Every link holds. The emulator emitted `action: labeled` with a populated
+`label.name`; the server rendered the Route step's environment correctly
+(`EVENT_NAME=issues`, `EVENT_ACTION=labeled`, `TRIGGERING_LABEL=ready-to-code`,
+`EVENT_SENDER_LOGIN=fullsend-triage[bot]`); the router's bot-sender branch
+matched and selected `code`; and the role gate refused it because
+`.fullsend/config.yaml` lists `roles: [triage]` — saying so in a notice that
+names the stage, the role, and the reason.
+
+That is the behaviour this plan keeps asking for and rarely gets: a thing that
+does not happen, and says why. Worth recording as a positive result rather
+than only cataloguing the failures.
+
+It also changes the shape of the code-stage work. The trigger path is proven;
+what is missing is everything downstream of the gate — the role in the
+repository config, the local `fullsend-code` image, `gitleaks` and
+`pre-commit` on the runner, and the three profiles.
+
+**A caution for the earlier reading.** The first pass at this concluded "no
+stage matched" from run *1438*'s log — the `documentation` label, where that
+is the right answer — and nearly recorded a defect that did not exist. The
+run whose log matters is the one carrying the routing label.

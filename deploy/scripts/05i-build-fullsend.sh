@@ -32,6 +32,18 @@ SANDBOX_LOCAL_CONTEXT="${PROJECT_ROOT}/deploy/fullsend-sandbox-local"
 RUNNER_IMAGE="fullsend-runner-dev:k3s"
 SANDBOX_IMAGE="fullsend-sandbox-dev:k3s"
 SANDBOX_LOCAL_IMAGE="fullsend-sandbox-local:k3s"
+CODE_LOCAL_IMAGE="fullsend-code-local:k3s"
+
+# The CA-bearing local images, each "<tag>|<harness file>|<base repository>".
+# The base digest is not written here: it is read from the harness file that
+# pins it, so the local image cannot quietly be built on a stale base when the
+# harness moves. fullsend-sandbox backs triage; fullsend-code backs review and
+# code, which pin the same digest.
+AGENTS_HARNESS_DIR="${PROJECT_ROOT}/checkouts/fullsend-ai/agents/harness"
+LOCAL_SANDBOX_IMAGES=(
+  "${SANDBOX_LOCAL_IMAGE}|triage.yaml|ghcr.io/fullsend-ai/fullsend-sandbox"
+  "${CODE_LOCAL_IMAGE}|review.yaml|ghcr.io/fullsend-ai/fullsend-code"
+)
 
 if command -v docker >/dev/null 2>&1; then
   CONTAINER_CMD=docker
@@ -118,11 +130,10 @@ echo "==> Building ${RUNNER_IMAGE}"
 echo "==> Building ${SANDBOX_IMAGE}"
 "${CONTAINER_CMD}" build -f "${SANDBOX_CONTEXT}/Containerfile" -t "${SANDBOX_IMAGE}" "${SANDBOX_CONTEXT}"
 
-# The conformance sandbox is Fullsend's own pinned image plus this cluster's
-# internal CA. The supervisor reads its upstream TLS roots once at startup, so
-# the CA has to be in the image rather than mounted afterwards, and the chart
-# at this version exposes no way to inject one into sandbox pods.
-echo "==> Building ${SANDBOX_LOCAL_IMAGE}"
+# The conformance sandboxes are Fullsend's own pinned images plus this
+# cluster's internal CA. The supervisor reads its upstream TLS roots once at
+# startup, so the CA has to be in the image rather than mounted afterwards, and
+# the chart at this version exposes no way to inject one into sandbox pods.
 CA_OUT="${SANDBOX_LOCAL_CONTEXT}/internal-ca.crt"
 if ! kubectl get configmap internal-ca-cert -n ai-pipeline \
       -o jsonpath='{.data.ca\.crt}' > "${CA_OUT}" 2>/dev/null || [[ ! -s "${CA_OUT}" ]]; then
@@ -133,10 +144,34 @@ if ! kubectl get configmap internal-ca-cert -n ai-pipeline \
 fi
 # Fail here rather than shipping an image whose trust store is quietly wrong.
 openssl x509 -in "${CA_OUT}" -noout -subject >/dev/null
-"${CONTAINER_CMD}" build -f "${SANDBOX_LOCAL_CONTEXT}/Containerfile" \
-  -t "${SANDBOX_LOCAL_IMAGE}" "${SANDBOX_LOCAL_CONTEXT}"
 
-for image in "${RUNNER_IMAGE}" "${SANDBOX_IMAGE}" "${SANDBOX_LOCAL_IMAGE}"; do
+for entry in "${LOCAL_SANDBOX_IMAGES[@]}"; do
+  IFS='|' read -r local_image harness_file base_repo <<< "${entry}"
+  harness_path="${AGENTS_HARNESS_DIR}/${harness_file}"
+  [[ -f "${harness_path}" ]] || {
+    echo "ERROR: ${harness_path} is missing; cannot read the base digest for ${local_image}." >&2
+    exit 1
+  }
+  # Read the digest from the harness rather than repeating it here. If the
+  # harness moves to a new image and this is not updated, the build stops
+  # instead of silently producing a local image on last month's base.
+  base_digest="$(sed -n "s|^image: ${base_repo}@\(sha256:[0-9a-f]\{64\}\)\s*$|\1|p" \
+    "${harness_path}" | head -1)"
+  if [[ -z "${base_digest}" ]]; then
+    echo "ERROR: ${harness_file} does not pin ${base_repo} by digest." >&2
+    echo "       Its image: line is:" >&2
+    grep -n '^image:' "${harness_path}" >&2 || true
+    echo "       Update LOCAL_SANDBOX_IMAGES in this script to match." >&2
+    exit 1
+  fi
+  echo "==> Building ${local_image} FROM ${base_repo}@${base_digest} (pinned by ${harness_file})"
+  "${CONTAINER_CMD}" build -f "${SANDBOX_LOCAL_CONTEXT}/Containerfile" \
+    --build-arg "BASE_REPO=${base_repo}" \
+    --build-arg "BASE_DIGEST=${base_digest}" \
+    -t "${local_image}" "${SANDBOX_LOCAL_CONTEXT}"
+done
+
+for image in "${RUNNER_IMAGE}" "${SANDBOX_IMAGE}" "${SANDBOX_LOCAL_IMAGE}" "${CODE_LOCAL_IMAGE}"; do
   echo "==> Importing ${image} into k3s"
   sudo k3s ctr images rm "docker.io/library/${image}" "localhost/${image}" 2>/dev/null || true
   "${CONTAINER_CMD}" save "${image}" | sudo k3s ctr images import -
@@ -144,4 +179,4 @@ for image in "${RUNNER_IMAGE}" "${SANDBOX_IMAGE}" "${SANDBOX_LOCAL_IMAGE}"; do
 done
 
 echo "==> Imported Fullsend/OpenShell images"
-sudo k3s ctr images ls | grep -E 'fullsend-(runner|sandbox)-dev'
+sudo k3s ctr images ls | grep -E 'fullsend-(runner-dev|sandbox-dev|sandbox-local|code-local)'

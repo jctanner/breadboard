@@ -7,11 +7,17 @@
 # handshake and the agent sees a connection reset. Uploading a CA afterwards
 # does not help: the roots are read once.
 #
-# The base is the exact digest the Fullsend triage harness pins, so this image
-# is that image plus one recorded layer, not a substitute assembled from
-# somewhere else. Bump BASE_DIGEST when the harness moves.
+# The base is the exact digest a Fullsend harness pins, so the result is that
+# image plus one recorded layer, not a substitute assembled from somewhere
+# else. Bump the digest when the harness moves.
+#
+# Two harness images need this treatment and differ only in their base:
+# fullsend-sandbox for triage, and fullsend-code for review and code. They get
+# one Containerfile rather than two copies, because the layer being added is
+# identical and a second copy would drift.
+ARG BASE_REPO=ghcr.io/fullsend-ai/fullsend-sandbox
 ARG BASE_DIGEST=sha256:259605fea321353552fdefd3a6a55e8b5c260998dfc5a622ed143e41a429995a
-FROM ghcr.io/fullsend-ai/fullsend-sandbox@${BASE_DIGEST}
+FROM ${BASE_REPO}@${BASE_DIGEST}
 
 USER root
 

@@ -1,4 +1,4 @@
-Subject: local: run the triage sandbox on a CA-bearing image
+Subject: local: run the agent sandboxes on CA-bearing images
 
 NOT FOR UPSTREAM. Breadboard-local substitution, recorded under decision 3 of
 the Fullsend integration conformance plan.
@@ -13,12 +13,18 @@ roots are read once.
 The OpenShell chart at the deployed version exposes no way to inject a CA into
 sandbox pods, so the CA has to be in the image.
 
-fullsend-sandbox-local:k3s is built FROM the exact digest this file pinned,
-adding only ca-certificates and the cluster CA. It is that image plus one
-recorded layer, not a substitute assembled elsewhere. See
-deploy/fullsend-sandbox-local/Containerfile and the build step in
-deploy/scripts/05i-build-fullsend.sh, which fails rather than shipping an image
-whose trust store is wrong.
+Two images need it, because the harnesses do not share one. Triage runs on
+fullsend-sandbox; review and code both pin the same fullsend-code digest, so
+one local build covers both. Each local image is built FROM the exact digest
+the harness pins, adding only ca-certificates and the cluster CA — that image
+plus one recorded layer, not a substitute assembled elsewhere.
+
+deploy/scripts/05i-build-fullsend.sh reads each base digest out of the
+harness file that pins it rather than repeating it, so a harness that moves to
+a new image stops the build instead of quietly producing a local image on a
+stale base. It also fails rather than shipping an image whose trust store is
+wrong. See deploy/fullsend-sandbox-local/Containerfile, which takes the base
+repository as a build argument and is shared by both.
 
 Drop this patch if the chart gains sandbox CA injection, or if the forge is
 ever served by a publicly trusted certificate.
@@ -26,6 +32,25 @@ ever served by a publicly trusted certificate.
 Breadboard note: applied to the agents mirror by
 deploy/fullsend/seed/seed-upstream-agents.py.
 
+diff --git a/harness/review.yaml b/harness/review.yaml
+index 72d5507..e9632f6 100644
+--- a/harness/review.yaml
++++ b/harness/review.yaml
+@@ -9,7 +9,13 @@ model: opus
+ # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
+ # when the model: above moves to a generation with a different default.
+ effort: high
+-image: ghcr.io/fullsend-ai/fullsend-code@sha256:623fc74588876062f12f40690ee759c6134ba516fabdd36e6dcfc4eeb9cd1d0b
++# Breadboard-local: the image above, plus this cluster's internal CA, for
++# the same reason as the triage harness. Review and code pin the same
++# fullsend-code digest, so one local build serves both. Built by
++# deploy/scripts/05i-build-fullsend.sh, which reads the digest out of this
++# file's upstream line rather than repeating it, so a harness that moves to
++# a new image stops the build instead of quietly reusing the old base.
++image: fullsend-code-local:k3s
+ policy: policies/base.yaml
+ readonly_repo: true
+ openshell:
 diff --git a/harness/triage.yaml b/harness/triage.yaml
 index 889e41c..b2bf3d0 100644
 --- a/harness/triage.yaml

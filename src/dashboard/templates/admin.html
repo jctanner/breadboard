@@ -206,9 +206,13 @@ async function onboardRepository() {
 }
 
 function renderOnboardResult(data) {
-  const link = data.pull_request_url
-    ? `<a href="${data.pull_request_url}" target="_blank" rel="noopener"
-          class="underline font-medium">pull request #${data.pull_request_number}</a>`
+  // Prefer the browse URL: the CLI reports the canonical GitHub shape
+  // (<host>/<owner>/<repo>/pull/N), which this emulator does not serve — its
+  // web UI is /ui/<owner>/<repo>/pulls/N, so the CLI's link 404s.
+  const href = data.pull_request_browse_url || data.pull_request_url;
+  const link = href
+    ? `<a href="${escapeOnboard(href)}" target="_blank" rel="noopener"
+          class="underline font-medium">pull request #${escapeOnboard(data.pull_request_number)}</a>`
     : null;
 
   if (data.status === 'created') {

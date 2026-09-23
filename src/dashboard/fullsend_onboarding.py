@@ -55,6 +55,9 @@ class OnboardingResult:
     exit_code: int | None = None
     output: str = ""
     pull_request_url: str | None = None
+    # Where a human can actually open it: the CLI's URL is the canonical
+    # GitHub shape, which this forge's web UI does not serve.
+    pull_request_browse_url: str | None = None
     pull_request_number: int | None = None
     branch: str | None = None
     message: str = ""
@@ -67,6 +70,7 @@ class OnboardingResult:
             "exit_code": self.exit_code,
             "output": self.output,
             "pull_request_url": self.pull_request_url,
+            "pull_request_browse_url": self.pull_request_browse_url,
             "pull_request_number": self.pull_request_number,
             "branch": self.branch,
             "message": self.message,
@@ -98,6 +102,17 @@ class OnboardingConfig:
         self.inference_project = os.getenv("FULLSEND_GCP_PROJECT_ID", "")
         self.inference_wif_provider = os.getenv("FULLSEND_GCP_WIF_PROVIDER", "")
         self.runtime = os.getenv("FULLSEND_ONBOARD_RUNTIME", "claude")
+        # Where a human opens the pull request. The CLI reports the canonical
+        # GitHub shape, <host>/<owner>/<repo>/pull/<n>, which this emulator
+        # does not serve: its web UI lives under /ui/ and uses "pulls".
+        # Linking the CLI's URL gives a 404, so the browse URL is built from a
+        # template that can be set per forge — the default is this emulator's
+        # shape, and a real GitHub deployment sets the canonical one.
+        self.ui_url = os.getenv("GITHUB_UI_URL", "https://github.local").rstrip("/")
+        self.pull_url_template = os.getenv(
+            "FULLSEND_ONBOARD_PULL_URL_TEMPLATE",
+            "{ui}/ui/{owner}/{repo}/pulls/{number}",
+        )
         self.timeout = float(os.getenv("FULLSEND_ONBOARD_TIMEOUT", "420"))
         self.verify_tls = os.getenv("FULLSEND_ONBOARD_VERIFY_TLS", "0") == "1"
 
@@ -215,6 +230,16 @@ def build_command(repository: str, config: OnboardingConfig) -> list[str]:
     return command
 
 
+def browse_url(repository: str, number: int | None, config: OnboardingConfig) -> str | None:
+    """Build a pull request URL a browser can open on this forge."""
+    if not number or "/" not in repository:
+        return None
+    owner, repo = repository.split("/", 1)
+    return config.pull_url_template.format(
+        ui=config.ui_url, owner=owner, repo=repo, number=number
+    )
+
+
 def _parse_pull_request(output: str) -> tuple[str | None, int | None]:
     """Pull the PR URL and number out of the CLI's output."""
     match = re.search(r"Created PR #(\d+):\s*(\S+)", output)
@@ -255,6 +280,7 @@ def onboard_repository(
             repository=repository,
             status="already-open",
             pull_request_url=existing.get("html_url"),
+            pull_request_browse_url=browse_url(repository, existing.get("number"), config),
             pull_request_number=existing.get("number"),
             branch=SCAFFOLD_BRANCH,
             message=(
@@ -284,6 +310,7 @@ def onboard_repository(
             exit_code=exit_code,
             output=output,
             pull_request_url=pr_url,
+            pull_request_browse_url=browse_url(repository, pr_number, config),
             pull_request_number=pr_number,
             branch=SCAFFOLD_BRANCH,
             message=(
@@ -299,6 +326,7 @@ def onboard_repository(
         exit_code=exit_code,
         output=output,
         pull_request_url=pr_url,
+        pull_request_browse_url=browse_url(repository, pr_number, config),
         pull_request_number=pr_number,
         branch=SCAFFOLD_BRANCH,
         message=f"fullsend github setup exited {exit_code} for {repository}.",

@@ -151,3 +151,26 @@ def test_a_credential_the_forge_refuses_fails_before_the_cli_runs(monkeypatch):
     with pytest.raises(MODULE.OnboardingError) as exc:
         MODULE.onboard_repository("acme/widget", runner=must_not_run)
     assert "refused the onboarding credential" in str(exc.value)
+
+
+def test_the_pull_request_link_is_one_a_browser_can_open(monkeypatch):
+    # The CLI reports <host>/<owner>/<repo>/pull/N, the canonical GitHub
+    # shape. This emulator serves its web UI at /ui/<owner>/<repo>/pulls/N and
+    # returns 404 for the other, so linking the CLI's URL gives a dead link.
+    monkeypatch.setenv("GITHUB_UI_URL", "https://github.local")
+    monkeypatch.delenv("FULLSEND_ONBOARD_PULL_URL_TEMPLATE", raising=False)
+    result = MODULE.onboard_repository("acme/widget", runner=_run())
+    assert result.pull_request_browse_url == "https://github.local/ui/acme/widget/pulls/7"
+    # The CLI's own URL is kept: it is what the command said.
+    assert result.pull_request_url.endswith("/pull/7")
+
+
+def test_the_browse_url_shape_is_configurable(monkeypatch):
+    # A real GitHub deployment serves the canonical shape; the template is how
+    # that is expressed rather than hardcoding one forge's layout.
+    monkeypatch.setenv("GITHUB_UI_URL", "https://github.com")
+    monkeypatch.setenv(
+        "FULLSEND_ONBOARD_PULL_URL_TEMPLATE", "{ui}/{owner}/{repo}/pull/{number}"
+    )
+    result = MODULE.onboard_repository("acme/widget", runner=_run())
+    assert result.pull_request_browse_url == "https://github.com/acme/widget/pull/7"

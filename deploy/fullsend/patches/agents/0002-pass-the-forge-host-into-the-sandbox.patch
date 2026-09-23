@@ -1,11 +1,15 @@
-Subject: fix(triage): pass the forge host into the sandbox
+Subject: fix(agents): pass the forge host into the sandbox
 
 An agent running inside the sandbox reaches GitHub through gh, which takes its
 host from GH_HOST and, for any host that is not github.com, its credential from
-GH_ENTERPRISE_TOKEN rather than GH_TOKEN. The GitHub overlay passes neither, so
+GH_ENTERPRISE_TOKEN rather than GH_TOKEN. The GitHub overlays pass neither, so
 every call the agent makes goes to github.com regardless of where the run is
 executing, and on an enterprise install the pre-flight connectivity check fails
-before the agent starts.
+before the agent starts:
+
+  ✗ GitHub API unreachable from sandbox
+  Error: pre-flight connectivity check: GitHub API connectivity check failed
+  (exit 1): gh: Bad credentials (HTTP 401)
 
 Both values are already resolved on the host by the time the sandbox env file
 is built. Pass them through rather than rederiving them: that file is expanded
@@ -20,16 +24,119 @@ identical in the log.
 On github.com both expand to empty, which gh treats as unset, so behaviour
 there is unchanged.
 
-Scoped to the triage harness, which is the one exercised here. The same overlay
-shape appears in the other agent harnesses and would need the same two lines.
+An earlier revision of this patch scoped the change to the triage harness and
+noted that the same overlay shape appears in the others and would need the same
+two lines. It does, and it did: the first review run on an enterprise install
+failed at the connectivity check above. Every GitHub overlay that passes
+GH_TOKEN to the sandbox now passes the host and the enterprise credential with
+it - triage, review, code, fix, prioritize and retro. Scribe passes no forge
+token to its sandbox and is untouched.
 
 Breadboard note: this patches fullsend-ai/agents and is applied to the agents
 mirror by deploy/fullsend/seed/seed-upstream-agents.py. Written to be sent
 upstream as-is. Add a DCO sign-off before submitting it as a human-authored
 change.
 
+Exercised on triage and review. The code, fix, prioritize and retro harnesses
+receive the identical two lines but have not been run against this change.
+
+diff --git a/harness/code.yaml b/harness/code.yaml
+index 97d7b46..a58b6f0 100644
+--- a/harness/code.yaml
++++ b/harness/code.yaml
+@@ -109,6 +109,14 @@ overlays:
+         ISSUE_NUMBER: "${ISSUE_NUMBER}"
+         ISSUE_URL: "${GITHUB_ISSUE_URL}"
+         GH_TOKEN: "${GH_TOKEN}"
++        # gh reads its host from GH_HOST and, for any host that is not
++        # github.com, its credential from GH_ENTERPRISE_TOKEN rather than
++        # GH_TOKEN. Without both, every call the agent makes inside the
++        # sandbox goes to github.com no matter where the run is executing.
++        # GH_TOKEN alone would leave the agent authenticating as whatever the
++        # environment already held rather than as the minted role.
++        GH_HOST: "${GH_HOST}"
++        GH_ENTERPRISE_TOKEN: "${GH_ENTERPRISE_TOKEN}"
+         FULLSEND_FORGE: github
+   - when: 'runtime.forge == "gitlab"'
+     providers:
+diff --git a/harness/fix.yaml b/harness/fix.yaml
+index 668b96a..f643203 100644
+--- a/harness/fix.yaml
++++ b/harness/fix.yaml
+@@ -114,6 +114,14 @@ forge:
+       sandbox:
+         PR_NUMBER: "${PR_NUMBER}"
+         GH_TOKEN: "${GH_TOKEN}"
++        # gh reads its host from GH_HOST and, for any host that is not
++        # github.com, its credential from GH_ENTERPRISE_TOKEN rather than
++        # GH_TOKEN. Without both, every call the agent makes inside the
++        # sandbox goes to github.com no matter where the run is executing.
++        # GH_TOKEN alone would leave the agent authenticating as whatever the
++        # environment already held rather than as the minted role.
++        GH_HOST: "${GH_HOST}"
++        GH_ENTERPRISE_TOKEN: "${GH_ENTERPRISE_TOKEN}"
+         FULLSEND_FORGE: github
+   gitlab:
+     providers:
+diff --git a/harness/prioritize.yaml b/harness/prioritize.yaml
+index afabc58..4b4acbe 100644
+--- a/harness/prioritize.yaml
++++ b/harness/prioritize.yaml
+@@ -63,6 +63,14 @@ forge:
+       sandbox:
+         ISSUE_URL: "${GITHUB_ISSUE_URL}"
+         GH_TOKEN: "${GH_TOKEN}"
++        # gh reads its host from GH_HOST and, for any host that is not
++        # github.com, its credential from GH_ENTERPRISE_TOKEN rather than
++        # GH_TOKEN. Without both, every call the agent makes inside the
++        # sandbox goes to github.com no matter where the run is executing.
++        # GH_TOKEN alone would leave the agent authenticating as whatever the
++        # environment already held rather than as the minted role.
++        GH_HOST: "${GH_HOST}"
++        GH_ENTERPRISE_TOKEN: "${GH_ENTERPRISE_TOKEN}"
+         FULLSEND_FORGE: github
+   gitlab:
+     providers:
+diff --git a/harness/retro.yaml b/harness/retro.yaml
+index 696ee8c..f06d0f3 100644
+--- a/harness/retro.yaml
++++ b/harness/retro.yaml
+@@ -78,6 +78,14 @@ forge:
+         FULLSEND_FORGE: github
+       sandbox:
+         GH_TOKEN: "${GH_TOKEN}"
++        # gh reads its host from GH_HOST and, for any host that is not
++        # github.com, its credential from GH_ENTERPRISE_TOKEN rather than
++        # GH_TOKEN. Without both, every call the agent makes inside the
++        # sandbox goes to github.com no matter where the run is executing.
++        # GH_TOKEN alone would leave the agent authenticating as whatever the
++        # environment already held rather than as the minted role.
++        GH_HOST: "${GH_HOST}"
++        GH_ENTERPRISE_TOKEN: "${GH_ENTERPRISE_TOKEN}"
+         FULLSEND_FORGE: github
+   gitlab:
+     providers:
+diff --git a/harness/review.yaml b/harness/review.yaml
+index 72d5507..4412a67 100644
+--- a/harness/review.yaml
++++ b/harness/review.yaml
+@@ -103,6 +103,14 @@ forge:
+         PR_NUMBER: "${PR_NUMBER}"
+         PR_URL: "${GITHUB_PR_URL}"
+         GH_TOKEN: "${GH_TOKEN}"
++        # gh reads its host from GH_HOST and, for any host that is not
++        # github.com, its credential from GH_ENTERPRISE_TOKEN rather than
++        # GH_TOKEN. Without both, every call the agent makes inside the
++        # sandbox goes to github.com no matter where the run is executing.
++        # GH_TOKEN alone would leave the agent authenticating as whatever the
++        # environment already held rather than as the minted role.
++        GH_HOST: "${GH_HOST}"
++        GH_ENTERPRISE_TOKEN: "${GH_ENTERPRISE_TOKEN}"
+         FULLSEND_FORGE: github
+         REVIEW_RISK_ASSESSMENT_ENABLED: "true"
+   gitlab:
 diff --git a/harness/triage.yaml b/harness/triage.yaml
-index 889e41c..5e521c6 100644
+index 889e41c..56f8cbd 100644
 --- a/harness/triage.yaml
 +++ b/harness/triage.yaml
 @@ -67,6 +67,14 @@ overlays:

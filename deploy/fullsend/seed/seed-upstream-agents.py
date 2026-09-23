@@ -156,6 +156,21 @@ def main() -> None:
                 break
             time.sleep(2)
 
+        # Empty the working tree before copying the sources in. The fetch above
+        # leaves the previous mirror's contents behind, which made this seed a
+        # function of its own last result rather than of the sources and the
+        # patches: a patch that adds a file applied once and then failed with
+        # "already exists in working directory" on every later run, and a file
+        # deleted upstream stayed in the mirror forever. The history is kept -
+        # only the checked-out files go.
+        for entry in directory.iterdir():
+            if entry.name == ".git":
+                continue
+            if entry.is_dir() and not entry.is_symlink():
+                shutil.rmtree(entry)
+            else:
+                entry.unlink()
+
         for origin, relative in sources:
             destination = directory / relative
             destination.parent.mkdir(parents=True, exist_ok=True)

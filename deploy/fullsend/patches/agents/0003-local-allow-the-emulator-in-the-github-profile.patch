@@ -1,4 +1,4 @@
-Subject: local: allow the conformance emulator in the GitHub read-only profile
+Subject: local: allow the conformance emulator in the GitHub profiles
 
 NOT FOR UPSTREAM. This is a Breadboard-local substitution, recorded under
 decision 3 of the Fullsend integration conformance plan.
@@ -10,16 +10,61 @@ widen what a sandbox may reach. The consequence is that a host which varies
 per environment cannot be templated, and the conformance forge is a GitHub
 emulator on a cluster address.
 
-So the emulator's host is added here explicitly. The posture is unchanged:
+So the emulator's host is added explicitly. The posture is unchanged:
 read-only, enforced, and the binary allowlist still excludes curl so the agent
 cannot make raw HTTP calls with the injected token.
 
-If this profile ever becomes templatable upstream, this patch should be dropped
-rather than rebased.
+Both GitHub profiles get it. fullsend-github-ro backs triage and review;
+fullsend-github-code backs the code and fix agents and differs from it only in
+its binaries, with a header telling the reader to keep the two endpoint lists
+in sync. Patching one and not the other would have left the code agent unable
+to reach the forge while the profile looked like it permitted it - and, given
+that header, would have drifted the moment anyone followed it.
+
+If these profiles ever become templatable upstream, this patch should be
+dropped rather than rebased.
 
 Breadboard note: applied to the agents mirror by
 deploy/fullsend/seed/seed-upstream-agents.py.
 
+diff --git a/profiles/fullsend-github-code.yaml b/profiles/fullsend-github-code.yaml
+index 8dccc12..7db6b12 100644
+--- a/profiles/fullsend-github-code.yaml
++++ b/profiles/fullsend-github-code.yaml
+@@ -22,6 +22,33 @@ endpoints:
+     protocol: rest
+     access: read-only
+     enforcement: enforce
++  # Breadboard-local: the conformance forge is a GitHub emulator on a cluster
++  # address, and this profile is the sandbox's network allowlist. Fullsend
++  # imports profiles verbatim and does not expand variables in them, which is
++  # correct for a policy file, so a host that varies per environment can only
++  # be added by editing it. That makes this a local substitution rather than
++  # something to send upstream.
++  #
++  # The read-only posture and the binary allowlist below are unchanged: curl
++  # stays excluded so the agent cannot make raw HTTP calls with the injected
++  # token, and these entries are enforced like the rest.
++  - host: github.local
++    port: 443
++    protocol: rest
++    access: read-only
++    enforcement: enforce
++  # github.com serves GraphQL from api.github.com/graphql. An enterprise host
++  # has no second hostname and serves it from the appliance at /api/graphql,
++  # which is the path gh posts to for any host that is not github.com. Copying
++  # the public entry's "/graphql" here allowed a path nothing asks for and
++  # denied the one that is used, so every GraphQL call the agent made was
++  # refused with policy_denied while the profile looked like it permitted them.
++  - host: github.local
++    port: 443
++    protocol: graphql
++    access: read-only
++    enforcement: enforce
++    path: "/api/graphql"
+ binaries:
+   - "**/gh"
+   - "**/git"
 diff --git a/profiles/fullsend-github-ro.yaml b/profiles/fullsend-github-ro.yaml
 index e3d9545..12e4c51 100644
 --- a/profiles/fullsend-github-ro.yaml

@@ -15,7 +15,7 @@ sandbox pods, so the CA has to be in the image.
 
 Two images need it, because the harnesses do not share one. Triage runs on
 fullsend-sandbox; review and code both pin the same fullsend-code digest, so
-one local build covers both. Each local image is built FROM the exact digest
+one local build covers both, and all three harnesses are substituted here. Each local image is built FROM the exact digest
 the harness pins, adding only ca-certificates and the cluster CA — that image
 plus one recorded layer, not a substitute assembled elsewhere.
 
@@ -32,8 +32,25 @@ ever served by a publicly trusted certificate.
 Breadboard note: applied to the agents mirror by
 deploy/fullsend/seed/seed-upstream-agents.py.
 
+diff --git a/harness/code.yaml b/harness/code.yaml
+index a58b6f0..8e7972b 100644
+--- a/harness/code.yaml
++++ b/harness/code.yaml
+@@ -20,7 +20,11 @@ model: opus
+ # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
+ # when the model: above moves to a generation with a different default.
+ effort: high
+-image: ghcr.io/fullsend-ai/fullsend-code@sha256:623fc74588876062f12f40690ee759c6134ba516fabdd36e6dcfc4eeb9cd1d0b
++# Breadboard-local: the same locally built image the review harness uses -
++# they pin the same fullsend-code digest, so one build serves both. The
++# build reads that digest from review.yaml's upstream line rather than
++# repeating it anywhere.
++image: fullsend-code-local:k3s
+ policy: policies/base.yaml
+ openshell:
+   profiles:
 diff --git a/harness/review.yaml b/harness/review.yaml
-index 72d5507..e9632f6 100644
+index 4412a67..add757a 100644
 --- a/harness/review.yaml
 +++ b/harness/review.yaml
 @@ -9,7 +9,13 @@ model: opus
@@ -52,7 +69,7 @@ index 72d5507..e9632f6 100644
  readonly_repo: true
  openshell:
 diff --git a/harness/triage.yaml b/harness/triage.yaml
-index 889e41c..b2bf3d0 100644
+index 56f8cbd..bb5ae12 100644
 --- a/harness/triage.yaml
 +++ b/harness/triage.yaml
 @@ -9,7 +9,13 @@ model: opus

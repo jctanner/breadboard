@@ -593,10 +593,10 @@ called workflow could not be resolved. Nothing past that boundary ran.
   returns 401/403 for a PAT. Fullsend treats 401/403 as "not an installation
   token" but any other status as fatal, so this **hard-fails
   `fullsend repos install` during preflight** before any work begins. Implemented and confirmed live: a personal access token now receives 403.
-- [ ] **[W4] E2. Creating a variable that already exists returns 500**, not 409.
-- [ ] **[W4] E3. `GET /repos/{o}/{r}/actions/variables/{name}` returns 405.**
-- [ ] **[W4] E4. `/organizations` returns 404.**
-- [ ] **[W4] E5. Issue `html_url` names the wrong owner** - issue #38 in
+- [x] **[W4] E2. Creating a variable that already exists returns 500**, not 409.
+- [x] **[W4] E3. `GET /repos/{o}/{r}/actions/variables/{name}` returns 405.**
+- [x] **[W4] E4. `/organizations` returns 404.**
+- [x] **[W4] E5. Issue `html_url` names the wrong owner** - issue #38 in
   `fullsend-dev/triage-target` reported
   `https://github.local/admin/triage-target/issues/38`.
 
@@ -3563,3 +3563,39 @@ defects (E2 to E5, B7, B8, B10, G14, G15, G6), two Fullsend-side items (F2,
 F4), and work packages 3 to 5 — the mint trust document, the review and code
 harnesses, the compatibility profile, the stage matrix, and sending traces to
 MLflow and Observatory. None of them blocks the conformance path.
+
+### 2026-09-23 E2 to E5, and a narrow fix that would have left half the bug
+
+All four reproduced first, then fixed, then verified against the live stack:
+
+| | before | after |
+| --- | --- | --- |
+| E2 duplicate variable | 500 | 409 with "Use PATCH to update it" |
+| E3 GET one variable | 405 | 200, and 404 when absent |
+| E4 `/organizations` | 404 | the list, paginated by `since` |
+| E5 issue `html_url` | `/admin/triage-target/…` | `/fullsend-dev/triage-target/…` |
+
+Each was found by a client behaving correctly, and each answer sent the caller
+somewhere unhelpful. A 500 for "already exists" is the clearest: clients branch
+on 409 to choose between POST and PATCH, so a crash makes one that would have
+updated give up instead. E3 was a route GitHub serves where only PATCH and
+DELETE existed, so FastAPI reported a wrong method rather than a missing
+feature. E4 is the only endpoint that enumerates organizations without knowing
+their names; the admin frontend's own `/organizations` is a different router
+with a different shape and is not what an API client reaches.
+
+**E5 is the one worth remembering.** `Repository.owner_id` points at the user
+who created the repository and `organization_id` is separate, so rebuilding a
+path as `owner.login + "/" + name` names the creator rather than the owner
+whenever a repository belongs to an org. `full_name` was right there, unique
+and indexed.
+
+The first fix bound `owner_login` only on the fallback branch, and it is used
+further down for label URLs — `UnboundLocalError` on any issue carrying a
+label. The full suite caught it. Fixing it properly meant deriving
+`owner_login` *from* `full_name`, which revealed that **label URLs carried the
+same wrong-owner bug for the same reason**: the narrow fix would have left half
+of it in place and passed its own test.
+
+Six tests added, 520 passing, the two pre-existing migration failures
+unchanged.

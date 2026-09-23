@@ -102,6 +102,9 @@ class OnboardingConfig:
         self.inference_project = os.getenv("FULLSEND_GCP_PROJECT_ID", "")
         self.inference_wif_provider = os.getenv("FULLSEND_GCP_WIF_PROVIDER", "")
         self.runtime = os.getenv("FULLSEND_ONBOARD_RUNTIME", "claude")
+        # Passed through to the CLI so the scaffold targets this stack's
+        # runners rather than a GitHub-hosted image name.
+        self.runner_image = os.getenv("FULLSEND_RUNNER_IMAGE", "")
         # Where a human opens the pull request. The CLI reports the canonical
         # GitHub shape, <host>/<owner>/<repo>/pull/<n>, which this emulator
         # does not serve: its web UI lives under /ui/ and uses "pulls".
@@ -295,6 +298,8 @@ def onboard_repository(
         "GITHUB_API_URL": config.api_url,
         "GITHUB_SERVER_URL": config.server_url,
     }
+    if config.runner_image:
+        env["FULLSEND_RUNNER_IMAGE"] = config.runner_image
 
     if runner is None:
         runner = _exec_in_runner_pod

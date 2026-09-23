@@ -1,0 +1,93 @@
+Subject: fix(scaffold): let an installation name the runner its workflows target
+
+A scaffold can only ever name DefaultGHRunner, so an installation whose
+runners carry different labels gets workflows nothing picks up. The jobs sit
+queued indefinitely and nothing reports why: there is no error, no warning,
+and the run simply never starts.
+
+RenderOptions.RunnerImage has always existed and resolvedRunner has always
+honoured it. Nothing ever set it. Every caller builds its options through
+RenderOptionsForInstall — installfiles, remote_scaffold, layers/workflows —
+and that constructor did not carry the field, so the only way to change the
+rendered runner was to edit the workflow after the fact.
+
+It now reads FULLSEND_RUNNER_IMAGE. An environment variable rather than a flag
+because the callers are library entry points rather than one command, and
+because this is a property of where Fullsend is installed rather than of an
+individual invocation. Unset, the default is unchanged.
+
+Breadboard note: patches Go source, so it belongs to the build patch list in
+deploy/scripts/05i-build-fullsend.sh rather than the mirror list. Written to
+be sent upstream as-is. Add a DCO sign-off before submitting it as a
+human-authored change.
+
+diff --git a/internal/scaffold/render.go b/internal/scaffold/render.go
+index ec0d4c1..3358378 100644
+--- a/internal/scaffold/render.go
++++ b/internal/scaffold/render.go
+@@ -2,6 +2,7 @@ package scaffold
+ 
+ import (
+ 	"fmt"
++	"os"
+ 	"strings"
+ 
+ 	"github.com/fullsend-ai/fullsend/internal/config"
+@@ -17,8 +18,21 @@ type RenderOptions struct {
+ }
+ 
+ // RenderOptionsForInstall builds render options from the --vendor flag.
++//
++// RunnerImage comes from FULLSEND_RUNNER_IMAGE. The field has always existed
++// and resolvedRunner has always honoured it, but nothing set it: every caller
++// went through this constructor, which dropped it, so a scaffold could only
++// ever name DefaultGHRunner. An installation whose runners carry different
++// labels then renders workflows that never get picked up, and the jobs sit
++// queued indefinitely with nothing reporting why.
+ func RenderOptionsForInstall(vendored, perRepo bool, upstreamRef, upstreamTag string) RenderOptions {
+-	return RenderOptions{Vendored: vendored, PerRepo: perRepo, UpstreamRef: upstreamRef, UpstreamTag: upstreamTag}
++	return RenderOptions{
++		Vendored:    vendored,
++		PerRepo:     perRepo,
++		UpstreamRef: upstreamRef,
++		UpstreamTag: upstreamTag,
++		RunnerImage: strings.TrimSpace(os.Getenv("FULLSEND_RUNNER_IMAGE")),
++	}
+ }
+ 
+ // thinStageWorkflows lists thin caller paths and their stage markers. Keep in sync
+diff --git a/internal/scaffold/render_test.go b/internal/scaffold/render_test.go
+index 6533fcc..a7a722c 100644
+--- a/internal/scaffold/render_test.go
++++ b/internal/scaffold/render_test.go
+@@ -241,3 +241,30 @@ func TestRenderFallbackToDefaultRef(t *testing.T) {
+ 	assert.Contains(t, out, "@main")
+ 	assert.NotContains(t, out, "fullsend_ai_ref:")
+ }
++
++// The RunnerImage field and resolvedRunner have always existed, but every
++// caller went through RenderOptionsForInstall, which dropped it — so a
++// scaffold could only ever name DefaultGHRunner. An installation whose
++// runners carry different labels renders workflows nothing picks up, and the
++// jobs sit queued with nothing reporting why.
++func TestRenderOptionsForInstallHonoursTheRunnerImageEnv(t *testing.T) {
++	t.Setenv("FULLSEND_RUNNER_IMAGE", "self-hosted-linux")
++	opts := RenderOptionsForInstall(false, true, "", "")
++	if opts.RunnerImage != "self-hosted-linux" {
++		t.Fatalf("RunnerImage = %q, want the configured runner", opts.RunnerImage)
++	}
++	if got := resolvedRunner(opts); got != "self-hosted-linux" {
++		t.Fatalf("resolvedRunner() = %q", got)
++	}
++}
++
++func TestTheDefaultRunnerIsUnchangedWhenUnset(t *testing.T) {
++	t.Setenv("FULLSEND_RUNNER_IMAGE", "")
++	opts := RenderOptionsForInstall(false, true, "", "")
++	if opts.RunnerImage != "" {
++		t.Fatalf("RunnerImage = %q, want empty so the default applies", opts.RunnerImage)
++	}
++	if resolvedRunner(opts) == "" {
++		t.Fatal("resolvedRunner() must fall back to the built-in default")
++	}
++}

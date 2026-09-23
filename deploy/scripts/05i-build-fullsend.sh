@@ -24,6 +24,7 @@ FULLSEND_PATCHES=(
   "${PROJECT_ROOT}/deploy/fullsend/patches/0009-load-the-harness-environment-for-behaviour-ops.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0010-do-not-cache-a-profile-import-that-never-replaced-anything.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0011-address-the-configured-forge-in-the-github-commands.patch"
+  "${PROJECT_ROOT}/deploy/fullsend/patches/0012-let-an-installation-name-its-runner.patch"
 )
 RUNNER_CONTEXT="${PROJECT_ROOT}/deploy/fullsend-runner-dev"
 SANDBOX_CONTEXT="${PROJECT_ROOT}/deploy/fullsend-sandbox-dev"

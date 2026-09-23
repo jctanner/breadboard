@@ -91,6 +91,12 @@ spec:
         # The local emulator certificates are issued by Breadboard's internal CA.
         - name: NO_SSL_VERIFY
           value: "1"
+        # This stack's runners are labelled `fullsend`, not GitHub's hosted
+        # image names. Without this the scaffold renders `runs-on:` for a
+        # hosted runner, nothing picks the jobs up, and they sit queued with
+        # nothing reporting why. Honoured by patch 0012.
+        - name: FULLSEND_RUNNER_IMAGE
+          value: fullsend
         # Values the onboarding button passes to `fullsend github setup`.
         # The CLI requires them for a per-repo install and cannot read them
         # from a repository that has not been set up yet.

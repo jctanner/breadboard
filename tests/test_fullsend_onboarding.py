@@ -174,3 +174,20 @@ def test_the_browse_url_shape_is_configurable(monkeypatch):
     )
     result = MODULE.onboard_repository("acme/widget", runner=_run())
     assert result.pull_request_browse_url == "https://github.com/acme/widget/pull/7"
+
+
+def test_the_runner_image_is_passed_through(monkeypatch):
+    # This stack's runners are labelled `fullsend`, not a GitHub-hosted image
+    # name. Without it the scaffold renders workflows nothing picks up, and
+    # the jobs sit queued with nothing reporting why.
+    monkeypatch.setenv("FULLSEND_RUNNER_IMAGE", "fullsend")
+    capture: dict = {}
+    MODULE.onboard_repository("acme/widget", runner=_run(capture=capture))
+    assert capture["env"].get("FULLSEND_RUNNER_IMAGE") == "fullsend"
+
+
+def test_no_runner_image_means_the_cli_default(monkeypatch):
+    monkeypatch.delenv("FULLSEND_RUNNER_IMAGE", raising=False)
+    capture: dict = {}
+    MODULE.onboard_repository("acme/widget", runner=_run(capture=capture))
+    assert "FULLSEND_RUNNER_IMAGE" not in capture["env"]

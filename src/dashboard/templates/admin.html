@@ -8,6 +8,27 @@
 
   <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
     <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="text-base font-semibold text-gray-900 dark:text-white">Onboard a repository to Fullsend</h3>
+      <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+        Runs Fullsend&rsquo;s own <code class="text-xs">github setup</code> on the backend and opens a scaffold pull request for review.
+        Nothing is activated until a maintainer merges it.
+      </p>
+    </div>
+    <div class="px-5 py-4 space-y-3">
+      <div class="flex items-center gap-3">
+        <input id="onboard-repo" type="text" placeholder="owner/repo" autocomplete="off"
+               class="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+               onkeydown="if (event.key === 'Enter') onboardRepository()">
+        <button id="onboard-button"
+                class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors"
+                onclick="onboardRepository()">Onboard</button>
+      </div>
+      <div id="onboard-result" class="hidden text-sm"></div>
+    </div>
+  </div>
+
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700">
       <h3 class="text-base font-semibold text-gray-900 dark:text-white">K8s Jobs</h3>
       <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">Delete completed and failed pipeline jobs and their pods from the cluster.</p>
     </div>
@@ -141,4 +162,86 @@
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/admin.js"></script>
+
+<script>
+// Onboarding runs the real Fullsend CLI on the backend; this only starts it
+// and renders what came back. The credential stays server-side and is never
+// part of the response.
+async function onboardRepository() {
+  const input = document.getElementById('onboard-repo');
+  const button = document.getElementById('onboard-button');
+  const box = document.getElementById('onboard-result');
+  const repository = (input.value || '').trim();
+
+  if (!repository) {
+    showOnboardResult('error', 'Enter a repository as owner/repo.');
+    return;
+  }
+
+  // The CLI takes minutes: disable the control so a second click cannot
+  // start a concurrent run against the same repository.
+  button.disabled = true;
+  button.textContent = 'Onboarding...';
+  showOnboardResult('pending', `Running fullsend github setup for ${repository}. This takes a minute or two.`);
+
+  try {
+    const response = await fetch('/api/fullsend/onboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repository })
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      showOnboardResult('error', data.error || `Request failed (HTTP ${response.status}).`);
+      return;
+    }
+    renderOnboardResult(data);
+  } catch (err) {
+    showOnboardResult('error', `Could not reach the dashboard backend: ${err}`);
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Onboard';
+  }
+}
+
+function renderOnboardResult(data) {
+  const link = data.pull_request_url
+    ? `<a href="${data.pull_request_url}" target="_blank" rel="noopener"
+          class="underline font-medium">pull request #${data.pull_request_number}</a>`
+    : null;
+
+  if (data.status === 'created') {
+    showOnboardResult('ok', `${escapeOnboard(data.message)} Review the ${link || 'scaffold branch'}.`, true);
+  } else if (data.status === 'already-open') {
+    // Repeating the action is not an error; it just has nothing new to do.
+    showOnboardResult('warn', `${escapeOnboard(data.message)} ${link ? 'See ' + link + '.' : ''}`, true);
+  } else {
+    // Show the command and its output: a failure here is the CLI's, and the
+    // output is the only thing that says why.
+    const detail = `<pre class="mt-2 p-2 rounded bg-gray-100 dark:bg-gray-800 overflow-x-auto text-xs whitespace-pre-wrap">${escapeOnboard(data.output || '')}</pre>`;
+    showOnboardResult('error', `${escapeOnboard(data.message)}${detail}`, true);
+  }
+}
+
+function showOnboardResult(kind, html, isHtml) {
+  const box = document.getElementById('onboard-result');
+  const tone = {
+    ok: 'text-green-700 dark:text-green-400',
+    warn: 'text-amber-700 dark:text-amber-400',
+    error: 'text-red-700 dark:text-red-400',
+    pending: 'text-gray-600 dark:text-gray-400'
+  }[kind] || 'text-gray-600 dark:text-gray-400';
+  box.className = `text-sm ${tone}`;
+  box.innerHTML = isHtml ? html : escapeOnboard(html);
+  box.classList.remove('hidden');
+}
+
+function escapeOnboard(text) {
+  const div = document.createElement('div');
+  div.textContent = text == null ? '' : String(text);
+  return div.innerHTML;
+}
+</script>
+
 {% endblock %}

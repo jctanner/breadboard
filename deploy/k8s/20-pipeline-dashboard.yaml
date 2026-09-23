@@ -91,6 +91,35 @@ spec:
         # The local emulator certificates are issued by Breadboard's internal CA.
         - name: NO_SSL_VERIFY
           value: "1"
+        # Values the onboarding button passes to `fullsend github setup`.
+        # The CLI requires them for a per-repo install and cannot read them
+        # from a repository that has not been set up yet.
+        - name: FULLSEND_MINT_URL
+          value: https://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080
+        - name: FULLSEND_GCP_PROJECT_ID
+          valueFrom:
+            secretKeyRef:
+              name: pipeline-secrets
+              key: ANTHROPIC_VERTEX_PROJECT_ID
+              optional: true
+        # This stack reaches Vertex with mounted credentials rather than
+        # Workload Identity Federation — the setup-gcp step says so on every
+        # run — but the CLI requires the flag regardless. A placeholder keeps
+        # the install shape correct; it is not a usable WIF provider and is
+        # named so nobody reads it as one.
+        - name: FULLSEND_GCP_WIF_PROVIDER
+          value: projects/000/locations/global/workloadIdentityPools/not-used-here/providers/not-used-here
+        # The forge credential used to onboard a repository to Fullsend.
+        # Deliberately separate from GITHUB_TOKEN, which is a different
+        # credential for a different forge: handing that one to the CLI
+        # produced a 401 several minutes into a run, reported as a confusing
+        # CLI error rather than a credential problem.
+        - name: GITHUB_EMULATOR_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-actions-runner-credentials
+              key: token
+              optional: true
         - name: GITHUB_TOKEN
           valueFrom:
             secretKeyRef:

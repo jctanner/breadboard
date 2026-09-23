@@ -41,3 +41,16 @@ cc5609eb66867c6935175e43a81d5074cdc61da9:var/demos/end-to-end/workflows/run-pipe
 # False positives: public Jira text and generic storage terminology
 2cbf21267cf6810274ca87ec22e805a2082d0bcf:docs/reference/data-sources-and-access.md:generic-api-key:415
 a4aff1874e144d7f5f764584b9b5aa0ebb4fbf0f:benchmarks/arch-context/corpus-claude.yaml:generic-api-key:1615
+
+# False positives: the GitHub emulator's documented default admin token in the
+# reproduction steps of bug handover documents. `ghp_admin_default_token` is
+# seeded by every fresh emulator instance and published in the emulator's own
+# CLAUDE.md; it grants nothing outside a local stack. The handover documents
+# exist so another agent can reproduce a failure without this conversation, so
+# the commands in them are meant to be run as written.
+59ad0f7fef639094c52ee95ed426591a9d108c77:.ledger/bugs/openshell-sandbox-create-killed.md:curl-auth-header:149
+59ad0f7fef639094c52ee95ed426591a9d108c77:.ledger/bugs/openshell-sandbox-create-killed.md:curl-auth-header:158
+59ad0f7fef639094c52ee95ed426591a9d108c77:.ledger/bugs/openshell-sandbox-create-killed.md:curl-auth-header:160
+59ad0f7fef639094c52ee95ed426591a9d108c77:.ledger/bugs/sandbox-proxy-resets-local-forge.md:curl-auth-header:167
+59ad0f7fef639094c52ee95ed426591a9d108c77:.ledger/bugs/gh-host-empty-in-sandbox.md:curl-auth-header:284
+59ad0f7fef639094c52ee95ed426591a9d108c77:.ledger/bugs/gh-host-empty-in-sandbox.md:curl-auth-header:296

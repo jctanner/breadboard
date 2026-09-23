@@ -775,6 +775,49 @@ def create_app() -> Flask:
             },
         )
 
+    @app.route("/api/fullsend/onboard", methods=["POST"])
+    def api_fullsend_onboard():
+        """Onboard a repository by running Fullsend's own CLI.
+
+        Work package 7. The backend runs `fullsend github setup OWNER/REPO`
+        in the runner pod and reports what it did; it does not re-implement
+        any of it, which keeps Fullsend's pull-request review step in the loop
+        and stops the dashboard drifting from the CLI.
+
+        Who may start onboarding: this dashboard has no user model, so the
+        gate is the deployment rather than the request — the operation needs a
+        credential the backend holds and the browser never sees. That is
+        recorded as the current answer to the plan's "define who may start
+        onboarding", not as the finished one.
+        """
+        from src.dashboard.fullsend_onboarding import (
+            OnboardingError,
+            onboard_repository,
+        )
+
+        data = request.get_json(silent=True) or {}
+        repository = str(data.get("repository", "")).strip()
+        if not repository:
+            return jsonify({"error": "repository is required, as OWNER/REPO"}), 400
+
+        try:
+            result = onboard_repository(repository)
+        except OnboardingError as exc:
+            # A refusal the caller can act on: a bad name, a missing
+            # credential, an unreachable forge.
+            return jsonify({"error": str(exc), "repository": repository}), 400
+        except Exception as exc:  # noqa: BLE001 - surface, do not swallow
+            return jsonify({
+                "error": f"onboarding failed: {exc}",
+                "repository": repository,
+            }), 500
+
+        payload = result.as_dict()
+        # "failed" is a real answer, not a transport error: the command ran
+        # and its output is the useful part, so it is returned with 200 and
+        # the status field carries the verdict.
+        return jsonify(payload)
+
     @app.route("/api/workspace/reset", methods=["POST"])
     def api_reset_workspace():
         """Delete model workspace directories for selected issue*model pairs."""

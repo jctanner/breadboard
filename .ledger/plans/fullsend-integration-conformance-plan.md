@@ -1645,14 +1645,14 @@ generated files before they activate. No direct-commit mode from the normal
 action.
 
 - [ ] Define who may start onboarding from the dashboard.
-- [ ] Add a backend operation that runs the real `fullsend` CLI from the
+- [x] Add a backend operation that runs the real `fullsend` CLI from the
   canonical checkout and captures the command, exit code, and output.
 - [ ] Provide the short-lived App credential to that operation.
-- [ ] Return the PR URL, branch, commit, and any failure to the dashboard
+- [x] Return the PR URL, branch, commit, and any failure to the dashboard
   without the credential.
-- [ ] Handle repos that already have a scaffold or an open scaffold PR
+- [x] Handle repos that already have a scaffold or an open scaffold PR
   without creating duplicates.
-- [ ] Keep direct-commit mode unavailable from the normal action.
+- [x] Keep direct-commit mode unavailable from the normal action.
 - [ ] Add an emulator-backed test for permission, PR creation, repeat
   onboarding, and credential cleanup.
 
@@ -3435,3 +3435,52 @@ Two habits would have caught it: treating a dependency list that exists twice
 as one change rather than two, and checking a service answers rather than that
 its pod started. The note now sits at the insertion point in
 `requirements.txt`.
+
+### 2026-09-23 the onboarding button runs the real CLI
+
+`POST /api/fullsend/onboard` and a card on the dashboard admin page. Against a
+fresh repository:
+
+```text
+status:    created
+exit_code: 0
+pr:        1  https://github.local/fullsend-dev/button-probe/pull/1
+branch:    fullsend/scaffold-install
+```
+
+The path is: HTTP request, dashboard backend, exec into the runner pod, real
+`fullsend github setup`, scaffold pull request on the forge. Nothing is
+re-implemented, which is what decision 7 asks for and what keeps the dashboard
+from drifting away from the CLI.
+
+Repeating the request returns `already-open` with the existing PR, the CLI
+never runs, and the forge still has one pull request.
+
+**What the tests actually enforce.** Fourteen of them, and they cover the
+plan's rules rather than the happy path: `--direct` is unreachable because the
+argument list is built rather than passed through; the credential never
+appears in the result, checked against a CLI that echoes its own configuration
+on failure; an open scaffold PR short-circuits before the CLI runs, with the
+runner raising if called; and only `OWNER/REPO` is accepted, because a bare
+org name puts the CLI into per-org mode and creates a config repository.
+
+**A credential failure that looked like a regression.** The dashboard carries
+`GITHUB_TOKEN`, a `ghe_` credential for a different forge that the emulator
+refuses, and the first version read whichever it found. Handing the CLI a
+token the forge rejects produced `401 unexpected status checking secret`
+several minutes in - the exact symptom of F1, which had just been fixed, so it
+looked as though patch 0011 had regressed. `verify_credential` now makes one
+call before the CLI runs, so a refused credential is reported as one. A test
+asserts the CLI does not run in that case.
+
+**Two things are not done and are not claimed.** The plan asks for a
+short-lived App installation token; minting one needs the App's private key
+and nothing in this deployment holds it, so the fallback is used and labelled
+`emulator-admin-fallback` in the response, with a test asserting the label
+appears. And "who may start onboarding" is answered by the deployment rather
+than by a user model, which is recorded in the route's docstring as the
+current answer rather than the finished one.
+
+`FULLSEND_GCP_WIF_PROVIDER` is a placeholder named `not-used-here`: this stack
+reaches Vertex through mounted credentials, and the CLI requires the flag
+regardless.

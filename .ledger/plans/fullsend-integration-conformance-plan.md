@@ -524,16 +524,16 @@ called workflow could not be resolved. Nothing past that boundary ran.
   emulator then erased that decision on the way out of the job. Fixed by
   routing any expression containing an operator, literal, or call through the
   real parser; bare paths and plain `||` chains keep their previous behaviour.
-- [ ] **[W4] B7. `workflow_call` typed inputs, `required`, and `default` are not
+- [x] **[W4] B7. `workflow_call` typed inputs, `required`, and `default` are not
   honoured.** Unsupplied inputs render empty instead of their declared
   defaults. Some of the dispatch's guards work only by coincidence today.
-- [ ] **[W4] B8. `secrets: inherit` is silently discarded** (parsed as a string, then
+- [x] **[W4] B8. `secrets: inherit` is silently discarded** (parsed as a string, then
   dropped). The shim passes explicit secrets, so this is a latent trap rather
   than a current failure.
 - [x] **[W3, sequencing agreed 2026-09-17: before breakpoint B4] B9. Job-level `permissions:` are parsed and stored but never enforced**;
   a job token authenticates as the run actor with full privileges. This is a
   trust-boundary gap that work package 3 depends on. **Done 2026-09-17, mirroring GitHub's documented semantics** rather than the weaker write-only scheme first proposed. The reviewer asked whether this was a GitHub construct or a Fullsend one; it is entirely GitHub's, and the emulator's own `specs/github-actions.md` documents the rule that matters: *declaring any permission sets every unspecified scope to `none`*. Enforcing only writes would therefore have admitted requests GitHub refuses, which is the same class of quiet falsehood this plan exists to remove. Implemented in `app/services/job_permissions.py` and enforced in the auth path, so it covers every route and applies only to job tokens; other credentials are untouched. Refusals are `403 Resource not accessible by integration`. Two deliberate deviations are documented in the module: a job declaring no permissions at all is permissive, because GitHub defers to a repository setting the emulator does not have; and an unmapped endpoint allows reads but denies and logs writes, so a gap in the map is loud rather than silent.
-- [ ] **[W4] B10. Job-level `concurrency:` is not supported**, and workflow-level
+- [x] **[W4] B10. Job-level `concurrency:` is not supported**, and workflow-level
   `cancel-in-progress` defaults to true where GitHub defaults to false. Every
   dispatch stage job declares a job-level group.
 
@@ -3599,3 +3599,54 @@ of it in place and passed its own test.
 
 Six tests added, 520 passing, the two pre-existing migration failures
 unchanged.
+
+### 2026-09-23 B7, B8, B10, and a regression the unit tests could not see
+
+All three were latent: the dispatch's guards worked by coincidence,
+`secrets: inherit` looked honoured while passing nothing, and a concurrency
+group cancelled runs nobody asked to cancel.
+
+**B7.** An unsupplied `workflow_call` input rendered empty instead of its
+declared default, so `inputs.install_mode == 'per-repo'` compared against `""`
+and only worked when the caller passed the value. Defaults are merged and
+types coerced; a missing `required: true` input is logged rather than fatal,
+because failing the run here would turn a latent workflow bug into an outage
+in a stack built to surface such things visibly. Type coercion matters more
+than it sounds: a boolean input arrives from YAML or a rendered expression as
+the string `"true"`, which compares unequal to `True` and silently takes the
+wrong branch.
+
+**B8.** `secrets: inherit` is a string. The code parsed it as a mapping, found
+it was not, and substituted `{}` — so the called workflow received nothing
+while the call looked honoured.
+
+**B10.** Job-level `concurrency:` was unsupported although every dispatch
+stage declares a group, and workflow-level `cancel-in-progress` defaulted to
+true where GitHub defaults to false. Needed a column on `workflow_jobs`
+(migration 0006) and carrying the key through the job graph, which was
+dropping it.
+
+**The regression is the part worth keeping.** The first implementation applied
+concurrency at job *creation*. 536 unit tests passed. The conformance check
+failed: run 1428 reported `cancelled` while its artifact, labels and bot
+comments were all present. A stage job declares `needs: route`, so at creation
+its `if:` cannot be evaluated; meanwhile every conformance run spawns
+follow-on runs from the agent's own comments, whose stage jobs share the group
+`fullsend-triage-<repo>-<issue>`. Those jobs were about to skip, and cancelled
+the one doing the work first.
+
+Supersession now happens in `dispatch_ready_jobs`, where a job becomes
+eligible — which is when GitHub considers it. Only a job that will really run
+may cancel another. Two limits are stated rather than fudged: supersession
+skips jobs in the same run, so a matrix sharing a group does not cancel its
+siblings; and a group is recorded only when `cancel-in-progress` is true,
+because this emulator has no queue-behind state and storing it otherwise would
+claim a serialisation it does not perform.
+
+**A side effect worth having.** Adding migration 0006 forced the two
+`test_database_migrations` failures — red since before this session — into the
+open: they pinned revision `0004` while the tree was at `0005`. They now
+compare against Alembic's head, so a new migration cannot rot them again. The
+emulator suite is fully green for the first time: **536 passed, 0 failed**.
+
+Conformance re-run after the fix: run 1433, `success`.

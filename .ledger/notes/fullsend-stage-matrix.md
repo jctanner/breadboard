@@ -84,11 +84,19 @@ Checked rather than inferred, on 2026-09-23:
    `fullsend-github-code`, and the last of those will need the same
    emulator-host substitution that agents patch 0003 makes to the read-only
    profile.
-5. **`fullsend-package-registries` means public egress** to package indexes.
-   That collides directly with F4, which is open precisely because the sandbox
-   boundary cannot be demonstrated while the pod can reach anything. Deciding
-   what the code stage may reach is a boundary decision, not a configuration
-   detail, and should be made deliberately.
+5. ~~**`fullsend-package-registries` means public egress**~~ - **wrong, and
+   corrected here rather than quietly dropped.** Reading the profile instead
+   of its name: it is seven named hosts (`registry.npmjs.org`,
+   `registry.yarnpkg.com`, `pypi.org`, `files.pythonhosted.org`,
+   `proxy.golang.org`, `sum.golang.org`, `storage.googleapis.com`), each
+   read-only and `enforcement: enforce`, with a binary allowlist that excludes
+   `curl`. `fullsend-gitleaks` is the same shape over three GitHub release
+   hosts. That is the sandbox boundary working as designed, not a hole in it,
+   and it does not collide with F4 - which is about the *runner* pod's
+   unrestricted egress and stays open on its own terms. There is no trade to
+   make and nothing to decide: the profiles import as shipped. The original
+   claim was made from the profile's name and category, which is exactly the
+   kind of inference this plan keeps warning about.
 6. **`review.yaml` composes with `forge:`, not `overlays:`.** Triage and code
    both use `overlays:` with CEL conditions, which this deployment has
    exercised. The `forge:` keyed form is untested here. It may work fine; it

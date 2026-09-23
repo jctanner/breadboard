@@ -1,23 +1,29 @@
 # Fullsend Integration Conformance
 
-**Status:** Waves 1 and 2 complete 2026-09-17 (A2 held on a dependency
-decision), plus B9 and D1 to D3. A real event runs the whole chain into the
-Triage job, which checks out upstream defaults, runs nested composite actions,
-and reaches the mint. Job tokens are now scoped by the job's declared
-`permissions:`, the OIDC exchange uses real signed claims that the mint
-verifies, the mint is served over internal TLS, and G17 is fixed. A real event
-now mints a triage credential, checks out the target repository with it, sets up
-credentials and the agent environment, and reaches the agent step itself. The
-trace reaches the agent step, resolves releases against the emulator, and
-installs the Fullsend CLI from a vendored binary, and stands down the agent
-action's local sandbox host setup in favour of this cluster's OpenShell
-gateway. The agent now loads its whole harness from the local forge, runs its
-pre-script, and **posts a status comment to the issue as `fullsend-triage[bot]`
-using its minted credential**, which is the first forge write by an agent in
-this stack. With OpenShell moved to the pinned revision it now creates a real
-sandbox, with a Kubernetes `Sandbox` resource and Pod, and pulls its image. It
-stops there: the CLI is killed seconds later and the cause is not yet known,
-recorded as G36. See status notes. See status notes.
+**Status:** All seven breakpoints are **go** as of 2026-09-23.
+
+A real GitHub event flows through Fullsend's own unmodified workflow into a
+real sandboxed agent running a real model, and the run leaves behind evidence
+that outlives it. The chain is: shim, `reusable-dispatch.yml`, actor
+permission check, OIDC exchange at the mint over internal TLS, a role-scoped
+credential, an OpenShell sandbox on the cluster gateway, the harness loaded
+from the local forge, Claude Code against Vertex, schema validation, and a
+post-script that labels and comments as `fullsend-triage[bot]`.
+
+`make host-conformance-reset && make host-conformance` runs that end to end
+from a cleared baseline and asserts on artefacts and identities rather than on
+the run's own conclusion — which was green on several runs that did nothing
+useful. The dashboard's onboarding button runs `fullsend github setup` in the
+runner pod and returns a reviewable scaffold pull request.
+
+Local deviations are eleven upstream-bound patches, two local-only profile
+patches, and three emulated marketplace actions; every one is named and its
+status recorded. Twenty-six checklist items remain open, mostly small
+emulator-fidelity defects and work packages 3 to 5, and none of them blocks
+the conformance path. Two are open by decision rather than oversight: the
+short-lived App installation token needs a private key this deployment does
+not hold, and "who may start onboarding" is answered by the deployment rather
+than by a user model.
 
 ## Goal
 
@@ -1740,8 +1746,8 @@ own task, bug, or ADR file.
 | B3 | 2026-09-17 | **go** | Both halves demonstrated with non-admin actors: `fullsend-triager` (triage) routes to the Triage job; `fullsend-reader` (read) and `fullsend-outsider` (no access) are both refused. Reviewer approved proceeding to wave 2. |
 | B4 | 2026-09-22 | **go** | Reviewer deferred to the executing agent's judgement. Re-demonstrated on the current stack as run 1277 after the credential-handling changes, rather than resting on run 1176: claims printed, exchange scoped to the calling repository, mint refuses to mint for another (403), credential works on its own repository (200) and is refused on another across six endpoints (404). Repeatable via `deploy/fullsend/seed/seed-trust-check.py`. Scoping is by repository, not by actor - identity separation remains open as WP3. |
 | B5 | 2026-09-22 | **go** | Demonstrated on a real model end to end. Run 1287 correctly identified a duplicate; run 1307 returned `sufficient` on a novel issue with all five clarity scores and a structured `triage_summary`, and its assessment checks out against the repository. Evidence bundles are downloadable after the workspace is gone. Total spend across four real runs: $0.42 on haiku. |
-| B6 | | | |
-| B7 | | | |
+| B6 | 2026-09-23 | **go** | One make target chain: `host-conformance-reset` clears the forge baseline and the OpenShell gateway state — sandboxes, the user-scoped profiles, and Fullsend's profile hash cache on the runners — then `host-conformance` files an issue, waits for the run selected by workflow name, and asserts on artefacts and identities rather than the run conclusion. Evidence lands in `var/conformance/run-<id>/` with the artifact bundle and all five repository revisions. Verified from a cleared baseline and again after a full reset, which re-imported both profiles from the mirror. |
+| B7 | 2026-09-23 | **go** | The dashboard button runs the real `fullsend github setup` in the runner pod and returns a reviewable scaffold pull request; it re-implements none of it. Eight emulator-backed tests cover the exec path, the scaffold contents, sealed secrets, repeat onboarding without duplicates, a browse URL that resolves, and that nothing token-shaped reaches the response. Two items remain open by decision rather than oversight: the short-lived App installation token needs a private key this deployment does not hold, and "who may start onboarding" is answered by the deployment rather than a user model. |
 
 ### 2026-09-16
 
@@ -3519,3 +3525,41 @@ WP7 now has one item that is work and one that is a decision. The App
 installation token needs a private key this deployment does not hold. "Who may
 start onboarding" is answered by the deployment rather than a user model, and
 choosing whether that is sufficient for a local stack is the reviewer's.
+
+### 2026-09-23 B6 and B7 verdicts: all seven breakpoints are go
+
+The reviewer gave both. That closes the sequence this plan was built around.
+
+**What the seven add up to.** A real event enters Fullsend's own unmodified
+shim, is routed by `reusable-dispatch.yml`, has its actor's permission
+checked, exchanges signed OIDC claims at a mint served over internal TLS for a
+role-scoped credential, creates an OpenShell sandbox on the cluster gateway,
+loads its harness from the local forge, runs Claude Code against Vertex,
+validates against Fullsend's own schema, and writes back to the issue as
+`fullsend-triage[bot]`. None of that is re-implemented. Where it could not run
+as shipped, the deviation is a named patch with its upstream status recorded:
+eleven upstream-bound, two local-only profile patches, three emulated
+marketplace actions.
+
+**What it cost to be sure.** The recurring lesson was not that things were
+broken but that broken things reported success. A run concluded `success`
+while uploading an empty artifact; another while the agent had exited 1; a
+third while the agent never read the issue it was triaging. An ambient admin
+token outranked every minted credential for a day. A gateway served a
+26-day-old policy while every run reported importing it. Each of those is now
+an assertion in `24-run-conformance-triage.sh` or in the emulator's test
+suite, because the run's own verdict turned out to be the least reliable
+signal available.
+
+**What is deliberately not claimed.** Two WP7 items are open by decision. The
+short-lived App installation token needs a private key this deployment does
+not hold, so the fallback is used and labelled `emulator-admin-fallback` in
+every response, with a test asserting the label appears. "Who may start
+onboarding" is answered by the deployment rather than by a user model. Both
+are recorded where someone will see them rather than in a commit message.
+
+**What is left** is twenty-six checklist items: small emulator-fidelity
+defects (E2 to E5, B7, B8, B10, G14, G15, G6), two Fullsend-side items (F2,
+F4), and work packages 3 to 5 — the mint trust document, the review and code
+harnesses, the compatibility profile, the stage matrix, and sending traces to
+MLflow and Observatory. None of them blocks the conformance path.

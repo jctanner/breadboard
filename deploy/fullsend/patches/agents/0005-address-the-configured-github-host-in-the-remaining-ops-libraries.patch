@@ -1,0 +1,1194 @@
+Subject: fix(agents): address the configured GitHub host in the review, code and fix ops
+
+Patch 0001 fixed this for the triage library. The same assumption is still
+present in three of the other GitHub ops libraries, so every stage past triage
+fails on any GitHub Enterprise install:
+
+  ERROR: PR_URL does not match expected GitHub pattern: https://forge.internal/acme/widgets/pull/107
+
+That is where a review run stops, before the agent does anything.
+github-code-ops and github-fix-ops carry the identical pair of functions for
+ISSUE_URL and PR_URL, so the code and fix stages fail the same way.
+
+Three distinct faults, not one:
+
+1. Validation matched https://github.com by name, rejecting a valid URL on any
+   other host.
+2. Parsing stripped the same literal host, so where validation did pass the
+   repository was parsed wrongly.
+3. forge_set_push_remote in the code and fix libraries built its remote as
+   https://x-access-token:TOKEN@github.com/OWNER/REPO.git. On an enterprise
+   install that does not merely fail — it sends a minted push token to
+   github.com. The two libraries already read GITHUB_SERVER_URL a few lines
+   further down, for the run URLs in their status comments.
+
+There is a fourth, easy to miss: with GITHUB_SERVER_URL set to an enterprise
+host, the old validation still accepted a github.com URL, because github.com
+was written into the pattern rather than derived. A PR_URL from the wrong
+forge passed the check. The new behaviour accepts exactly one host, whichever
+one the run is executing against.
+
+The host comes from GITHUB_SERVER_URL, defaulting to https://github.com, so
+behaviour on github.com is unchanged. It is stripped as a literal prefix and
+never interpolated into a regular expression, which is what patch 0001
+established for the triage library, so a server URL containing regex
+metacharacters cannot change what a pattern means. The shared helper also
+rejects a GITHUB_SERVER_URL that is not a plain https origin, since a value
+carrying a path or credentials would otherwise be spliced into URL matching.
+
+The derivation lives in a new scripts/lib/github-host-validation.lib.sh,
+mirroring scripts/lib/gitlab-host-validation.lib.sh, which has done this on the
+GitLab side from the start via CI_SERVER_HOST. It does not fail closed when the
+variable is unset, unlike its GitLab counterpart, because callers outside an
+Actions job have no GITHUB_SERVER_URL and github.com is the right default for
+them.
+
+scripts/github-host-validation-test.sh is the GitHub counterpart of the GitLab
+host-mismatch test in post-fix-test.sh. Its absence is why this survived in
+four libraries after being fixed in the fifth. It covers the github.com
+defaults, enterprise hosts with and without a port, the wrong-host and
+lookalike-host rejections, the malformed GITHUB_SERVER_URL rejections, and both
+push remotes; it fails against the unpatched libraries and passes with them.
+
+The generated scripts that embed these libraries are regenerated here, as a
+build would otherwise do: make script-build, verified with make check-bundle.
+
+Breadboard note: this patches fullsend-ai/agents, not fullsend-ai/fullsend, and
+is applied to the agents mirror by deploy/fullsend/seed/seed-upstream-agents.py.
+Written to be sent upstream as-is. Add a DCO sign-off before submitting it as a
+human-authored change.
+
+Exercised locally on the review stage only; the code and fix stages have not
+been run against this change.
+
+diff --git a/Makefile b/Makefile
+index e79fbf8..06c68b4 100644
+--- a/Makefile
++++ b/Makefile
+@@ -75,6 +75,7 @@ script-test:
+ 	$(call run-timed,bash scripts/post-review-test.sh)
+ 	$(call run-timed,bash scripts/risk-tier1-test.sh)
+ 	$(call run-timed,bash scripts/post-fix-test.sh)
++	$(call run-timed,bash scripts/github-host-validation-test.sh)
+ 	$(call run-timed,bash scripts/review-body-fallback-test.sh)
+ 	$(call run-timed,bash scripts/post-retro-test.sh)
+ 	$(call run-timed,bash scripts/pre-scribe-test.sh)
+diff --git a/scripts/github-host-validation-test.sh b/scripts/github-host-validation-test.sh
+new file mode 100755
+index 0000000..16f68b4
+--- /dev/null
++++ b/scripts/github-host-validation-test.sh
+@@ -0,0 +1,150 @@
++#!/usr/bin/env bash
++# github-host-validation-test.sh — Test GitHub forge host derivation.
++#
++# The GitHub ops libraries matched and stripped a literal https://github.com,
++# so a GitHub Enterprise host was rejected as a malformed URL. The GitLab side
++# has had a host-mismatch test since CI_SERVER_HOST was introduced; this is its
++# GitHub counterpart, and its absence is why the assumption survived.
++#
++# Run from the repo root:
++#   bash scripts/github-host-validation-test.sh
++
++set -euo pipefail
++
++SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++# shellcheck source=test-lib.sh
++source "${SCRIPT_DIR}/test-lib.sh"
++parse_script_test_args "$@"
++
++FAILURES=0
++
++check() {
++  local name="$1" expected="$2" actual="$3"
++  if [[ "${expected}" == "${actual}" ]]; then
++    echo "PASS: ${name}"
++  else
++    echo "FAIL: ${name}"
++    echo "  expected: ${expected}"
++    echo "  actual:   ${actual}"
++    FAILURES=$((FAILURES + 1))
++  fi
++}
++
++check_fails() {
++  local name="$1"; shift
++  if "$@" >/dev/null 2>&1; then
++    echo "FAIL: ${name} — expected non-zero exit but got 0"
++    FAILURES=$((FAILURES + 1))
++  else
++    echo "PASS: ${name}"
++  fi
++}
++
++# Each case runs in a subshell so one test's GITHUB_SERVER_URL cannot leak into
++# the next, and so the libraries' load guards are re-evaluated each time.
++run_case() {
++  local server_url="$1" body="$2"
++  (
++    if [[ -n "${server_url}" ]]; then
++      export GITHUB_SERVER_URL="${server_url}"
++    else
++      unset GITHUB_SERVER_URL
++    fi
++    # shellcheck source=lib/github-host-validation.lib.sh
++    source "${SCRIPT_DIR}/lib/github-host-validation.lib.sh"
++    # shellcheck source=lib/github-review-ops.lib.sh
++    source "${SCRIPT_DIR}/lib/github-review-ops.lib.sh"
++    # shellcheck source=lib/github-code-ops.lib.sh
++    source "${SCRIPT_DIR}/lib/github-code-ops.lib.sh"
++    eval "${body}"
++  )
++}
++
++# --- No GITHUB_SERVER_URL: behaviour must be exactly what it was -----------
++
++check "default-base-url" "https://github.com" \
++  "$(run_case "" '_github_base_url')"
++
++check "default-accepts-dotcom-pr" "ok" \
++  "$(run_case "" 'PR_URL=https://github.com/o/r/pull/7; forge_validate_pr_url && echo ok')"
++
++check "default-parses-dotcom-pr" "o/r 7" \
++  "$(run_case "" 'PR_URL=https://github.com/o/r/pull/7; forge_parse_pr_url; echo "${REPO} ${PR_NUMBER}"')"
++
++# --- An enterprise host: the case that was rejected outright ---------------
++
++check "enterprise-accepts-pr" "ok" \
++  "$(run_case "https://github.example.org" \
++     'PR_URL=https://github.example.org/o/r/pull/7; forge_validate_pr_url && echo ok')"
++
++check "enterprise-parses-pr" "o/r 7" \
++  "$(run_case "https://github.example.org" \
++     'PR_URL=https://github.example.org/o/r/pull/7; forge_parse_pr_url; echo "${REPO} ${PR_NUMBER}"')"
++
++check "enterprise-parses-issue" "o/r 12" \
++  "$(run_case "https://github.example.org" \
++     'ISSUE_URL=https://github.example.org/o/r/issues/12; forge_parse_issue_url; echo "${REPO_FULL_NAME} ${ISSUE_NUMBER}"')"
++
++check "enterprise-extracts-repo" "o/r" \
++  "$(run_case "https://github.example.org" \
++     'forge_extract_repo_from_url https://github.example.org/o/r/issues/12')"
++
++check "enterprise-host-with-port" "ok" \
++  "$(run_case "https://github.example.org:8443" \
++     'PR_URL=https://github.example.org:8443/o/r/pull/7; forge_validate_pr_url && echo ok')"
++
++# --- Still rejects what it should ------------------------------------------
++
++# github.com is not special once a server URL is configured: a URL on any other
++# host is somebody else's, and accepting it would hand a minted token over.
++check_fails "enterprise-rejects-other-host" \
++  bash -c "GITHUB_SERVER_URL=https://github.example.org; export GITHUB_SERVER_URL
++    source '${SCRIPT_DIR}/lib/github-review-ops.lib.sh'
++    PR_URL=https://github.com/o/r/pull/7
++    forge_validate_pr_url"
++
++# The host is stripped as a literal prefix and never interpolated into a
++# regular expression, so a lookalike host does not match: the strip is a no-op,
++# the remainder still carries a scheme, and validation fails. Matching a host
++# built into a pattern would let a dot stand for any character.
++check_fails "lookalike-host-is-not-accepted" \
++  bash -c "GITHUB_SERVER_URL=https://github.example.org; export GITHUB_SERVER_URL
++    source '${SCRIPT_DIR}/lib/github-review-ops.lib.sh'
++    PR_URL=https://githubXexample.org/o/r/pull/7
++    forge_validate_pr_url"
++
++# A server URL carrying a path would be spliced into URL matching and stripping.
++check_fails "rejects-server-url-with-path" \
++  bash -c "GITHUB_SERVER_URL=https://github.example.org/prefix; export GITHUB_SERVER_URL
++    source '${SCRIPT_DIR}/lib/github-host-validation.lib.sh'
++    _github_base_url"
++
++check_fails "rejects-non-https-server-url" \
++  bash -c "GITHUB_SERVER_URL=http://github.example.org; export GITHUB_SERVER_URL
++    source '${SCRIPT_DIR}/lib/github-host-validation.lib.sh'
++    _github_base_url"
++
++# --- The push remote ------------------------------------------------------
++
++# The token belongs in the authority, so the scheme comes off the base URL
++# first. Splicing the whole base in would yield
++# https://x-access-token:TOKEN@https://host/... and push nowhere.
++check "push-remote-targets-the-configured-host" \
++  "https://x-access-token:TOK@github.example.org/o/r.git" \
++  "$(run_case "https://github.example.org" \
++     'REPO_FULL_NAME=o/r
++      git() { [[ "$1 $2" == "remote set-url" ]] && printf "%s" "$4"; }
++      forge_set_push_remote TOK')"
++
++check "push-remote-default-is-dotcom" \
++  "https://x-access-token:TOK@github.com/o/r.git" \
++  "$(run_case "" \
++     'REPO_FULL_NAME=o/r
++      git() { [[ "$1 $2" == "remote set-url" ]] && printf "%s" "$4"; }
++      forge_set_push_remote TOK')"
++
++if [[ ${FAILURES} -gt 0 ]]; then
++  echo "${FAILURES} test(s) failed"
++  exit 1
++fi
++echo "All github host validation tests passed"
+diff --git a/scripts/lib/github-code-ops.lib.sh b/scripts/lib/github-code-ops.lib.sh
+index a161af2..8838813 100644
+--- a/scripts/lib/github-code-ops.lib.sh
++++ b/scripts/lib/github-code-ops.lib.sh
+@@ -15,11 +15,18 @@
+ [[ -n "${GITHUB_CODE_OPS_SH_LOADED:-}" ]] && return 0
+ GITHUB_CODE_OPS_SH_LOADED=1
+ 
++# shellcheck source=github-host-validation.lib.sh
++source "${BASH_SOURCE[0]%/*}/github-host-validation.lib.sh"
++
+ # --- URL handling ---
+ 
+ forge_validate_issue_url() {
+   local url="${1:-${ISSUE_URL:-}}"
+-  if [[ ! "${url}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
++  local base rest
++  base="$(_github_base_url)" || return 1
++  rest="${url#"${base}/"}"
++  if [[ "${rest}" == "${url}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
+     echo "ERROR: ISSUE_URL does not match expected GitHub pattern: ${url}" >&2
+     return 1
+   fi
+@@ -27,13 +34,17 @@ forge_validate_issue_url() {
+ 
+ forge_parse_issue_url() {
+   local url="${1:-${ISSUE_URL:-}}"
+-  REPO_FULL_NAME=$(echo "${url}" | sed 's|https://github.com/||; s|/issues/.*||')
++  local rest
++  rest="$(_github_strip_base "${url}")" || return 1
++  REPO_FULL_NAME="${rest%%/issues/*}"
+   ISSUE_NUMBER=$(basename "${url}")
+ }
+ 
+ forge_extract_repo_from_url() {
+   local url="$1"
+-  echo "${url}" | sed -E 's|https://github.com/([^/]+/[^/]+)/issues/.*|\1|'
++  local rest
++  rest="$(_github_strip_base "${url}")" || return 1
++  printf '%s\n' "${rest%%/issues/*}"
+ }
+ 
+ forge_extract_issue_from_url() {
+@@ -175,8 +186,14 @@ forge_get_default_branch() {
+ 
+ forge_set_push_remote() {
+   local token="$1"
++  local base host
++  base="$(_github_base_url)" || return 1
++  # Credentials go in the authority, so the scheme has to come off first:
++  # splicing the token into the full base URL would produce
++  # https://x-access-token:TOKEN@https://host/... and push nowhere.
++  host="${base#https://}"
+   git remote set-url origin \
+-    "https://x-access-token:${token}@github.com/${REPO_FULL_NAME}.git"
++    "https://x-access-token:${token}@${host}/${REPO_FULL_NAME}.git"
+ }
+ 
+ forge_check_remote_branch() {
+diff --git a/scripts/lib/github-fix-ops.lib.sh b/scripts/lib/github-fix-ops.lib.sh
+index 5668c3d..d9d7fdc 100644
+--- a/scripts/lib/github-fix-ops.lib.sh
++++ b/scripts/lib/github-fix-ops.lib.sh
+@@ -15,6 +15,9 @@
+ [[ -n "${GITHUB_FIX_OPS_SH_LOADED:-}" ]] && return 0
+ GITHUB_FIX_OPS_SH_LOADED=1
+ 
++# shellcheck source=github-host-validation.lib.sh
++source "${BASH_SOURCE[0]%/*}/github-host-validation.lib.sh"
++
+ if ! declare -F gha_echo >/dev/null 2>&1; then
+   gha_echo() {
+     local lvl="$1"; shift
+@@ -29,7 +32,11 @@ fi
+ 
+ forge_validate_pr_url() {
+   local url="${1:-${PR_URL:-}}"
+-  if [[ ! "${url}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/pull/[1-9][0-9]*$ ]]; then
++  local base rest
++  base="$(_github_base_url)" || return 1
++  rest="${url#"${base}/"}"
++  if [[ "${rest}" == "${url}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/pull/[1-9][0-9]*$ ]]; then
+     echo "ERROR: PR_URL does not match expected GitHub pattern: ${url}" >&2
+     return 1
+   fi
+@@ -37,7 +44,9 @@ forge_validate_pr_url() {
+ 
+ forge_parse_pr_url() {
+   local url="${1:-${PR_URL:-}}"
+-  REPO_FULL_NAME=$(echo "${url}" | sed 's|https://github.com/||; s|/pull/.*||')
++  local rest
++  rest="$(_github_strip_base "${url}")" || return 1
++  REPO_FULL_NAME="${rest%%/pull/*}"
+   # shellcheck disable=SC2034
+   PR_NUMBER=$(basename "${url}")
+ }
+@@ -52,8 +61,14 @@ forge_get_pr_head_ref() {
+ 
+ forge_set_push_remote() {
+   local token="$1"
++  local base host
++  base="$(_github_base_url)" || return 1
++  # Credentials go in the authority, so the scheme has to come off first:
++  # splicing the token into the full base URL would produce
++  # https://x-access-token:TOKEN@https://host/... and push nowhere.
++  host="${base#https://}"
+   git remote set-url origin \
+-    "https://x-access-token:${token}@github.com/${REPO_FULL_NAME}.git"
++    "https://x-access-token:${token}@${host}/${REPO_FULL_NAME}.git"
+ }
+ 
+ forge_setup_push_token() {
+diff --git a/scripts/lib/github-host-validation.lib.sh b/scripts/lib/github-host-validation.lib.sh
+new file mode 100644
+index 0000000..e4b0846
+--- /dev/null
++++ b/scripts/lib/github-host-validation.lib.sh
+@@ -0,0 +1,57 @@
++#!/usr/bin/env bash
++# shellcheck shell=bash
++# github-host-validation.lib.sh — Shared forge host handling for GitHub ops.
++#
++# Derives the forge's base URL from GITHUB_SERVER_URL, the GitHub Actions
++# predefined variable set automatically by the runner. It is the direct
++# analogue of CI_SERVER_HOST on the GitLab side, which gitlab-host-validation
++# already uses for the same purpose.
++#
++# The GitHub ops libraries previously matched and stripped a literal
++# https://github.com, so every URL on a GitHub Enterprise host was rejected as
++# malformed — the error named the URL rather than the assumption that produced
++# it.
++#
++# Unlike the GitLab library this does not fail closed when the variable is
++# unset: it falls back to https://github.com, which is exactly the behaviour
++# these scripts had before. Failing closed here would break callers that run
++# outside an Actions job, where GITHUB_SERVER_URL is not defined, for the sake
++# of a case Actions always populates.
++#
++# Callers strip the base as a literal prefix rather than interpolating it into
++# a regular expression, matching what patch 0001 established for the triage
++# library: a server URL carrying regex metacharacters then cannot change what
++# a pattern means.
++#
++# Sourced by the github-*-ops.lib.sh files and inlined by the bundler.
++
++[[ -n "${GITHUB_HOST_VALIDATION_SH_LOADED:-}" ]] && return 0
++GITHUB_HOST_VALIDATION_SH_LOADED=1
++
++if ! declare -F _gha_sanitize >/dev/null 2>&1; then
++  _gha_sanitize() {
++    printf '%s' "$1" | tr -d '\n\r' | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/%/%25/g; s/::/%3A%3A/g'
++  }
++fi
++
++# Base URL of the forge these scripts address, with no trailing slash.
++_github_base_url() {
++  local base="${GITHUB_SERVER_URL:-https://github.com}"
++  base="${base%/}"
++  # A plain https origin and nothing else. A value carrying a path, a query or
++  # credentials would be spliced into URL matching and stripping below, so it
++  # is rejected rather than used.
++  if [[ ! "${base}" =~ ^https://[a-zA-Z0-9.-]+(:[0-9]+)?$ ]]; then
++    echo "ERROR: GITHUB_SERVER_URL is not a plain https origin: $(_gha_sanitize "${base}")" >&2
++    return 1
++  fi
++  printf '%s' "${base}"
++}
++
++# Strip the forge's base URL from the front of a URL. Uses parameter expansion
++# rather than sed so that a host needs no regular-expression quoting.
++_github_strip_base() {
++  local url="$1" base
++  base="$(_github_base_url)" || return 1
++  printf '%s' "${url#"${base}/"}"
++}
+diff --git a/scripts/lib/github-review-ops.lib.sh b/scripts/lib/github-review-ops.lib.sh
+index 14238ae..30d6ac4 100644
+--- a/scripts/lib/github-review-ops.lib.sh
++++ b/scripts/lib/github-review-ops.lib.sh
+@@ -16,17 +16,26 @@
+ [[ -n "${GITHUB_REVIEW_OPS_SH_LOADED:-}" ]] && return 0
+ GITHUB_REVIEW_OPS_SH_LOADED=1
+ 
++# shellcheck source=github-host-validation.lib.sh
++source "${BASH_SOURCE[0]%/*}/github-host-validation.lib.sh"
++
+ # --- URL handling ---
+ 
+ forge_validate_pr_url() {
+-  if [[ ! "${PR_URL}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/pull/[0-9]+$ ]]; then
++  local base rest
++  base="$(_github_base_url)" || return 1
++  rest="${PR_URL#"${base}/"}"
++  if [[ "${rest}" == "${PR_URL}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/pull/[0-9]+$ ]]; then
+     echo "ERROR: PR_URL does not match expected GitHub pattern: $(_gha_sanitize "${PR_URL}")" >&2
+     return 1
+   fi
+ }
+ 
+ forge_parse_pr_url() {
+-  REPO=$(echo "${PR_URL}" | sed 's|https://github.com/||; s|/pull/.*||')
++  local rest
++  rest="$(_github_strip_base "${PR_URL}")" || return 1
++  REPO="${rest%%/pull/*}"
+   PR_NUMBER=$(basename "${PR_URL}")
+ }
+ 
+diff --git a/scripts/post-code.sh b/scripts/post-code.sh
+index 5bc3e60..cc84336 100755
+--- a/scripts/post-code.sh
++++ b/scripts/post-code.sh
+@@ -1271,11 +1271,75 @@ case "${FULLSEND_FORGE:-}" in
+ [[ -n "${GITHUB_CODE_OPS_SH_LOADED:-}" ]] && return 0
+ GITHUB_CODE_OPS_SH_LOADED=1
+ 
++# shellcheck source=github-host-validation.lib.sh
++# BEGIN bundled: lib/github-host-validation.lib.sh
++# shellcheck shell=bash
++# github-host-validation.lib.sh — Shared forge host handling for GitHub ops.
++#
++# Derives the forge's base URL from GITHUB_SERVER_URL, the GitHub Actions
++# predefined variable set automatically by the runner. It is the direct
++# analogue of CI_SERVER_HOST on the GitLab side, which gitlab-host-validation
++# already uses for the same purpose.
++#
++# The GitHub ops libraries previously matched and stripped a literal
++# https://github.com, so every URL on a GitHub Enterprise host was rejected as
++# malformed — the error named the URL rather than the assumption that produced
++# it.
++#
++# Unlike the GitLab library this does not fail closed when the variable is
++# unset: it falls back to https://github.com, which is exactly the behaviour
++# these scripts had before. Failing closed here would break callers that run
++# outside an Actions job, where GITHUB_SERVER_URL is not defined, for the sake
++# of a case Actions always populates.
++#
++# Callers strip the base as a literal prefix rather than interpolating it into
++# a regular expression, matching what patch 0001 established for the triage
++# library: a server URL carrying regex metacharacters then cannot change what
++# a pattern means.
++#
++# Sourced by the github-*-ops.lib.sh files and inlined by the bundler.
++
++[[ -n "${GITHUB_HOST_VALIDATION_SH_LOADED:-}" ]] && return 0
++GITHUB_HOST_VALIDATION_SH_LOADED=1
++
++if ! declare -F _gha_sanitize >/dev/null 2>&1; then
++  _gha_sanitize() {
++    printf '%s' "$1" | tr -d '\n\r' | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/%/%25/g; s/::/%3A%3A/g'
++  }
++fi
++
++# Base URL of the forge these scripts address, with no trailing slash.
++_github_base_url() {
++  local base="${GITHUB_SERVER_URL:-https://github.com}"
++  base="${base%/}"
++  # A plain https origin and nothing else. A value carrying a path, a query or
++  # credentials would be spliced into URL matching and stripping below, so it
++  # is rejected rather than used.
++  if [[ ! "${base}" =~ ^https://[a-zA-Z0-9.-]+(:[0-9]+)?$ ]]; then
++    echo "ERROR: GITHUB_SERVER_URL is not a plain https origin: $(_gha_sanitize "${base}")" >&2
++    return 1
++  fi
++  printf '%s' "${base}"
++}
++
++# Strip the forge's base URL from the front of a URL. Uses parameter expansion
++# rather than sed so that a host needs no regular-expression quoting.
++_github_strip_base() {
++  local url="$1" base
++  base="$(_github_base_url)" || return 1
++  printf '%s' "${url#"${base}/"}"
++}
++# END bundled: lib/github-host-validation.lib.sh
++
+ # --- URL handling ---
+ 
+ forge_validate_issue_url() {
+   local url="${1:-${ISSUE_URL:-}}"
+-  if [[ ! "${url}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
++  local base rest
++  base="$(_github_base_url)" || return 1
++  rest="${url#"${base}/"}"
++  if [[ "${rest}" == "${url}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
+     echo "ERROR: ISSUE_URL does not match expected GitHub pattern: ${url}" >&2
+     return 1
+   fi
+@@ -1283,13 +1347,17 @@ forge_validate_issue_url() {
+ 
+ forge_parse_issue_url() {
+   local url="${1:-${ISSUE_URL:-}}"
+-  REPO_FULL_NAME=$(echo "${url}" | sed 's|https://github.com/||; s|/issues/.*||')
++  local rest
++  rest="$(_github_strip_base "${url}")" || return 1
++  REPO_FULL_NAME="${rest%%/issues/*}"
+   ISSUE_NUMBER=$(basename "${url}")
+ }
+ 
+ forge_extract_repo_from_url() {
+   local url="$1"
+-  echo "${url}" | sed -E 's|https://github.com/([^/]+/[^/]+)/issues/.*|\1|'
++  local rest
++  rest="$(_github_strip_base "${url}")" || return 1
++  printf '%s\n' "${rest%%/issues/*}"
+ }
+ 
+ forge_extract_issue_from_url() {
+@@ -1431,8 +1499,14 @@ forge_get_default_branch() {
+ 
+ forge_set_push_remote() {
+   local token="$1"
++  local base host
++  base="$(_github_base_url)" || return 1
++  # Credentials go in the authority, so the scheme has to come off first:
++  # splicing the token into the full base URL would produce
++  # https://x-access-token:TOKEN@https://host/... and push nowhere.
++  host="${base#https://}"
+   git remote set-url origin \
+-    "https://x-access-token:${token}@github.com/${REPO_FULL_NAME}.git"
++    "https://x-access-token:${token}@${host}/${REPO_FULL_NAME}.git"
+ }
+ 
+ forge_check_remote_branch() {
+diff --git a/scripts/post-fix.sh b/scripts/post-fix.sh
+index 1ccbac5..76527d8 100755
+--- a/scripts/post-fix.sh
++++ b/scripts/post-fix.sh
+@@ -89,6 +89,66 @@ case "${FULLSEND_FORGE:-}" in
+ [[ -n "${GITHUB_FIX_OPS_SH_LOADED:-}" ]] && return 0
+ GITHUB_FIX_OPS_SH_LOADED=1
+ 
++# shellcheck source=github-host-validation.lib.sh
++# BEGIN bundled: lib/github-host-validation.lib.sh
++# shellcheck shell=bash
++# github-host-validation.lib.sh — Shared forge host handling for GitHub ops.
++#
++# Derives the forge's base URL from GITHUB_SERVER_URL, the GitHub Actions
++# predefined variable set automatically by the runner. It is the direct
++# analogue of CI_SERVER_HOST on the GitLab side, which gitlab-host-validation
++# already uses for the same purpose.
++#
++# The GitHub ops libraries previously matched and stripped a literal
++# https://github.com, so every URL on a GitHub Enterprise host was rejected as
++# malformed — the error named the URL rather than the assumption that produced
++# it.
++#
++# Unlike the GitLab library this does not fail closed when the variable is
++# unset: it falls back to https://github.com, which is exactly the behaviour
++# these scripts had before. Failing closed here would break callers that run
++# outside an Actions job, where GITHUB_SERVER_URL is not defined, for the sake
++# of a case Actions always populates.
++#
++# Callers strip the base as a literal prefix rather than interpolating it into
++# a regular expression, matching what patch 0001 established for the triage
++# library: a server URL carrying regex metacharacters then cannot change what
++# a pattern means.
++#
++# Sourced by the github-*-ops.lib.sh files and inlined by the bundler.
++
++[[ -n "${GITHUB_HOST_VALIDATION_SH_LOADED:-}" ]] && return 0
++GITHUB_HOST_VALIDATION_SH_LOADED=1
++
++if ! declare -F _gha_sanitize >/dev/null 2>&1; then
++  _gha_sanitize() {
++    printf '%s' "$1" | tr -d '\n\r' | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/%/%25/g; s/::/%3A%3A/g'
++  }
++fi
++
++# Base URL of the forge these scripts address, with no trailing slash.
++_github_base_url() {
++  local base="${GITHUB_SERVER_URL:-https://github.com}"
++  base="${base%/}"
++  # A plain https origin and nothing else. A value carrying a path, a query or
++  # credentials would be spliced into URL matching and stripping below, so it
++  # is rejected rather than used.
++  if [[ ! "${base}" =~ ^https://[a-zA-Z0-9.-]+(:[0-9]+)?$ ]]; then
++    echo "ERROR: GITHUB_SERVER_URL is not a plain https origin: $(_gha_sanitize "${base}")" >&2
++    return 1
++  fi
++  printf '%s' "${base}"
++}
++
++# Strip the forge's base URL from the front of a URL. Uses parameter expansion
++# rather than sed so that a host needs no regular-expression quoting.
++_github_strip_base() {
++  local url="$1" base
++  base="$(_github_base_url)" || return 1
++  printf '%s' "${url#"${base}/"}"
++}
++# END bundled: lib/github-host-validation.lib.sh
++
+ if ! declare -F gha_echo >/dev/null 2>&1; then
+   gha_echo() {
+     local lvl="$1"; shift
+@@ -103,7 +163,11 @@ fi
+ 
+ forge_validate_pr_url() {
+   local url="${1:-${PR_URL:-}}"
+-  if [[ ! "${url}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/pull/[1-9][0-9]*$ ]]; then
++  local base rest
++  base="$(_github_base_url)" || return 1
++  rest="${url#"${base}/"}"
++  if [[ "${rest}" == "${url}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/pull/[1-9][0-9]*$ ]]; then
+     echo "ERROR: PR_URL does not match expected GitHub pattern: ${url}" >&2
+     return 1
+   fi
+@@ -111,7 +175,9 @@ forge_validate_pr_url() {
+ 
+ forge_parse_pr_url() {
+   local url="${1:-${PR_URL:-}}"
+-  REPO_FULL_NAME=$(echo "${url}" | sed 's|https://github.com/||; s|/pull/.*||')
++  local rest
++  rest="$(_github_strip_base "${url}")" || return 1
++  REPO_FULL_NAME="${rest%%/pull/*}"
+   # shellcheck disable=SC2034
+   PR_NUMBER=$(basename "${url}")
+ }
+@@ -126,8 +192,14 @@ forge_get_pr_head_ref() {
+ 
+ forge_set_push_remote() {
+   local token="$1"
++  local base host
++  base="$(_github_base_url)" || return 1
++  # Credentials go in the authority, so the scheme has to come off first:
++  # splicing the token into the full base URL would produce
++  # https://x-access-token:TOKEN@https://host/... and push nowhere.
++  host="${base#https://}"
+   git remote set-url origin \
+-    "https://x-access-token:${token}@github.com/${REPO_FULL_NAME}.git"
++    "https://x-access-token:${token}@${host}/${REPO_FULL_NAME}.git"
+ }
+ 
+ forge_setup_push_token() {
+diff --git a/scripts/post-review.sh b/scripts/post-review.sh
+index f638713..01665ba 100755
+--- a/scripts/post-review.sh
++++ b/scripts/post-review.sh
+@@ -66,17 +66,83 @@ case "${FULLSEND_FORGE:-}" in
+ [[ -n "${GITHUB_REVIEW_OPS_SH_LOADED:-}" ]] && return 0
+ GITHUB_REVIEW_OPS_SH_LOADED=1
+ 
++# shellcheck source=github-host-validation.lib.sh
++# BEGIN bundled: lib/github-host-validation.lib.sh
++# shellcheck shell=bash
++# github-host-validation.lib.sh — Shared forge host handling for GitHub ops.
++#
++# Derives the forge's base URL from GITHUB_SERVER_URL, the GitHub Actions
++# predefined variable set automatically by the runner. It is the direct
++# analogue of CI_SERVER_HOST on the GitLab side, which gitlab-host-validation
++# already uses for the same purpose.
++#
++# The GitHub ops libraries previously matched and stripped a literal
++# https://github.com, so every URL on a GitHub Enterprise host was rejected as
++# malformed — the error named the URL rather than the assumption that produced
++# it.
++#
++# Unlike the GitLab library this does not fail closed when the variable is
++# unset: it falls back to https://github.com, which is exactly the behaviour
++# these scripts had before. Failing closed here would break callers that run
++# outside an Actions job, where GITHUB_SERVER_URL is not defined, for the sake
++# of a case Actions always populates.
++#
++# Callers strip the base as a literal prefix rather than interpolating it into
++# a regular expression, matching what patch 0001 established for the triage
++# library: a server URL carrying regex metacharacters then cannot change what
++# a pattern means.
++#
++# Sourced by the github-*-ops.lib.sh files and inlined by the bundler.
++
++[[ -n "${GITHUB_HOST_VALIDATION_SH_LOADED:-}" ]] && return 0
++GITHUB_HOST_VALIDATION_SH_LOADED=1
++
++if ! declare -F _gha_sanitize >/dev/null 2>&1; then
++  _gha_sanitize() {
++    printf '%s' "$1" | tr -d '\n\r' | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/%/%25/g; s/::/%3A%3A/g'
++  }
++fi
++
++# Base URL of the forge these scripts address, with no trailing slash.
++_github_base_url() {
++  local base="${GITHUB_SERVER_URL:-https://github.com}"
++  base="${base%/}"
++  # A plain https origin and nothing else. A value carrying a path, a query or
++  # credentials would be spliced into URL matching and stripping below, so it
++  # is rejected rather than used.
++  if [[ ! "${base}" =~ ^https://[a-zA-Z0-9.-]+(:[0-9]+)?$ ]]; then
++    echo "ERROR: GITHUB_SERVER_URL is not a plain https origin: $(_gha_sanitize "${base}")" >&2
++    return 1
++  fi
++  printf '%s' "${base}"
++}
++
++# Strip the forge's base URL from the front of a URL. Uses parameter expansion
++# rather than sed so that a host needs no regular-expression quoting.
++_github_strip_base() {
++  local url="$1" base
++  base="$(_github_base_url)" || return 1
++  printf '%s' "${url#"${base}/"}"
++}
++# END bundled: lib/github-host-validation.lib.sh
++
+ # --- URL handling ---
+ 
+ forge_validate_pr_url() {
+-  if [[ ! "${PR_URL}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/pull/[0-9]+$ ]]; then
++  local base rest
++  base="$(_github_base_url)" || return 1
++  rest="${PR_URL#"${base}/"}"
++  if [[ "${rest}" == "${PR_URL}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/pull/[0-9]+$ ]]; then
+     echo "ERROR: PR_URL does not match expected GitHub pattern: $(_gha_sanitize "${PR_URL}")" >&2
+     return 1
+   fi
+ }
+ 
+ forge_parse_pr_url() {
+-  REPO=$(echo "${PR_URL}" | sed 's|https://github.com/||; s|/pull/.*||')
++  local rest
++  rest="$(_github_strip_base "${PR_URL}")" || return 1
++  REPO="${rest%%/pull/*}"
+   PR_NUMBER=$(basename "${PR_URL}")
+ }
+ 
+diff --git a/scripts/pre-code-jira.sh b/scripts/pre-code-jira.sh
+index f28be44..6c37a92 100755
+--- a/scripts/pre-code-jira.sh
++++ b/scripts/pre-code-jira.sh
+@@ -143,11 +143,75 @@ case "${FULLSEND_FORGE:-}" in
+ [[ -n "${GITHUB_CODE_OPS_SH_LOADED:-}" ]] && return 0
+ GITHUB_CODE_OPS_SH_LOADED=1
+ 
++# shellcheck source=github-host-validation.lib.sh
++# BEGIN bundled: lib/github-host-validation.lib.sh
++# shellcheck shell=bash
++# github-host-validation.lib.sh — Shared forge host handling for GitHub ops.
++#
++# Derives the forge's base URL from GITHUB_SERVER_URL, the GitHub Actions
++# predefined variable set automatically by the runner. It is the direct
++# analogue of CI_SERVER_HOST on the GitLab side, which gitlab-host-validation
++# already uses for the same purpose.
++#
++# The GitHub ops libraries previously matched and stripped a literal
++# https://github.com, so every URL on a GitHub Enterprise host was rejected as
++# malformed — the error named the URL rather than the assumption that produced
++# it.
++#
++# Unlike the GitLab library this does not fail closed when the variable is
++# unset: it falls back to https://github.com, which is exactly the behaviour
++# these scripts had before. Failing closed here would break callers that run
++# outside an Actions job, where GITHUB_SERVER_URL is not defined, for the sake
++# of a case Actions always populates.
++#
++# Callers strip the base as a literal prefix rather than interpolating it into
++# a regular expression, matching what patch 0001 established for the triage
++# library: a server URL carrying regex metacharacters then cannot change what
++# a pattern means.
++#
++# Sourced by the github-*-ops.lib.sh files and inlined by the bundler.
++
++[[ -n "${GITHUB_HOST_VALIDATION_SH_LOADED:-}" ]] && return 0
++GITHUB_HOST_VALIDATION_SH_LOADED=1
++
++if ! declare -F _gha_sanitize >/dev/null 2>&1; then
++  _gha_sanitize() {
++    printf '%s' "$1" | tr -d '\n\r' | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/%/%25/g; s/::/%3A%3A/g'
++  }
++fi
++
++# Base URL of the forge these scripts address, with no trailing slash.
++_github_base_url() {
++  local base="${GITHUB_SERVER_URL:-https://github.com}"
++  base="${base%/}"
++  # A plain https origin and nothing else. A value carrying a path, a query or
++  # credentials would be spliced into URL matching and stripping below, so it
++  # is rejected rather than used.
++  if [[ ! "${base}" =~ ^https://[a-zA-Z0-9.-]+(:[0-9]+)?$ ]]; then
++    echo "ERROR: GITHUB_SERVER_URL is not a plain https origin: $(_gha_sanitize "${base}")" >&2
++    return 1
++  fi
++  printf '%s' "${base}"
++}
++
++# Strip the forge's base URL from the front of a URL. Uses parameter expansion
++# rather than sed so that a host needs no regular-expression quoting.
++_github_strip_base() {
++  local url="$1" base
++  base="$(_github_base_url)" || return 1
++  printf '%s' "${url#"${base}/"}"
++}
++# END bundled: lib/github-host-validation.lib.sh
++
+ # --- URL handling ---
+ 
+ forge_validate_issue_url() {
+   local url="${1:-${ISSUE_URL:-}}"
+-  if [[ ! "${url}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
++  local base rest
++  base="$(_github_base_url)" || return 1
++  rest="${url#"${base}/"}"
++  if [[ "${rest}" == "${url}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
+     echo "ERROR: ISSUE_URL does not match expected GitHub pattern: ${url}" >&2
+     return 1
+   fi
+@@ -155,13 +219,17 @@ forge_validate_issue_url() {
+ 
+ forge_parse_issue_url() {
+   local url="${1:-${ISSUE_URL:-}}"
+-  REPO_FULL_NAME=$(echo "${url}" | sed 's|https://github.com/||; s|/issues/.*||')
++  local rest
++  rest="$(_github_strip_base "${url}")" || return 1
++  REPO_FULL_NAME="${rest%%/issues/*}"
+   ISSUE_NUMBER=$(basename "${url}")
+ }
+ 
+ forge_extract_repo_from_url() {
+   local url="$1"
+-  echo "${url}" | sed -E 's|https://github.com/([^/]+/[^/]+)/issues/.*|\1|'
++  local rest
++  rest="$(_github_strip_base "${url}")" || return 1
++  printf '%s\n' "${rest%%/issues/*}"
+ }
+ 
+ forge_extract_issue_from_url() {
+@@ -303,8 +371,14 @@ forge_get_default_branch() {
+ 
+ forge_set_push_remote() {
+   local token="$1"
++  local base host
++  base="$(_github_base_url)" || return 1
++  # Credentials go in the authority, so the scheme has to come off first:
++  # splicing the token into the full base URL would produce
++  # https://x-access-token:TOKEN@https://host/... and push nowhere.
++  host="${base#https://}"
+   git remote set-url origin \
+-    "https://x-access-token:${token}@github.com/${REPO_FULL_NAME}.git"
++    "https://x-access-token:${token}@${host}/${REPO_FULL_NAME}.git"
+ }
+ 
+ forge_check_remote_branch() {
+diff --git a/scripts/pre-code.sh b/scripts/pre-code.sh
+index b17144c..f53d0c7 100755
+--- a/scripts/pre-code.sh
++++ b/scripts/pre-code.sh
+@@ -79,11 +79,75 @@ case "${FULLSEND_FORGE:-}" in
+ [[ -n "${GITHUB_CODE_OPS_SH_LOADED:-}" ]] && return 0
+ GITHUB_CODE_OPS_SH_LOADED=1
+ 
++# shellcheck source=github-host-validation.lib.sh
++# BEGIN bundled: lib/github-host-validation.lib.sh
++# shellcheck shell=bash
++# github-host-validation.lib.sh — Shared forge host handling for GitHub ops.
++#
++# Derives the forge's base URL from GITHUB_SERVER_URL, the GitHub Actions
++# predefined variable set automatically by the runner. It is the direct
++# analogue of CI_SERVER_HOST on the GitLab side, which gitlab-host-validation
++# already uses for the same purpose.
++#
++# The GitHub ops libraries previously matched and stripped a literal
++# https://github.com, so every URL on a GitHub Enterprise host was rejected as
++# malformed — the error named the URL rather than the assumption that produced
++# it.
++#
++# Unlike the GitLab library this does not fail closed when the variable is
++# unset: it falls back to https://github.com, which is exactly the behaviour
++# these scripts had before. Failing closed here would break callers that run
++# outside an Actions job, where GITHUB_SERVER_URL is not defined, for the sake
++# of a case Actions always populates.
++#
++# Callers strip the base as a literal prefix rather than interpolating it into
++# a regular expression, matching what patch 0001 established for the triage
++# library: a server URL carrying regex metacharacters then cannot change what
++# a pattern means.
++#
++# Sourced by the github-*-ops.lib.sh files and inlined by the bundler.
++
++[[ -n "${GITHUB_HOST_VALIDATION_SH_LOADED:-}" ]] && return 0
++GITHUB_HOST_VALIDATION_SH_LOADED=1
++
++if ! declare -F _gha_sanitize >/dev/null 2>&1; then
++  _gha_sanitize() {
++    printf '%s' "$1" | tr -d '\n\r' | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/%/%25/g; s/::/%3A%3A/g'
++  }
++fi
++
++# Base URL of the forge these scripts address, with no trailing slash.
++_github_base_url() {
++  local base="${GITHUB_SERVER_URL:-https://github.com}"
++  base="${base%/}"
++  # A plain https origin and nothing else. A value carrying a path, a query or
++  # credentials would be spliced into URL matching and stripping below, so it
++  # is rejected rather than used.
++  if [[ ! "${base}" =~ ^https://[a-zA-Z0-9.-]+(:[0-9]+)?$ ]]; then
++    echo "ERROR: GITHUB_SERVER_URL is not a plain https origin: $(_gha_sanitize "${base}")" >&2
++    return 1
++  fi
++  printf '%s' "${base}"
++}
++
++# Strip the forge's base URL from the front of a URL. Uses parameter expansion
++# rather than sed so that a host needs no regular-expression quoting.
++_github_strip_base() {
++  local url="$1" base
++  base="$(_github_base_url)" || return 1
++  printf '%s' "${url#"${base}/"}"
++}
++# END bundled: lib/github-host-validation.lib.sh
++
+ # --- URL handling ---
+ 
+ forge_validate_issue_url() {
+   local url="${1:-${ISSUE_URL:-}}"
+-  if [[ ! "${url}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
++  local base rest
++  base="$(_github_base_url)" || return 1
++  rest="${url#"${base}/"}"
++  if [[ "${rest}" == "${url}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/issues/[0-9]+$ ]]; then
+     echo "ERROR: ISSUE_URL does not match expected GitHub pattern: ${url}" >&2
+     return 1
+   fi
+@@ -91,13 +155,17 @@ forge_validate_issue_url() {
+ 
+ forge_parse_issue_url() {
+   local url="${1:-${ISSUE_URL:-}}"
+-  REPO_FULL_NAME=$(echo "${url}" | sed 's|https://github.com/||; s|/issues/.*||')
++  local rest
++  rest="$(_github_strip_base "${url}")" || return 1
++  REPO_FULL_NAME="${rest%%/issues/*}"
+   ISSUE_NUMBER=$(basename "${url}")
+ }
+ 
+ forge_extract_repo_from_url() {
+   local url="$1"
+-  echo "${url}" | sed -E 's|https://github.com/([^/]+/[^/]+)/issues/.*|\1|'
++  local rest
++  rest="$(_github_strip_base "${url}")" || return 1
++  printf '%s\n' "${rest%%/issues/*}"
+ }
+ 
+ forge_extract_issue_from_url() {
+@@ -239,8 +307,14 @@ forge_get_default_branch() {
+ 
+ forge_set_push_remote() {
+   local token="$1"
++  local base host
++  base="$(_github_base_url)" || return 1
++  # Credentials go in the authority, so the scheme has to come off first:
++  # splicing the token into the full base URL would produce
++  # https://x-access-token:TOKEN@https://host/... and push nowhere.
++  host="${base#https://}"
+   git remote set-url origin \
+-    "https://x-access-token:${token}@github.com/${REPO_FULL_NAME}.git"
++    "https://x-access-token:${token}@${host}/${REPO_FULL_NAME}.git"
+ }
+ 
+ forge_check_remote_branch() {
+diff --git a/scripts/pre-fix.sh b/scripts/pre-fix.sh
+index 1b894aa..54e0893 100755
+--- a/scripts/pre-fix.sh
++++ b/scripts/pre-fix.sh
+@@ -52,6 +52,66 @@ case "${FULLSEND_FORGE:-}" in
+ [[ -n "${GITHUB_FIX_OPS_SH_LOADED:-}" ]] && return 0
+ GITHUB_FIX_OPS_SH_LOADED=1
+ 
++# shellcheck source=github-host-validation.lib.sh
++# BEGIN bundled: lib/github-host-validation.lib.sh
++# shellcheck shell=bash
++# github-host-validation.lib.sh — Shared forge host handling for GitHub ops.
++#
++# Derives the forge's base URL from GITHUB_SERVER_URL, the GitHub Actions
++# predefined variable set automatically by the runner. It is the direct
++# analogue of CI_SERVER_HOST on the GitLab side, which gitlab-host-validation
++# already uses for the same purpose.
++#
++# The GitHub ops libraries previously matched and stripped a literal
++# https://github.com, so every URL on a GitHub Enterprise host was rejected as
++# malformed — the error named the URL rather than the assumption that produced
++# it.
++#
++# Unlike the GitLab library this does not fail closed when the variable is
++# unset: it falls back to https://github.com, which is exactly the behaviour
++# these scripts had before. Failing closed here would break callers that run
++# outside an Actions job, where GITHUB_SERVER_URL is not defined, for the sake
++# of a case Actions always populates.
++#
++# Callers strip the base as a literal prefix rather than interpolating it into
++# a regular expression, matching what patch 0001 established for the triage
++# library: a server URL carrying regex metacharacters then cannot change what
++# a pattern means.
++#
++# Sourced by the github-*-ops.lib.sh files and inlined by the bundler.
++
++[[ -n "${GITHUB_HOST_VALIDATION_SH_LOADED:-}" ]] && return 0
++GITHUB_HOST_VALIDATION_SH_LOADED=1
++
++if ! declare -F _gha_sanitize >/dev/null 2>&1; then
++  _gha_sanitize() {
++    printf '%s' "$1" | tr -d '\n\r' | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/%/%25/g; s/::/%3A%3A/g'
++  }
++fi
++
++# Base URL of the forge these scripts address, with no trailing slash.
++_github_base_url() {
++  local base="${GITHUB_SERVER_URL:-https://github.com}"
++  base="${base%/}"
++  # A plain https origin and nothing else. A value carrying a path, a query or
++  # credentials would be spliced into URL matching and stripping below, so it
++  # is rejected rather than used.
++  if [[ ! "${base}" =~ ^https://[a-zA-Z0-9.-]+(:[0-9]+)?$ ]]; then
++    echo "ERROR: GITHUB_SERVER_URL is not a plain https origin: $(_gha_sanitize "${base}")" >&2
++    return 1
++  fi
++  printf '%s' "${base}"
++}
++
++# Strip the forge's base URL from the front of a URL. Uses parameter expansion
++# rather than sed so that a host needs no regular-expression quoting.
++_github_strip_base() {
++  local url="$1" base
++  base="$(_github_base_url)" || return 1
++  printf '%s' "${url#"${base}/"}"
++}
++# END bundled: lib/github-host-validation.lib.sh
++
+ if ! declare -F gha_echo >/dev/null 2>&1; then
+   gha_echo() {
+     local lvl="$1"; shift
+@@ -66,7 +126,11 @@ fi
+ 
+ forge_validate_pr_url() {
+   local url="${1:-${PR_URL:-}}"
+-  if [[ ! "${url}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/pull/[1-9][0-9]*$ ]]; then
++  local base rest
++  base="$(_github_base_url)" || return 1
++  rest="${url#"${base}/"}"
++  if [[ "${rest}" == "${url}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/pull/[1-9][0-9]*$ ]]; then
+     echo "ERROR: PR_URL does not match expected GitHub pattern: ${url}" >&2
+     return 1
+   fi
+@@ -74,7 +138,9 @@ forge_validate_pr_url() {
+ 
+ forge_parse_pr_url() {
+   local url="${1:-${PR_URL:-}}"
+-  REPO_FULL_NAME=$(echo "${url}" | sed 's|https://github.com/||; s|/pull/.*||')
++  local rest
++  rest="$(_github_strip_base "${url}")" || return 1
++  REPO_FULL_NAME="${rest%%/pull/*}"
+   # shellcheck disable=SC2034
+   PR_NUMBER=$(basename "${url}")
+ }
+@@ -89,8 +155,14 @@ forge_get_pr_head_ref() {
+ 
+ forge_set_push_remote() {
+   local token="$1"
++  local base host
++  base="$(_github_base_url)" || return 1
++  # Credentials go in the authority, so the scheme has to come off first:
++  # splicing the token into the full base URL would produce
++  # https://x-access-token:TOKEN@https://host/... and push nowhere.
++  host="${base#https://}"
+   git remote set-url origin \
+-    "https://x-access-token:${token}@github.com/${REPO_FULL_NAME}.git"
++    "https://x-access-token:${token}@${host}/${REPO_FULL_NAME}.git"
+ }
+ 
+ forge_setup_push_token() {
+diff --git a/scripts/pre-review.sh b/scripts/pre-review.sh
+index 63be9b0..c62cfff 100755
+--- a/scripts/pre-review.sh
++++ b/scripts/pre-review.sh
+@@ -51,17 +51,83 @@ case "${FULLSEND_FORGE:-}" in
+ [[ -n "${GITHUB_REVIEW_OPS_SH_LOADED:-}" ]] && return 0
+ GITHUB_REVIEW_OPS_SH_LOADED=1
+ 
++# shellcheck source=github-host-validation.lib.sh
++# BEGIN bundled: lib/github-host-validation.lib.sh
++# shellcheck shell=bash
++# github-host-validation.lib.sh — Shared forge host handling for GitHub ops.
++#
++# Derives the forge's base URL from GITHUB_SERVER_URL, the GitHub Actions
++# predefined variable set automatically by the runner. It is the direct
++# analogue of CI_SERVER_HOST on the GitLab side, which gitlab-host-validation
++# already uses for the same purpose.
++#
++# The GitHub ops libraries previously matched and stripped a literal
++# https://github.com, so every URL on a GitHub Enterprise host was rejected as
++# malformed — the error named the URL rather than the assumption that produced
++# it.
++#
++# Unlike the GitLab library this does not fail closed when the variable is
++# unset: it falls back to https://github.com, which is exactly the behaviour
++# these scripts had before. Failing closed here would break callers that run
++# outside an Actions job, where GITHUB_SERVER_URL is not defined, for the sake
++# of a case Actions always populates.
++#
++# Callers strip the base as a literal prefix rather than interpolating it into
++# a regular expression, matching what patch 0001 established for the triage
++# library: a server URL carrying regex metacharacters then cannot change what
++# a pattern means.
++#
++# Sourced by the github-*-ops.lib.sh files and inlined by the bundler.
++
++[[ -n "${GITHUB_HOST_VALIDATION_SH_LOADED:-}" ]] && return 0
++GITHUB_HOST_VALIDATION_SH_LOADED=1
++
++if ! declare -F _gha_sanitize >/dev/null 2>&1; then
++  _gha_sanitize() {
++    printf '%s' "$1" | tr -d '\n\r' | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/%/%25/g; s/::/%3A%3A/g'
++  }
++fi
++
++# Base URL of the forge these scripts address, with no trailing slash.
++_github_base_url() {
++  local base="${GITHUB_SERVER_URL:-https://github.com}"
++  base="${base%/}"
++  # A plain https origin and nothing else. A value carrying a path, a query or
++  # credentials would be spliced into URL matching and stripping below, so it
++  # is rejected rather than used.
++  if [[ ! "${base}" =~ ^https://[a-zA-Z0-9.-]+(:[0-9]+)?$ ]]; then
++    echo "ERROR: GITHUB_SERVER_URL is not a plain https origin: $(_gha_sanitize "${base}")" >&2
++    return 1
++  fi
++  printf '%s' "${base}"
++}
++
++# Strip the forge's base URL from the front of a URL. Uses parameter expansion
++# rather than sed so that a host needs no regular-expression quoting.
++_github_strip_base() {
++  local url="$1" base
++  base="$(_github_base_url)" || return 1
++  printf '%s' "${url#"${base}/"}"
++}
++# END bundled: lib/github-host-validation.lib.sh
++
+ # --- URL handling ---
+ 
+ forge_validate_pr_url() {
+-  if [[ ! "${PR_URL}" =~ ^https://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/pull/[0-9]+$ ]]; then
++  local base rest
++  base="$(_github_base_url)" || return 1
++  rest="${PR_URL#"${base}/"}"
++  if [[ "${rest}" == "${PR_URL}" ]] || \
++     [[ ! "${rest}" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/pull/[0-9]+$ ]]; then
+     echo "ERROR: PR_URL does not match expected GitHub pattern: $(_gha_sanitize "${PR_URL}")" >&2
+     return 1
+   fi
+ }
+ 
+ forge_parse_pr_url() {
+-  REPO=$(echo "${PR_URL}" | sed 's|https://github.com/||; s|/pull/.*||')
++  local rest
++  rest="$(_github_strip_base "${PR_URL}")" || return 1
++  REPO="${rest%%/pull/*}"
+   PR_NUMBER=$(basename "${PR_URL}")
+ }
+ 

@@ -1588,8 +1588,11 @@ failures stop the run, and no long-lived token passes through the sandbox.
 
 Feeds breakpoint B5.
 
-- [ ] Collect concrete examples from the triage, review, and code harnesses
+- [x] Collect concrete examples from the triage, review, and code harnesses
   of the binaries, entrypoints, providers, and credential paths they expect.
+  Written up in [`.ledger/notes/fullsend-stage-matrix.md`](../notes/fullsend-stage-matrix.md),
+  with the triage column marked observed and the review and code columns
+  marked as read from the harness files rather than run.
 - [ ] Diff those harnesses against Breadboard's local images, policies,
   profiles, schemas, scripts, and environment variables.
 - [x] Decide which resources are mirrored locally and how their revision is

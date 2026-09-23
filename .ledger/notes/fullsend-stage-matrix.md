@@ -9,11 +9,9 @@ mirrored revision. There are seven harnesses upstream — `fix`, `prioritize`,
 `retro` and `scribe` as well — but only these three are in scope for the
 conformance plan.
 
-**Status of this document.** Triage is observed end to end; run 1436's
-evidence bundle backs every cell. Review is observed as far as the agent
-boundary - see "The review stage, run" below - and unobserved beyond it. Code
-is still read from the harness file and has not been run. The distinction is
-the point of the matrix and should stay explicit until a run replaces each
+**Status of this document.** Triage and review are both observed end to end.
+Code is still read from the harness file and has not been run. The distinction
+is the point of the matrix and should stay explicit until a run replaces each
 unobserved cell.
 
 ## The matrix
@@ -216,3 +214,49 @@ without ever establishing whether haiku had been given its inputs.
 
 The scenario and `FULLSEND_RUNTIME` were restored afterwards, the scenario
 verified byte-identical.
+
+
+## Review, closed end to end
+
+Run 1462 (sonnet) completed the path the three haiku runs could not: a
+schema-valid `agent-result.json`, a `risk/moderate` label, a sticky comment,
+and a `CHANGES_REQUESTED` review posted as `fullsend-review[bot]`. It found
+both planted defects - the mutable default argument and the bare `except:` -
+and flagged `scripts/` as a protected path.
+
+It also found a third defect, in the emulator, by being the first client ever
+to submit a review *with* inline comments:
+
+**The emulator accepted a review's `comments` array and discarded it.**
+`create_review` read `event`, `body` and `commit_id` and never looked at it.
+The log said `Attaching 4 inline comment(s) · ✓ Review submitted`, the run went
+green, the review carried the right state and body, and every inline finding
+was gone. Nothing reported a loss. The only way to see it was to ask the API
+for comments the client had been told were attached.
+
+**And the fix for it nearly reintroduced the same shape one layer up.** The
+first version required every comment to carry a `line` or `position`.
+Fullsend's payload builder omits `line` when it is 0 and sets
+`subject_type: "file"` for a whole-file finding, so those would have been
+rejected - and `internal/cli/postreview.go` catches a 422 on the review and
+resubmits with *no* inline comments at all. One unplaceable finding would have
+cost every placed one, and the run would still have reported success. Caught by
+reading the client's payload builder before spending another run, not by a
+test. `subject_type` is now stored (migration 0008), returned, and used to
+decide whether an anchor is required.
+
+Verified in three places, which is worth distinguishing:
+
+| claim | evidence |
+| --- | --- |
+| the handler stores what it is given | 552 emulator tests, new ones failing against the old handler |
+| the deployed image does too, for both comment kinds | live smoke against `github.local` with Fullsend's exact payload |
+| Fullsend's post-review path really delivers them | run 1471: 6 attached, **6 retained**, each on the right line |
+
+The `subject_type: "file"` path is covered by the first two and *not* by an
+agent run: every finding in run 1471 was line-anchored. Saying "the rerun
+passed" would imply more than was shown.
+
+Cost: $2.50 for run 1462, $1.77 for run 1471. The haiku runs were $0.03. The
+difference is not diff size - the review harness fans out into sub-agents, and
+a first estimate of "well under a dollar" was wrong by roughly threefold.

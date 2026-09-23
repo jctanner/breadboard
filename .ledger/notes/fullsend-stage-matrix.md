@@ -69,11 +69,18 @@ Checked rather than inferred, on 2026-09-23:
    they pull from ghcr with no internal CA, which is precisely the failure
    agents patch 0004 exists to prevent — every proxied HTTPS call to the forge
    fails its handshake and the agent sees a connection reset.
-2. **`gitleaks` and `pre-commit` are missing from the runner.** Checked
-   directly in the runner pod: `yq`, `gh`, `jq`, `git` and `python3` are
-   present; `gitleaks`, `pre-commit`, `gopls`, `go`, `node` and `npm` are not.
-   `post-code.sh` runs on the runner and does a secret scan and a pre-commit
-   pass before pushing. This is the same class as G9.
+2. ~~**`gitleaks` and `pre-commit` are missing from the runner**~~ - **also
+   wrong, and for the same reason as 5 below.** They are absent from the image,
+   which is what `command -v` in the runner pod showed, but absence is not the
+   question: both install themselves. `gitleaks-install.lib.sh` downloads
+   8.30.1 and verifies it against a per-platform SHA-256, and
+   `precommit-gate.lib.sh` pip-installs `pre-commit==4.5.1` on demand - and
+   skips outright, with a message, when the repository has no
+   `.pre-commit-config.yaml`, which `triage-target` does not. Nothing needs
+   adding to the image. Both installs do depend on the runner reaching
+   github.com and PyPI, which it can only because of F4; that dependency is
+   worth naming, but it is not the same claim as G9, where `yq` was genuinely
+   absent with nothing to install it.
 3. **The repository allows only the triage role.** `.fullsend/config.yaml` on
    `fullsend-dev/triage-target` has `roles: [triage]`. The mint itself is
    already configured for `triage`, `scribe`, `coder`, `review`, `fix` and

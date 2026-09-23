@@ -9,11 +9,12 @@ mirrored revision. There are seven harnesses upstream — `fix`, `prioritize`,
 `retro` and `scribe` as well — but only these three are in scope for the
 conformance plan.
 
-**Status of this document.** The triage column is observed: it has run, and
-run 1436's evidence bundle backs every cell. The review and code columns are
-*read from the harness files*, not observed. Nothing here claims they work.
-That distinction is the whole point of the matrix, and it should stay explicit
-until a real run replaces each unobserved cell.
+**Status of this document.** Triage is observed end to end; run 1436's
+evidence bundle backs every cell. Review is observed as far as the agent
+boundary - see "The review stage, run" below - and unobserved beyond it. Code
+is still read from the harness file and has not been run. The distinction is
+the point of the matrix and should stay explicit until a run replaces each
+unobserved cell.
 
 ## The matrix
 
@@ -146,3 +147,72 @@ repository config, the local `fullsend-code` image, `gitleaks` and
 stage matched" from run *1438*'s log — the `documentation` label, where that
 is the right answer — and nearly recorded a defect that did not exist. The
 run whose log matters is the one carrying the routing label.
+
+
+## The review stage, run
+
+Three attempts, each failing honestly - every one reported `failure`, none
+reported success while broken.
+
+| run | reached | stopped at |
+| --- | --- | --- |
+| 1444 | route, mint `review`, profiles, providers | pre-script: `PR_URL does not match expected GitHub pattern` |
+| 1450 | sandbox created, bootstrapped, six skills, code copied read-only, both security scans | `gh: Bad credentials (HTTP 401)` from inside the sandbox |
+| 1456 | connectivity check, agent ran (haiku, exit 0, $0.03, 10.8s) | no `agent-result.json`; validation failed, post-script correctly skipped |
+
+Two upstream defects, now agents patches 0005 and 0002:
+
+**The PR_URL host assumption.** `github-review-ops.lib.sh` matched and stripped
+a literal `https://github.com`. Patch 0001 had already fixed exactly this for
+the triage library; three others still carried it, so every stage past triage
+failed identically. It was three faults rather than one - validation, parsing,
+and `forge_set_push_remote` building `x-access-token:TOKEN@github.com`, which
+on an enterprise install sends a minted push token to github.com - plus a
+fourth worth stating on its own: with `GITHUB_SERVER_URL` set to an enterprise
+host, the old validation still *accepted* a github.com URL, because the host
+was written into the pattern rather than derived.
+
+**The sandbox credential.** Patch 0002 had scoped itself to triage and said so
+in its own header: "The same overlay shape appears in the other agent harnesses
+and would need the same two lines." It came due exactly there. `gh` takes its
+host from `GH_HOST` and, off github.com, its credential from
+`GH_ENTERPRISE_TOKEN`; the overlay passed neither. All six affected harnesses
+now pass both.
+
+Landing that patch exposed a defect in Breadboard's own seeder: it reset its
+temp tree to the previous mirror before applying patches, making the mirror a
+function of its own last result. A patch that adds a file applied once and then
+failed on every later run, and a file deleted upstream would have stayed
+mirrored forever. Fixed; verified by seeding three times.
+
+## What the dummy runtime settled, and what it cost to ask
+
+Run 1456's agent made **zero tool calls** and replied asking to be told the PR
+URL, the repository and the output directory - values its own agent definition
+documents as arriving in the environment. Two explanations fitted: the harness
+did not deliver them, or the model did not use them. The artifacts could not
+tell them apart; telemetry records the harness URL and no environment.
+
+Rather than buy a stronger model to guess, the question went to the dummy
+runtime, which runs scripted operations inside the real sandbox with no model
+involved. A temporary scenario asserted the review inputs on run 1459. All
+eight passed:
+
+```
+GH_TOKEN  GH_ENTERPRISE_TOKEN  GH_HOST
+PR_URL  REPO_FULL_NAME  PR_NUMBER
+FULLSEND_OUTPUT_DIR  REVIEW_FINDING_SEVERITY_THRESHOLD
+```
+
+So the harness delivered everything, and gap 6 from the list above - that
+`review.yaml` composes with `forge:` rather than `overlays:` - **closes as a
+non-issue**: the `forge:` form merges `host_files` and `env.sandbox` correctly.
+The agent had its inputs and did not use them.
+
+That is worth keeping as a method note rather than only a result. The cheap
+deterministic probe answered the question the expensive one would only have
+guessed at: a passing run on a larger model would have shown the path works
+without ever establishing whether haiku had been given its inputs.
+
+The scenario and `FULLSEND_RUNTIME` were restored afterwards, the scenario
+verified byte-identical.

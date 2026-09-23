@@ -643,12 +643,17 @@ called workflow could not be resolved. Nothing past that boundary ran.
   but was carried into the called workflow unrendered, so `inputs.event_action`
   was the literal expression text rather than `opened`. Now rendered against
   the caller's context.
-- [ ] **[W1] G6. The scaffold targets GitHub-hosted runner labels.** The shim
+- [x] **[W1] G6. The scaffold targets GitHub-hosted runner labels.** The shim
   renders `runs-on: ubuntu-24.04`, while this stack's runners are labelled
-  `fullsend`, so every job sat queued forever. Fullsend's scaffold renderer
-  already supports a runner-image override, so the conformance seed must set
-  it. Currently applied by hand when generating the scaffold; it belongs in
-  the seed as a documented local substitution under decision 3.
+  `fullsend`, so every job sat queued forever - pending rather than failed,
+  with nothing reporting why, which is this plan's recurring failure shape.
+  Closed by patch 0012: the install's render options gain `RunnerImage`, read
+  from `FULLSEND_RUNNER_IMAGE`, and upstream behaviour is unchanged when the
+  variable is unset. That makes it a configuration seam rather than a fork -
+  an installation names the runner it actually has. The dashboard passes the
+  value through and the deployment sets it to `fullsend`. It remains a
+  documented substitution under decision 3, but an automatic one: nothing is
+  now edited by hand between generating a scaffold and dispatching it.
 
 - [x] **[W1] G7. The runner never pointed the `gh` CLI at the emulator.** It
   sets `GITHUB_API_URL`, but `gh` does not read that variable; it needs
@@ -727,13 +732,28 @@ called workflow could not be resolved. Nothing past that boundary ran.
   set to the restricted default, such a job gets contents and packages read
   only, and the emulator would wrongly allow it to write. Surfaced while
   implementing B9 and recorded here because a deviation noted only inside a
-  completed item is a deviation that gets lost.
-- [ ] **[W4] G15. The permission-to-endpoint map is incomplete by
+  completed item is a deviation that gets lost. Closed: two columns on the
+  repository (migration 0007), both endpoints, and the job-token check now
+  consults the repository when the job declared nothing. A restricted
+  repository grants contents, packages and metadata reads; a repository left
+  alone behaves exactly as before, so the change is only observable once
+  someone sets the restricted default - which is the point, since a workflow
+  tested here against such a repository now fails here the way it would fail
+  on GitHub. Verified against the live emulator: GET returns `write`, a PUT to
+  `read` persists, and the migration is at head in the deployed database.
+- [x] **[W4] G15. The permission-to-endpoint map is incomplete by
   construction.** `job_permissions.py` maps the scopes the dispatch exercises;
   anything unmapped allows reads and denies writes, logging
   `Unmapped write path`. That keeps gaps loud rather than silent, but the map
   should be completed against the emulator's actual route table so the
-  fallback stops being load-bearing. The log line is the to-do list.
+  fallback stops being load-bearing. The log line is the to-do list. Closed by
+  walking that route table rather than waiting for the log: `forks` was the
+  single repository write segment with no scope, so `POST /repos/{o}/{r}/forks`
+  passed the check whatever the job declared. Forking creates a repository
+  from this one's contents, which is a Contents write under GitHub's
+  fine-grained model, and that is what it maps to now. The fallback stays, and
+  stays loud, but it is no longer load-bearing for a route the dispatch can
+  reach.
 
 - [x] **[W3] G16. Every 403 was flattened to the single word "Forbidden".**
   The error middleware discarded the detail on any 403, so the refusal reasons
@@ -3650,3 +3670,37 @@ compare against Alembic's head, so a new migration cannot rot them again. The
 emulator suite is fully green for the first time: **536 passed, 0 failed**.
 
 Conformance re-run after the fix: run 1433, `success`.
+
+### 2026-09-23 G6, G14 and G15: two gaps read out of a route table
+
+G6 was the last of the hand-applied substitutions. Fullsend's scaffold
+renders `runs-on:` for a GitHub-hosted image, nothing in this stack carries
+that label, and a scaffolded repository's first dispatch therefore sat queued
+with no runner claiming it. The run looked pending, not broken — the same
+shape as every other defect in this plan. Patch 0012 gives the install's
+render options a `RunnerImage`, read from `FULLSEND_RUNNER_IMAGE`; unset, the
+upstream default is unchanged, so this is a seam rather than a fork. Verified
+end to end: a fresh repository onboarded through the dashboard button now
+lands `runs-on: fullsend` with nothing edited by hand in between.
+
+G14 and G15 came from the opposite direction. Neither was found by a run
+failing; both were found by reading the emulator's own route table against
+GitHub's. A job declaring no `permissions:` inherited "permissive"
+unconditionally, when on GitHub the repository decides — so migration 0007,
+two columns, the GET and PUT at
+`/repos/{owner}/{repo}/actions/permissions/workflow`, and a check that
+consults the repository when the job declared nothing. A repository left alone
+behaves exactly as before; the change is observable only once someone sets the
+restricted default, which is the point. And `forks` was the single repository
+write segment with no scope mapped, so `POST /repos/{o}/{r}/forks` passed
+whatever the job declared. It maps to a Contents write now.
+
+Worth naming the difference: G1 to G13 were each paid for with a failed run
+and a trace. These two cost an afternoon of comparing tables, and would
+otherwise have waited for a workflow that happened to set a restricted default
+or fork a repository — which is to say, for someone else, later, with less
+context. The unmapped-write fallback stays and stays loud, but it is no longer
+load-bearing for a route the dispatch can reach.
+
+Emulator suite: 545 passed, 0 failed. Nine patches apply in sequence and
+build. Migration 0007 is at head in the deployed database.

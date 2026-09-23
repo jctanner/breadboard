@@ -1653,7 +1653,7 @@ action.
 - [x] Handle repos that already have a scaffold or an open scaffold PR
   without creating duplicates.
 - [x] Keep direct-commit mode unavailable from the normal action.
-- [ ] Add an emulator-backed test for permission, PR creation, repeat
+- [x] Add an emulator-backed test for permission, PR creation, repeat
   onboarding, and credential cleanup.
 
 **Done when:** an allowed user can onboard an emulator repo, gets a reviewable
@@ -3484,3 +3484,38 @@ current answer rather than the finished one.
 `FULLSEND_GCP_WIF_PROVIDER` is a placeholder named `not-used-here`: this stack
 reaches Vertex through mounted credentials, and the CLI requires the flag
 regardless.
+
+### 2026-09-23 the onboarding path gets its first real coverage
+
+`tests/test_fullsend_onboarding_live.py`, eight tests, passing against the
+running stack in 97 seconds.
+
+The unit tests inject a fake runner, so they stop at the boundary:
+`_exec_in_runner_pod` — the part that shells into the runner pod and invokes
+the CLI — had no coverage, and every claim about it rested on manual runs.
+These go through the deployed HTTP endpoint instead, in the dashboard's own
+pod with its own credentials and RBAC, against a real repository. That is the
+only arrangement where the exec path, the credential handoff, the pull request
+parse and the redaction are all real at once.
+
+What they assert, beyond that a PR appears: the scaffold actually carries
+`fullsend.yaml` rather than something resembling it; variables and sealed
+secrets land; repeating returns `already-open` with the CLI not run and one
+pull request still on the forge; the returned browse URL resolves with a 200,
+which is the bug the reviewer found by clicking a link I had only ever read as
+JSON; no token-shaped string appears anywhere in the response, checked by
+shape rather than only against the token the test knows; and a missing
+repository is refused in seconds instead of failing several minutes into a CLI
+run.
+
+Two properties worth keeping. They **skip** rather than fail without a stack,
+so a unit run on a laptop does not go red for want of a cluster - verified by
+pointing the dashboard URL at an unreachable host. And each test creates a
+uniquely named repository and deletes it in a `finally`, verified by checking
+the org afterwards: a leftover would silently turn the first assertion into a
+test of the repeat path.
+
+WP7 now has one item that is work and one that is a decision. The App
+installation token needs a private key this deployment does not hold. "Who may
+start onboarding" is answered by the deployment rather than a user model, and
+choosing whether that is sufficient for a local stack is the reviewer's.

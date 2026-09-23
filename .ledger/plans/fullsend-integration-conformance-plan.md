@@ -468,7 +468,7 @@ called workflow could not be resolved. Nothing past that boundary ran.
   (`workflow_service.py:231-246`, resolved from the DB by `full_name` and read
   with `git show <ref>:<path>`), so this is a missing seed, not a missing
   feature. This alone is what stalled job `1752`. Seeded by `deploy/fullsend/seed/seed-upstream-fullsend.py`, which mirrors the dispatch chain (81 files) from the checkout and is wired into `22-seed-fullsend.sh`.
-- [ ] **[W2, blocked on a dependency decision] A2. Repository secrets cannot be
+- [x] **[W2, decided 2026-09-22: real PyNaCl] A2. Repository secrets cannot be
   created the normal way.**
   `actions/secrets/public-key` returns 404, so the encrypted-value flow the
   real API and `gh secret set` use is unavailable. A plaintext `PUT` exists as
@@ -1400,6 +1400,19 @@ called workflow could not be resolved. Nothing past that boundary ran.
   path is wrong here; agents mirror re-seeded; installed profile reconciled to
   `resource_version: 2` with all five endpoints. Confirmed by run 1301: no
   denial, and the agent read the issue through GraphQL.
+
+- [x] **[W4] G44. `HEAD` was refused on every GET route.** HTTP defines HEAD as
+  GET without a body and GitHub answers it, but FastAPI registers only the
+  methods a route declares, so `HEAD /api/v3/user` and `HEAD /api/v3/rate_limit`
+  both returned 405.
+
+  Fullsend reads `X-OAuth-Scopes` with `HEAD /user` before it will write to a
+  repository, so `github setup` stopped with `405 token validation failed` - an
+  error naming credentials rather than an unsupported method, which is why it
+  was only found by reading the CLI's source. `HeadMethodMiddleware` rewrites
+  HEAD to GET in the ASGI scope and discards the body. Tests cover the two
+  risks a method-rewriting middleware carries: it must not bypass
+  authentication, and a missing route must still 404.
 
 *Group F - Fullsend-side, not emulator gaps. Decision 5 does not cover these.*
 
@@ -3379,3 +3392,46 @@ What it does not have is the thing the breakpoint actually asks - somebody
 other than the agent that wrote it running
 `make host-conformance-reset && make host-conformance` and getting a green
 result plus an evidence folder they can read without this conversation.
+
+### 2026-09-22 `fullsend github setup` runs against the emulator
+
+B7's precondition is met. The real CLI, patched only with upstream-bound
+fixes, completes a per-repo install against the emulator:
+
+```text
+  ✓ Created PR #1: https://github.local/fullsend-dev/setup-probe/pull/1
+  ✓ Set 3 repository variables
+  ✓ Set 2 repository secrets
+  ✓ Per-repo setup complete for fullsend-dev/setup-probe
+```
+
+Verified on the forge rather than from the CLI's summary: PR #1 from
+`fullsend/scaffold-install` into `main` carrying
+`.github/workflows/{fullsend.yaml, prioritize.yml}`, two secrets by name, and
+three variables with their values. So the dashboard button can shell out to
+the real command, which is what B7 requires instead of a re-implementation.
+
+Three fixes were needed and only the first was the one F1 named.
+
+**F1, patch 0011.** Five commands built their client with a bare
+`gh.New(token)`. Before: `401 unexpected status checking secret`.
+
+**G44, HEAD.** Reading `X-OAuth-Scopes` needs `HEAD /user`; every GET route
+returned 405.
+
+**A2, secrets.** The public-key endpoint did not exist, so a sealed-box upload
+was impossible. **The dependency decision is made: real PyNaCl.** The keypair
+is derived from `sha256(salt || repo_id)` rather than stored, so it needs no
+migration and survives the conformance reset clearing PVC contents. That also
+exposed `http_422_handler` discarding every exception detail, so two different
+causes arrived as the same anonymous "Validation Failed".
+
+**And one self-inflicted outage worth keeping visible.** `pynacl` went into
+`pyproject.toml`; the image installs from `requirements.txt`. 514 tests passed
+and the container crashed at import, taking the emulator down for every
+service polling it. The pod still read `1/1 Running` because Caddy was healthy
+and uvicorn behind it was dead, so `kubectl rollout status` reported success.
+Two habits would have caught it: treating a dependency list that exists twice
+as one change rather than two, and checking a service answers rather than that
+its pod started. The note now sits at the insertion point in
+`requirements.txt`.

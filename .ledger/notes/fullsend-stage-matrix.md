@@ -9,10 +9,7 @@ mirrored revision. There are seven harnesses upstream — `fix`, `prioritize`,
 `retro` and `scribe` as well — but only these three are in scope for the
 conformance plan.
 
-**Status of this document.** Triage and review are both observed end to end.
-Code is still read from the harness file and has not been run. The distinction
-is the point of the matrix and should stay explicit until a run replaces each
-unobserved cell.
+**Status of this document.** All three stages are observed end to end.
 
 ## The matrix
 
@@ -275,3 +272,62 @@ passed" would imply more than was shown.
 Cost: $2.50 for run 1462, $1.77 for run 1471. The haiku runs were $0.03. The
 difference is not diff size - the review harness fans out into sub-agents, and
 a first estimate of "well under a dollar" was wrong by roughly threefold.
+
+
+## Code, closed end to end
+
+Run 1492 (sonnet, $0.57) produced PR #117 on the forge: a six-line SUPPORT.md
+change on `agent/116-support-getting-help-section`, authored by
+`fullsend-code[bot]`, after gitleaks 8.30.1 scanned the commit clean and the
+pre-commit gate skipped for want of a config. Both survey corrections held.
+
+The write boundary held as designed and is now demonstrated rather than
+asserted: the agent committed locally and never pushed, `PUSH_TOKEN` stayed in
+`env.runner` and never entered the sandbox, and only `post-code.sh` pushed the
+branch and opened the pull request.
+
+A free dummy-runtime probe (run 1487) cleared everything up to validation
+first - role gate, pre-script inputs, three profiles, the github-code host
+substitution, the `coder` credential, target-repo copy, result write and
+return, all ten assertions passing. Three separate defects had killed the
+first three review runs at exactly those points, each costing a paid run to
+discover. Here they cost nothing.
+
+### The handoff, broken through four layers
+
+The run was green, the branch was pushed, the pull request was correct, and
+nobody was assigned to it:
+
+```
+::warning::Failed to assign PR #117 to admin - continuing
+::warning::Unknown argument 'first' on field 'Repository.assignableUsers'
+```
+
+Fixing the reported error would have fixed nothing. Each layer hid the next,
+and only the first was loud:
+
+| layer | fault | what fixing only the layer above would have given |
+| --- | --- | --- |
+| `assignableUsers` | no arguments, empty connection | an empty list: nobody assigned, no error |
+| `UpdatePullRequestInput` | no `assigneeIds` | mutation rejected by the schema |
+| `updatePullRequest` | `MissingGreenlet` on **every** field | any update at all fails |
+| `_pr_json` + `PRResponse` | hardcoded empty, `lazy="raise"`, field undeclared | assignment persists; the pull request still reads unassigned |
+
+The third is worth its own line: `updatePullRequest` had never worked, for any
+field. It had no test, so nothing had ever called it. The code agent was the
+first client to try.
+
+The fourth is this plan's signature exactly - the API accepted the assignment,
+stored it, and reported the pull request as unassigned. What kept the dig
+going was checking the backing issue directly and finding the assignment
+present there while the pull request endpoint denied it. Had the warning not
+been in the log, or had `post-code.sh` treated assignment as fatal, this would
+have been found sooner or not at all.
+
+Verified free of charge after the fix: the exact `gh pr edit --add-assignee`
+call that failed now succeeds, and PR #117 reads `assignees: admin` through
+the REST response.
+
+Costs: $0.57 code, $0.37 triage. The triage run was unnecessary - filing the
+issue fired `issues opened` before the label was applied, which is not what
+"file it with the label" was supposed to mean.

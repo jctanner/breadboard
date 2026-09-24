@@ -138,6 +138,19 @@ done
 # --- 4. Forge baseline ----------------------------------------------------
 # An issue resembling an open one is correctly triaged as a duplicate, so a
 # backlog changes what the scenario exercises.
+#
+# This stopped being theoretical once the coder role was enabled. Run 1509's
+# triage promoted its issue to code, the code agent opened a pull request, and
+# the next run's triage correctly called its own issue a duplicate of that one,
+# citing the earlier issue and the pull request by number. The check still
+# passed, but it exercised triage alone where the run before had exercised
+# triage and code. A green conformance run stopped meaning a fixed amount of
+# coverage.
+#
+# Closing issues covers the pull requests too: this emulator's /issues listing
+# includes them, as GitHub's does, and a pull request's state follows its
+# backing issue. What it does not cover is the branches behind them, which is
+# what section 5 is for.
 note "Closing open issues on ${REPO}"
 python3 - "${API}" "${TOKEN}" <<'PY'
 import json, ssl, sys, time, urllib.request
@@ -163,5 +176,61 @@ while True:
         break
 print(f"  closed {closed} issue(s)")
 PY
+
+# --- 5. Agent branches ----------------------------------------------------
+# The code agent pushes a branch per issue and opens a pull request from it.
+# Closing the pull request leaves the branch, and a left branch is not inert:
+# it is what a later code run sees when it checks whether it has already worked
+# on something, and one accumulates per run forever.
+#
+# Every branch backing a pull request goes, except the repository's default.
+# Going through the pull requests rather than listing branches by name means
+# nothing is removed that the scenario did not create: a branch someone pushed
+# by hand has no pull request and is left alone.
+note "Deleting branches left behind by agent pull requests"
+python3 - "${API}" "${TOKEN}" <<'BRANCH_CLEANUP'
+import json, ssl, sys, time, urllib.error, urllib.request
+api, token = sys.argv[1:3]
+ctx = ssl.create_default_context(); ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
+hdrs = {"Authorization": "token " + token, "Content-Type": "application/json"}
+
+def call(url, method=None):
+    req = urllib.request.Request(url, headers=hdrs, method=method)
+    with urllib.request.urlopen(req, context=ctx) as response:
+        body = response.read()
+    return json.loads(body) if body else None
+
+default_branch = (call(api) or {}).get("default_branch", "main")
+
+refs, page = [], 1
+while True:
+    batch = call(f"{api}/pulls?state=all&per_page=50&page={page}") or []
+    refs.extend(
+        pr["head"]["ref"] for pr in batch
+        if pr.get("head", {}).get("ref") and pr["head"]["ref"] != default_branch
+    )
+    if len(batch) < 50:
+        break
+    page += 1
+
+deleted = missing = failed = 0
+for ref in sorted(set(refs)):
+    try:
+        call(f"{api}/git/refs/heads/{ref}", method="DELETE")
+        deleted += 1
+    except urllib.error.HTTPError as exc:
+        # Already gone is the desired end state, not a reason to fail a reset.
+        # Anything else is counted and named rather than swallowed.
+        if exc.code in (404, 422):
+            missing += 1
+        else:
+            failed += 1
+            print(f"  could not delete {ref}: HTTP {exc.code}", file=sys.stderr)
+    time.sleep(0.5)
+
+print(f"  deleted {deleted} branch(es); {missing} already gone" + (f"; {failed} failed" if failed else ""))
+if failed:
+    sys.exit(1)
+BRANCH_CLEANUP
 
 note "Conformance state reset. Next run re-imports profiles from the agents mirror."

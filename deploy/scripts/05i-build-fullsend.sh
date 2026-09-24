@@ -124,6 +124,70 @@ echo "==> Building OpenShell CLI from pinned checkout"
 cp "${OPENSHELL_ROOT}/target/release/openshell" "${BUILD_CONTEXT}/openshell"
 cp "${RUNNER_SOURCE}" "${BUILD_CONTEXT}/runner.py"
 
+# The runner image ships gitleaks and pre-commit so the code stage's secret
+# scan does not depend on the runner reaching the public internet. Those tools
+# are also self-installed by the agent scripts at pinned versions, and the
+# scripts skip their download when the tool is already on PATH — so the image
+# silently wins. If the two drift, a run uses a version the library never
+# verified, and nothing says so.
+#
+# Rather than trusting a comment to keep them in step, the versions and
+# checksums are read out of the libraries that own them and compared.
+echo "==> Checking the runner's pinned tools against the agent libraries"
+GITLEAKS_LIB="${AGENTS_ROOT_LIB:-${PROJECT_ROOT}/checkouts/fullsend-ai/agents}/scripts/lib/gitleaks-install.lib.sh"
+PRECOMMIT_LIB="${AGENTS_ROOT_LIB:-${PROJECT_ROOT}/checkouts/fullsend-ai/agents}/scripts/lib/precommit-gate.lib.sh"
+RUNNER_CONTAINERFILE="${RUNNER_CONTEXT}/Containerfile"
+
+for required_file in "${GITLEAKS_LIB}" "${PRECOMMIT_LIB}" "${RUNNER_CONTAINERFILE}"; do
+  [[ -f "${required_file}" ]] || {
+    echo "ERROR: ${required_file} is missing; cannot check pinned tool versions." >&2
+    exit 1
+  }
+done
+
+drift_check() {
+  local label="$1" expected="$2" actual="$3" source_file="$4"
+  if [[ -z "${expected}" ]]; then
+    echo "ERROR: could not read ${label} from ${source_file}." >&2
+    echo "       That file owns the value; this check cannot be skipped by guessing." >&2
+    exit 1
+  fi
+  if [[ -z "${actual}" ]]; then
+    echo "ERROR: could not read ${label} from ${RUNNER_CONTAINERFILE}." >&2
+    exit 1
+  fi
+  if [[ "${expected}" != "${actual}" ]]; then
+    echo "ERROR: ${label} has drifted." >&2
+    echo "       ${source_file} says: ${expected}" >&2
+    echo "       ${RUNNER_CONTAINERFILE} says: ${actual}" >&2
+    echo "       The image wins at run time, because the agent scripts skip" >&2
+    echo "       their own install when the tool is already on PATH. Update" >&2
+    echo "       the Containerfile to match the library." >&2
+    exit 1
+  fi
+  echo "  ${label}: ${actual}"
+}
+
+containerfile_arg() {
+  sed -n "s/^ARG $1=\(.*\)$/\1/p" "${RUNNER_CONTAINERFILE}" | head -1
+}
+
+drift_check "gitleaks version" \
+  "$(sed -n 's/^GITLEAKS_VERSION="\(.*\)"$/\1/p' "${GITLEAKS_LIB}" | head -1)" \
+  "$(containerfile_arg GITLEAKS_VERSION)" "${GITLEAKS_LIB}"
+
+drift_check "gitleaks linux_x64 sha256" \
+  "$(sed -n 's/^[[:space:]]*linux_x64)[[:space:]]*echo "\([0-9a-f]\{64\}\)".*$/\1/p' "${GITLEAKS_LIB}" | head -1)" \
+  "$(containerfile_arg GITLEAKS_SHA256_AMD64)" "${GITLEAKS_LIB}"
+
+drift_check "gitleaks linux_arm64 sha256" \
+  "$(sed -n 's/^[[:space:]]*linux_arm64)[[:space:]]*echo "\([0-9a-f]\{64\}\)".*$/\1/p' "${GITLEAKS_LIB}" | head -1)" \
+  "$(containerfile_arg GITLEAKS_SHA256_ARM64)" "${GITLEAKS_LIB}"
+
+drift_check "pre-commit version" \
+  "$(sed -n 's/.*pre-commit==\([0-9][0-9.]*\)".*/\1/p' "${PRECOMMIT_LIB}" | head -1)" \
+  "$(containerfile_arg PRECOMMIT_VERSION)" "${PRECOMMIT_LIB}"
+
 echo "==> Building ${RUNNER_IMAGE}"
 "${CONTAINER_CMD}" build -f "${RUNNER_CONTEXT}/Containerfile" -t "${RUNNER_IMAGE}" "${BUILD_CONTEXT}"
 

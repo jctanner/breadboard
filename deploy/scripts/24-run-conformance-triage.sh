@@ -71,9 +71,23 @@ api() { curl -sk -H "${AUTH}" "$@"; }
 # match the mirrored source the run will be composed against. Skipped when
 # openshell is not reachable, since a conformance run against a stack without
 # a gateway fails later and more clearly.
+#
+# fullsend-github-code is here for the same reason as fullsend-github-ro, not
+# because triage uses it. Both carry the local github.local substitution from
+# agents patch 0003, so both can drift from the mirror in the way described
+# above, with the same symptom: an agent denied access its own policy grants.
+# The code stage reaches this repository through it now that the coder role is
+# enabled, and a conformance run promotes a triaged issue to code, so a stale
+# copy would be exercised by this very check without being covered by it.
+#
+# fullsend-package-registries and fullsend-gitleaks are deliberately not here.
+# They are unpatched upstream profiles: they can still drift, but a divergence
+# would come from upstream changing them rather than from the replace-and-cache
+# fault this precondition exists to catch, and adding them would slow every run
+# for a case nothing here has seen.
 if kubectl get deploy/github-actions-runner -n ai-pipeline >/dev/null 2>&1; then
   note "Checking installed provider profiles against the mirrored source"
-  for PROFILE in fullsend-vertex-ai fullsend-github-ro; do
+  for PROFILE in fullsend-vertex-ai fullsend-github-ro fullsend-github-code; do
     INSTALLED="$(kubectl exec -n ai-pipeline deploy/github-actions-runner -- \
       openshell provider profile export "${PROFILE}" 2>/dev/null || true)"
     SOURCE="$(api "${FORGE}/fullsend-ai/agents/raw/main/profiles/${PROFILE}.yaml" 2>/dev/null || true)"

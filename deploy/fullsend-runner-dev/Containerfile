@@ -43,6 +43,40 @@ RUN case "${TARGETARCH}" in \
     && install -m 0755 /tmp/yq /usr/local/bin/yq \
     && rm -f /tmp/yq
 
+# post-code.sh and post-fix.sh scan the agent's commits for secrets before
+# pushing, and gate on pre-commit. Both install themselves at run time -
+# gitleaks from GitHub releases, pre-commit from PyPI - which works only
+# because the runner pod can reach the public internet. That egress is F4 in
+# the conformance plan and is meant to close; when it does, a self-installing
+# tool becomes a job that fails at the secret scan, after the agent has
+# already done its work.
+#
+# So both are shipped here, pinned to exactly the versions those scripts would
+# have fetched (gitleaks 8.30.1, pre-commit 4.5.1). The scripts find them on
+# PATH and skip their download, so this is the same binary by a different
+# route rather than a divergence - and their install paths stay as a fallback.
+# Keep these versions in step with scripts/lib/gitleaks-install.lib.sh and
+# scripts/lib/precommit-gate.lib.sh in fullsend-ai/agents.
+ARG GITLEAKS_VERSION=8.30.1
+ARG GITLEAKS_SHA256_AMD64=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+ARG GITLEAKS_SHA256_ARM64=e4a487ee7ccd7d3a7f7ec08657610aa3606637dab924210b3aee62570fb4b080
+RUN case "${TARGETARCH}" in \
+      amd64) GITLEAKS_SHA="${GITLEAKS_SHA256_AMD64}"; GITLEAKS_PLATFORM=linux_x64 ;; \
+      arm64) GITLEAKS_SHA="${GITLEAKS_SHA256_ARM64}"; GITLEAKS_PLATFORM=linux_arm64 ;; \
+      *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+    esac \
+    && curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_${GITLEAKS_PLATFORM}.tar.gz" -o /tmp/gitleaks.tar.gz \
+    && echo "${GITLEAKS_SHA}  /tmp/gitleaks.tar.gz" | sha256sum -c - \
+    && tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks \
+    && install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks \
+    && rm -f /tmp/gitleaks.tar.gz /tmp/gitleaks \
+    && gitleaks version
+
+ARG PRECOMMIT_VERSION=4.5.1
+RUN python3 -m pip install --no-cache-dir --break-system-packages \
+      "pre-commit==${PRECOMMIT_VERSION}" \
+    && pre-commit --version
+
 # Fullsend's agent action installs a Go toolchain when it builds the CLI from
 # source, which is the path a local stack takes because the emulator carries no
 # releases. Ship the toolchain its go.mod asks for rather than downloading one

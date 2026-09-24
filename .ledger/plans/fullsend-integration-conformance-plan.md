@@ -1538,12 +1538,44 @@ called workflow could not be resolved. Nothing past that boundary ran.
   not have one yet. The fix itself is small: derive the expected host from
   `GITHUB_SERVER_URL` rather than hardcoding it.
 
-- [ ] **[Track F] F4. The runner pod has egress to the public internet.** The
+- [x] **[Track F] F4. The runner pod has egress to the public internet.** The
   401 above is evidence: the request reached `api.github.com` and was answered.
   A sandbox boundary that is supposed to confine an agent to local services
   cannot be demonstrated while the runner that launches it can reach anything.
   This is a finding about the boundary, not about Fullsend, and it belongs in
   the sandbox review questions.
+
+  Closed by `deploy/k8s/27-fullsend-runner-egress.yaml`, but the policy was
+  the last step rather than the fix. `post-code.sh` fetched gitleaks from
+  GitHub releases and pre-commit from PyPI *during a run*, so blocking egress
+  before shipping both in the runner image would have moved the failure rather
+  than removed it. With the binaries in the image at the versions those
+  libraries pin - and a build-time check that the two pins cannot drift - the
+  egress is unused, and the policy states that rather than enforcing it
+  against a live dependency.
+
+  Three things were verified rather than assumed, each of which could have
+  made this look done while doing nothing:
+
+  - **That k3s enforces egress policy at all.** A throwaway pod with a
+    deny-all rule lost DNS and the internet, so the mechanism works here. An
+    unenforced policy and a working one are indistinguishable from the
+    manifest.
+  - **That the selector matches what the comment claims.** The first version
+    selected `breadboard.dev/role=fullsend`, which also matches the mint -
+    confining the mint is a larger claim than this item makes and one nothing
+    has tested. It now names the two runner deployments.
+  - **That the code stage still works**, not just triage. The conformance run
+    under the policy classified its issue `needs-info` and never promoted to
+    code, which would have left the stage that actually used the egress
+    untested. Run 1538, driven from a `ready-to-code` label, pushed a branch
+    and opened PR #125 with gitleaks scanning from the image and no install
+    step in the log.
+
+  What is still allowed is the pod and service CIDRs: CoreDNS, the API server,
+  the emulator through the ingress proxy that `github.local` resolves to, the
+  mint, and the OpenShell gateway. The gateway keeps its own egress, since it
+  is what reaches Vertex on the sandbox's behalf.
 
 **Done when:** a resettable seed installs the real layout, emulator contract
 tests cover the resulting Actions graph, and a retained trace links the

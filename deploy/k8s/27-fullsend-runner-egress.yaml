@@ -1,0 +1,63 @@
+# Confine the Fullsend runners to this cluster.
+#
+# F4 in the Fullsend integration conformance plan: the runner pod could reach
+# the public internet, and a sandbox boundary that is meant to confine an agent
+# to local services cannot be demonstrated while the pod that launches it can
+# reach anything. The evidence was a run whose request arrived at
+# api.github.com and was answered with a 401 — it failed for the wrong reason,
+# and would have succeeded given the right credential.
+#
+# This was not enforceable until the runner stopped needing the internet to do
+# its job. post-code.sh installed gitleaks from GitHub releases and pre-commit
+# from PyPI at run time; both now ship in the runner image at the versions
+# those scripts pin, so the egress they needed is gone rather than merely
+# disallowed.
+#
+# What is still allowed is everything inside the cluster: the pod CIDR and the
+# service CIDR. That covers CoreDNS, the Kubernetes API, the GitHub emulator
+# reached through the ingress proxy that `github.local` resolves to, the
+# Fullsend mint, and the OpenShell gateway. Addressing them by CIDR rather than
+# by pod selector is deliberate — traffic to a ClusterIP is evaluated
+# differently by different policy implementations, and a selector that silently
+# fails to match would leave this policy looking applied while allowing nothing.
+#
+# The gateway keeps its own egress: it is what reaches Vertex on the sandbox's
+# behalf, under the provider profiles. This policy is about the runner only.
+#
+# To take it off, delete it: the runner resumes unrestricted egress at once.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: fullsend-runner-egress
+  namespace: ai-pipeline
+  labels:
+    breadboard.dev/role: fullsend
+  annotations:
+    breadboard.dev/plan-item: >-
+      F4 — the runner pod has egress to the public internet
+spec:
+  # The two Fullsend runner deployments by name, not by the
+  # breadboard.dev/role=fullsend label they share: the mint carries that label
+  # too, and confining the mint is a larger claim than this item makes and one
+  # nothing here has tested. The site runner, which runs the emulator's own
+  # Actions workflows rather than agent work, is role=fullsend-router and was
+  # never in scope.
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - github-actions-runner
+          - github-actions-config-runner
+  policyTypes:
+    - Egress
+  egress:
+    # Pods, on this node and any future one.
+    - to:
+        - ipBlock:
+            cidr: 10.42.0.0/16
+    # Services: CoreDNS, the API server, ingress-proxy (github.local), the
+    # mint, and the OpenShell gateway.
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.0/16

@@ -35,12 +35,12 @@ POST /api/jobs/submit
 }
 ```
 
-**API handler** (`lib/webapp.py`): Passes the request to
+**API handler** (`src/dashboard/webapp.py`): Passes the request to
 `PipelineOrchestrator.submit_phase_job()`.
 
 ## 2. Job Manifest Generation
 
-`PipelineOrchestrator._create_job_manifest()` in `lib/k8s_orchestrator.py`
+`PipelineOrchestrator._create_job_manifest()` in `src/dashboard/k8s_orchestrator.py`
 builds a `batch/v1` Job object programmatically (not from a YAML template).
 
 ### Job naming
@@ -126,14 +126,18 @@ affinity:
 
 **Baked-in application files:**
 
-| Path in image | Source |
-|----------------|--------|
-| `/app/main.py` | `main.py` |
-| `/app/lib/` | `lib/` (skill_config, agent_runner, etc.) |
-| `/app/scripts/` | `scripts/` (run_skill.sh, run_skill_sdk.sh, stream-claude.py) |
-| `/app/.claude/` | `.claude/` (local skill definitions) |
-| `/app/pipeline-skills.yaml` | Skill-to-source mapping config |
-| `/app/skills-registry/` | Local staging marketplace (registry.yaml + marketplace.json) |
+| Path in image | Source | Contents |
+|----------------|--------|----------|
+| `/app/main.py` | `main.py` | CLI entry point |
+| `/app/src/` | `src/` | `src/cli/` phase orchestration, `src/dashboard/` the dashboard |
+| `/app/scripts/` | `scripts/` | standalone utilities |
+| `/app/.claude/` | `.claude/` | local skill definitions |
+| `/app/var/` | `var/` | `pipeline-skills.yaml`, `skills-registry.yaml`, Markov workflows, demos |
+
+`PYTHONPATH=/app`, so `src.cli` and `src.dashboard` import as packages. Read
+against `deploy/pipeline-agent/Dockerfile`, which is what actually copies
+these; an earlier version of this table named a `lib/` directory and two
+root-level config files that no longer exist.
 
 **Resource limits:**
 
@@ -338,7 +342,7 @@ Examples:
 - `jctanner-opendatahub-io/eder-strat-creator@reorganize-scripts:strategy-refine`
 - `local:bug-completeness`
 
-This format is built by `lib/skill_config.list_skills()` from the
+This format is built by `src/cli/skill_config.list_skills()` from the
 `pipeline-skills.yaml` config. The `github`, `ref`, and `skill` fields
 from `skill_repos` and `skills` sections are combined.
 
@@ -364,9 +368,9 @@ Submit ──► Pending ──► Running ──► Completed/Failed ──► 
 
 | File | Purpose |
 |------|---------|
-| `lib/k8s_orchestrator.py` | Job manifest generation, submission, status, logs, stop/delete |
-| `lib/webapp.py` | Dashboard UI and REST API endpoints |
-| `lib/skill_config.py` | Reads pipeline-skills.yaml, resolves skill names and display metadata |
+| `src/dashboard/k8s_orchestrator.py` | Job manifest generation, submission, status, logs, stop/delete |
+| `src/dashboard/webapp.py` | Dashboard UI and REST API endpoints |
+| `src/cli/skill_config.py` | Reads pipeline-skills.yaml, resolves skill names and display metadata |
 | `scripts/run_skill.sh` | CLI runner — marketplace setup, plugin install, Claude CLI invocation |
 | `scripts/run_skill_sdk.sh` | SDK runner — same setup, Python SDK invocation with MLflow |
 | `scripts/stream-claude.py` | Parses stream-json events into human-readable log output |

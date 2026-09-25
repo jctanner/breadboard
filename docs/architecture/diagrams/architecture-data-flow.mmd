@@ -13,7 +13,7 @@ graph TB
         direction TB
         Browser["Browser - https://dashboard.local"]
         DashboardAPI["Dashboard API - https://dashboard.local/api/jobs - POST"]
-        K8sOrchestrator["lib/k8s_orchestrator.py - PipelineOrchestrator"]
+        K8sOrchestrator["src/dashboard/k8s_orchestrator.py - PipelineOrchestrator"]
         K8sJobs["K8s Jobs - Created in ai-pipeline namespace"]
 
         Browser -->|submit job request| DashboardAPI
@@ -23,7 +23,7 @@ graph TB
 
     subgraph Phase2b["Phase 2b: Job Execution in Pod"]
         direction TB
-        AgentRunner["lib/agent_runner.py - SDK or CLI runner"]
+        AgentRunner["src/cli/agent_runner.py - SDK or CLI runner"]
         K8sJobs -->|pod starts| AgentRunner
     end
 
@@ -49,7 +49,7 @@ graph TB
 
     subgraph Phase4["Phase 4: Validation Optional"]
         direction TB
-        ValidationLib["lib/validation.py"]
+        ValidationLib["src/cli/validation.py"]
         PodmanContainer["Podman Container - odh-tests-context recipes"]
 
         PatchDiff --> ValidationLib

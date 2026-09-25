@@ -5,7 +5,7 @@ graph TB
         direction TB
 
         Dashboard["Dashboard - https://dashboard.local - Flask API - POST /api/jobs"]
-        Orchestrator["PipelineOrchestrator - lib/k8s_orchestrator.py"]
+        Orchestrator["PipelineOrchestrator - src/dashboard/k8s_orchestrator.py"]
 
         subgraph Jobs["K8s Jobs - Created Dynamically"]
             Job1["bug-completeness-RHOAIENG-12345-opus"]
@@ -25,7 +25,7 @@ graph TB
 
         Scripts["Entry Point - scripts/run_skill.sh or run_skill_sdk.sh"]
 
-        subgraph RunnerLogic["lib/agent_runner.py"]
+        subgraph RunnerLogic["src/cli/agent_runner.py"]
             SDKRunner["SDK Runner - ClaudeSDKClient - Fast programmatic - MCP support v0.1.59+"]
             CLIRunner["CLI Runner - Subprocess: claude -p - Full persistence - Multi-turn workflows"]
         end

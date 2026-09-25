@@ -160,7 +160,7 @@ kubectl exec -it deployment/pipeline-dashboard -n ai-pipeline -- ls -la /app/iss
 
 ## Troubleshooting
 
-See [`deploy/docs/TROUBLESHOOTING.md`](deploy/docs/TROUBLESHOOTING.md) for detailed troubleshooting.
+See [`deploy/docs/TROUBLESHOOTING.md`](../../deploy/docs/TROUBLESHOOTING.md) for detailed troubleshooting.
 
 Quick checks:
 
@@ -209,9 +209,9 @@ vagrant destroy -f
 
 For comprehensive documentation, see:
 
-- **Deployment Details**: [`deploy/README.md`](deploy/README.md)
-- **Troubleshooting**: [`deploy/docs/TROUBLESHOOTING.md`](deploy/docs/TROUBLESHOOTING.md)
-- **Project Overview**: [`CLAUDE.md`](CLAUDE.md)
+- **Deployment Details**: [`deploy/README.md`](../../deploy/README.md)
+- **Troubleshooting**: [`deploy/docs/TROUBLESHOOTING.md`](../../deploy/docs/TROUBLESHOOTING.md)
+- **Project Overview**: [`CLAUDE.md`](../../CLAUDE.md)
 
 ## Architecture Summary
 

@@ -80,9 +80,9 @@ All **bug analysis skills** produce two files per phase:
 
 ### 3. JSON Schema Definitions
 
-Bug skills embed their full JSON schema as a code block inside the SKILL.md. The pipeline validates outputs against schemas defined in `lib/schemas.py`.
+Bug skills embed their full JSON schema as a code block inside the SKILL.md. The pipeline validates outputs against schemas defined in `src/cli/schemas.py`.
 
-| Skill | Schema embedded in SKILL.md | Validated by `lib/schemas.py` |
+| Skill | Schema embedded in SKILL.md | Validated by `src/cli/schemas.py` |
 |-------|---------------------------|-------------------------------|
 | `bug-completeness` | yes | yes |
 | `bug-context-map` | yes | yes |
@@ -92,7 +92,7 @@ Bug skills embed their full JSON schema as a code block inside the SKILL.md. The
 | `patch-validation` | yes | yes |
 | RFE/strategy skills | no (use frontmatter schemas) | no (use `scripts/frontmatter.py`) |
 
-**Inconsistency:** Bug skills define schemas in two places — SKILL.md (for the agent) and `lib/schemas.py` (for validation). These must be kept in sync manually.
+**Inconsistency:** Bug skills define schemas in two places — SKILL.md (for the agent) and `src/cli/schemas.py` (for validation). These must be kept in sync manually.
 
 ### 4. Enum Conventions
 
@@ -170,7 +170,7 @@ The pipeline uses two fundamentally different invocation methods:
 
 | Method | Skills | How prompt is delivered | Agent context |
 |--------|--------|------------------------|---------------|
-| **Templated** | All `bug-*` skills | SKILL.md extracted by `lib/prompts.py`, injected with issue data into agent prompt | Minimal — only the skill prompt and issue data |
+| **Templated** | All `bug-*` skills | SKILL.md extracted by `src/cli/prompts.py`, injected with issue data into agent prompt | Minimal — only the skill prompt and issue data |
 | **Native** | `patch-validation`, all `rfe.*`, all `strat.*`, `strat-security-review`, `strat-submit` | Agent discovers skills via SDK `Skill` tool | Full repo context — CLAUDE.md, scripts, sub-skills |
 
 **Consequence:** Templated skills are self-contained — the SKILL.md must include everything the agent needs (schema, rubric, steps, template). Native skills can reference external files, scripts, and other skills.
@@ -201,7 +201,7 @@ Skills fall into two categories:
 
 ### 10. State Persistence Patterns
 
-**Bug pipeline:** No state persistence needed — the orchestrator (`lib/phases.py`) manages state externally. Skills are stateless.
+**Bug pipeline:** No state persistence needed — the orchestrator (`src/cli/phases.py`) manages state externally. Skills are stateless.
 
 **RFE/strategy pipeline:** Skills use `scripts/state.py` to persist state to `tmp/` files. This survives context compression in long-running sessions.
 
@@ -237,7 +237,7 @@ Each skill uses distinct file prefixes: `autofix-`, `review-`, `split-`, `speedr
 | **MCP server** (read) | `strat-security-review`, `strat-submit`, `strat.create`, `rfe.review`, `assess-rfe` | `mcp__atlassian__getJiraIssue`, `mcp__atlassian__editJiraIssue`, etc. |
 | **REST API scripts** (write) | `rfe.submit`, `rfe.split` | `scripts/submit.py`, `scripts/split_submit.py` — deterministic, not LLM-dependent |
 | **REST API scripts** (read fallback) | `rfe.review`, `assess-rfe` | `scripts/fetch_issue.py`, `scripts/fetch_single.py` — when MCP unavailable |
-| **Orchestrator fetch** | Bug pipeline | `lib/phases.py` fetches via REST API, no MCP |
+| **Orchestrator fetch** | Bug pipeline | `src/cli/phases.py` fetches via REST API, no MCP |
 
 **Convention for writes:** "All write operations use the Jira REST API directly via Python scripts... This ensures the exact sequence of Jira API calls is deterministic and not dependent on LLM tool-calling decisions."
 
@@ -298,7 +298,7 @@ Not used in bug pipeline (the Python orchestrator controls interactivity).
 
 The pipeline has two independent parallelism layers that interact:
 
-**Layer 1 — Python orchestrator (`lib/phases.py`):** Uses `asyncio.Semaphore(max_concurrent)` to gate top-level Claude SDK sessions. Controlled by the `--max-concurrent` CLI flag (default: 5).
+**Layer 1 — Python orchestrator (`src/cli/phases.py`):** Uses `asyncio.Semaphore(max_concurrent)` to gate top-level Claude SDK sessions. Controlled by the `--max-concurrent` CLI flag (default: 5).
 
 **Layer 2 — Agent self-parallelism (orchestrator skills):** Agents launch sub-agents via the `Agent` tool with `run_in_background: true`. There is no explicit concurrency cap at this layer (except assess-rfe's self-imposed limit of 30).
 
@@ -341,9 +341,9 @@ Sub-agents are independent Claude Code sessions. They share the filesystem but N
 
 | Mechanism | Where | What it protects |
 |-----------|-------|-----------------|
-| `asyncio.Semaphore` | `lib/phases.py` | Top-level SDK sessions (configurable via `--max-concurrent`) |
+| `asyncio.Semaphore` | `src/cli/phases.py` | Top-level SDK sessions (configurable via `--max-concurrent`) |
 | File lock in `next_rfe_id.py` | `remote_skills/rfe-creator/scripts/` | Sequential ID allocation when parallel split agents allocate IDs simultaneously |
-| Stale-file deletion inside semaphore | `lib/phases.py:603-609` | Prevents race where orchestrator is killed after deleting old outputs but before generating new ones |
+| Stale-file deletion inside semaphore | `src/cli/phases.py:603-609` | Prevents race where orchestrator is killed after deleting old outputs but before generating new ones |
 | State file prefixes | `tmp/review-*`, `tmp/split-*`, etc. | Prevents collisions when skills call each other (e.g., speedrun → auto-fix → review) |
 | `context: fork` | Strategy sub-reviewers | Prevents groupthink — each reviewer runs in isolated context, cannot see others' output |
 
@@ -391,7 +391,7 @@ python3 scripts/check_review_progress.py --phase <phase> --id-file tmp/rfe-poll-
 
 ### 22. RFE Pipeline Idempotency
 
-**`_rfe_is_complete()` check:** The Python orchestrator (`lib/phases.py:2918`) checks for the presence of four files before launching `/rfe.speedrun` for a given key:
+**`_rfe_is_complete()` check:** The Python orchestrator (`src/cli/phases.py:2918`) checks for the presence of four files before launching `/rfe.speedrun` for a given key:
 - `artifacts/rfe-tasks/{key}.md`
 - `artifacts/rfe-reviews/{key}-review.md`
 - `artifacts/rfe-reviews/{key}-feasibility.md`
@@ -463,7 +463,7 @@ RFE/strategy orchestrator skills must survive context compression — when the a
    python3 scripts/state.py write-ids tmp/autofix-batch-2-ids.txt ID4 ID5 ID6
    ```
 
-**Bug skills don't need this** — their orchestrator (`lib/phases.py`) runs as Python code outside the agent context, so there is no context window to compress.
+**Bug skills don't need this** — their orchestrator (`src/cli/phases.py`) runs as Python code outside the agent context, so there is no context window to compress.
 
 ### 26. Self-Correction and Retry Consistency
 
@@ -521,9 +521,9 @@ Several orchestrator steps run post-processing after sub-agents complete:
 
 **Bug pipeline:** Two-layer validation ensures output accuracy:
 1. **Agent-side:** The SKILL.md embeds the full JSON schema with field descriptions, types, and allowed values. The agent is instructed to conform.
-2. **Orchestrator-side:** `lib/phases.py` validates the output against the schema in `lib/schemas.py` using `jsonschema.validate()`. Invalid outputs are renamed to `*.invalid`.
+2. **Orchestrator-side:** `src/cli/phases.py` validates the output against the schema in `src/cli/schemas.py` using `jsonschema.validate()`. Invalid outputs are renamed to `*.invalid`.
 
-**Accuracy risk:** The schemas in SKILL.md and `lib/schemas.py` can drift. If the SKILL.md schema is updated but `lib/schemas.py` is not (or vice versa), agents may produce output that passes one validation but fails the other.
+**Accuracy risk:** The schemas in SKILL.md and `src/cli/schemas.py` can drift. If the SKILL.md schema is updated but `src/cli/schemas.py` is not (or vice versa), agents may produce output that passes one validation but fails the other.
 
 **RFE pipeline:** Single-layer validation via `scripts/frontmatter.py`. The schema is defined once and enforced on both read and write. No drift risk.
 
@@ -602,11 +602,11 @@ The RFE assessment pipeline uses a structured rubric (`assess-rfe/scripts/agent_
 | Aspect | Bug Skills | RFE/Strategy Skills |
 |--------|-----------|-------------------|
 | Invocation | Templated (prompt injection) | Native (SDK skill discovery) |
-| Orchestration | External Python (`lib/phases.py`) | Internal skill orchestration (agent-launched sub-agents) |
+| Orchestration | External Python (`src/cli/phases.py`) | Internal skill orchestration (agent-launched sub-agents) |
 | State management | Python code (external) | `scripts/state.py` + disk files |
 | Structured output | JSON files + JSON Schema validation | YAML frontmatter + `scripts/frontmatter.py` |
 | Human-readable output | Companion `.md` file | Same file (frontmatter + markdown body) |
-| Schema source of truth | Duplicated: SKILL.md + `lib/schemas.py` | Single: `scripts/frontmatter.py schema` |
+| Schema source of truth | Duplicated: SKILL.md + `src/cli/schemas.py` | Single: `scripts/frontmatter.py schema` |
 | Jira integration | Fetch via Python script | MCP (read) + Python scripts (write) |
 | Interactivity | None (batch only) | `--headless` flag, `AskUserQuestion` tool |
 | Architecture context path | `architecture-context/` (symlink) | `.context/architecture-context/` |
@@ -645,7 +645,7 @@ Shared patterns across all four sub-reviewers:
 
 ## Known Inconsistencies
 
-1. **Schema duplication:** Bug skill JSON schemas exist in both SKILL.md (for the agent) and `lib/schemas.py` (for validation). Changes to one must be manually synced to the other. This creates a drift risk that could cause agents to produce output the orchestrator rejects, or the orchestrator to accept output that doesn't match what the agent was instructed to produce.
+1. **Schema duplication:** Bug skill JSON schemas exist in both SKILL.md (for the agent) and `src/cli/schemas.py` (for validation). Changes to one must be manually synced to the other. This creates a drift risk that could cause agents to produce output the orchestrator rejects, or the orchestrator to accept output that doesn't match what the agent was instructed to produce.
 
 2. **Architecture context path:** Bug skills reference `architecture-context/` (symlink at project root). RFE/strategy skills reference `.context/architecture-context/`. Both point to the same data but use different paths. This could cause confusion if one path is updated and the other is not.
 

@@ -6,7 +6,6 @@ System design, component docs, and diagrams.
 
 - [agent-parallelism.md](architecture/agent-parallelism.md) — Two-layer parallelism: orchestrator + agent self-parallelism
 - [agent-runner.md](architecture/agent-runner.md) — Pipeline job lifecycle from dashboard to K8s execution
-- [cli-runner.md](architecture/cli-runner.md) — CLI runner mode proposal (SDK limitations workaround)
 
 ### Diagrams
 

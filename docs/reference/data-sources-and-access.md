@@ -381,7 +381,7 @@ Both are fetched on first use and cached. Subsequent runs pull updates. Can be s
 
 ### Phase Output JSON Schema
 
-All phase outputs are validated against JSON Schema (defined in `lib/schemas.py`). Key schemas:
+All phase outputs are validated against JSON Schema (defined in `src/cli/schemas.py`). Key schemas:
 
 **completeness.json**: `overall_score` (0-100), `issue_type_assessment`, `triage_recommendation`, section scores for description, reproduction, environment, etc.
 

@@ -1,8 +1,27 @@
 # CLI Runner for Production Pipeline
 
+> **Implemented, and moved here on 2026-09-24.** This was written as a
+> proposal — Problem, Goal, Design, Files to Modify, Testing — which is plan
+> shape rather than documentation shape, and `CLAUDE.md` keeps planning
+> material in `.ledger/` rather than under `docs/`. It lived in
+> `docs/architecture/` until now.
+>
+> The design shipped: `src/cli/agent_runner.py` carries both paths, a
+> `ClaudeSDKClient` session and a `claude -p` subprocess, selected per phase.
+> The record is kept because the SDK-versus-CLI tradeoff it measured is still
+> the reason the code has two paths, and that reasoning is not obvious from
+> reading the code.
+>
+> **The evidence it cites no longer exists in the tree.** `tests/notes.md`,
+> the source of every "Finding N" below, was deleted in commit `fbf0e5c`
+> ("Consolidate lib/ into src/cli/, remove stale files") — the same commit
+> that moved the code this plan describes and left the documentation pointing
+> at the old `lib/` paths for months. Recover it with
+> `git show fbf0e5c^:tests/notes.md` if the numbers matter.
+
 ## Problem
 
-The production pipeline uses the Claude Agent SDK (`lib/agent_runner.py`) with a single `query()` + `receive_response()` cycle. This has two proven problems:
+The production pipeline uses the Claude Agent SDK (`src/cli/agent_runner.py`) with a single `query()` + `receive_response()` cycle. This has two proven problems:
 
 1. **`end_turn` drops background tasks.** When an agent emits text without a tool call, the SDK interprets it as session-over and closes the stream — even if background sub-agents are still running. Tested at N=30 with batch_size=5: SDK achieves 40-60% perfect runs vs CLI's 100% (see `tests/notes.md`, Findings 1-12).
 
@@ -12,11 +31,11 @@ The CLI runner (`claude -p` without `--bare`) solves both: persistent session fo
 
 ## Goal
 
-Add a CLI runner mode to `lib/agent_runner.py` so phases can choose between SDK and CLI execution. The interface (`run_agent()`) stays the same — callers don't change. The runner mode is configured per-phase in `pipeline-skills.yaml`.
+Add a CLI runner mode to `src/cli/agent_runner.py` so phases can choose between SDK and CLI execution. The interface (`run_agent()`) stays the same — callers don't change. The runner mode is configured per-phase in `pipeline-skills.yaml`.
 
 ## Design
 
-### `lib/agent_runner.py` Changes
+### `src/cli/agent_runner.py` Changes
 
 Add a `run_agent_cli()` function alongside the existing SDK-based `run_agent()`. Then modify `run_agent()` to dispatch based on a `runner` parameter.
 
@@ -131,11 +150,11 @@ phases:
 
 If `runner` is omitted, default to `sdk` for backward compatibility.
 
-### `lib/skill_config.py` Changes
+### `src/cli/skill_config.py` Changes
 
 Update the YAML parser to read the `runner` field from phase config and pass it through to `run_agent()`.
 
-### `lib/phases.py` Changes
+### `src/cli/phases.py` Changes
 
 All four `run_agent()` call sites pass through the `runner` parameter from the phase config. Since `run_agent()` dispatches internally, the changes are minimal:
 
@@ -148,9 +167,9 @@ All four `run_agent()` call sites pass through the `runner` parameter from the p
 
 | File | Change |
 |------|--------|
-| `lib/agent_runner.py` | Add `run_agent_cli()`, add `runner` param to `run_agent()`, dispatch logic |
-| `lib/skill_config.py` | Parse `runner` field from phase YAML config |
-| `lib/phases.py` | Pass `runner` through to all `run_agent()` call sites |
+| `src/cli/agent_runner.py` | Add `run_agent_cli()`, add `runner` param to `run_agent()`, dispatch logic |
+| `src/cli/skill_config.py` | Parse `runner` field from phase YAML config |
+| `src/cli/phases.py` | Pass `runner` through to all `run_agent()` call sites |
 | `pipeline-skills.yaml` | Add `runner: cli` to native skill phases |
 
 ## Files NOT to Modify
@@ -158,7 +177,7 @@ All four `run_agent()` call sites pass through the `runner` parameter from the p
 | File | Reason |
 |------|--------|
 | `tests/conftest.py` | Already has a working CLI runner — test infrastructure is separate |
-| `lib/cli.py` | No new CLI flags needed; runner is per-phase config, not a user flag |
+| `src/cli/cli.py` | No new CLI flags needed; runner is per-phase config, not a user flag |
 | `main.py` | No changes — dispatches to phases which handle runner internally |
 
 ## Testing

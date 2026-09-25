@@ -1,10 +1,10 @@
 # Agent Parallelism Architecture
 
-This document describes all the parallelism mechanisms in the pipeline — both the outer Python orchestrator (`lib/phases.py`) and the inner agent-level self-parallelism in the RFE/strategy skills. The two layers interact because the Python orchestrator can launch N agents concurrently, and each of those agents may itself launch sub-agents in parallel.
+This document describes all the parallelism mechanisms in the pipeline — both the outer Python orchestrator (`src/cli/phases.py`) and the inner agent-level self-parallelism in the RFE/strategy skills. The two layers interact because the Python orchestrator can launch N agents concurrently, and each of those agents may itself launch sub-agents in parallel.
 
 ## Table of Contents
 
-- [Layer 1: Python Orchestrator (lib/phases.py)](#layer-1-python-orchestrator)
+- [Layer 1: Python Orchestrator (src/cli/phases.py)](#layer-1-python-orchestrator)
 - [Layer 2: Agent Self-Parallelism (RFE/Strategy Skills)](#layer-2-agent-self-parallelism)
 - [Detailed Skill Walkthroughs](#detailed-skill-walkthroughs)
 - [Concurrency Control Mechanisms](#concurrency-control-mechanisms)
@@ -16,7 +16,7 @@ This document describes all the parallelism mechanisms in the pipeline — both 
 
 ## Layer 1: Python Orchestrator
 
-The Python orchestrator in `lib/phases.py` uses `asyncio` with a shared `asyncio.Semaphore` to limit concurrent agent sessions. Each agent session is launched via `lib/agent_runner.py`, which calls the Claude Agent SDK (`claude_agent_sdk.ClaudeSDKClient`).
+The Python orchestrator in `src/cli/phases.py` uses `asyncio` with a shared `asyncio.Semaphore` to limit concurrent agent sessions. Each agent session is launched via `src/cli/agent_runner.py`, which calls the Claude Agent SDK (`claude_agent_sdk.ClaudeSDKClient`).
 
 ### Single-Phase Batch (`_run_phase`)
 
@@ -39,9 +39,9 @@ Used by: `bug-completeness`, `bug-context-map`, `bug-fix-attempt`, `bug-test-pla
 ```
 
 **Key details:**
-- `_run_phase` at `lib/phases.py:659` creates a semaphore and launches all jobs via `asyncio.gather`
+- `_run_phase` at `src/cli/phases.py:659` creates a semaphore and launches all jobs via `asyncio.gather`
 - Each job is a dict with `name`, `cwd`, `prompt`, `model_id`, `model_shorthand`, `stale_files`
-- Inside `run_with_semaphore` (`lib/phases.py:682`), the semaphore is acquired before calling `run_agent()`
+- Inside `run_with_semaphore` (`src/cli/phases.py:682`), the semaphore is acquired before calling `run_agent()`
 - Stale output files are deleted inside the semaphore (after acquiring, before running) to prevent a killed orchestrator from leaving deleted-but-never-regenerated files
 - `return_exceptions=True` ensures one failure doesn't cancel others
 - After all jobs complete, per-model summaries are printed
@@ -76,7 +76,7 @@ This is a more sophisticated model where each issue flows through phases 2-6 seq
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Within each issue pipeline** (`_run_issue_pipeline` at `lib/phases.py:2256`):
+**Within each issue pipeline** (`_run_issue_pipeline` at `src/cli/phases.py:2256`):
 
 1. **Phases 2+3 (completeness + context-map)** run in parallel via `asyncio.gather` — they're independent
 2. **Phase 4 (fix-attempt)** runs after both 2+3 complete — needs their outputs
@@ -89,7 +89,7 @@ Each `_maybe_run_*` function acquires the shared semaphore before launching its 
 
 ### Batch Native-Skill Orchestration (`run_rfe_speedrun_phases`)
 
-Used by: `rfe-speedrun`, `rfe-all` (batch mode via `lib/phases.py`)
+Used by: `rfe-speedrun`, `rfe-all` (batch mode via `src/cli/phases.py`)
 
 ```
 ┌────────────────────────────────────────────────────────────┐
@@ -110,8 +110,8 @@ Used by: `rfe-speedrun`, `rfe-all` (batch mode via `lib/phases.py`)
 ```
 
 **Key details:**
-- `_run_native_skill_for_issue` at `lib/phases.py:2755` acquires the semaphore, then calls `run_agent()` with the prompt `/{skill_name} --headless {issue_key}`
-- `_gather_with_progress` at `lib/phases.py:2879` wraps `asyncio.gather` with a Rich progress bar
+- `_run_native_skill_for_issue` at `src/cli/phases.py:2755` acquires the semaphore, then calls `run_agent()` with the prompt `/{skill_name} --headless {issue_key}`
+- `_gather_with_progress` at `src/cli/phases.py:2879` wraps `asyncio.gather` with a Rich progress bar
 - Each launched agent gets its own Claude SDK session that discovers skills via `setting_sources=["project"]`
 - The agent's prompt is a slash command (e.g., `/rfe.speedrun --headless RHAIRFE-1234`)
 - **Idempotency:** `_rfe_is_complete()` checks if all expected artifacts exist and skips completed RFEs
@@ -340,7 +340,7 @@ Phase 3: Submit
 Phase 4: Summary
 ```
 
-**Speedrun is sequential at the top level.** Parallelism is delegated to `/rfe.auto-fix` -> `/rfe.review` -> sub-agents. However, the **Python orchestrator** (`run_rfe_speedrun_phases` in `lib/phases.py`) launches multiple `/rfe.speedrun` sessions concurrently — one per RFE key. So the effective parallelism is:
+**Speedrun is sequential at the top level.** Parallelism is delegated to `/rfe.auto-fix` -> `/rfe.review` -> sub-agents. However, the **Python orchestrator** (`run_rfe_speedrun_phases` in `src/cli/phases.py`) launches multiple `/rfe.speedrun` sessions concurrently — one per RFE key. So the effective parallelism is:
 
 ```
 Python orchestrator (asyncio.Semaphore)
@@ -408,7 +408,7 @@ The orchestrator (`strat.review`) invokes these as inline Skill calls, not backg
 
 ### 1. Python asyncio.Semaphore
 
-**Where:** `lib/phases.py` — all `_run_phase`, `_run_issue_pipeline`, `_run_strat_pipeline`, `_run_native_skill_for_issue`
+**Where:** `src/cli/phases.py` — all `_run_phase`, `_run_issue_pipeline`, `_run_strat_pipeline`, `_run_native_skill_for_issue`
 **Configured by:** `--max-concurrent N` CLI flag (default: 5)
 **Scope:** Controls top-level Claude SDK sessions only. Does not see or control sub-agents launched by skills.
 
@@ -438,7 +438,7 @@ The script uses file-level locking to atomically allocate sequential IDs. When m
 
 ### 4. Stale File Deletion Inside Semaphore
 
-**Where:** `lib/phases.py:603-609`, `lib/phases.py:688-691`
+**Where:** `src/cli/phases.py:603-609`, `src/cli/phases.py:688-691`
 **Purpose:** Prevent race condition where orchestrator is killed after deleting stale files but before regenerating them
 
 ```python

@@ -58,6 +58,116 @@ if this work is done under an account that already has write access to the org,
 this section is moot — establish that first, because it changes the whole shape
 of the plan.
 
+## What the vouch request needs to cover
+
+A checklist of **facts and topics**, not draft sentences, and deliberately so.
+The project's rule is "write in your own words — do not have an AI generate the
+request", and a request assembled from pre-written prose would pass the letter
+of that while defeating its point. Working from factual notes is not the same as
+having the text written; these bullets are notes. The prose has to be the
+submitter's.
+
+Where each fact can be checked is given so nothing has to be taken on trust.
+
+**Context — who is asking and why they were in the code at all**
+
+- Breadboard runs Fullsend as a first-class service in a local K3s stack with
+  emulated GitHub, GitLab and Jira forges — not a toy harness or a read-through
+  of the source.
+- The configuration exercised is enterprise-shaped: the forge is not
+  `github.com`. That is a configuration Fullsend supports and, on this
+  evidence, does not test.
+
+**What was actually run** — evidence in
+[`fullsend-integration-conformance-plan.md`](fullsend-integration-conformance-plan.md),
+closing entry
+
+- Real GitHub events through Fullsend's own `fullsend.yaml` shim and
+  `reusable-dispatch.yml`, a mint verifying real OIDC claims, an OpenShell
+  sandbox, a real agent against Vertex, and results written back to the forge.
+- Three stages end to end: triage (labels and comments), review (a
+  `CHANGES_REQUESTED` review with inline comments), code (a pushed branch, an
+  opened pull request, an assignee).
+- Nothing reimplemented and no compatibility shim between Fullsend and the
+  forge; missing forge behaviour was added to the emulator instead.
+
+**The recurring defect class** — the main thing worth reporting
+
+- `github.com` assumed where the configured host belongs, in three separate
+  layers: the Go client, the composite action YAML, and the agents shell ops
+  libraries.
+- Worth naming that it had already been fixed in *one* of six ops libraries
+  upstream and never carried across — this is not a single oversight.
+- Worth naming the security-relevant instance: `forge_set_push_remote` built
+  `x-access-token:TOKEN@github.com/...`, so on an enterprise install a minted
+  push token goes to github.com.
+
+**Standalone defects**
+
+- A provider profile import reporting success when it replaced nothing, leaving
+  a gateway serving a stale policy while every run logged importing it.
+- The sandbox not receiving `GH_HOST`/`GH_ENTERPRISE_TOKEN`, so `gh` inside the
+  sandbox addresses github.com and authenticates as whatever the environment
+  already held rather than as the minted role.
+- The scaffold hardcoding a hosted runner label, so a scaffolded repository's
+  first dispatch sits queued with nothing reporting why.
+
+**What makes the submission credible**
+
+- Thirteen upstream-bound fixes; six of the eight Go patches already carry
+  tests, and one agents patch ships a test suite modelled on the project's
+  existing GitLab host-mismatch test.
+- Each patch header records what was observed, how, and why the fix is shaped
+  as it is — see `deploy/fullsend/patches/`.
+- Two earlier patches were dropped because upstream fixed the same ground
+  natively; upstream movement is being tracked rather than ignored.
+
+**What would *not* be submitted, and why** — probably the strongest single
+signal
+
+- Two local-only substitutions stay local: `github.local` in the two GitHub
+  provider profiles, and the CA-bearing sandbox images. Both are artefacts of
+  running against an emulator on a cluster address, both are marked
+  `NOT FOR UPSTREAM` in their own headers, and both are documented in
+  [`docs/fullsend-compatibility-profile.md`](../../docs/fullsend-compatibility-profile.md).
+- Knowing which changes do not belong upstream is what separates someone who
+  understands the codebase from someone generating plausible patches.
+
+**The ask**
+
+- Permission to open pull requests.
+- Intent to group by repository and layer rather than filing thirteen PRs for
+  one root cause — and willingness to split them if a maintainer prefers.
+
+**If a patch is included in an issue body before vouching** — see
+"Bug reports as a parallel path" below
+
+- State that the patch is offered for inclusion under the project's licence,
+  and that the submitter will sign off on it as a commit if that is preferable.
+  Their DCO policy exempts autonomous agent commits because no human is present
+  to certify; code lifted from an issue into an agent commit has a human origin
+  and no sign-off, and saying so up front removes the ambiguity.
+
+## Bug reports as a parallel path
+
+The vouch system gates pull requests, not issues. Filing well-evidenced bug
+reports needs no vouch, is useful to upstream immediately, and their
+`CONTRIBUTING.md` documents a split queue — a "contributor issue search" that
+excludes issues reserved for agents, filtered by bot author and by
+`label:ready-to-code`. An issue their triage classifies as a bug may therefore
+be picked up and fixed by their own code agent.
+
+Include the patch and the reasoning in the issue body. Withholding a fix in
+order to have their agent reproduce it would be using them, and the reasoning is
+the part a bug report otherwise loses — several of these fixes are non-obvious
+in ways a symptom description does not convey.
+
+Two constraints: start with two or three of the best-evidenced defects rather
+than thirteen, since volume reads as automation regardless of merit; and for the
+patches that carry tests, a real pull request remains materially better once
+vouched, because an issue gets no CI, no coverage report and no line-level
+review.
+
 ## What goes, and what never does
 
 Sixteen patch files across three lists: eleven in
@@ -159,19 +269,23 @@ Ordered so the cheapest possible failure comes first.
 1. **Establish account standing.** Does the submitting account already have write
    access to `fullsend-ai`? If yes, the vouch gate does not apply and everything
    below starts immediately.
-2. **Vouch request** (human, own words) if it does apply.
-3. **Refresh the checkouts and measure the damage.** Fetch both repos, rebase
+2. **File two or three bug reports** with patches and reasoning inline. No vouch
+   needed for these, they are useful to upstream on their own, and they become
+   the concrete evidence the vouch request cites.
+3. **Vouch request** (human, own words, from the checklist above) if the gate
+   applies.
+4. **Refresh the checkouts and measure the damage.** Fetch both repos, rebase
    the patch set onto current `main`, and record which patches no longer apply,
    which are now unnecessary because upstream fixed them, and which changed
    shape. This is the first place the plan can shrink for free.
-4. **One probe PR.** Patch 0010 — "do not report success for a profile import
+5. **One probe PR.** Patch 0010 — "do not report success for a profile import
    that replaced nothing" — is self-contained, carries a test, and is an
    obvious correctness bug with no design argument attached. Land that one
    first to learn the actual review cycle, CI behaviour and coverage reporting
    before the harder ones are exposed.
-5. **The host-assumption cluster**, grouped as decided above.
-6. **The remainder** — 0006, 0009, 0012 — each on its own merits.
-7. **Write tests for 0005** before it goes anywhere.
+6. **The host-assumption cluster**, grouped as decided above.
+7. **The remainder** — 0006, 0009, 0012 — each on its own merits.
+8. **Write tests for 0005** before it goes anywhere.
 
 ## Breakpoints
 

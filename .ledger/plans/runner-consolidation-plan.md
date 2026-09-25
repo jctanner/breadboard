@@ -22,10 +22,10 @@ runner_image:
 ```
 
 Every agent job renders `runs-on: ${{ inputs.runner_image }}`, and the action
-carries an `install-fullsend-cli` composite with three fallbacks — vendored
-binary, download from release, clone and build from source — plus
-`install-openshell.sh`. You only write that if you land on a clean ephemeral
-machine every job.
+carries an `install-fullsend-cli` composite with a vendored mode and an
+upstream mode, the latter falling back from release download to a source
+build, plus `install-openshell.sh`. You only write that if you land on a clean
+ephemeral machine every job.
 
 This stack has no hosted runners, so it diverged in three places at once:
 
@@ -57,10 +57,17 @@ checking each claim confirmed it.
 `src/runners/emulator/runner.py` injects `GH_HOST`, `GH_ENTERPRISE_TOKEN` and
 the OIDC request variables into every step, and shims three marketplace
 actions: `google-github-actions/auth`, `actions/setup-go` and
-`actions/upload-artifact`. The upstream entrypoint does none of that — zero
-matches for any of it. Moving agent jobs there would resurrect G7 and G8,
-break Vertex authentication, and break the artifact shim built as G41. The
-emulator's runner is a compatibility layer, not just a job executor.
+`actions/upload-artifact`. The upstream entrypoint contains none of that.
+
+What that establishes is where the logic lives, not that the upstream runner
+fails without it: those behaviours could in principle be supplied by the runner
+binary, by the actions themselves, or server-side by the emulator. So the
+honest statement is that moving agent jobs onto the upstream runner carries
+**unverified compatibility risk** against the paths G7, G8 and G41 exist to
+fix — enterprise host and token handling, Vertex authentication, and artifact
+upload — and that verifying it would cost a run per path. Keeping the known
+compatibility layer avoids paying that, which is the argument for the revised
+target; it is not a claim that the alternative is broken.
 
 So the target changes. Keep the compatibility layer; change what it runs on
 and how it is scoped:
@@ -109,9 +116,13 @@ gateway endpoint to skip local Podman setup, so without it jobs try to build a
 sandbox inside the runner.
 
 Apply `27-fullsend-runner-egress.yaml` to the new deployment **before**
-accepting the phase. The policy currently selects the two agent runners by
-name and allows only `10.42.0.0/16` and `10.43.0.0/16`; a renamed or
-re-scoped deployment silently falls outside it and regains public egress.
+accepting the phase. The policy selects on the pod `app` label — currently
+`github-actions-runner` and `github-actions-config-runner`, which happen to
+match the deployment names — and allows only `10.42.0.0/16` and
+`10.43.0.0/16`. Registration scope has nothing to do with it; what breaks the
+selection is changing the pod template's `app` label, which a rename would
+normally do. A pod outside the selector has unrestricted egress and nothing
+reports it, so the acceptance check runs with the policy active.
 
 **Breakpoint:** a triage job runs with `runs-on: ubuntu-24.04`, no
 `FULLSEND_RUNNER_IMAGE` set, *with the egress policy active*.
@@ -137,13 +148,19 @@ turns the staleness check into a no-op, and `host-conformance` would still
 report green. The check exists because a gateway once served a 26-day-old
 profile while every run reported importing it.
 
-**Breakpoint:** deploy, reset and conformance all work, *and* the profile
-comparison is observed running rather than skipped.
+**Breakpoint:** two things, not one. Deploy, reset and conformance all work,
+*and* the profile comparison is observed running rather than skipped. Then a
+**newly onboarded repository completes a triage** using the stock label and the
+enterprise runner, with no new deployment and no `FULLSEND_RUNNER_IMAGE`
+override — that is the goal the whole plan exists for, and the current layout
+cannot do it at all.
 
 ### 4. Record what changed
 
-Update the stage matrix and the conformance plan: one patch fewer, G6 and G9
-reclassified as consequences of a layout that no longer exists.
+Update the stage matrix and the conformance plan: one patch fewer; **G6
+resolved** by serving the stock label; **G9 addressed** by the explicit,
+validated tool inventory rather than resolved — the missing-tool class does not
+disappear, it gains an owner and a list.
 
 ## Risks, recorded before starting
 
@@ -159,8 +176,11 @@ workspace volume reused across jobs, so per-job minting does not by itself
 protect a later job from an earlier compromised one. What is true: `PUSH_TOKEN`
 still never enters the sandbox, and tokens are still minted per job and per
 role. Consolidation widens the blast radius from one repository to all of them
-and does not change the sandbox boundary. Either accept that explicitly in the
-compatibility profile, or add workspace cleanup between jobs.
+and does not change the sandbox boundary. Workspace cleanup between jobs reduces carryover but is not a
+guarantee: a compromised job in a long-lived container can persist outside the
+workspace. The real options are to replace the execution environment between
+jobs, or to accept the residual exposure explicitly in the compatibility
+profile. Cleanup alone should not be recorded as a mitigation.
 
 **Egress is already closed, not pending.** The first draft framed per-job tool
 installation as pulling against F4's *future* aim. It is not future:
@@ -305,3 +325,89 @@ unreachable. The change was load-bearing, not defensive.
 The review states it was static inspection with no runtime tests. Points 2 and
 3 were additionally confirmed against the live cluster; the rest were confirmed
 in source.
+
+## Follow-up review — 2026-09-25
+
+The revised plan addresses the main migration concerns by keeping the Python
+emulator runner, rebasing it on Ubuntu 24.04, and giving it enterprise scope
+and the stock `ubuntu-24.04` label. The upstream router remains separate.
+The phases now explicitly preserve gateway configuration, enforce the existing
+egress policy, remove patch 0012 from the CLI build, and update deployment,
+reset, and conformance consumers. The narrower tool-inventory and isolation
+claims also improve the plan.
+
+Six issues remain:
+
+1. **The installer description is still inconsistent.** The introduction still
+   says "three fallbacks," although the response accepts the correction.
+   Update it to describe separate vendored and upstream modes, with
+   release-to-source fallback inside upstream mode.
+
+2. **Phase 4 still overstates the resolution of G9.** It reclassifies G9 as a
+   consequence of a layout that no longer exists, while the revised target
+   correctly withdraws the claim that the entire missing-tool class disappears.
+   Record G6 as resolved by serving the stock label and G9 as addressed by the
+   explicit tool inventory and validation.
+
+3. **Registration scope does not control network-policy selection.** Phase 2
+   says a renamed or re-scoped deployment silently falls outside the policy.
+   The policy selects pod `app` labels. Changing registration scope alone does
+   not affect it; changing the selected pod labels can. State the dependency
+   precisely and retain the acceptance check with the policy active.
+
+4. **Workspace cleanup is insufficient as an isolation guarantee.** A
+   compromised job can persist changes elsewhere in a long-lived container.
+   Cleanup can reduce workspace carryover, but it does not provide a fresh
+   execution environment. Explicitly accept that residual exposure or require
+   replacement of the execution environment between jobs.
+
+5. **The upstream-runner failure claims exceed the evidence stated.** Absence
+   of shim logic in `upstream/entrypoint.sh` does not establish that the upstream
+   runner's authentication or artifact paths fail: those behaviors may live in
+   the runner, actions, or emulator service. Keeping the known compatibility
+   layer is a reasonable migration choice, but claims that Vertex authentication
+   and artifact upload would break require validation of those paths. Describe
+   them as unverified compatibility risks until that evidence exists.
+
+6. **Restore the fresh-repository onboarding acceptance check.** It disappeared
+   from the revised breakpoints even though onboarding without deploying a
+   repository-specific runner remains a central goal. Require a newly onboarded
+   repository to complete triage using the stock label and enterprise runner,
+   with no new runner deployment or runner-image override.
+
+Follow-up scope: review of the updated document against the earlier source
+inspection. No new runtime tests or independent live-cluster checks were run.
+
+## Response to the follow-up review — 2026-09-25
+
+All six accepted and applied.
+
+| # | what it was | fix |
+| --- | --- | --- |
+| 1 | intro still said "three fallbacks" after the correction was accepted | reworded to vendored and upstream modes, release-to-source inside the latter |
+| 2 | phase 4 still called G9 resolved | G6 **resolved**, G9 **addressed** — the class gains an owner and a list, it does not vanish |
+| 3 | conflated registration scope with policy selection | the policy selects the pod `app` label; scope is irrelevant, a rename is what breaks it |
+| 4 | offered workspace cleanup as an isolation mitigation | cleanup is not a guarantee; the options are replacing the environment per job or accepting the exposure |
+| 5 | stated upstream-runner breakage as fact | restated as unverified compatibility risk, with what the evidence does and does not establish |
+| 6 | dropped the fresh-repository breakpoint | restored to phase 3, alongside the profile-comparison check |
+
+Three of these — 1, 2 and 6 — were inconsistencies between what the revision
+argued and what it left behind: a claim withdrawn in one section and still
+standing in another, and an acceptance criterion silently lost in a rewrite.
+Worth noting because they are the failure mode of revising a document under
+review rather than rewriting it, and the same shape as the defects this project
+keeps finding in code: the fix landed, the thing that pointed at the old
+behaviour did not move with it.
+
+Number 5 is the substantive one. The evidence — that the shim and injection
+logic lives in `runner.py` and not in `upstream/entrypoint.sh` — establishes
+where the behaviour is implemented, not that the upstream runner fails without
+it. Stating it as breakage was an overclaim of exactly the kind this plan is
+supposed to catch. It now reads as risk, with the cost of resolving it named: a
+run per path.
+
+Neither review ran the code. Points 2 and 3 of the first review were confirmed
+against the live cluster; the network-policy selector in point 3 here was
+confirmed too. Everything else in both rounds was confirmed in source. No claim
+in this plan is backed by a run of the thing it describes, because nothing in
+it has been built yet.

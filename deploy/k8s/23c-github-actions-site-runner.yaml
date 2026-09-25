@@ -54,8 +54,25 @@ spec:
               value: breadboard
             - name: RUNNER_NAME
               value: breadboard-enterprise-router
+            # fullsend-router is what Fullsend's shim targets. The ubuntu
+            # labels are here because nothing else in this stack serves them:
+            # on real GitHub a self-hosted runner would not claim them, since
+            # GitHub supplies hosted runners, but there are none here, so any
+            # ordinary workflow — including the agents mirror's own CI —
+            # queues forever with nothing reporting why.
+            #
+            # Only labels this image can honestly satisfy: it is genuinely
+            # Ubuntu 22.04.5 (see src/runners/upstream/Dockerfile). ubuntu-24.04
+            # is deliberately absent rather than claimed and then failing in
+            # confusing ways; workflows asking for it still queue, which is the
+            # honest outcome until something actually runs 24.04.
+            #
+            # The cost: this is a single replica whose real job is dispatch,
+            # and a runner goes busy while it runs a job. A long CI job will
+            # delay routing. If that starts to bite, the answer is a separate
+            # runner for hosted-label work rather than more labels here.
             - name: RUNNER_LABELS
-              value: self-hosted,linux,fullsend-router
+              value: self-hosted,linux,ubuntu-latest,ubuntu-22.04,fullsend-router
             # The workspace and RUNNER_TEMP are siblings under one
             # volume, as they are on GitHub. RUNNER_TEMP has to sit outside the
             # workspace: a checkout with no path: makes the workspace root a

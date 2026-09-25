@@ -11,12 +11,16 @@ OPENSHELL_ROOT="${PROJECT_ROOT}/checkouts/openshell"
 # here. Two prior patches (sandbox-name length, sticky-comment forge URL)
 # were dropped because upstream now fixes both natively - see work package 1
 # in .ledger/plans/fullsend-integration-conformance-plan.md.
+# 0002 (allow an insecure dev mint URL) is retired, as decision 3 required
+# once the mint was served over the stack's internal TLS. It only relaxed the
+# HTTPS check for an http:// URL, and nothing on any path uses one: the
+# repository variable and .fullsend/config.yaml both name https. The file is
+# kept for the record; the gap in the numbering is deliberate.
 # These patch Go source before the binary is compiled. Patches that change
 # files a workflow reads at run time belong to MIRROR_PATCHES in
 # deploy/fullsend/seed/seed-upstream-fullsend.py instead; a patch in the wrong
 # list does nothing and does it silently.
 FULLSEND_PATCHES=(
-  "${PROJECT_ROOT}/deploy/fullsend/patches/0002-allow-insecure-dev-mint-url.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0005-resolve-agents-repo-against-configured-host.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0006-allow-a-privately-reachable-forge.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0007-parse-enterprise-raw-content-urls.patch"

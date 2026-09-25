@@ -1625,8 +1625,14 @@ Feeds breakpoint B5.
   Written up in [`.ledger/notes/fullsend-stage-matrix.md`](../notes/fullsend-stage-matrix.md),
   with the triage column marked observed and the review and code columns
   marked as read from the harness files rather than run.
-- [ ] Diff those harnesses against Breadboard's local images, policies,
-  profiles, schemas, scripts, and environment variables.
+- [x] Diff those harnesses against Breadboard's local images, policies,
+  profiles, schemas, scripts, and environment variables. Done in the stage
+  matrix and then settled by running all three: images (two local CA-bearing
+  builds), profiles (the `github.local` substitution in both GitHub profiles),
+  scripts (three ops libraries corrected), schemas (each stage's result
+  validated in a real run), and environment (`GH_HOST` and
+  `GH_ENTERPRISE_TOKEN` into six overlays). Policy is the one column with
+  nothing to diff: all three harnesses use `policies/base.yaml` unmodified.
 - [x] Decide which resources are mirrored locally and how their revision is
   shown at run time. Keep it simple enough to rebuild often.
 - [x] Verify filesystem, network, binary, and credential boundaries against
@@ -1634,9 +1640,17 @@ Feeds breakpoint B5.
 - [ ] Replace broad custom policy with the narrowest policy that passes.
 - [x] Verify local CA, `.local` routing, and TLS from both the runner and the
   sandbox.
-- [ ] Write the compatibility profile as a separate document containing only
+- [x] Write the compatibility profile as a separate document containing only
   what decision 3 allows.
-- [ ] Produce the stage matrix.
+  [`docs/fullsend-compatibility-profile.md`](../../docs/fullsend-compatibility-profile.md).
+  Writing it found two things rather than merely recording them: the F4 egress
+  policy existed only on the cluster it was applied to, with nothing in
+  `deploy-all` applying it, so it would have regressed on the next deploy; and
+  Go patch 0002 was still in the build list although this decision required its
+  retirement once the mint moved to internal TLS. Both fixed. The document also
+  names the two credential substitutions that sit at the edge of this decision
+  rather than filing them quietly under local image builds.
+- [x] Produce the stage matrix. [`.ledger/notes/fullsend-stage-matrix.md`](../notes/fullsend-stage-matrix.md) covers triage, review and code with every cell marked observed or not, and records the three survey claims that were wrong on inspection.
 
 **Done when:** the real harness runs after a normal local rebuild, the stage
 matrix and compatibility profile exist, and a retained evidence bundle proves
@@ -1660,9 +1674,9 @@ output validation, through post-script behavior, and in retained telemetry.
 
 Feeds breakpoint B6.
 
-- [ ] Reset and seed the emulator with no manual UI steps.
-- [ ] Build or import every image from the canonical checkouts.
-- [ ] Deploy the runner, mint, OpenShell, DNS, and policy prerequisites.
+- [x] Reset and seed the emulator with no manual UI steps. `22-seed-fullsend.sh` runs nine seeders (both mirrors, the config allowlist, the behaviour script, conformance actors, the vendored binary, the App, the trust check, the workflow mirror) and `25-reset-conformance.sh` returns sandboxes, profiles, runner caches and the forge to a baseline. No UI step in either.
+- [x] Build or import every image from the canonical checkouts. Verified per script: `05-build-images` and `05a` from `checkouts/github-emulator` and the other emulators, `05g`/`05k` from the emulator's runner sources, `05i` from `checkouts/fullsend-ai/{fullsend,agents}` and `checkouts/openshell`. The two sandbox images read their base digest out of the harness that pins it, so a moved harness stops the build.
+- [x] Deploy the runner, mint, OpenShell, DNS, and policy prerequisites. `deploy-all.sh` runs `16-deploy-openshell`, `18-deploy-fullsend-mint-dev`, `17-deploy-github-actions-runner` and `09-deploy-ingress-proxy` for `.local` routing; `17-` also applies the F4 egress policy, which it did not before this item was checked.
 - [x] Run the triage-on-issue scenario from a clean state.
 - [x] Collect revisions, run and job IDs, sandbox logs, agent output, forge
   changes, and failure evidence.

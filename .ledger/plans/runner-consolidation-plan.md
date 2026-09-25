@@ -68,16 +68,26 @@ Per-repo mode, as ADR 0033 says. Two runner tiers, two labels:
 
 | tier | runner | scope | labels | serves |
 | --- | --- | --- | --- | --- |
-| **hosted stand-in** | upstream `actions/runner` on `ubuntu:24.04` | enterprise (site-wide) | `ubuntu-24.04`, `ubuntu-latest`, `fullsend-router` | generic CI, the dispatch routing job |
-| **agent** | `runner.py` + compatibility layer + tooling, on `ubuntu:24.04` | **site** (`runner.py` supports `repository` and `site` only) | `fullsend` | every Fullsend agent job in every repository |
+| **hosted stand-in** | upstream `actions/runner` on `ubuntu:24.04` | enterprise (site-wide) | `ubuntu-24.04`, `ubuntu-latest` (`fullsend-router` until phase 3) | generic CI only |
+| **agent** | `runner.py` + compatibility layer + tooling, on `ubuntu:24.04` | **site** (`runner.py` supports `repository` and `site` only) | `fullsend` | every Fullsend job in every repository — routing included |
+
+Routing is not a separate tier. Every job in `reusable-dispatch.yml` — `route`,
+the stages, and `harness-dispatch` — runs on `inputs.runner_image`, so with
+the override set to `fullsend` the routing job lands on the agent runner. Run
+1509 shows exactly that. The `fullsend-router` label served only the
+deprecated org-mode `.fullsend/dispatch.yml`; once phase 3 retires that, the
+label is vestigial and comes off.
 
 The two tiers need two labels. `runner.py` is not a job executor but a
 compatibility layer — it injects `GH_HOST`, `GH_ENTERPRISE_TOKEN` and the OIDC
 variables into every step and shims `google-github-actions/auth`,
-`actions/setup-go` and `actions/upload-artifact` — and agent jobs have to land
-on it rather than on the upstream runner. So **patch 0012 stays**, on a stated
-basis: a render-time runner label is structural to a two-tier layout, not a
-deviation to remove. What the layout *does* remove is the per-repo runner
+`actions/setup-go` and `actions/upload-artifact`. Whether the upstream Actions
+runtime, the actions themselves, or the emulator could supply equivalents is
+**unverified**; missing logic in an entrypoint shows where the behaviour lives,
+not what the full runtime supports. Keeping the proven layer avoids paying a
+run per path to find out, and that is the whole argument. So **patch 0012
+stays**, on a stated basis: a render-time runner label is structural to a
+two-tier layout, not a deviation to remove. What the layout *does* remove is the per-repo runner
 deployment, the Debian base, and the deprecated org-mode remnants.
 
 Onboarding becomes what ADR 0033 describes: `fullsend github setup <owner/repo>`
@@ -98,8 +108,8 @@ Each phase ends somewhere real. Stop at the breakpoint and take a verdict.
 Rebase `src/runners/upstream/Dockerfile` (github-emulator checkout) on
 `ubuntu:24.04`, review `libicu70` and other distro pins, add `ubuntu-24.04` to
 `RUNNER_LABELS`, and drop `ubuntu-22.04` — a label list has to describe the
-image. Keep `fullsend-router`; the dispatch routing job is the same class as
-generic CI and this is where it has always run.
+image. Keep `fullsend-router` for now: nothing in the per-repo path uses it, but the
+deprecated `.fullsend/dispatch.yml` does until phase 3 retires it.
 
 The agents mirror's own CI (183 jobs in the database asked for `ubuntu-24.04`)
 will start running here rather than queueing. It may fail for want of `node`;
@@ -130,10 +140,28 @@ selects on the pod `app` label — currently `github-actions-runner` and
 does, and a pod outside the selector has unrestricted egress with nothing
 reporting it.
 
-**Breakpoint:** `make host-conformance` passes on the rebased, site-scoped
-runner with the egress policy active. Then a **fresh repository onboarded
-through the dashboard button completes a triage** with no new deployment —
-the thing the current layout cannot do.
+Update `github-actions-runner` **in place** rather than creating a new
+deployment: the egress policy selects the pod `app` label, and an in-place
+update keeps it applying without touching the policy.
+
+During validation the old repo-scoped registrations still advertise
+`fullsend`, so a green conformance run proves nothing about *which* runner
+served it. Extend `24-run-conformance-triage.sh` to record `runner_name` from
+the jobs endpoint it already calls (it captures `job_id` but not the runner),
+and require it to name the new runner — or scale the old deployments to zero
+for the duration.
+
+Triage alone does not exercise the tool inventory the plan keeps: the code
+path needs `gitleaks` and `pre-commit`, review needs the post-review tooling.
+Before the old runners go, confirm the inventory in the new pod with
+`command -v`, and run review and code once each on the new runner. Those are
+paid runs, roughly $2 each on the last measurement.
+
+**Breakpoint:** `make host-conformance` passes with the egress policy active
+and the evidence names the new runner; a review and a code run each complete
+on it; and a **fresh repository onboarded through the dashboard button
+completes a triage** with no new deployment — the thing the current layout
+cannot do.
 
 ### 3. Retire what the design no longer has
 
@@ -158,8 +186,9 @@ comparison is observed running rather than skipped.
 
 ### 4. Record
 
-- Conformance plan: G6 **resolved** by serving the stock label; G9
-  **addressed** by the pinned tool inventory, not resolved.
+- Conformance plan: G6 **addressed through the retained override** — agent
+  jobs still do not use the stock label, by design; G9 **addressed** by the
+  pinned tool inventory, not resolved.
 - Stage matrix: `forge:` is deprecated-but-functional (ADR 0088), not
   first-class; the org-mode analysis is withdrawn with a pointer here.
 - Decision entry: why patch 0012 stays.
@@ -167,10 +196,18 @@ comparison is observed running rather than skipped.
 
 ## Findings carried, not fixed here
 
-Both surfaced while working out whether org mode could serve other orgs. Both
-are dormant on the development mint (`deploy/fullsend-mint-dev/server.py`,
-which binds every minted token to the caller's own repository and ignores
-`job_workflow_ref`), and both would matter the moment a real mint were used.
+Both surfaced while working out whether org mode could serve other orgs. They
+are not the same kind of problem and should not be filed together.
+
+The first is **active**. The cross-repository dispatch used `github.token`
+straight against the emulator's API; the mint was never in the path, so the
+development mint's binding of minted tokens to the caller's repository does
+not contain it. Any job on this stack can already start workflows in any
+repository. It is an authorization defect in the emulator and deserves a
+fix on its own timeline, not this plan's.
+
+The second is dormant: the development mint ignores `job_workflow_ref`, so
+it would matter only when a real mint were used.
 
 1. **Job tokens are not repository-bound.** Proven by probe: a job in repo A
    declaring `actions: write` dispatched a workflow in repo B — `204`, run
@@ -221,3 +258,70 @@ saying what the image actually is.
   phase 1 that CI runs instead of queueing. Whether the seeder should trigger
   it at all is a separate question and no longer a prerequisite.
 - Verify the `yq`-on-hosted-images claim before phase 4 records G9.
+
+## Review of the rewritten plan — 2026-09-25
+
+The rewrite addresses several earlier findings, and `RUNNER_SCOPE=site` is
+correct for the Python runner. Five issues remain:
+
+1. **The routing tier does not match the workflow.** The target assigns
+   dispatch routing to the upstream runner. But the `route` job in
+   `checkouts/fullsend-ai/fullsend/.github/workflows/reusable-dispatch.yml`
+   uses the same `inputs.runner_image` as agent jobs. With the override set to
+   `fullsend`, routing also runs on the Python runner. Either describe that
+   layout or explicitly plan a separate routing input.
+
+2. **Phase 4 contradicts the decision to retain patch 0012.** It says G6 is
+   resolved by serving the stock label. Fullsend still requires the `fullsend`
+   override under this design; the runner serving `ubuntu-24.04` is deliberately
+   unsuitable for agent jobs. Record G6 as addressed through the retained
+   override.
+
+3. **The cross-repository token defect is not dormant.** The findings section
+   describes an already-successful cross-repository dispatch using a job token.
+   That request bypasses the mint entirely, so the development mint's
+   restrictions do not contain it. Separate this active authorization defect
+   from the OIDC compatibility issue.
+
+4. **Phase 2's conformance result could come from the old runner.** The plan
+   validates the replacement before retiring old registrations, all serving
+   `fullsend`. Require evidence that conformance ran on the new runner, or
+   disable the old runners during validation. Also specify whether
+   `github-actions-runner` is updated in place or replaced by a newly named
+   deployment.
+
+5. **Triage alone does not validate the promised tool inventory.** Phase 2
+   tests triage, but the plan retains tools needed by code/review paths. Add
+   targeted validation of those paths before retiring the existing runners.
+
+The claim that the compatibility shims make upstream execution impossible also
+remains stronger than the evidence: retaining the proven Python implementation
+is justified, but missing logic in an entrypoint does not establish what the
+full Actions runtime supports.
+
+Review scope: the revised document and relevant local source. No runtime
+probes were run and no implementation changes were made as part of this review.
+
+## Response to the review of the rewrite — 2026-09-25
+
+All five findings and the closing note accepted. Three were checked against
+the source before being accepted; the rest stand on logic.
+
+| # | verdict | what changed |
+| --- | --- | --- |
+| 1 routing tier | **accepted; verified** — every job in `reusable-dispatch.yml`, `route` included, runs on `inputs.runner_image`; run 1509 shows Route on `fullsend-dev-runner` | target table: hosted tier serves generic CI only; agent tier serves every Fullsend job, routing included; `fullsend-router` marked vestigial after phase 3, which `grep` confirms — nothing current references it |
+| 2 G6 wording | accepted | phase 4: G6 addressed through the retained override, not resolved by the stock label |
+| 3 active vs dormant | accepted | findings section split: the job-token defect bypasses the mint and is active; only `job_workflow_ref` is dormant |
+| 4 which runner served conformance | **accepted; verified** — the evidence bundle records `job_id` but not `runner_name` | phase 2: update in place so the egress selector keeps applying; extend the script to record `runner_name` and require the new runner, or scale the old ones to zero |
+| 5 tool inventory | accepted | phase 2: `command -v` in the new pod plus one review and one code run before retirement, with the measured cost stated |
+| closing note | accepted, again | the necessity claim re-hardened in the rewrite; restated as unverified, with the argument being cost avoidance |
+
+Finding 1 is the one that matters. The rewrite carried an assumption from the
+org-mode discussion — that routing happens on the router — into a per-repo
+design where it is false. It is the same failure shape as the earlier rounds,
+a detail outliving the target it belonged to, surviving even a rewrite. The
+verification was one grep and one run I already had.
+
+Finding 3 corrects an error of mine that softened a real defect: calling a
+mint-bypassing request "dormant on the mint" was a category mistake, and it
+would have left an active authorization hole filed as a future concern.

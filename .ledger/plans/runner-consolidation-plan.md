@@ -504,3 +504,30 @@ Findings 1 and 3 are the same failure as the reviews' points 1, 2 and 6 in the
 previous round: a target moved and a detail that depended on the old target
 stayed where it was. Three rounds of that is enough to say the plan should not
 be revised in place again — if the target moves once more, rewrite it.
+
+### Changes applied from the self-review
+
+Each finding above produced an edit to the plan body. Listed so the diff can
+be read against the reasoning, and so a later reader can tell what the plan
+said before.
+
+| finding | section | before | after |
+| --- | --- | --- | --- |
+| 1 | The target | "register it at **enterprise scope**" | "register it at **site scope**", with the note that `runner.py` supports `repository` and `site` only and that site scope is what M12-024 proved |
+| 1 | Phase 2 heading and body | "Move it to enterprise scope" / "Register at enterprise scope" | "Move it to site scope" / "Register at **site scope** (`RUNNER_SCOPE=site`)" |
+| 2 | Phase 2 | no prerequisite | opens with a stated prerequisite: stop the agents-mirror seed triggering that repository's CI, with the 183-job figure and the reason (`node` absent, label not exclusive to Fullsend) |
+| 2 | The target, router paragraph | "The upstream router stays exactly as it is" | adds "**It must not also carry `ubuntu-24.04`**", the shared-label broker behaviour, and that this reverses the plan's opening assumption |
+| 3 | The target, bullet list | "label it `ubuntu-24.04`" | "label it `ubuntu-24.04` … keeping `fullsend` alongside it until the existing scaffolds are regenerated" |
+| 3 | Phase 2 | relabel only | "label `ubuntu-24.04` **and keep `fullsend`**", with why: live shims say `runs-on: fullsend` until phase 3 |
+| 3 | Phase 3 | no mention of the old label | "Regenerating the scaffolds is also when the transitional `fullsend` label comes off the runner — not before, and verified by the conformance run" |
+| 4 | Phase 1 | named only `src/runners/emulator/Dockerfile` | adds that it lives in the github-emulator checkout, is built by `05g-build-github-actions-runner.sh` into `github-emulator-actions-runner:k3s`, and that checkout's `AGENTS.md` and tests are the gate |
+| 5 | The deviation, G9 bullet | "GitHub's ubuntu runners ship `yq`" | "are believed to ship `yq` … believed, not verified against the hosted-image manifest" |
+| positive | Phase 3 | — | adds that the two agent deployments differ only in `RUNNER_NAME` and `RUNNER_REPO` with identical volumes, so folding them is a merge |
+
+Not changed, deliberately: the phase 1 and phase 2 breakpoints. Both still
+hold under the corrected scope and labels, and the phase 3 breakpoint already
+carries the fresh-repository check restored in the previous round.
+
+Not changed, and should be before phase 4: the `yq` claim (finding 5). It is
+marked rather than fixed because verifying it needs the hosted-image
+manifest, which was not consulted here.

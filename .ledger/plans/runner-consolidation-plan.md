@@ -42,7 +42,9 @@ defects:
 - **G6** exists only because nothing serves `ubuntu-24.04`. Patch 0012 adds
   `FULLSEND_RUNNER_IMAGE` so an installation can name its own runner.
 - **G9** (`yq: command not found`) exists only because our image is not a
-  hosted image. GitHub's ubuntu runners ship `yq`; upstream never hits it.
+  hosted image. GitHub's ubuntu runners are believed to ship `yq`, which would
+  be why upstream never hits it — believed, not verified against the hosted
+  image manifest.
 - **`button-probe` queued forever** because `fullsend` is repo-scoped: a newly
   onboarded repository has no runner until someone deploys one for it, which
   is precisely what ledger M12-024 said should not be necessary.
@@ -74,9 +76,12 @@ and how it is scoped:
 
 - rebase `fullsend-runner-dev` on **ubuntu:24.04** instead of
   `python:3.12-slim`, keeping `runner.py`;
-- register it at **enterprise scope** so every repository can use it;
+- register it at **site scope** so every repository can use it — `runner.py`
+  supports `repository` and `site` only, and site scope is the mechanism
+  ledger M12-024 already proved with the original shim;
 - label it **`ubuntu-24.04`**, which is what Fullsend's stock scaffold asks
-  for.
+  for, keeping `fullsend` alongside it until the existing scaffolds are
+  regenerated.
 
 That reaches the same three prizes without replacing the compatibility layer:
 `runs-on: ubuntu-24.04` works unmodified so **patch 0012 can go**, onboarding
@@ -84,7 +89,12 @@ needs no per-repo deployment, and the Debian-vs-Ubuntu fidelity gap closes.
 
 The upstream router stays exactly as it is, doing what it is good for:
 exercising GitHub's real runner protocol for dispatch, and serving hosted-label
-CI that wants a genuine Ubuntu machine.
+CI that wants a genuine Ubuntu machine. **It must not also carry
+`ubuntu-24.04`.** Two runners sharing a label means the broker hands a job to
+whichever polls first, and a Fullsend agent job landing on the router is the
+unverified compatibility risk above, realised. That reverses the assumption
+this plan started from — that the router should be bumped to 24.04 — and the
+reversal is a consequence of choosing the compatibility layer as the target.
 
 Not a goal: replacing the sandbox, or making the emulator's runner a faithful
 hosted image. "Hosted parity" was an overclaim in the first draft — adding
@@ -102,14 +112,34 @@ Change `src/runners/emulator/Dockerfile` from `python:3.12-slim` to
 `ubuntu:24.04` plus an explicit Python, keeping `runner.py` and the existing
 tool inventory. Review the distro-dependent pins while doing it.
 
+This lands in the **github-emulator checkout**, not this repository: the file
+is built by `deploy/scripts/05g-build-github-actions-runner.sh` into
+`github-emulator-actions-runner:k3s`, which `fullsend-runner-dev` then extends.
+Read that checkout's `AGENTS.md` first, and expect its own test suite to be
+the gate, not only ours.
+
 **Breakpoint:** `make host-conformance` passes unchanged on the rebased image.
 Nothing about scope or labels has moved yet, so a failure here is purely the
 base change.
 
-### 2. Move it to enterprise scope and the stock label
+### 2. Move it to site scope and the stock label
 
-Register at enterprise scope, label `ubuntu-24.04`, and carry over the
-configuration the router does not have. That inventory is not optional and is
+**Prerequisite, not optional:** stop the agents-mirror seed from triggering
+that repository's own CI. 183 jobs in this database have asked for
+`ubuntu-24.04`, all from that CI, and it needs `node` and tooling the agent
+runner does not carry. The moment the agent runner advertises the label, every
+mirror seed sends that CI to the compatibility-layer runner, where it competes
+with agent jobs and fails. The label is Fullsend's default; it is not
+Fullsend's alone.
+
+Register at **site scope** (`RUNNER_SCOPE=site`), label `ubuntu-24.04`
+**and keep `fullsend`**: the live shims in `triage-target` and `.fullsend`
+still say `runs-on: fullsend`, and they are not regenerated until phase 3.
+Dropping the old label here would break conformance between the two phases,
+and the breakpoint below would pass on the new label while the existing
+repositories silently stopped matching.
+
+Carry over the configuration the router does not have. That inventory is not optional and is
 known to include `OPENSHELL_GATEWAY_ENDPOINT`, `OPENSHELL_GATEWAY_NAME`,
 `FULLSEND_MINT_URL` and `FULLSEND_ALLOW_PRIVATE_FORGE`; patch 0004 uses the
 gateway endpoint to skip local Podman setup, so without it jobs try to build a
@@ -134,6 +164,14 @@ Patch 0012 is a **Fullsend CLI patch** applied by
 means rebuilding the CLI, refreshing the vendored binary in
 `deploy/fullsend/vendor/`, and regenerating affected scaffolds — reseeding the
 mirror does nothing.
+
+Regenerating the scaffolds is also when the transitional `fullsend` label
+comes off the runner — not before, and verified by the conformance run, not
+assumed.
+
+The two agent deployments differ only in `RUNNER_NAME` and `RUNNER_REPO`, with
+identical volumes and every other variable the same, so folding them into one
+is a clean merge rather than a reconciliation.
 
 Then update every consumer of the retired deployments before deleting them:
 
@@ -411,3 +449,58 @@ against the live cluster; the network-policy selector in point 3 here was
 confirmed too. Everything else in both rounds was confirmed in source. No claim
 in this plan is backed by a run of the thing it describes, because nothing in
 it has been built yet.
+
+## Self-review — 2026-09-25
+
+A fresh pass after both external reviews, checking claims against the source
+and the running cluster rather than against the previous drafts. Five findings
+the reviews did not raise; two of them change the plan again.
+
+1. **Enterprise scope does not exist in the Python runner.** `runner.py`
+   accepts `RUNNER_SCOPE` of `repository` or `site` and errors on anything
+   else (line 1707). "Enterprise" is the upstream router's concept, carried
+   over from the first draft's target and never re-examined when the target
+   moved. Phase 2 as written could not have been executed. Fixed: site scope,
+   which polls `/actions/runner/jobs` and is the mechanism M12-024 proved with
+   the original shim.
+
+2. **`ubuntu-24.04` is not Fullsend's label.** 183 jobs in this database have
+   asked for it, every one from the agents mirror's own CI. Advertising it on
+   the agent runner routes that CI onto the compatibility-layer runner, where
+   it competes with agent jobs and fails for lack of `node`. Two consequences
+   the plan now states: stopping the mirror seed from triggering that CI moves
+   from "option" to prerequisite; and the router must **not** also carry the
+   label, because a shared label hands a Fullsend job to whichever runner polls
+   first. That reverses the assumption the plan opened with — bump the router
+   to 24.04 — and the reversal follows directly from choosing the compatibility
+   layer as the target.
+
+3. **Migration ordering broke conformance between phases.** The live shims
+   say `runs-on: fullsend`. Phase 2 relabelled the runner; phase 3 regenerated
+   the scaffolds. In between, every existing repository silently stopped
+   matching while the phase 2 breakpoint passed on the new label. Fixed: keep
+   `fullsend` as a transitional label and drop it in phase 3 under the
+   conformance run.
+
+4. **Phase 1 is a change in another repository.** The Dockerfile lives in the
+   github-emulator checkout and is built by `05g-build-github-actions-runner.sh`;
+   the plan named the file and not the builder or the checkout. Now stated,
+   with that checkout's conventions and tests as the gate.
+
+5. **"GitHub's ubuntu runners ship `yq`" was asserted, not verified.** Marked
+   as believed. It is load-bearing for the claim that G9 is a layout
+   consequence, so it should be checked against the hosted-image manifest
+   before phase 4 records G9 as addressed.
+
+Two things checked and found sound, recorded so they are not re-derived:
+
+- The two agent deployments differ only in `RUNNER_NAME` and `RUNNER_REPO`,
+  with identical volumes. Folding them is a merge, not a reconciliation.
+- The mint carries no repository restriction; `repos=triage-target` in earlier
+  token requests was the requester scoping down, not the mint refusing. The
+  fresh-repository breakpoint is not blocked there.
+
+Findings 1 and 3 are the same failure as the reviews' points 1, 2 and 6 in the
+previous round: a target moved and a detail that depended on the old target
+stayed where it was. Three rounds of that is enough to say the plan should not
+be revised in place again — if the target moves once more, rewrite it.

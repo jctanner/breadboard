@@ -3753,3 +3753,60 @@ load-bearing for a route the dispatch can reach.
 
 Emulator suite: 545 passed, 0 failed. Nine patches apply in sequence and
 build. Migration 0007 is at head in the deployed database.
+
+---
+
+## Closed 2026-09-24
+
+The thesis is proven. A real GitHub event travels Fullsend's own unmodified
+shim and `reusable-dispatch.yml`, through a mint that verifies real OIDC claims,
+into an OpenShell sandbox running a real agent against Vertex, and back to the
+forge as labels, comments, a pull request and an assignee. Three stages —
+triage, review, code — each observed end to end. All seven breakpoints go.
+Nothing is reimplemented and no compatibility layer sits between Fullsend and
+the forge.
+
+**What the plan actually bought.** The recurring lesson was not that things were
+broken but that broken things reported success. A run concluded `success` with
+an empty artifact; another while the agent had exited 1; a third while the agent
+never read its issue. A review posted four inline comments the API silently
+discarded. A pull request was created, correct, and assigned to nobody through
+four layers of API that each failed a little more quietly than the last. A
+gateway served a 26-day-old policy while every run logged importing it. Each of
+those is now an assertion in `24-run-conformance-triage.sh` or a test in the
+emulator suite, because a run's own verdict turned out to be the least reliable
+signal available.
+
+**Proven.** Triage, review and code, end to end, on a clean baseline, with the
+runner confined to the cluster. 564 emulator tests. Ten upstream-bound patches
+and two local-only substitutions, each with its status in its own header and all
+of them collected in
+[`docs/fullsend-compatibility-profile.md`](../../docs/fullsend-compatibility-profile.md).
+
+**Patched but never run.** The `fix`, `prioritize`, `retro` and `scribe`
+harnesses all carry the widened patches 0002 and 0004, and `fix` shares the
+`fullsend-code` image. They are plausibly fine and entirely unverified. That is
+exactly where review and code stood on the morning of 2026-09-23, and each
+turned up two defects within the hour. "The integration works" means three of
+seven stages.
+
+**Open by decision, not omission.** The short-lived App installation token needs
+a private key this deployment does not hold; the onboarding fallback is labelled
+`emulator-admin-fallback` in every response with a test asserting the label.
+"Who may start onboarding" is answered by the deployment rather than a user
+model. The mint returns a static per-role token, which
+`docs/fullsend-compatibility-profile.md` §7a flags for a reviewer rather than
+defending.
+
+**Left undone deliberately.** Two evidence-and-documentation items — what the
+development mint trusts and covers, and recording identity in evidence without
+secret values. The narrowest-policy exercise. F2, which is upstream hygiene and
+moot locally. WP5 telemetry: Fullsend exports OTLP natively and MLflow is
+deployed here, so orchestration traces are a configuration task, but per-call
+request/response traces need either a proxy in the Vertex path or a runtime
+Breadboard does not use — recorded so nobody reads the open box as missing
+plumbing.
+
+**Follow-on.** Getting the upstream-bound patches to `fullsend-ai` is its own
+work with its own gates, and is now
+[`fullsend-upstreaming-plan.md`](fullsend-upstreaming-plan.md).

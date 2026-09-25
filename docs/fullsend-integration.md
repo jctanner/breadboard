@@ -12,6 +12,40 @@ and Fullsend workflow shim. Jira and GitLab are available to the broader
 Breadboard platform, but they do not directly trigger Fullsend agent runs in
 the current deployment.
 
+At a glance — who provides what, and the path an event takes:
+
+```mermaid
+graph LR
+    event(["Issue · PR · comment · review"]) --> forge
+
+    subgraph breadboard["Breadboard provides"]
+        forge["GitHub emulator<br/>repos · issues · PRs · Actions"]
+        runners["Actions runners"]
+        mint["Local token mint"]
+        shell["OpenShell gateway<br/>sandbox controller"]
+    end
+
+    subgraph fullsend["Fullsend provides"]
+        shim["Workflow shim<br/>.github/workflows/fullsend.yaml"]
+        dispatch["Reusable dispatch<br/>selects the stage"]
+        harness["Agent harnesses<br/>triage · review · code"]
+    end
+
+    forge -->|"matches trigger"| shim
+    shim --> dispatch
+    dispatch -->|"queues a job"| runners
+    runners -->|"OIDC assertion"| mint
+    runners -->|"creates a sandbox"| shell
+    shell --> agent["Agent sandbox<br/>loads a harness, calls a model"]
+    harness -.->|"fetched at run time"| agent
+    mint -.->|"role-scoped credential"| agent
+    agent -->|"labels · comments · reviews · branches · PRs"| forge
+```
+
+The dashed edges are what the agent is *given*; the solid path is control
+flow. The loop closes at the forge: everything an agent produces arrives back
+as ordinary GitHub activity, which is why the dashboard can be a pure observer.
+
 ## Services
 
 The integration uses these deployed components:

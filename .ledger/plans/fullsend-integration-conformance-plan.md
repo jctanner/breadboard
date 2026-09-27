@@ -1090,6 +1090,21 @@ called workflow could not be resolved. Nothing past that boundary ran.
   restarted. Raised to 1536Mi with the reason written next to the numbers,
   because the next person to see a 502 here should not have to find this twice.
 
+  **Recurred at the new limit, three times** (kernel log): 2026-09-23 08:45
+  and 13:06, and 2026-09-27 15:14, each with ~1.5 GiB of anonymous RSS in
+  the uvicorn process itself, not a git child. The 09-27 one was
+  investigated in the runner consolidation plan's phase 2: every operation
+  from the window, replayed under a half-second cgroup sampler, stayed
+  under 350 MiB, so it does not reproduce on demand and the cause is still
+  unidentified. All three followed a dashboard onboarding within the hour,
+  which is a correlation, not a mechanism - the replayed onboarding was
+  flat. The emulator now carries a memory watchdog (github-emulator
+  0e23191) that writes in-flight requests and tracemalloc's largest sites
+  to `DATA_DIR/memory-watch.log` on threshold crossings; the next kill
+  should name a file and line. The limit was left at 1536Mi so that report
+  is written before the kill, not instead of it. Details in the emulator's
+  `docs/bugs/open/restart-mid-claim-strands-the-job.md`.
+
 - [x] **[W4] G35. The OpenShell build is not pinned to what Fullsend expects.**
   Fullsend pins OpenShell `0.0.116` at `d1155aa7` in
   `.github/scripts/openshell-version.sh`, and its sandbox code passes

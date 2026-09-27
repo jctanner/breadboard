@@ -17,9 +17,15 @@ kubectl -n ai-pipeline create secret generic github-actions-runner-credentials \
   --from-literal=token="${TOKEN}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-echo "==> Deploying GitHub emulator Actions runner"
+echo "==> Deploying GitHub emulator Actions runners"
+# Two runners, two tiers (runner consolidation plan): the agent runner at
+# site scope, label `fullsend`, serving every Fullsend job in every
+# repository; and the hosted stand-in, an upstream actions/runner at
+# enterprise scope serving ubuntu-24.04 / ubuntu-latest. The former
+# github-actions-config-runner served the deprecated org-mode
+# fullsend-dev/.fullsend config repository (Fullsend ADR 0044) and was
+# retired in phase 3; nothing had run on it since 2026-09-17.
 kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/23-github-actions-runner.yaml"
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/23b-github-actions-config-runner.yaml"
 kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/23c-github-actions-site-runner.yaml"
 
 # F4: confine the Fullsend runners to the cluster. Applied here rather than
@@ -27,14 +33,11 @@ kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/23c-github-actions-site-runner.yaml
 # was typed into regresses on the next deploy-all and nothing reports it.
 kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/27-fullsend-runner-egress.yaml"
 kubectl -n ai-pipeline rollout restart deployment/github-actions-runner
-kubectl -n ai-pipeline rollout restart deployment/github-actions-config-runner
 kubectl -n ai-pipeline rollout restart deployment/github-actions-site-runner
 kubectl -n ai-pipeline rollout status deployment/github-actions-runner --timeout=180s
-kubectl -n ai-pipeline rollout status deployment/github-actions-config-runner --timeout=180s
 kubectl -n ai-pipeline rollout status deployment/github-actions-site-runner --timeout=180s
 
 echo "==> Runner status"
 kubectl -n ai-pipeline get deployment/github-actions-runner
-kubectl -n ai-pipeline get deployment/github-actions-config-runner
 kubectl -n ai-pipeline get deployment/github-actions-site-runner
 kubectl -n ai-pipeline get pods -l 'breadboard.dev/role in (fullsend,fullsend-router)' -o wide

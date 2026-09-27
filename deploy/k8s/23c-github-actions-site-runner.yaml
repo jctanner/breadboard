@@ -67,14 +67,13 @@ spec:
             # image. ubuntu-latest is claimed on the same basis and will need
             # revisiting when GitHub moves it.
             #
-            # fullsend-router stays until phase 3 retires the deprecated
-            # org-mode .fullsend/dispatch.yml, the only thing that targets it.
-            # Nothing in the per-repo path uses it: routing runs on the agent
-            # runner via inputs.runner_image.
+            # fullsend-router came off in phase 3 with the deprecated org-mode
+            # .fullsend/dispatch.yml, the only thing that ever targeted it.
+            # Fullsend routing runs on the agent runner via inputs.runner_image.
             #
             # Single replica, and a runner goes busy while it runs a job.
             - name: RUNNER_LABELS
-              value: self-hosted,linux,ubuntu-latest,ubuntu-24.04,fullsend-router
+              value: self-hosted,linux,ubuntu-latest,ubuntu-24.04
             # The workspace and RUNNER_TEMP are siblings under one
             # volume, as they are on GitHub. RUNNER_TEMP has to sit outside the
             # workspace: a checkout with no path: makes the workspace root a

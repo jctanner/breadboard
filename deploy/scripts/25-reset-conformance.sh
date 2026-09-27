@@ -42,7 +42,10 @@ REPO="${CONFORMANCE_REPO:-fullsend-dev/triage-target}"
 TOKEN="${GITHUB_EMULATOR_TOKEN:-ghp_admin_default_token}"
 API="${FORGE}/api/v3/repos/${REPO}"
 NAMESPACE="${CONFORMANCE_NAMESPACE:-ai-pipeline}"
-RUNNER_DEPLOYMENTS="${CONFORMANCE_RUNNERS:-github-actions-runner github-actions-config-runner}"
+# The agent runner is the one deployment with the OpenShell CLI and a route
+# to the gateway. The config runner it used to fall back to was retired
+# with the org-mode config repository (runner consolidation plan, phase 3).
+RUNNER_DEPLOYMENTS="${CONFORMANCE_RUNNERS:-github-actions-runner}"
 
 note() { echo "==> $*"; }
 

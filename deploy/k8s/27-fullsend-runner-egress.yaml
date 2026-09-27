@@ -36,19 +36,19 @@ metadata:
     breadboard.dev/plan-item: >-
       F4 — the runner pod has egress to the public internet
 spec:
-  # The two Fullsend runner deployments by name, not by the
-  # breadboard.dev/role=fullsend label they share: the mint carries that label
-  # too, and confining the mint is a larger claim than this item makes and one
-  # nothing here has tested. The site runner, which runs the emulator's own
-  # Actions workflows rather than agent work, is role=fullsend-router and was
-  # never in scope.
+  # The agent runner deployment by name, not by the breadboard.dev/role=fullsend
+  # label: the mint carries that label too, and confining the mint is a larger
+  # claim than this item makes and one nothing here has tested. The hosted
+  # stand-in (github-actions-site-runner) runs generic CI, not agent work, and
+  # keeps its route to github.com so setup-* actions can fetch tools; it was
+  # never in scope. The config runner that used to be listed here was retired
+  # in phase 3 of the runner consolidation plan.
   podSelector:
     matchExpressions:
       - key: app
         operator: In
         values:
           - github-actions-runner
-          - github-actions-config-runner
   policyTypes:
     - Egress
   egress:

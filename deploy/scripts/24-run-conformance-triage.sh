@@ -89,7 +89,12 @@ api() { curl -sk -H "${AUTH}" "$@"; }
 # would come from upstream changing them rather than from the replace-and-cache
 # fault this precondition exists to catch, and adding them would slow every run
 # for a case nothing here has seen.
-if kubectl get deploy/github-actions-runner -n ai-pipeline >/dev/null 2>&1; then
+# Required, not optional: if the agent runner deployment is missing, the
+# staleness check below would silently become a no-op while this script
+# stayed green. A conformance run without it proves nothing.
+kubectl get deploy/github-actions-runner -n ai-pipeline >/dev/null 2>&1 \
+  || fail "deployment github-actions-runner is absent; the provider-profile check cannot run"
+if true; then
   note "Checking installed provider profiles against the mirrored source"
   for PROFILE in fullsend-vertex-ai fullsend-github-ro fullsend-github-code; do
     INSTALLED="$(kubectl exec -n ai-pipeline deploy/github-actions-runner -- \

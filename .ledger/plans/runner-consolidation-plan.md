@@ -263,10 +263,48 @@ it would matter only when a real mint were used.
    runner, anything a Fullsend job needs stays in the image; a `uses:
    actions/setup-*` step there would fail at download, and loudly.
 
-   Interim landed 2026-09-27: `_job_step_message` renders a `uses:` step as
-   a script that annotates the run (`::error::`) with the action it did not
-   execute and exits 1; `tests/actions/test_uses_step_refusal.py` pushes
-   the three-step probe workflow through the protocol and pins it.
+   Interim landed 2026-09-27 (github-emulator 87ca0c9): a `uses:` step
+   became a script that annotated the run and exited 1, so run 1576 failed
+   on step 1 where 1574 had passed three steps that did nothing.
+
+   Fixed 2026-09-27, run 1580 green on `breadboard-enterprise-router`:
+   checkout populated the workspace, setup-node fetched 20.20.2 from
+   github.com, `node --version` printed. It took three things, each found
+   by running the probe rather than by reading:
+
+   - **The protocol** (github-emulator 73d96bc). `_job_step_message`
+     mirrors PipelineTemplateConverter: `owner/repo[/path]@ref` becomes a
+     GitHub RepositoryPathReference, `./path` a `self` one, `with:` the
+     step inputs. Connection data publishes location
+     `27d7f831-88c1-4719-8ca1-6a061dad90eb`, served as
+     `.../plans/{planId}/actionsdownloadinfo`: refs resolve to commits
+     through the GitHub API from the emulator pod (a full SHA skips it),
+     and the archive URL points back at the emulator, which fetches from
+     codeload once per SHA. That indirection is forced: the runner sends
+     the *emulator's* job token as the download credential, and GitHub
+     answers a foreign credential with 401 before serving a public
+     tarball. Unknown actions return the runner's own
+     `UnresolvableActionDownloadInfoException` typeKey so they fail once.
+     `docker://` stays refused, loudly.
+   - **The context** (github-emulator 6097af5). The first live run
+     downloaded both actions and then failed loading checkout's
+     `action.yml`: `Unexpected type 'BasicExpressionToken'` on
+     `default: ${{ github.repository }}`. The runner expands an expression
+     only when every context the schema allows for that field is
+     registered; input defaults allow github, strategy, matrix, job,
+     runner and hashFiles, and the job message carried only github. It now
+     sends `strategy` and `matrix` (null, as GitHub does for a job without
+     one; matrix values here are rendered at job creation).
+   - **The trust** (breadboard, `23c-github-actions-site-runner.yaml`).
+     git on the pod trusted github.local through the system store; the
+     runner's bundled Node did not (`UNABLE_TO_VERIFY_LEAF_SIGNATURE`), and
+     every JS action runs on it. `NODE_EXTRA_CA_CERTS` names the internal
+     CA.
+
+   `tests/actions/test_uses_steps.py` pins the grammar, the payload, the
+   download-info call with a stubbed resolver, the archive proxy with the
+   runner's exact Basic header, the credential check, and the two
+   contexts. The mirror CI's results on this tier now mean something.
 
 1. **Job tokens are not repository-bound.** Proven by probe: a job in repo A
    declaring `actions: write` dispatched a workflow in repo B — `204`, run

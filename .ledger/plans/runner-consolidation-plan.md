@@ -251,6 +251,23 @@ it would matter only when a real mint were used.
    exact endpoint to be verified against `actions/runner` source — with a
    loud refusal as the interim so the drop is at least visible.
 
+   That per-job shape holds for the hosted stand-in only. The two tiers
+   differ in egress, deliberately: the router is outside
+   `27-fullsend-runner-egress.yaml` and reaches github.com, while the agent
+   runners are confined to cluster CIDRs, which is why gitleaks and
+   pre-commit are baked into their image with a drift check rather than
+   fetched by `post-code.sh` at run time (conformance plan, F4). Nothing
+   else constrains an install: every runner pod runs as root on a writable
+   rootfs, and none carries `sudo`, so a hosted-style `sudo apt-get` step
+   fails as command-not-found while a bare `apt-get` works. So on the agent
+   runner, anything a Fullsend job needs stays in the image; a `uses:
+   actions/setup-*` step there would fail at download, and loudly.
+
+   Interim landed 2026-09-27: `_job_step_message` renders a `uses:` step as
+   a script that annotates the run (`::error::`) with the action it did not
+   execute and exits 1; `tests/actions/test_uses_step_refusal.py` pushes
+   the three-step probe workflow through the protocol and pins it.
+
 1. **Job tokens are not repository-bound.** Proven by probe: a job in repo A
    declaring `actions: write` dispatched a workflow in repo B — `204`, run
    created. The same job with `actions: read` got `403`, so the B9 scope gate

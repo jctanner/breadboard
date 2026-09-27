@@ -21,8 +21,11 @@ from pathlib import Path
 BASE_URL = os.environ.get("GITHUB_EMULATOR_URL", "https://github.local").rstrip("/")
 API_URL = f"{BASE_URL}/api/v3"
 TOKEN = os.environ.get("GITHUB_EMULATOR_TOKEN", "ghp_admin_default_token")
-ORG = "fullsend-dev"
-REPO = "triage-target"
+# The conformance target by default. A seeder that is also the right tool
+# for another repository - the allowlist one, for a repository onboarded
+# through the dashboard - takes the target from the environment.
+ORG = os.environ.get("FULLSEND_SEED_ORG", "fullsend-dev")
+REPO = os.environ.get("FULLSEND_SEED_REPO", "triage-target")
 
 
 def api_request(method: str, path: str, body: dict | None = None) -> tuple[int, dict | list | None]:

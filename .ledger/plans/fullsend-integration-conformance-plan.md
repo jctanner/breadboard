@@ -1105,6 +1105,28 @@ called workflow could not be resolved. Nothing past that boundary ran.
   is written before the kill, not instead of it. Details in the emulator's
   `docs/bugs/open/restart-mid-claim-strands-the-job.md`.
 
+  **Cause found and fixed the same day** (github-emulator 7b43453). The
+  watchdog's first live report had one application request in flight
+  during a 220 MiB rise - the pull-request creation - and 412k freshly
+  decoded JSON objects; the jobs table holds 5,077 rows whose `steps`
+  column is 22.6 MiB of JSON. `Workflow.runs` and `WorkflowRun.jobs` were
+  `lazy="selectin"`: loading one Workflow loaded every run it ever had and
+  every job of every run, and loading one job chained back through its
+  run and workflow to the same. Event dispatch loads a repository's
+  workflows to match triggers, so every issue, pull request and comment on
+  this target paid for its whole Actions history. That is why the kills
+  grew with history, why replays on a five-run repository were flat, and
+  why issue creation took 17 seconds. Nothing read either collection; both
+  are `lazy="raise"` now, with a test that loads a workflow, a run and a
+  job and asserts the history stays unloaded. Measured after the roll:
+  pull-request creation 12.4 s and +176 MiB before, 0.8 s and +3 MiB
+  after; a pull-request close on this target 40 s before, 4.4 s after.
+
+  One caution from the investigation: the watchdog's tracemalloc mode
+  itself stalled the process for tens of seconds per report and cost a
+  review run its token mint. Tracing is off by default; the sampler and
+  the in-flight list stay on and were what named the request.
+
 - [x] **[W4] G35. The OpenShell build is not pinned to what Fullsend expects.**
   Fullsend pins OpenShell `0.0.116` at `d1155aa7` in
   `.github/scripts/openshell-version.sh`, and its sandbox code passes

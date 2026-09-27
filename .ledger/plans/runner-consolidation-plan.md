@@ -180,7 +180,7 @@ on it; and a **fresh repository onboarded through the dashboard button
 completes a triage** with no new deployment — the thing the current layout
 cannot do.
 
-**Status 2026-09-27: passed, except the two paid runs, which wait for a go.**
+**Status 2026-09-27: passed in full.**
 
 - `github-actions-runner` updated in place (breadboard b63a766): site scope,
   name `fullsend-agent-runner`, label `fullsend`, image on Ubuntu 24.04
@@ -232,10 +232,27 @@ cannot do.
   and the two seeders above. None is a deployment. Whether the dashboard
   button should perform the two seeders itself is an open question for
   phase 4; they are the local stack's business, not Fullsend's.
-- Model spend for the phase: about $0.25 across four triage runs on haiku.
-- **Not yet done:** one review and one code run on the new runner, about
-  $2 each on sonnet. The tool inventory they need is verified present;
-  the runs themselves wait for a go.
+- **Review and code, both closed on the new runner (2026-09-27, sonnet).**
+  Review: run 1610 on pull request 133 (the planted `scripts/retry.py`),
+  every job on `fullsend-agent-runner`, $2.46, validated, `risk/moderate`
+  applied, a `CHANGES_REQUESTED` review by `fullsend-review[bot]` with six
+  inline comments retained on the right lines. Code: run 1618 on issue
+  134, $0.71, gitleaks 8.30.1 scanned the commit clean from the image,
+  pre-commit skipped for want of a config, pull request 135 opened by
+  `fullsend-code[bot]` and assigned. **Phase 2 passed in full.**
+- What the two runs cost beyond themselves, so the next person budgets
+  honestly: a first review (run 1604, $2.20) completed its agent and then
+  skipped posting because I had closed its pull request to prevent a
+  duplicate - the duplicate itself being the late-push `synchronize` race
+  now recorded in the emulator's bugs; a sonnet triage ($0.60) fired on the
+  code issue's `opened` event before the `labeled` one, the trap the stage
+  matrix already warned about; and a review of the code bot's own pull
+  request started on sonnet before the model was switched back and was
+  killed in the runner within a minute. Total for this step about $6.10;
+  for the phase about $6.35.
+- Found on the way and fixed: the emulator's OOM kills, three of them,
+  were the ORM eager-loading a repository's whole Actions history on every
+  event dispatch (conformance plan G34, github-emulator 7b43453).
 
 ### 3. Retire what the design no longer has
 

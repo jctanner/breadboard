@@ -205,7 +205,15 @@ class Handler(BaseHTTPRequestHandler):
         ):
             self._send(HTTPStatus.BAD_REQUEST, {"error": "repos must contain repository names or owner/name values"})
             return
-        default_owner = os.environ.get("FULLSEND_DEV_DEFAULT_OWNER", "fullsend-dev")
+        # A bare name is resolved against the owner the token was issued
+        # for, which is what an installation-scoped mint does: the caller's
+        # own organization. A fixed default owner only ever fitted a stack
+        # with one organization; the first repository onboarded under a
+        # second one (phase2/fresh-target) had its request rewritten to
+        # fullsend-dev/fresh-target and was refused as cross-repository.
+        default_owner = str(claims.get("repository_owner") or "") or os.environ.get(
+            "FULLSEND_DEV_DEFAULT_OWNER", "fullsend-dev"
+        )
         granted_repos = [repo if "/" in repo else f"{default_owner}/{repo}" for repo in repos]
 
         try:

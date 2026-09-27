@@ -19,7 +19,7 @@ conformance plan.
 | role | `triage` | `review` | `coder` |
 | slug | `fullsend-ai-triage` | `fullsend-ai-review` | `fullsend-ai-coder` |
 | sandbox image | `fullsend-sandbox@sha256:259605…` | `fullsend-code@sha256:623fc7…` | `fullsend-code@sha256:623fc7…` |
-| composition | `overlays:` with CEL `when:` | **`forge:` keyed map** | `overlays:` with CEL `when:` |
+| composition | `overlays:` with CEL `when:` | **`forge:` keyed map** (deprecated, functional - ADR 0088) | `overlays:` with CEL `when:` |
 | providers | vertex-ai, github-ro | vertex-ai, github-ro | vertex-ai, **package-registries**, **gitleaks**, **github-code** |
 | profiles | fullsend-vertex-ai, fullsend-github-ro | same | + fullsend-package-registries, fullsend-gitleaks, **fullsend-github-code** |
 | skills | github-forge, issue-labels/github | pr-review, code-review, docs-review, pr-risk-assessment, github-forge, issue-labels, pr-review/github | code-implementation, github-forge |
@@ -104,7 +104,11 @@ Checked rather than inferred, on 2026-09-23:
 6. **`review.yaml` composes with `forge:`, not `overlays:`.** Triage and code
    both use `overlays:` with CEL conditions, which this deployment has
    exercised. The `forge:` keyed form is untested here. It may work fine; it
-   has simply never run.
+   has simply never run. *Corrected 2026-09-27:* `forge:` is not a
+   first-class alternative but **deprecated-but-functional**, superseded by
+   CEL `overlays:` (Fullsend ADR 0088). Run 1462 later showed it merges
+   `host_files` and `env.sandbox` correctly, so "functional" holds; a
+   review harness written today would use `overlays:`.
 7. **The conformance check waits 900 seconds.** Review budgets 45 minutes per
    iteration and code 60. A run that needs longer would currently be reported
    as a timeout by the harness rather than by the thing that actually stalled.

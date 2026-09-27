@@ -655,6 +655,13 @@ called workflow could not be resolved. Nothing past that boundary ran.
   documented substitution under decision 3, but an automatic one: nothing is
   now edited by hand between generating a scaffold and dispatching it.
 
+  *2026-09-27, runner consolidation plan phase 4:* **addressed, not
+  resolved**, and by design. Agent jobs still do not run on the stock
+  `ubuntu-24.04` label; the override renders `fullsend`, and that label is
+  structural to a two-tier layout - the agent runner carries the OpenShell
+  client, the gateway route and the pinned tools, and the hosted stand-in
+  serves generic CI on the stock labels. ADR-0002 records the reasoning.
+
 - [x] **[W1] G7. The runner never pointed the `gh` CLI at the emulator.** It
   sets `GITHUB_API_URL`, but `gh` does not read that variable; it needs
   `GH_HOST`. Every `gh` call therefore went to api.github.com and returned
@@ -684,6 +691,14 @@ called workflow could not be resolved. Nothing past that boundary ran.
   present; `yq` was the only omission. Added to
   `deploy/fullsend-runner-dev/Containerfile` pinned and checksum-verified, in
   the same style as the existing `gh` install.
+
+  *2026-09-27, runner consolidation plan phase 4:* **addressed** by the
+  pinned inventory, verified against the hosted image rather than assumed:
+  GitHub's `ubuntu-24.04` runner image ships `yq` 4.53.6, the version this
+  image pins, along with `jq`, Podman, Node 22 and Python 3.12. The agent
+  runner's base is Ubuntu 24.04 as of phase 2, so the tool a job finds
+  here is the one it would find there. Not resolved: the image is still a
+  hand-kept inventory, not the hosted image.
 
 - [x] **[W1] G10. The `needs` context answered only to prefixed job keys.**
   Inlining a reusable workflow renames its jobs after the calling job
@@ -3847,3 +3862,43 @@ plumbing.
 **Follow-on.** Getting the upstream-bound patches to `fullsend-ai` is its own
 work with its own gates, and is now
 [`fullsend-upstreaming-plan.md`](fullsend-upstreaming-plan.md).
+
+
+## Runner consolidation findings — 2026-09-27
+
+Three findings from the runner consolidation plan, numbered here so they
+sit with the rest. Two are open emulator defects; one is fixed.
+
+**G45. Job tokens are not repository-bound.** *Open, active.* Proven by
+probe: a job in repository A declaring `actions: write` dispatched a
+workflow in repository B - `204`, run created. The same job with
+`actions: read` got `403`, so the B9 scope gate holds; nothing checks the
+*repository*. `issue_job_token` binds only `job:{id}` and the run, and
+`dispatch_workflow` performs no target-repository access check. Real
+GitHub job tokens cannot cross repositories. This is an authorization
+defect in the emulator, and the development mint's binding of minted
+tokens to the caller's repository does not contain it, because the mint is
+not in this path. Deserves its own fix and its own test: a cross-repository
+dispatch with the job token must be `403`.
+
+**G46. `job_workflow_ref` reports the caller, not the called workflow.**
+*Open, dormant.* `oidc.py` sets it equal to `workflow_ref`, derived from the
+run's own repository. The shim `uses:` the reusable workflow rather than
+vendoring it, so upstream expects the *called* repository there (Fullsend
+ADR 0082). The development mint ignores the claim, so nothing fails today;
+a real mint would refuse the token. Dormant until a real mint is in the
+path, and worth fixing before one is.
+
+**G47. The upstream-runner path silently dropped every `uses:` step.**
+*Fixed 2026-09-27.* Every step reached the real `actions/runner` as a
+Script reference; a `uses:` step became an empty script that reported
+success, so `actions/checkout@v4` and `actions/setup-node@v4` both went
+green and did nothing. Now a repository reference in the payload, an
+action-download-info endpoint that resolves refs through the GitHub API
+from the emulator pod, and an archive proxy on the emulator, because the
+runner presents the emulator's job token as the download credential and
+GitHub refuses it; plus the `strategy` and `matrix` contexts the runner
+needs before it will evaluate an action's input defaults, and Node's trust
+of the internal CA on the router. github-emulator 87ca0c9, 73d96bc,
+6097af5; breadboard fc0eaf9. Run 1580 is the evidence. The plan's finding
+3 has the full account.

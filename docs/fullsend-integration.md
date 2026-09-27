@@ -53,7 +53,7 @@ The integration uses these deployed components:
 | Component | Responsibility |
 |-----------|----------------|
 | GitHub emulator | Stores repositories, issues, pull requests, workflow definitions, workflow runs, and job state; evaluates Actions event triggers. |
-| GitHub Actions runners | Poll for queued jobs, execute workflow steps, and report logs and conclusions back to the emulator. The deployment includes repository, config-repository, and site-wide runners. |
+| GitHub Actions runners | Poll for queued jobs, execute workflow steps, and report logs and conclusions back to the emulator. Two tiers: a site-scoped agent runner (label `fullsend`) that serves every Fullsend job in every repository, and an enterprise-scoped hosted stand-in (`ubuntu-24.04`, `ubuntu-latest`) for generic CI. Onboarding a repository needs no runner deployment. |
 | Fullsend Mint | Exchanges a development OIDC assertion for a role- and repository-scoped GitHub installation token. |
 | OpenShell gateway | Creates and manages constrained agent sandboxes. |
 | Sandbox controller | Runs the sandbox workload and exposes pod state and events to the operations dashboard. |

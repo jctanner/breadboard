@@ -326,6 +326,23 @@ comparison is observed running rather than skipped.
 - Decision entry: why patch 0012 stays.
 - The two fidelity findings below, as G-numbers.
 
+**Status 2026-09-27: done.**
+
+- Conformance plan: G6 annotated addressed-not-resolved with the reasoning
+  and a pointer to ADR-0002; G9 annotated addressed, with the hosted-image
+  claim verified first - GitHub's `ubuntu-24.04` image ships `yq` 4.53.6,
+  the version the runner pins. G45 (job tokens not repository-bound, open),
+  G46 (`job_workflow_ref`, dormant) and G47 (`uses:` dropped, fixed) added
+  in a dated section.
+- Stage matrix: `forge:` corrected in the matrix row and in gap 6 to
+  deprecated-but-functional per ADR 0088. There was no org-mode analysis
+  in the stage matrix to withdraw; the org-mode reading lived in this
+  plan's own earlier drafts and its "deviation" section, which already
+  says upstream deprecates it (ADR 0044).
+- `.ledger/decisions/ADR-0002-fullsend-runner-label-override-stays.md`.
+- `docs/fullsend-integration.md`: the runners row describes two tiers and
+  says onboarding needs no deployment.
+
 ## Findings carried, not fixed here
 
 Both surfaced while working out whether org mode could serve other orgs. They
@@ -470,6 +487,15 @@ saying what the image actually is.
   phase 1 that CI runs instead of queueing. Whether the seeder should trigger
   it at all is a separate question and no longer a prerequisite.
 - Verify the `yq`-on-hosted-images claim before phase 4 records G9.
+
+*Answered 2026-09-27:* one deployment or two - two, kept: the agent runner
+serves one job at a time and a long review must not block a generic CI
+job, and the two tiers differ in egress on purpose. Debian dependency -
+none surfaced in the rebase; conformance, review and code all passed on
+Ubuntu 24.04. Seeder-triggered CI - still triggers, now runs to completion
+on the hosted stand-in since G47; whether it should trigger remains a
+seeder question, not a runner one. `yq` - verified against the hosted
+image manifest: 4.53.6, the pinned version.
 
 ## Review of the rewritten plan — 2026-09-25
 

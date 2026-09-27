@@ -37,12 +37,19 @@ spec:
                 secretKeyRef:
                   name: github-actions-runner-credentials
                   key: token
-            - name: RUNNER_REPO
-              value: fullsend-dev/triage-target
+            # The agent tier of the runner consolidation plan: one runner at
+            # site scope serves every Fullsend job in every repository, so
+            # onboarding a repository (`fullsend github setup`) needs no
+            # deployment to follow. The label is `fullsend` alone - that is
+            # what patch 0012 renders into `runs-on` - so generic CI, which
+            # asks for ubuntu-24.04, lands on the hosted stand-in instead.
+            # Registration needs the admin token; the credential above is it.
+            - name: RUNNER_SCOPE
+              value: site
             - name: RUNNER_NAME
-              value: fullsend-dev-runner
+              value: fullsend-agent-runner
             - name: RUNNER_LABELS
-              value: self-hosted,linux,fullsend
+              value: fullsend
             # The workspace and RUNNER_TEMP are siblings under one
             # volume, as they are on GitHub. RUNNER_TEMP has to sit outside the
             # workspace: a checkout with no path: makes the workspace root a

@@ -50,6 +50,10 @@ WORKFLOW_NAME="${CONFORMANCE_WORKFLOW:-fullsend}"
 # The identity the post-script must write as. If this ever reverts to the run
 # actor, credential scoping has regressed the way it did in G39.
 EXPECT_AUTHOR="${CONFORMANCE_BOT:-fullsend-triage[bot]}"
+# Which runner must have served the triage job. While old repo-scoped
+# registrations still advertise `fullsend`, a green run proves nothing about
+# the runner under test unless the evidence names it.
+EXPECT_RUNNER="${CONFORMANCE_RUNNER:-fullsend-agent-runner}"
 TIMEOUT_SECONDS="${CONFORMANCE_TIMEOUT:-900}"
 
 fail() { echo "CONFORMANCE FAIL: $*" >&2; exit 1; }
@@ -215,11 +219,12 @@ EVIDENCE="${PROJECT_ROOT}/var/conformance/run-${RUN_ID}"
 mkdir -p "${EVIDENCE}"
 note "Collecting evidence to ${EVIDENCE#${PROJECT_ROOT}/}"
 
-JOB_ID="$(api "${API}/actions/runs/${RUN_ID}/jobs" | python3 -c '
+read -r JOB_ID RUNNER_NAME <<<"$(api "${API}/actions/runs/${RUN_ID}/jobs" | python3 -c '
 import sys, json
 for j in json.load(sys.stdin).get("jobs", []):
     if j.get("name") == "Triage":
-        print(j["id"]); break' 2>/dev/null || true)"
+        print(j["id"], j.get("runner_name") or "-"); break' 2>/dev/null || echo "")"
+JOB_ID="${JOB_ID:-}"; RUNNER_NAME="${RUNNER_NAME:-}"
 [ -n "${JOB_ID}" ] && api "${API}/actions/jobs/${JOB_ID}/logs" > "${EVIDENCE}/triage-job.log" || true
 api "${API}/issues/${ISSUE}" > "${EVIDENCE}/issue.json"
 api "${API}/issues/${ISSUE}/comments" > "${EVIDENCE}/issue-comments.json"
@@ -236,9 +241,9 @@ if [ -n "${ARTIFACT_ID}" ]; then
 fi
 
 # Revisions, so a failure can be tied to the source that produced it.
-python3 - "${PROJECT_ROOT}" "${EVIDENCE}" "${RUN_ID}" "${JOB_ID}" "${ISSUE}" "${CONCLUSION}" <<'PY'
+python3 - "${PROJECT_ROOT}" "${EVIDENCE}" "${RUN_ID}" "${JOB_ID}" "${ISSUE}" "${CONCLUSION}" "${RUNNER_NAME}" <<'PY'
 import json, subprocess, sys, pathlib
-root, evidence, run_id, job_id, issue, conclusion = sys.argv[1:7]
+root, evidence, run_id, job_id, issue, conclusion, runner_name = sys.argv[1:8]
 def rev(p):
     try:
         return subprocess.run(["git", "-C", str(pathlib.Path(root) / p), "rev-parse", "HEAD"],
@@ -248,6 +253,7 @@ def rev(p):
 summary = {
     "run_id": run_id, "job_id": job_id or None, "issue": int(issue),
     "conclusion": conclusion,
+    "runner_name": runner_name if runner_name not in ("", "-") else None,
     "revisions": {
         "breadboard": rev("."),
         "fullsend": rev("checkouts/fullsend-ai/fullsend"),
@@ -271,14 +277,19 @@ fi
 # --- Assertions -----------------------------------------------------------
 # Each of these failed silently at least once during this work.
 note "Checking what the run actually produced"
-python3 - "${EVIDENCE}" "${CONCLUSION}" "${EXPECT_AUTHOR}" <<'PY'
+python3 - "${EVIDENCE}" "${CONCLUSION}" "${EXPECT_AUTHOR}" "${EXPECT_RUNNER}" <<'PY'
 import json, sys, pathlib
-evidence, conclusion, expect_author = sys.argv[1:4]
+evidence, conclusion, expect_author, expect_runner = sys.argv[1:5]
 E = pathlib.Path(evidence)
 problems = []
 
 if conclusion != "success":
     problems.append(f"run conclusion is {conclusion!r}, not 'success'")
+
+runner = json.loads((E / "summary.json").read_text()).get("runner_name")
+if runner != expect_runner:
+    problems.append(f"the triage job ran on {runner!r}, expected {expect_runner!r} "
+                    "(set CONFORMANCE_RUNNER if that is intended)")
 
 arts = json.loads((E / "artifacts.json").read_text())
 if not arts.get("total_count"):
@@ -309,6 +320,7 @@ if log.exists():
         problems.append("the agent did not exit 0")
 
 print(f"  conclusion      {conclusion}")
+print(f"  runner          {runner}")
 print(f"  artifact        {arts.get('total_count', 0)} ({(E / 'evidence.zip').stat().st_size if (E / 'evidence.zip').exists() else 0} bytes)")
 print(f"  labels          {[l['name'] for l in issue.get('labels', [])]}")
 print(f"  comment authors {sorted(set(authors))}")

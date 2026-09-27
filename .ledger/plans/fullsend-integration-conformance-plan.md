@@ -62,6 +62,7 @@ deployment files belong under `deploy/` next to every other service. The
 | checkout | A clone of an upstream repository under `checkouts/`. |
 | conformance path | The one end-to-end route this plan is trying to prove. Everything else is a legacy test. |
 | compatibility profile | The short list of local substitutions the conformance path is allowed to make. See decision 3. |
+| configuration | What the conformance target sets through Fullsend's own surfaces, as any consumer would: `FULLSEND_MODEL=haiku`, and `TRIAGE_AUTO_CODE=off` through the per-repository harness override (`.fullsend/triage.yaml`, ADR 0080), so a green triage does not fire a code stage. Not a substitution. |
 
 ### The three legacy fixtures
 

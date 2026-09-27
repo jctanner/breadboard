@@ -23,7 +23,7 @@ decisions or separate work.
 ## Fullsend-side behaviour, decisions rather than bugs
 
 - **Issue edits trigger triage.** The shim listens to `issues: edited` and the router sends them to triage; thirty edits on 2026-09-27 cost $0.92 in haiku triages. Decide whether to drop `edited` from the shim for this stack or accept it as upstream's intent.
-- **`TRIAGE_AUTO_CODE` on for the conformance path.** A green triage labels `ready-to-code` and fires a code stage; conformance runs have had to cancel it by hand. Set it off for the conformance target (conformance plan, open list).
+- **`TRIAGE_AUTO_CODE` on for the conformance path.** *Done 2026-09-27:* off on the conformance target through the per-repository harness override Fullsend ADR 0080 names - `.fullsend/triage.yaml` composed on the mirror's `harness/triage.yaml`, pinned by commit and content hash, referenced from `config.yaml`'s `agents` list. Written by `seed-triage-auto-code-off.py`, which the seed script runs, so a reset restores it. Configuration, not a substitution; recorded in the plan's glossary.
 - **The onboarding button and the two local seeders.** The button covers what the CLI owns; the agents-mirror allowlist and the vendored binary still run by hand per repository (`seed-config-allowlist.py`, `seed-vendored-binary.py`, both taking `FULLSEND_SEED_ORG`/`REPO`). Decide whether the button runs them (runner consolidation plan, phase 2 status).
 
 ## Conformance plan items open before today

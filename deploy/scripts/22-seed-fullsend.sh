@@ -28,6 +28,7 @@ python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-upstream-fullsend.py"
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-upstream-agents.py"
 # ...and the repository has to allow fetching from it.
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-config-allowlist.py"
+python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-triage-auto-code-off.py"
 # The dummy runtime runs a scripted scenario instead of a model, and hard-fails
 # without it. This is what the conformance run actually asserts.
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-behaviour-script.py"

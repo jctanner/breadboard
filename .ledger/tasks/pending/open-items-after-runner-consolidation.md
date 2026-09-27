@@ -5,16 +5,16 @@ place, so nothing depends on a chat transcript. Each item names where its
 detail lives. The emulator bugs are being fixed in this task; the rest are
 decisions or separate work.
 
-## Emulator bugs (fixing now)
+## Emulator bugs (fixed 2026-09-27, github-emulator; deployed and conformance-checked below)
 
 | item | detail | status |
 | --- | --- | --- |
-| Rerun leaves dependent jobs waiting forever | github-emulator `docs/bugs/open/rerun-leaves-dependent-jobs-waiting.md` | fixing |
-| Restart mid-claim strands the job; cancel does not stop the runner | `docs/bugs/open/restart-mid-claim-strands-the-job.md`, defect 1 and the related note | fixing |
-| Push processed after its pull request opens fires `synchronize` | `docs/bugs/open/push-processed-after-pull-request-opens.md` | fixing |
-| Stale runner registrations accumulate | `docs/bugs/open/stale-actions-runner-registrations-accumulate.md` | fixing |
-| G45 job tokens are not repository-bound | conformance plan, "Runner consolidation findings" | fixing |
-| G46 `job_workflow_ref` reports the caller | same | fixing |
+| Rerun leaves dependent jobs waiting forever | github-emulator `docs/bugs/fixed/rerun-leaves-dependent-jobs-waiting.md` | fixed: rerun rebuilds the run through detection and materialization |
+| Restart mid-claim strands the job; cancel does not stop the runner | `docs/bugs/open/restart-mid-claim-strands-the-job.md` (defect 1 closed; the OOM half stays open) | fixed: unacknowledged claims requeue after 120 s; a cancelled job answers 409 and runner.py kills the step |
+| Push processed after its pull request opens fires `synchronize` | `docs/bugs/fixed/push-processed-after-pull-request-opens.md` | fixed: synchronize only for a head that moved |
+| Stale runner registrations accumulate | `docs/bugs/fixed/stale-actions-runner-registrations-accumulate.md` | fixed: same name in the same scope reuses the row, re-keys it and takes its jobs back |
+| G45 job tokens are not repository-bound | conformance plan, "Runner consolidation findings" | fixed: a job token's writes are refused outside its own repository at the auth chokepoint |
+| G46 `job_workflow_ref` reports the caller | same | fixed: the called workflow's owner/repo/path@ref is recorded on the job (migration 0009) and the OIDC token reports it |
 
 ## Emulator, open with an instrument armed
 

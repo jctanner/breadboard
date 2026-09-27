@@ -3869,7 +3869,7 @@ work with its own gates, and is now
 Three findings from the runner consolidation plan, numbered here so they
 sit with the rest. Two are open emulator defects; one is fixed.
 
-**G45. Job tokens are not repository-bound.** *Open, active.* Proven by
+**G45. Job tokens are not repository-bound.** *Fixed 2026-09-27 (github-emulator fbe0536): a job token's writes are refused outside its own repository at the auth chokepoint, reads of other public repositories still allowed; a cross-repository issue creation with a job token is 403 in `tests/actions/test_consolidation_bug_fixes.py`.* Original finding: Proven by
 probe: a job in repository A declaring `actions: write` dispatched a
 workflow in repository B - `204`, run created. The same job with
 `actions: read` got `403`, so the B9 scope gate holds; nothing checks the
@@ -3882,7 +3882,7 @@ not in this path. Deserves its own fix and its own test: a cross-repository
 dispatch with the job token must be `403`.
 
 **G46. `job_workflow_ref` reports the caller, not the called workflow.**
-*Open, dormant.* `oidc.py` sets it equal to `workflow_ref`, derived from the
+*Fixed 2026-09-27 (github-emulator fbe0536): materialization records the called workflow's owner/repo/path@ref on the job (migration 0009, `workflow_ref`) and the OIDC token's `job_workflow_ref` reports it, `workflow_ref` still naming the caller.* Original finding: `oidc.py` sets it equal to `workflow_ref`, derived from the
 run's own repository. The shim `uses:` the reusable workflow rather than
 vendoring it, so upstream expects the *called* repository there (Fullsend
 ADR 0082). The development mint ignores the claim, so nothing fails today;

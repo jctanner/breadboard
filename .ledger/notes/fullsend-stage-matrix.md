@@ -227,6 +227,17 @@ without ever establishing whether haiku had been given its inputs.
 The scenario and `FULLSEND_RUNTIME` were restored afterwards, the scenario
 verified byte-identical.
 
+It recurred on triage on 2026-09-27, run 1581, the first conformance run on
+the site-scoped agent runner (runner consolidation plan, phase 2). Both
+iterations exited 0 in ten seconds with no tool call: the transcript shows
+haiku reasoning that `ISSUE_URL` is documented as an input, deciding it was
+not in "the user's message", and asking for it. The passing run 1553 reads
+identically up to that point and differs only in that haiku chose to run
+`env | grep ISSUE_URL` first. The harness side - runner, sandbox, provider
+profiles, the notice line naming the issue - is the same in both logs, so
+this is the same non-determinism as 1456, not the new runner; the retry
+(run 1583, green, `pr-open`) is the evidence for that. Cost of the failed run: $0.03.
+
 
 ## Review, closed end to end
 

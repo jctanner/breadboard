@@ -180,6 +180,63 @@ on it; and a **fresh repository onboarded through the dashboard button
 completes a triage** with no new deployment — the thing the current layout
 cannot do.
 
+**Status 2026-09-27: passed, except the two paid runs, which wait for a go.**
+
+- `github-actions-runner` updated in place (breadboard b63a766): site scope,
+  name `fullsend-agent-runner`, label `fullsend`, image on Ubuntu 24.04
+  (github-emulator 330597f). The egress policy still selects the pod;
+  github.com is unreachable from inside it. Inventory by `command -v`:
+  fullsend, openshell, gh, yq, gitleaks 8.30.1, pre-commit 4.5.1, git, jq,
+  curl, ssh present; Go at `/usr/local/go`, where `runner.py` looks for it.
+  Registered as runner 116 at site scope; the stale repo-scoped
+  registration 115 was deleted through the admin page's Remove.
+- `24-run-conformance-triage.sh` records `runner_name` and requires it.
+  Run 1583 passed with the evidence naming `fullsend-agent-runner`. Run
+  1581 before it failed on the haiku pattern first seen in 1456 - zero tool
+  calls, "please provide the issue URL" - with a log identical to the
+  passing one up to the model's first decision; recorded in the stage
+  matrix, cost $0.03.
+- **A fresh repository, `phase2/fresh-target`, onboarded through the
+  dashboard button, completed a triage on the site runner with no
+  deployment**: run 1595, all three jobs on `fullsend-agent-runner`, the
+  issue labelled `duplicate` and closed by `fullsend-triage[bot]`. It took
+  five attempts, and each failure was a real gap, none of them the runner:
+  1. The development mint prefixed a bare repository name with a fixed
+     owner, `fullsend-dev`, so the first request under a second org was
+     refused as cross-repository. Fixed (breadboard 6475e2e): the owner
+     comes from the token's `repository_owner` claim.
+  2. The emulator's `rerun` endpoint copies jobs without `job_key`, so
+     dependents never resolve their `needs`; the rerun sat with `Triage`
+     waiting for twelve minutes. Recorded as an open emulator bug; new
+     issues were filed instead.
+  3. The scaffold's `allowed_remote_resources` lists only github.com
+     hosts, and the CLI's fallback for a missing agent definition is the
+     local agents mirror at github.local. The allowlist seeder adds that
+     one line; it now takes its target from `FULLSEND_SEED_ORG`/`REPO`
+     (breadboard 965b3d6).
+  4. The emulator was OOM-killed (1536Mi limit, 187Mi a minute later)
+     during a job claim; the claim was written, the response lost, and the
+     job stranded in progress. Recorded as an open emulator bug with two
+     defects: no recovery for an unacknowledged claim, and the unexplained
+     spike.
+  5. The scaffold carries no vendored CLI, so the agent action fell
+     through to building from source, which the runner cannot do (`make`
+     absent, egress closed). The vendored-binary seeder puts the local
+     build at `.fullsend/bin/fullsend`, as the conformance target has.
+
+  So "onboarded through the button" is true of the GitHub side the CLI
+  owns - shim workflow, config, three variables, two secrets, the scaffold
+  PR - and three local substitutions remain per repository: the App
+  installations and bot collaborators (org-admin steps on real GitHub, done
+  here through the admin API), `FULLSEND_MODEL=haiku` and `FULLSEND_RUNTIME`,
+  and the two seeders above. None is a deployment. Whether the dashboard
+  button should perform the two seeders itself is an open question for
+  phase 4; they are the local stack's business, not Fullsend's.
+- Model spend for the phase: about $0.25 across four triage runs on haiku.
+- **Not yet done:** one review and one code run on the new runner, about
+  $2 each on sonnet. The tool inventory they need is verified present;
+  the runs themselves wait for a go.
+
 ### 3. Retire what the design no longer has
 
 - `github-actions-config-runner` and the seeded `fullsend-dev/.fullsend`:

@@ -112,8 +112,10 @@ image. Keep `fullsend-router` for now: nothing in the per-repo path uses it, but
 deprecated `.fullsend/dispatch.yml` does until phase 3 retires it.
 
 The agents mirror's own CI (183 jobs in the database asked for `ubuntu-24.04`)
-will start running here rather than queueing. It may fail for want of `node`;
-a legible failure is the correct outcome and is not this plan's problem to fix.
+will start running here rather than queueing. **It will not fail for want of
+`node`, and its results must not be read as meaningful until finding 3 below
+is fixed:** on the upstream runner every `uses:` step is silently dropped, so
+a job made of setup actions reports success having done nothing.
 
 **Breakpoint:** a throwaway repo's `runs-on: ubuntu-24.04` job runs green
 here and reports Ubuntu 24.04. Trigger it with a git push — the contents API
@@ -223,6 +225,31 @@ fix on its own timeline, not this plan's.
 
 The second is dormant: the development mint ignores `job_workflow_ref`, so
 it would matter only when a real mint were used.
+
+3. **The upstream-runner path silently drops every `uses:` step.** Found
+   executing phase 1, by probing rather than assuming: a job with
+   `actions/checkout@v4` and `actions/setup-node@v4` reported both steps
+   as success, checked nothing out, and installed nothing; the next step's
+   `node --version` got `command not found`. The mechanism is exact:
+   `_job_step_message` in `actions_distributed_task.py` renders every step
+   as `reference: {type: "Script"}` with `script = step.get("run", "")`,
+   so a `uses:` step becomes an empty script; there is no `uses:` branch, no
+   action-download endpoint in the `_apis` surface for the runner to resolve
+   one from, no test that pushes a `uses:` step through the protocol, and
+   nothing in the M12-025 record saying so. The Python runner, by contrast,
+   refuses an unknown marketplace action by name and says so. This is the
+   plan's signature failure — a green step that did nothing — on the tier
+   the plan presents as the honest stand-in.
+
+   Two consequences. The mirror CI's results on this tier mean nothing until
+   it is fixed. And the question "should Node be baked into the runner" is
+   the wrong one: JS actions run on the runner's bundled `externals/node20`
+   once they can be fetched, the router already reaches github.com, and
+   `setup-node` would then supply Node per job as it does on hosted runners.
+   The fix is `uses:` support in the real-runner payload — emit a
+   repository reference and serve the runner's action-download request, the
+   exact endpoint to be verified against `actions/runner` source — with a
+   loud refusal as the interim so the drop is at least visible.
 
 1. **Job tokens are not repository-bound.** Proven by probe: a job in repo A
    declaring `actions: write` dispatched a workflow in repo B — `204`, run

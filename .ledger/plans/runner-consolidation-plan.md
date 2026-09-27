@@ -275,6 +275,47 @@ Before deleting any deployment, update its consumers:
 **Breakpoint:** deploy, reset and conformance all work, *and* the profile
 comparison is observed running rather than skipped.
 
+**Status 2026-09-27: passed.**
+
+- `github-actions-config-runner` deleted from the cluster and from the
+  inventory (breadboard dc0b7b3): manifest removed, the deploy script no
+  longer applies or restarts it, the reset script no longer falls back to
+  it, the egress policy selects `github-actions-runner` alone. Its
+  registration 114 removed through the admin page's endpoint.
+- `fullsend-dev/.fullsend` deleted from the emulator. Last push
+  2026-08-29, last run 2026-09-17; no current seeder creates it, only the
+  legacy fixture that says not to reuse it. One consumer still called its
+  `dispatch.yml`: `admin/ansible-agent-harness`, onboarded under org mode
+  on 09-1x. It was migrated first, through the dashboard button - scaffold
+  PR 15, three variables, two secrets, merged - and now calls
+  `fullsend-ai/fullsend/.github/workflows/reusable-dispatch.yml@main` on
+  `runs-on: fullsend`, with no deployment. That is the retirement path the
+  design has, exercised rather than assumed.
+- `fullsend-router` removed from the hosted stand-in's labels; it
+  advertises `self-hosted, linux, ubuntu-latest, ubuntu-24.04`. Two
+  registrations remain on the admin page: 53 (enterprise) and 116 (site).
+- The conformance script's provider-profile check fails when the agent
+  runner deployment is absent instead of skipping, so it cannot become a
+  no-op under a green run.
+- Deploy: `17-deploy-github-actions-runner.sh` exit 0, both runners rolled
+  and re-registered. Conformance after it: run 1629 green on
+  `fullsend-agent-runner`, and the comparison **observed comparing**:
+  `fullsend-vertex-ai`, `fullsend-github-ro`, `fullsend-github-code` each
+  "matches source". (Its triage labelled the issue `ready-to-code`, which
+  fired a code stage on the label event; cancelled before it spent -
+  `TRIAGE_AUTO_CODE` stays on the open list.)
+- Reset: `25-reset-conformance.sh --yes` exit 0 - sandboxes, the five
+  provider profiles and the profile hash cache cleared through
+  `github-actions-runner`, the one deployment it now knows. Conformance
+  after it: run 1634 green on `fullsend-agent-runner`; the check ran and
+  reported all three profiles "absent from the gateway (the run will
+  import it)", and the run imported them. So the check is observed in both
+  of its states, comparing and absent, and neither is a skip. Two haiku
+  triages for the phase, about $0.15.
+- What the stack has now is the target table: two runners, two labels,
+  two registrations, per-repo mode everywhere, and no deployment per
+  repository.
+
 ### 4. Record
 
 - Conformance plan: G6 **addressed through the retained override** — agent

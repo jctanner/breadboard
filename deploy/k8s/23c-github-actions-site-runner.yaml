@@ -54,25 +54,27 @@ spec:
               value: breadboard
             - name: RUNNER_NAME
               value: breadboard-enterprise-router
-            # fullsend-router is what Fullsend's shim targets. The ubuntu
-            # labels are here because nothing else in this stack serves them:
-            # on real GitHub a self-hosted runner would not claim them, since
-            # GitHub supplies hosted runners, but there are none here, so any
-            # ordinary workflow — including the agents mirror's own CI —
-            # queues forever with nothing reporting why.
+            # The hosted-runner stand-in (runner-consolidation-plan, phase 1).
+            # On real GitHub a self-hosted runner would not claim ubuntu labels,
+            # since GitHub supplies hosted runners. There are none here, so any
+            # ordinary workflow queues forever with nothing reporting why — and
+            # ubuntu-24.04 is not an arbitrary label: it is Fullsend's own
+            # default runner_image.
             #
-            # Only labels this image can honestly satisfy: it is genuinely
-            # Ubuntu 22.04.5 (see src/runners/upstream/Dockerfile). ubuntu-24.04
-            # is deliberately absent rather than claimed and then failing in
-            # confusing ways; workflows asking for it still queue, which is the
-            # honest outcome until something actually runs 24.04.
+            # Only labels this image can honestly satisfy. It is genuinely
+            # Ubuntu 24.04 (src/runners/upstream/Dockerfile); ubuntu-22.04 came
+            # off with the rebase, because a label list has to describe the
+            # image. ubuntu-latest is claimed on the same basis and will need
+            # revisiting when GitHub moves it.
             #
-            # The cost: this is a single replica whose real job is dispatch,
-            # and a runner goes busy while it runs a job. A long CI job will
-            # delay routing. If that starts to bite, the answer is a separate
-            # runner for hosted-label work rather than more labels here.
+            # fullsend-router stays until phase 3 retires the deprecated
+            # org-mode .fullsend/dispatch.yml, the only thing that targets it.
+            # Nothing in the per-repo path uses it: routing runs on the agent
+            # runner via inputs.runner_image.
+            #
+            # Single replica, and a runner goes busy while it runs a job.
             - name: RUNNER_LABELS
-              value: self-hosted,linux,ubuntu-latest,ubuntu-22.04,fullsend-router
+              value: self-hosted,linux,ubuntu-latest,ubuntu-24.04,fullsend-router
             # The workspace and RUNNER_TEMP are siblings under one
             # volume, as they are on GitHub. RUNNER_TEMP has to sit outside the
             # workspace: a checkout with no path: makes the workspace root a

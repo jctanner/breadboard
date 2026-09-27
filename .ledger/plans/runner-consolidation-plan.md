@@ -119,6 +119,21 @@ a legible failure is the correct outcome and is not this plan's problem to fix.
 here and reports Ubuntu 24.04. Trigger it with a git push — the contents API
 does not fire `push` events.
 
+**Passed 2026-09-27.** Run 1572 in `admin/phase1-ubuntu-24-04-1790516377`
+was queued *before* the roll, needing `ubuntu-24.04` with no runner
+advertising it; after the roll it was claimed by
+`breadboard-enterprise-router` without a re-push, completed `success`, and
+its own log reported `PRETTY_NAME="Ubuntu 24.04.5 LTS"` on x86_64. The
+registration shows `ubuntu-latest, ubuntu-24.04, fullsend-router` and no
+`ubuntu-22.04`. The image was checked directly (`/etc/os-release` inside
+it), not inferred from the Dockerfile.
+
+Two things executing found that planning had not: `05k-build-github-
+actions-real-runner.sh` lacked its executable bit (its siblings have it),
+and the build's pipeline reported exit 0 while the build itself returned
+126 — the `BUILD_EXIT` guard is the only reason a four-week-old image was
+not rolled as if new. Both fixed in the phase 1 commits.
+
 ### 2. The agent runner
 
 Rebase `src/runners/emulator/Dockerfile` (also the github-emulator checkout,

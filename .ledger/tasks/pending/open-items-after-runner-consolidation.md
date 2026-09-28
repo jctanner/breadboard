@@ -48,3 +48,10 @@ decisions or separate work.
 - [x] G52 step conditions imply `success()` (github-emulator 215183a).
 - [x] Retired `seed-vendored-binary.py` (2026-09-27): the binary is removed from the target and the agent action installs from release v0.0.1.
 - [x] Pushed: github-emulator through 215183a, breadboard through 0d465ea.
+
+## Credential deviations (closed 2026-09-28)
+
+- [x] 7a: the mint issues one-hour App installation tokens per exchange; static role tokens remain only for the legacy smoke.
+- [x] The mint honours `level`; the runner applies composite input defaults so the action's `write` arrives.
+- [x] Role bots hold no collaborator rows; the emulator gates content, ref and git-object writes on installation grants; the trust check proves a triage token cannot write contents (run 1756).
+- [ ] Still not gated: which workflow may ask for which role (`job_workflow_ref`), and `issues`/`pull_requests` permissions on the emulator's issue and pull request writes.

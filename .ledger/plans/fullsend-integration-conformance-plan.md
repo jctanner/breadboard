@@ -4179,3 +4179,36 @@ that bot, three variables and two secrets were set, and nothing
 token-shaped reached the response. The compatibility profile's 7b is closed
 as a deviation; 7a, the run-time mint's static role tokens, is the one
 credential deviation left.
+
+### 2026-09-28 7a closed: the mint issues installation tokens
+
+The last credential deviation is gone. The development mint no longer hands
+out static per-role personal access tokens; each role is a GitHub App on
+the emulator, installed on the seed organisation with selection "all", the
+Apps' private keys sit in the `fullsend-mint-role-apps` Secret the mint
+mounts, and every exchange signs a ten-minute JWT as the role's App and asks
+the forge for a one-hour installation token for the one repository at the
+requested level (`write` is the role's set, `read` the same with writes
+downgraded, per Fullsend ADR 0073). `FULLSEND_ROLE_TOKENS` survives only for
+the named legacy smoke. Eight mint tests cover the levels, the installation
+choice, the JWT, and the refusals.
+
+Three defects had to go first. The runner did not apply a composite action's
+declared input defaults, so the mint-token action's `level: write` reached
+the mint empty (github-emulator 93f6d5e). The emulator took any
+authenticated user for writes to contents, refs, blobs, trees, and commits,
+so a `contents: read` token could still write; the transport's rule now
+applies to those endpoints (github-emulator 40e477d). And the role bots
+held collaborator push rows on the conformance target, granted outside any
+seeder; those are removed and the deploy script no longer grants them, so a
+bot's access is its installation's and nothing else.
+
+Proof. The trust-boundary workflow gained a step, "The credential cannot
+write what its role does not grant": a `PUT` to contents with the triage
+credential answers `403`. Run 1756, all nine steps green, permissions
+`contents=read,issues=write,metadata=read`, selection `all`. Conformance run
+1757 green on the new mint; run 1751 before the write gate showed
+`level=write` arriving and the App's permissions granted. What the role
+binding proves is that a token for a role does what the role may do and no
+more; which workflow may ask for which role is still ungated, as the mint
+page says.

@@ -175,18 +175,16 @@ What it verifies is real, and is the part the plan set out to prove:
 - every repository named in `repos` must be the repository the token was issued
   for — so a run in one repository cannot mint for another.
 
-What it returns is an emulator personal access token selected by role, from
-`FULLSEND_ROLE_TOKENS`, rather than a short-lived GitHub App installation
-token. That is the deviation. Its own header records why the checks above were
-added: an earlier version trusted a shared secret, so anything holding that
-secret could ask for any role on any repository, and nothing in the request was
-checked.
-
-Whether a static per-role token counts as one of the "opaque mint tokens"
-decision 3 forbids is a judgement for someone other than its author. It is
-scoped and it is earned by a verified claim, which is not what "opaque"
-usually means — but it is not short-lived, and the plan should say so out loud
-rather than leave a reader to infer it from a manifest.
+What it returns, since 2026-09-28, is a short-lived GitHub App installation
+token: each role is a GitHub App on the emulator, the mint holds the Apps'
+keys, and every exchange signs a JWT as the role's App and asks the forge for
+a one-hour token scoped to the calling repository at the requested level.
+The static per-role tokens it used to hand out are gone from the mint; they
+remain in a Secret for the named legacy smoke only. This is no longer a
+deviation. What remains different from Fullsend's production mint is listed
+in [fullsend-mint-trust.md](fullsend-mint-trust.md): no `job_workflow_ref`
+gate, no allowlists, no audit log, and `issues`/`pull_requests` permissions
+carried but not yet enforced by the emulator.
 
 ### 7b. The dashboard onboarding credential
 
@@ -208,5 +206,5 @@ is labelled: `src/dashboard/fullsend_onboarding.py` returns
 that it appears in the operation's message. A seeded App that fails to mint
 is an error, not a fallback.
 
-The remedy for 7a, if a review judges it to exceed decision 3, is a mint that
-issues installation tokens the same way — not a rewording here.
+Neither 7a nor 7b is a credential deviation any more; the section's heading
+is kept so the history reads.

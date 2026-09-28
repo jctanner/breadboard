@@ -21,8 +21,12 @@ what the image ships cannot drift apart.
 This is a deliberate deviation from what a production install does. Production
 downloads a release asset matching the workflow commit; vendoring is Fullsend's
 pinned or air-gapped mode. Both are supported, but only the release path is the
-common one, and reproducing that locally needs release-asset endpoints the
-emulator does not have. See the Fullsend integration conformance plan.
+common one. The emulator now serves release assets and
+`seed-fullsend-release.py` publishes one on the mirror, which is what the
+reusable dispatch's harness job installs from; this seeder still decides the
+agent action's install, because a workspace binary is checked before any
+release. Retiring it in favour of the release is recorded as a follow-up in the
+Fullsend integration conformance plan.
 
 The push uses git rather than the contents API on purpose: the action looks for
 a regular file and chmods it later, but committing through a git tree keeps the

@@ -37,5 +37,7 @@ decisions or separate work.
 
 - [x] G48 `actions/cache` shim on the agent runner (github-emulator 6547571).
 - [x] G49 composite conditions see `inputs.*`; G50 `runner.*` left to the runner (github-emulator e02ee86).
-- [ ] G51 pick and build one of: emulator release assets + seeded release (layered install stays), or a full `--vendor` seed of the target. Until then `make host-conformance` is red on the harness-dispatch job even though triage itself is correct.
-- [ ] Push github-emulator (6547571, e02ee86) and breadboard once G51 is decided.
+- [x] G51 release path: emulator release assets (github-emulator 215183a) and `seed-fullsend-release.py` on the mirror; run 1727 green.
+- [x] G52 step conditions imply `success()` (github-emulator 215183a).
+- [ ] Retire `seed-vendored-binary.py` now that the agent action could install from the release too; the workspace binary is checked first, so today it still wins.
+- [ ] Push github-emulator (6547571, e02ee86, 215183a) and breadboard.

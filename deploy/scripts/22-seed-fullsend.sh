@@ -21,6 +21,11 @@ export PYTHONPATH="${PROJECT_ROOT}/deploy/fullsend/seed"
 # that repository has to exist in the emulator before any dispatch can
 # resolve (gap A1).
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-upstream-fullsend.py"
+# The reusable dispatch's harness job installs the CLI from a release whose
+# tag points at the workflow's own commit; that is the common path on real
+# GitHub and the only one that completes here. Every time, because a mirror
+# commit moves the head the tag has to sit on.
+python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-fullsend-release.py"
 # Non-admin actors, so the authorization gate can be exercised in both
 # directions rather than only ever admitting the repository owner.
 # The CLI resolves its agent definitions from fullsend-ai/agents at run time,

@@ -3934,8 +3934,32 @@ emits, since that protocol carries a string as a literal or a whole
 expression only.
 
 **G51. The harness-dispatch job's CLI install has no path that completes
-here.** *Open.* With G48 to G50 fixed, run 1717's install action ran to the
-end of what this stack can do: the target is detected as an upstream
+here.** *Fixed 2026-09-27 by the release path (github-emulator 215183a,
+breadboard: `seed-fullsend-release.py`).* The emulator now serves release
+assets: upload at the release's own `upload_url`, list, get, edit, delete,
+and download by the API asset URL with `Accept: application/octet-stream`,
+which is what `gh release download` sends, plus the browser URL at the
+root. Creating a release creates its tag at `target_commitish` when the
+repository lacks it, as GitHub does, because the install action maps the
+workflow commit to a release through the tags API. The seeder tags the
+mirror's head `v0.0.1`, creates the release there and uploads the built CLI
+as `fullsend_0.0.1_linux_amd64.tar.gz`; it runs after every mirror seed
+because a mirror commit moves the head the tag has to sit on, and is a
+no-op when the release already sits there with the same binary. Verified
+from the runner pod first (`gh release download` → the image build's
+sha256), then live: run 1727 is green end to end, its install action
+logging `SHA 0cee1da2… maps to release tag v0.0.1` and `Downloading
+fullsend_0.0.1_linux_amd64.tar.gz from release v0.0.1`, no source build,
+cache saved for the next job on that pod, triage to `documentation` +
+`triaged`, no code job. `make host-conformance` is green again.
+
+Follow-up, not done: `seed-vendored-binary.py` still commits the CLI into
+the target repository, which the agent action honours ahead of any
+release. With releases available that deviation could be retired so both
+install paths use the release; recorded in the open-items task.
+
+Original finding: with G48 to G50 fixed, run 1717's install action ran to
+the end of what this stack could do: the target is detected as an upstream
 install (no `.defaults/action.yml` marker), the mirror carries no release
 tag, and the source-build fallback fails on a mirror that has no `go.mod`
 or Makefile, on a runner image with no `make`, and behind an egress policy
@@ -3962,3 +3986,12 @@ and no code job. Run 1717 triaged to `in-progress` because PR 141, left by
 the last code run before the override, still addressed the same issue
 text; closed with its branch. The reset script already removes such pull
 requests, so a full reset before a conformance run prevents this.
+
+**G52. A step condition without a status function ran after a failure.**
+*Fixed 2026-09-27 (github-emulator 215183a).* Found by run 1722, which
+restored an empty cache entry and failed exposing it. GitHub prepends
+`success()` to any `if:` that names no status function; the runner
+evaluated the condition on its own terms, so run 1717's cache save,
+guarded only by `cache-hit != 'true'`, ran after the copy before it had
+failed and cached an empty directory. Conditions now imply `success()`
+unless they name `always()`, `success()`, `failure()` or `cancelled()`.

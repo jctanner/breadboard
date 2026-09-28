@@ -60,20 +60,10 @@ ensure_app 1005 "Fullsend Fix" fullsend-fix \
 ensure_app 1006 "Fullsend" fullsend \
   '{"contents":"write","issues":"write","pull_requests":"write","metadata":"read"}'
 
-echo "==> Granting Code and Fix bots push access to seeded repositories"
-for bot_login in fullsend-code%5Bbot%5D fullsend-fix%5Bbot%5D; do
-  repository="${FULLSEND_ORG}/triage-target"
-  collaborator_status="$(curl --silent --show-error --insecure \
-    -o /dev/null -w '%{http_code}' \
-    -X PUT "${API}/repos/${repository}/collaborators/${bot_login}" \
-    -H "Authorization: token ${GITHUB_TOKEN}" \
-    -H 'Content-Type: application/json' \
-    -d '{"permission":"push"}')"
-  if [[ "${collaborator_status}" != 201 ]]; then
-    echo "ERROR: could not grant ${bot_login} access to ${repository} (HTTP ${collaborator_status})" >&2
-    exit 1
-  fi
-done
+# The Code and Fix bots used to be granted push as collaborators here. Their
+# access now comes from their Apps' installations (contents: write), which is
+# what an installation token carries on GitHub; a collaborator row would let a
+# read-level token push regardless of its level, so none is granted.
 
 mint_pat() {
   local role="$1"
@@ -108,10 +98,58 @@ ROLE_TOKENS="$(jq -nc \
   '{triage:$triage,scribe:$scribe,coder:$coder,review:$review,fix:$fix,fullsend:$fullsend}')"
 
 echo "==> Creating fullsend-mint-dev credentials secret"
-# No shared OIDC secret: the mint verifies signed Actions OIDC tokens against
-# the emulator's published keys, so the only secret it needs is the role map.
+# The static per-role tokens are no longer what the mint hands out; it mints
+# installation tokens from the role Apps below. This Secret survives for the
+# named legacy direct-token smoke (25-fullsend-direct-token-smoke.yaml), which
+# reads the fullsend token from it directly and is not on the conformance path.
 kubectl -n ai-pipeline create secret generic fullsend-mint-dev-credentials \
   --from-literal=role-tokens="${ROLE_TOKENS}" \
+  --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+
+echo "==> Installing the role Apps on ${FULLSEND_ORG} and collecting their keys for the mint"
+# Each role App is installed on the seed organisation with repository
+# selection "all", so a repository onboarded later is covered without a
+# reseed; an older installation that named specific repositories is replaced.
+# The Apps' private keys go to a Secret the mint mounts as one file, and the
+# mint signs a ten-minute JWT per exchange for a one-hour installation token.
+ROLE_APPS="$(python3 - "${API}" "${GITHUB_URL%/}" "${GITHUB_TOKEN}" "${FULLSEND_ORG}" <<'PY'
+import json, ssl, sys, urllib.error, urllib.request
+api, base, token, org = sys.argv[1:5]
+ctx = ssl.create_default_context(); ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
+def call(url, body=None, method=None):
+    req = urllib.request.Request(url, data=json.dumps(body).encode() if body is not None else None,
+                                 headers={"Authorization": "token " + token, "Content-Type": "application/json",
+                                          "Accept": "application/vnd.github+json"}, method=method)
+    try:
+        with urllib.request.urlopen(req, context=ctx) as r:
+            payload = r.read(); return r.status, (json.loads(payload) if payload else None)
+    except urllib.error.HTTPError as e:
+        payload = e.read(); return e.code, (json.loads(payload) if payload else None)
+roles = {"triage": "1001", "scribe": "1002", "coder": "1003", "review": "1004", "fix": "1005", "fullsend": "1006"}
+out = {}
+for role, app_id in roles.items():
+    status, app = call(f"{base}/admin/api/apps/{app_id}")
+    if status != 200:
+        sys.exit(f"could not read App {app_id}: HTTP {status}")
+    for inst in app.get("installations") or []:
+        if inst.get("owner") == org and inst.get("repositories"):
+            status, _ = call(f"{base}/admin/api/apps/{app_id}/installations/{inst['id']}", method="DELETE")
+            if status != 204:
+                sys.exit(f"could not replace installation {inst['id']} of App {app_id}: HTTP {status}")
+    status, inst = call(f"{api}/admin/apps/{app_id}/installations",
+                        {"account_login": org, "account_type": "Organization", "repositories": [],
+                         "permissions": app.get("permissions") or {}})
+    if status not in (200, 201):
+        sys.exit(f"could not install App {app_id} on {org}: HTTP {status} {inst}")
+    status, key = call(f"{base}/admin/api/apps/{app_id}/private-key")
+    if status != 200 or not key.get("private_key"):
+        sys.exit(f"could not read the private key of App {app_id}: HTTP {status}")
+    out[role] = {"app_id": app_id, "private_key": key["private_key"]}
+print(json.dumps(out))
+PY
+)"
+kubectl -n ai-pipeline create secret generic fullsend-mint-role-apps \
+  --from-literal=role-apps.json="${ROLE_APPS}" \
   --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 
 echo "==> Deploying fullsend-mint-dev"

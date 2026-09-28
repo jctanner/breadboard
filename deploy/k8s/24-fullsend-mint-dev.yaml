@@ -41,17 +41,23 @@ spec:
               value: /etc/mint-tls/tls.crt
             - name: FULLSEND_MINT_TLS_KEY
               value: /etc/mint-tls/tls.key
-            - name: FULLSEND_ROLE_TOKENS
-              valueFrom:
-                secretKeyRef:
-                  name: fullsend-mint-dev-credentials
-                  key: role-tokens
+            # The role Apps: one JSON file of {role: {app_id, private_key}},
+            # written by 18-deploy-fullsend-mint-dev.sh. The mint signs a JWT
+            # as the role's App per exchange and asks the forge for a one-hour
+            # installation token; it holds no static role credential.
+            - name: FULLSEND_ROLE_APPS_FILE
+              value: /etc/fullsend-mint/role-apps/role-apps.json
+            - name: FULLSEND_FORGE_API_URL
+              value: https://github.local/api/v3
           volumeMounts:
             - name: breadboard-ca
               mountPath: /etc/breadboard-ca
               readOnly: true
             - name: mint-tls
               mountPath: /etc/mint-tls
+              readOnly: true
+            - name: role-apps
+              mountPath: /etc/fullsend-mint/role-apps
               readOnly: true
           readinessProbe:
             httpGet:
@@ -78,6 +84,9 @@ spec:
         - name: breadboard-ca
           configMap:
             name: internal-ca-cert
+        - name: role-apps
+          secret:
+            secretName: fullsend-mint-role-apps
         - name: mint-tls
           secret:
             secretName: fullsend-mint-dev-tls

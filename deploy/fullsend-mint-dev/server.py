@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Development-only Fullsend token mint for the breadboard emulators.
 
-This is not a GitHub App implementation: it returns pre-created, bot-owned
-emulator personal access tokens selected by role rather than installation
-tokens. What it *is* now is a real OIDC verifier.
+It verifies a real Actions OIDC assertion and answers with a real GitHub App
+installation token: each role is a GitHub App on the emulator, the mint holds
+the Apps' private keys, and every exchange signs a short JWT as the role's App
+and asks the forge for a one-hour installation token scoped to the calling
+repository and the role's permission level. Nothing long-lived is handed out.
 
 It used to accept one opaque shared string that both the runner pod and this
 service held in their environment. That made the mint's repository and role
@@ -32,7 +34,8 @@ import re
 import ssl
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+import urllib.error
+import urllib.request
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -40,6 +43,9 @@ import jwt
 from jwt import PyJWKClient
 
 
+# Each role's full ("write") permission set. The "read" level, the default
+# when a request names none, is the same set with every write downgraded to
+# read, as Fullsend ADR 0073 defines it.
 ROLE_PERMISSIONS = {
     "triage": {"contents": "read", "issues": "write", "metadata": "read"},
     "scribe": {"contents": "read", "issues": "write", "metadata": "read"},
@@ -50,12 +56,120 @@ ROLE_PERMISSIONS = {
 }
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 REPO_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
+LEVELS = ("read", "write")
 
 AUDIENCE = os.environ.get("FULLSEND_OIDC_AUDIENCE", "fullsend-mint")
 
 
 class ClaimsRejected(Exception):
     """The presented OIDC token is not one this mint will act on."""
+
+
+class MintFailed(Exception):
+    """The forge would not issue the installation token."""
+
+
+def permissions_for(role: str, level: str) -> dict[str, str]:
+    """The permission set a role gets at a level (ADR 0073)."""
+    full = ROLE_PERMISSIONS[role]
+    if level == "write":
+        return dict(full)
+    return {name: ("read" if value == "write" else value) for name, value in full.items()}
+
+
+def parse_level(value: object) -> str:
+    """An omitted or empty level is read; anything but read or write is refused."""
+    level = str(value or "").strip().lower() or "read"
+    if level not in LEVELS:
+        raise ValueError(f"unknown level {level!r}; expected one of {', '.join(LEVELS)}")
+    return level
+
+
+def load_role_apps(path: str) -> dict[str, dict[str, str]]:
+    """The role Apps: ``{role: {"app_id": ..., "private_key": ...}}`` from a mounted file."""
+    with open(path, encoding="utf-8") as handle:
+        data = json.load(handle)
+    if not isinstance(data, dict):
+        raise RuntimeError("role apps file must be a JSON object keyed by role")
+    apps: dict[str, dict[str, str]] = {}
+    for role, entry in data.items():
+        if role not in ROLE_PERMISSIONS:
+            raise RuntimeError(f"role apps file names unknown role {role!r}")
+        if not isinstance(entry, dict) or not entry.get("app_id") or not entry.get("private_key"):
+            raise RuntimeError(f"role apps entry for {role!r} needs app_id and private_key")
+        apps[role] = {"app_id": str(entry["app_id"]), "private_key": str(entry["private_key"])}
+    return apps
+
+
+def app_assertion(app: dict[str, str]) -> str:
+    """A ten-minute JWT naming the role's App, as GitHub requires."""
+    now = int(time.time())
+    return jwt.encode({"iat": now - 60, "exp": now + 540, "iss": app["app_id"]}, app["private_key"], algorithm="RS256")
+
+
+def _forge_request(method: str, url: str, bearer: str, body: dict | None = None) -> tuple[int, object]:
+    data = json.dumps(body).encode() if body is not None else None
+    request = urllib.request.Request(
+        url, data=data, method=method,
+        headers={
+            "Authorization": f"Bearer {bearer}",
+            "Accept": "application/vnd.github+json",
+            "Content-Type": "application/json",
+            "User-Agent": "fullsend-mint-dev",
+        },
+    )
+    # The default context honours SSL_CERT_FILE, which names the internal CA.
+    context = ssl.create_default_context()
+    try:
+        with urllib.request.urlopen(request, context=context, timeout=15) as response:
+            payload = response.read()
+            return response.status, json.loads(payload) if payload else None
+    except urllib.error.HTTPError as exc:
+        payload = exc.read()
+        try:
+            return exc.code, json.loads(payload) if payload else None
+        except json.JSONDecodeError:
+            return exc.code, payload.decode(errors="replace")
+    except (urllib.error.URLError, OSError) as exc:
+        raise MintFailed(f"forge unreachable: {exc}") from exc
+
+
+def installation_for_owner(installations: object, owner: str) -> dict | None:
+    """The App's installation on the requesting owner, if any."""
+    if not isinstance(installations, list):
+        return None
+    for installation in installations:
+        account = installation.get("account") if isinstance(installation, dict) else None
+        login = (account or {}).get("login", "")
+        if login.lower() == owner.lower():
+            return installation
+    return None
+
+
+def mint_installation_token(
+    forge_api: str, role: str, app: dict[str, str], owner: str, repos: list[str], level: str,
+) -> dict:
+    """Exchange the role App's assertion for an installation token on the owner."""
+    assertion = app_assertion(app)
+    status, installations = _forge_request("GET", f"{forge_api}/app/installations", assertion)
+    if status != 200:
+        raise MintFailed(f"could not list installations for the {role} App: HTTP {status}")
+    installation = installation_for_owner(installations, owner)
+    if installation is None:
+        raise MintFailed(f"the {role} App is not installed on {owner}")
+    permissions = permissions_for(role, level)
+    status, minted = _forge_request(
+        "POST", f"{forge_api}/app/installations/{installation['id']}/access_tokens", assertion,
+        {"repositories": [repo.split("/", 1)[-1] for repo in repos], "permissions": permissions},
+    )
+    if status != 201 or not isinstance(minted, dict) or not minted.get("token"):
+        raise MintFailed(f"the forge refused an installation token for {role} on {owner}: HTTP {status} {minted}")
+    return {
+        "token": str(minted["token"]),
+        "expires_at": str(minted.get("expires_at", "")),
+        "permissions": minted.get("permissions") or permissions,
+        "repository_selection": minted.get("repository_selection", "selected"),
+    }
 
 
 class _JwksCache:
@@ -92,13 +206,8 @@ class _JwksCache:
             return self._client
 
 
-def _config() -> tuple[dict[str, str], str, str]:
-    try:
-        tokens = json.loads(os.environ.get("FULLSEND_ROLE_TOKENS", "{}"))
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("FULLSEND_ROLE_TOKENS is not valid JSON") from exc
-    if not isinstance(tokens, dict):
-        raise RuntimeError("FULLSEND_ROLE_TOKENS must be a JSON object")
+def _config() -> tuple[dict[str, dict[str, str]], str, str, str]:
+    """Role Apps, issuer, JWKS URL, and the forge API the Apps are on."""
     issuer = os.environ.get("FULLSEND_OIDC_ISSUER", "").rstrip("/")
     jwks_url = os.environ.get("FULLSEND_OIDC_JWKS_URL", "")
     if not issuer or not jwks_url:
@@ -107,7 +216,14 @@ def _config() -> tuple[dict[str, str], str, str]:
             "the mint verifies real OIDC tokens and cannot fall back to a "
             "shared secret"
         )
-    return {str(k): str(v) for k, v in tokens.items()}, issuer, jwks_url
+    role_apps_file = os.environ.get("FULLSEND_ROLE_APPS_FILE", "")
+    if not role_apps_file:
+        raise RuntimeError(
+            "FULLSEND_ROLE_APPS_FILE must name the role Apps file; the mint "
+            "issues installation tokens and holds no static role credentials"
+        )
+    forge_api = os.environ.get("FULLSEND_FORGE_API_URL", "").rstrip("/") or f"{issuer}/api/v3"
+    return load_role_apps(role_apps_file), issuer, jwks_url, forge_api
 
 
 def _verify(token: str, issuer: str, jwks: _JwksCache) -> dict:
@@ -164,7 +280,9 @@ class Handler(BaseHTTPRequestHandler):
             self._send(HTTPStatus.OK, {
                 "status": "ok",
                 "mode": "development-only",
-                "roles": sorted(ROLE_PERMISSIONS),
+                "roles": sorted(self.server.role_apps),
+                "levels": list(LEVELS),
+                "credential": "app-installation",
                 "oidc": {"issuer": self.server.issuer, "audience": AUDIENCE},
             })
             return
@@ -175,7 +293,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send(HTTPStatus.NOT_FOUND, {"error": "not found"})
             return
 
-        tokens, issuer, _ = _config()
+        role_apps, issuer, forge_api = self.server.role_apps, self.server.issuer, self.server.forge_api
         scheme, _, presented = self.headers.get("Authorization", "").partition(" ")
         if scheme.lower() != "bearer" or not presented:
             self._send(HTTPStatus.UNAUTHORIZED, {"error": "OIDC token required"})
@@ -198,6 +316,11 @@ class Handler(BaseHTTPRequestHandler):
         repos = body.get("repos", [])
         if role not in ROLE_PERMISSIONS:
             self._send(HTTPStatus.BAD_REQUEST, {"error": "unknown role"})
+            return
+        try:
+            level = parse_level(body.get("level"))
+        except ValueError as exc:
+            self._send(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
             return
         if not isinstance(repos, list) or not repos or not all(
             isinstance(repo, str) and (REPO_RE.fullmatch(repo) or REPO_NAME_RE.fullmatch(repo))
@@ -222,18 +345,23 @@ class Handler(BaseHTTPRequestHandler):
             self._send(HTTPStatus.FORBIDDEN, {"error": str(exc)})
             return
 
-        token = tokens.get(role) or tokens.get("fullsend")
-        if not token:
-            self._send(HTTPStatus.SERVICE_UNAVAILABLE, {"error": f"no emulator token configured for role {role}"})
+        app = role_apps.get(role)
+        if app is None:
+            self._send(HTTPStatus.SERVICE_UNAVAILABLE, {"error": f"no App configured for role {role}"})
+            return
+        try:
+            minted = mint_installation_token(forge_api, role, app, default_owner, granted_repos, level)
+        except MintFailed as exc:
+            self._send(HTTPStatus.BAD_GATEWAY, {"error": str(exc)})
             return
 
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
         self._send(HTTPStatus.OK, {
-            "token": token,
-            "expires_at": expires_at.isoformat().replace("+00:00", "Z"),
+            "token": minted["token"],
+            "expires_at": minted["expires_at"],
             "granted_repos": granted_repos,
-            "granted_permissions": ROLE_PERMISSIONS[role],
-            "repository_selection": "selected",
+            "granted_permissions": minted["permissions"],
+            "repository_selection": minted["repository_selection"],
+            "level": level,
             "subject": claims.get("sub", ""),
             "run_id": claims.get("run_id", ""),
             "development_only": True,
@@ -242,10 +370,12 @@ class Handler(BaseHTTPRequestHandler):
 
 def main() -> None:
     port = int(os.environ.get("PORT", "8080"))
-    # Fail during startup rather than serving a mint that cannot verify.
-    _tokens, issuer, jwks_url = _config()
+    # Fail during startup rather than serving a mint that cannot verify or mint.
+    role_apps, issuer, jwks_url, forge_api = _config()
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     server.issuer = issuer
+    server.forge_api = forge_api
+    server.role_apps = role_apps
     server.jwks = _JwksCache(jwks_url)
 
     # Serve TLS when a certificate is mounted. Fullsend refuses a non-HTTPS

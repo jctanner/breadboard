@@ -197,6 +197,28 @@ jobs:
             exit 1
           }
 
+      - name: The credential cannot write what its role does not grant
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The triage role carries contents: read. An installation token
+          # minted for it must not be able to write a file, whatever the
+          # requested level: the level can only downgrade the role's set.
+          # This is the role binding, as distinct from the repository binding
+          # the steps around it prove.
+          CREDENTIAL=$(cat "$RUNNER_TEMP/credential")
+          echo "::add-mask::$CREDENTIAL"
+          BODY=$(jq -nc --arg content "$(printf 'trust check' | base64)" \\
+            '{message: "trust check must not land", content: $content}')
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X PUT \\
+            -H "Authorization: token $CREDENTIAL" -H 'Content-Type: application/json' \\
+            -d "$BODY" "${GITHUB_API_URL}/repos/${OWN_REPO}/contents/.trust-check-must-not-land")
+          echo "  PUT /repos/${OWN_REPO}/contents/... as triage -> ${STATUS} (expected 403)"
+          test "$STATUS" = "403" || {
+            echo "::error::a triage credential wrote repository contents; the role binding does not hold"
+            exit 1
+          }
+
       - name: The credential is refused on another repository
         shell: bash
         run: |

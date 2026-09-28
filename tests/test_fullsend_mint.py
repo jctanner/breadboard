@@ -133,3 +133,110 @@ def test_config_refuses_to_start_without_issuer_settings(monkeypatch):
     monkeypatch.delenv("FULLSEND_OIDC_JWKS_URL", raising=False)
     with pytest.raises(RuntimeError):
         mint._config()
+
+
+# --- installation tokens -------------------------------------------------------
+#
+# The mint used to answer with a static per-role personal access token, the
+# compatibility profile's deviation 7a. It now signs a JWT as the role's App
+# and asks the forge for a one-hour installation token scoped to the calling
+# repository and the requested level.
+
+def test_the_read_level_downgrades_every_write():
+    assert mint.permissions_for("coder", "write") == {
+        "contents": "write", "issues": "write", "pull_requests": "write", "metadata": "read",
+    }
+    assert mint.permissions_for("coder", "read") == {
+        "contents": "read", "issues": "read", "pull_requests": "read", "metadata": "read",
+    }
+
+
+def test_an_omitted_or_empty_level_is_read_and_an_unknown_one_is_refused():
+    assert mint.parse_level(None) == "read"
+    assert mint.parse_level("") == "read"
+    assert mint.parse_level(" Write ") == "write"
+    with pytest.raises(ValueError):
+        mint.parse_level("admin")
+
+
+def test_the_installation_on_the_requesting_owner_is_chosen():
+    installations = [
+        {"id": 3, "account": {"login": "someone-else"}},
+        {"id": 8, "account": {"login": "Fullsend-Dev"}},
+    ]
+    assert mint.installation_for_owner(installations, "fullsend-dev")["id"] == 8
+    assert mint.installation_for_owner(installations, "nobody") is None
+    assert mint.installation_for_owner("not a list", "fullsend-dev") is None
+
+
+def _role_app(signing_key):
+    from cryptography.hazmat.primitives import serialization
+    pem = signing_key.private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.TraditionalOpenSSL, serialization.NoEncryption()
+    ).decode()
+    return {"app_id": "1001", "private_key": pem}
+
+
+def test_minting_signs_as_the_app_and_scopes_the_token(monkeypatch, signing_key):
+    app = _role_app(signing_key)
+    calls = []
+
+    def fake_forge(method, url, bearer, body=None):
+        calls.append((method, url, bearer, body))
+        if url.endswith("/app/installations"):
+            return 200, [{"id": 8, "account": {"login": "fullsend-dev"}}]
+        return 201, {"token": "ghs_minted", "expires_at": "2026-09-28T12:00:00Z",
+                     "permissions": body["permissions"], "repository_selection": "selected"}
+
+    monkeypatch.setattr(mint, "_forge_request", fake_forge)
+    minted = mint.mint_installation_token(
+        "https://github.local/api/v3", "triage", app, "fullsend-dev", ["fullsend-dev/triage-target"], "write",
+    )
+    assert minted["token"] == "ghs_minted"
+    assert minted["permissions"] == {"contents": "read", "issues": "write", "metadata": "read"}
+    (list_call, mint_call) = calls
+    assert list_call[1] == "https://github.local/api/v3/app/installations"
+    assert mint_call[1] == "https://github.local/api/v3/app/installations/8/access_tokens"
+    assert mint_call[3]["repositories"] == ["triage-target"]
+    claims = jwt.decode(mint_call[2], signing_key.public_key(), algorithms=["RS256"])
+    assert claims["iss"] == "1001"
+    assert claims["exp"] - claims["iat"] == 600
+
+
+def test_an_app_not_installed_on_the_owner_cannot_mint(monkeypatch, signing_key):
+    monkeypatch.setattr(mint, "_forge_request", lambda *a, **k: (200, [{"id": 1, "account": {"login": "other-org"}}]))
+    with pytest.raises(mint.MintFailed) as refused:
+        mint.mint_installation_token("https://f/api/v3", "triage", _role_app(signing_key), "fullsend-dev", ["x"], "read")
+    assert "not installed on fullsend-dev" in str(refused.value)
+
+
+def test_a_forge_refusal_is_reported_not_papered_over(monkeypatch, signing_key):
+    def fake_forge(method, url, bearer, body=None):
+        if url.endswith("/app/installations"):
+            return 200, [{"id": 8, "account": {"login": "fullsend-dev"}}]
+        return 422, {"detail": "requested repository is not installed"}
+
+    monkeypatch.setattr(mint, "_forge_request", fake_forge)
+    with pytest.raises(mint.MintFailed) as refused:
+        mint.mint_installation_token("https://f/api/v3", "triage", _role_app(signing_key), "fullsend-dev", ["x"], "read")
+    assert "HTTP 422" in str(refused.value)
+
+
+def test_role_apps_file_is_validated(tmp_path):
+    path = tmp_path / "role-apps.json"
+    path.write_text('{"triage": {"app_id": "1001", "private_key": "k"}}')
+    assert mint.load_role_apps(str(path)) == {"triage": {"app_id": "1001", "private_key": "k"}}
+    path.write_text('{"janitor": {"app_id": "1", "private_key": "k"}}')
+    with pytest.raises(RuntimeError):
+        mint.load_role_apps(str(path))
+    path.write_text('{"triage": {"app_id": "1001"}}')
+    with pytest.raises(RuntimeError):
+        mint.load_role_apps(str(path))
+
+
+def test_config_requires_the_role_apps_file(monkeypatch):
+    monkeypatch.setenv("FULLSEND_OIDC_ISSUER", ISSUER)
+    monkeypatch.setenv("FULLSEND_OIDC_JWKS_URL", f"{ISSUER}/.well-known/jwks.json")
+    monkeypatch.delenv("FULLSEND_ROLE_APPS_FILE", raising=False)
+    with pytest.raises(RuntimeError):
+        mint._config()

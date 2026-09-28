@@ -1715,13 +1715,20 @@ Feeds breakpoint B5.
 
 - [x] Run the harness with its post-script and validation loop enabled.
 - [x] Keep Fullsend's output schema and status/comment behavior unchanged.
-- [ ] Send Fullsend traces and artifacts to MLflow and Observatory where the
-  harness supports it.
+- ~~Send Fullsend traces and artifacts to MLflow and Observatory where the
+  harness supports it.~~ *Taken out of the plan 2026-09-27 by decision, not
+  done.* Traces and artifacts stay where Fullsend already puts them: the
+  Actions artifact on every run, the OpenShell logs inside it, and the OTLP
+  export the runtime offers. Nothing in the conformance check reads MLflow or
+  Observatory, and the "done when" below no longer includes retained
+  telemetry beyond the artifact. Reinstate as its own plan if the platform
+  side later wants Fullsend runs in those tools.
 - [ ] Show the run's workflow, job, sandbox, result, and failure state in the
   Fullsend operations dashboard.
 
 **Done when:** an agent result is verified in the emulator API and UI, through
-output validation, through post-script behavior, and in retained telemetry.
+output validation, through post-script behavior, and in the retained run
+artifact.
 
 ### 6. Make the whole check repeatable
 
@@ -3407,6 +3414,7 @@ the optimism this plan keeps having to correct:
 - *WP4 stage matrix.* Not started.
 - *WP5 traces and artifacts to MLflow and Observatory.* The OTEL variables are
   passed to the agent step, and nothing has verified anything arrives.
+  (Removed from the plan 2026-09-27; see work package 5.)
 - *WP5 show workflow, job, sandbox, result and failure in the dashboard.* Not
   verified.
 

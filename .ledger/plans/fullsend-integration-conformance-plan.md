@@ -1638,8 +1638,11 @@ original event to the final forge change.
 
 Feeds breakpoints B3 (permission check) and B4 (mint exchange).
 
-- [ ] Write down exactly what the development mint trusts and covers, and
-  confine it to the legacy fixtures.
+- [x] Write down exactly what the development mint trusts and covers, and
+  confine it to the legacy fixtures. *2026-09-27:*
+  [`docs/fullsend-mint-trust.md`](../../docs/fullsend-mint-trust.md). The
+  confinement was already true and is now stated: `FULLSEND_ROLE_TOKENS` is
+  read by the mint and by the named direct-token smoke, nowhere else.
 - [x] Serve the conformance mint over internal TLS. A cert-manager certificate
   from the internal CA covers the mint's service names, the server wraps its
   socket when one is mounted, and the runner reaches it over TLS with the CA it
@@ -3404,7 +3407,7 @@ the optimism this plan keeps having to correct:
   confused run selection repeatedly in this work.
 - *WP3 write down what the development mint trusts and covers.* No such
   document exists. The trust check demonstrates the boundary; nothing states
-  it.
+  it. (Written 2026-09-27: `docs/fullsend-mint-trust.md`.)
 - *WP3 record actor, repo, role, workflow, mint exchange and downstream calls.*
   The trust check prints these for one run. There is no durable record.
 - *WP4 collect examples from the review and code harnesses.* Only triage has
@@ -4040,3 +4043,23 @@ cases. Verified by onboarding `fullsend-dev/allowlist-probe` through
 `POST /api/fullsend/onboard`: the scaffold pull request's config listed both
 local prefixes with no seeder run (repository deleted afterwards), and run
 1738 is green on the rebuilt CLI. Written to be sent upstream like 0005.
+
+### 2026-09-27 the mint trust write-up
+
+`docs/fullsend-mint-trust.md` states the exchange step by step, what the
+development mint trusts (the emulator's signing key, the issuer and audience
+strings, the claims the emulator derives from the job, the role registry
+Secret, and an unguarded network path), what it covers (repository binding,
+role selection, provenance present in the claims, a 300 s assertion), and
+the table of what it does not do that Fullsend's production mint does (fresh
+installation tokens, privilege levels, permission downscoping, workflow
+provenance checks, allowlists, audit). Two things surfaced while writing it
+that the trust check had not made explicit. The `level` field the mint-token
+action sends is ignored by the development mint. And on the conformance
+target the triage, code, and fix bots all hold push, so the token proves the
+repository binding and not the role binding; role separation here rests on
+collaborator permissions. The second WP3 item, one durable per-run record of
+actor, repository, role, workflow, exchange, and downstream identity, stays
+open; the page lists where each is recorded today, across three places.
+The stale paragraph in `docs/fullsend-integration.md` that still described
+the opaque `FULLSEND_DEV_OIDC_TOKEN` broker is replaced.

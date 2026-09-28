@@ -78,17 +78,15 @@ mint returns a short-lived token used to check out the target repository and
 perform the permitted GitHub operations. The runner then starts the agent
 through OpenShell.
 
-The development deployment uses a local OIDC broker backed by
-`FULLSEND_DEV_OIDC_TOKEN` and role credentials from the
-`fullsend-mint-dev-credentials` Secret. This preserves the workflow contract
-without requiring an external GitHub or cloud control plane.
-
-The GitHub emulator also exposes an ephemeral RS256 OIDC issuer and JWKS at
-`https://github.local`, and a GitHub App fixture whose private key is kept
-only in the emulator's local database. Real Actions OIDC claim validation
-against that issuer, rather than the opaque development token above, is the
-conformance target described in
-[`.ledger/plans/fullsend-integration-conformance-plan.md`](../.ledger/plans/fullsend-integration-conformance-plan.md).
+The GitHub emulator is the OIDC issuer: an ephemeral RS256 key pair with a
+JWKS at `https://github.local/.well-known/jwks.json`, issuing assertions whose
+claims are derived from the job that presents its request token. The
+development mint verifies those assertions against that issuer and refuses
+any repository the assertion was not issued for, then answers with a
+pre-created role credential from the `fullsend-mint-dev-credentials` Secret.
+This preserves the workflow contract without an external GitHub or cloud
+control plane. What that mint trusts, what it covers, and what it does not
+check is written up in [fullsend-mint-trust.md](fullsend-mint-trust.md).
 
 See [fullsend-event-flow.mmd](architecture/diagrams/fullsend-event-flow.mmd)
 for the sequence diagram.

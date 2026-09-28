@@ -40,4 +40,4 @@ decisions or separate work.
 - [x] G51 release path: emulator release assets (github-emulator 215183a) and `seed-fullsend-release.py` on the mirror; run 1727 green.
 - [x] G52 step conditions imply `success()` (github-emulator 215183a).
 - [x] Retired `seed-vendored-binary.py` (2026-09-27): the binary is removed from the target and the agent action installs from release v0.0.1.
-- [ ] Push github-emulator (6547571, e02ee86, 215183a) and breadboard.
+- [x] Pushed: github-emulator through 215183a, breadboard through 0d465ea.

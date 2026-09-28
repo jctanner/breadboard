@@ -4314,4 +4314,10 @@ The replay found something else: the rolled runner's triage job stayed
 route reused the runner's row and re-keyed it but did not return the
 row's held jobs to the queue, as the repository and enterprise routes do,
 and the stale-runner rule could not fire because the shared row kept
-heartbeating. Fixed in the emulator with a site-wide test.
+heartbeating. Fixed in the emulator with site-wide tests, by GitHub's
+rule: a job the runner never started is requeued, a job it had started
+fails on its current step with "The self-hosted runner lost communication
+with the server" and its run concludes. A plain requeue was tried first
+(run 1786): the re-run triage failed because the dead runner's sandbox
+still held the provider profile the new attempt wanted to replace, which
+is the practical reason GitHub does not re-run such a job.

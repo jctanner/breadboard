@@ -4212,3 +4212,24 @@ credential answers `403`. Run 1756, all nine steps green, permissions
 binding proves is that a token for a role does what the role may do and no
 more; which workflow may ask for which role is still ungated, as the mint
 page says.
+
+### 2026-09-28 the mirrors stop dispatching upstream's CI
+
+Both mirrors dispatched runs on every push. The agents mirror is whole by
+design, so it carried upstream's lint, script-test, functional-test and
+release workflows, all `runs-on: ubuntu-24.04`, which the hosted stand-in
+picked up (runs 1483 to 1485 and their predecessors: skipped, cancelled,
+cancelled). The fullsend mirror copied the whole `.github/workflows`
+directory and so carried upstream's CI, E2E and notify-scaffold-sync
+workflows beside the reusable ones (runs 1177 to 1179). Two fixes, each
+the shape an administrator would choose on GitHub. The emulator now honours
+the repository setting at `/repos/{owner}/{repo}/actions/permissions`
+(`enabled: false`: no event dispatches a run, `workflow_dispatch` is 403;
+migration 0010), and the agents seeder switches it off on every seed. The
+fullsend mirror seeder now mirrors only `reusable-*.yml` under
+`.github/workflows`, which is all a target reaches through `uses:`, and
+clears each mirrored directory before copying so a file dropped from the
+collection is removed rather than left behind. Live: the agents mirror
+answers 403 to a manual dispatch; the narrowed fullsend mirror's push
+(commit f045bf65, 60 files) dispatched nothing; the release seeder re-tagged
+the new head and conformance run 1760 installed from it, green.

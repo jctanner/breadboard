@@ -67,6 +67,24 @@ def ensure_upstream_org() -> None:
         raise RuntimeError(f"POST organization failed: HTTP {status}: {payload}")
 
 
+def disable_actions() -> None:
+    """Switch Actions off on the mirror, as an administrator would on GitHub.
+
+    The mirror is whole, so it carries upstream's own CI workflows: lint,
+    script tests, functional tests, release. Every push to the mirror
+    dispatched them here, onto the hosted stand-in runner, for a repository
+    that is content the CLI reads rather than a project anyone develops.
+    The repository setting at /actions/permissions is GitHub's answer to
+    exactly that, so the emulator honours it and the mirror uses it. Applied
+    on every seed, since a recreated mirror starts enabled.
+    """
+    status, _ = api_request(
+        "PUT", f"/repos/{UPSTREAM_ORG}/{UPSTREAM_REPO}/actions/permissions", {"enabled": False},
+    )
+    if status != 204:
+        raise RuntimeError(f"could not disable Actions on the agents mirror: HTTP {status}")
+
+
 def ensure_upstream_repo() -> None:
     status, _ = api_request("GET", f"/repos/{UPSTREAM_ORG}/{UPSTREAM_REPO}")
     if status == 200:
@@ -134,6 +152,7 @@ def apply_mirror_patches(directory: Path) -> None:
 def main() -> None:
     ensure_upstream_org()
     ensure_upstream_repo()
+    disable_actions()
 
     sources = collect_sources()
     revision = run_git(SOURCE, "rev-parse", "HEAD").stdout.strip()

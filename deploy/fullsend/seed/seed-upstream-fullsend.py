@@ -112,11 +112,26 @@ def collect_sources() -> list[tuple[Path, str]]:
             collected.append((origin, relative))
         elif origin.is_dir():
             for path in sorted(origin.rglob("*")):
-                if path.is_file():
+                if path.is_file() and _wanted(str(path.relative_to(SOURCE))):
                     collected.append((path, str(path.relative_to(SOURCE))))
         else:
             raise RuntimeError(f"required Fullsend path is missing: {origin}")
     return collected
+
+
+def _wanted(relative: str) -> bool:
+    """Only the workflows the dispatch chain calls.
+
+    `.github/workflows` also holds upstream's own CI (lint, E2E, release,
+    notify-scaffold-sync) and its own dogfooding caller. Mirrored, those
+    dispatched runs here on every mirror push, onto the hosted stand-in
+    runner, for a repository that is content rather than a project. Targets
+    reach this mirror only through `uses:` of the reusable workflows, so
+    those are all it carries.
+    """
+    if relative.startswith(".github/workflows/"):
+        return Path(relative).name.startswith("reusable-")
+    return True
 
 
 def apply_mirror_patches(directory: Path) -> None:
@@ -173,6 +188,14 @@ def main() -> None:
                 break
             time.sleep(2)
 
+        # The tree reflects the collection exactly: a file mirrored before and
+        # not collected now is removed rather than left behind from the fetch.
+        for relative in MIRRORED_PATHS:
+            target = directory / relative
+            if target.is_dir():
+                shutil.rmtree(target)
+            elif target.is_file():
+                target.unlink()
         for origin, relative in sources:
             destination = directory / relative
             destination.parent.mkdir(parents=True, exist_ok=True)

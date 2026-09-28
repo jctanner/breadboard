@@ -29,7 +29,7 @@ decisions or separate work.
 ## Conformance plan items open before today
 
 - `fullsend-github-code` in the profile-staleness precondition.
-- The seeder triggering the agents mirror's CI on every push.
+- ~~The seeder triggering the agents mirror's CI on every push.~~ Closed 2026-09-28: Actions is disabled on the agents mirror through GitHub's repository setting (github-emulator 9cfe694), and the fullsend mirror carries only the reusable workflows the dispatch chain calls.
 - ~~Provide the App installation token to the onboarding operation.~~ Built 2026-09-28: work package 7 closed; compatibility profile 7b no longer a deviation.
 - Scenario question from run 1743: repeated conformance issues can be triaged as duplicates of the closed earlier copies. *Decided 2026-09-28: accept it; not a Breadboard fix.* The cause is upstream: in `fullsend-ai/agents`, `agents/triage.md` defines a duplicate as an existing *open* issue, while the `github-forge` and `issue-labels` skills it is told to use list issues with `--state all`, so the model is shown closed issues and then told they do not count. The conformance check keeps asserting only that a label was applied.
 

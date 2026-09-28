@@ -3903,3 +3903,62 @@ needs before it will evaluate an action's input defaults, and Node's trust
 of the internal CA on the router. github-emulator 87ca0c9, 73d96bc,
 6097af5; breadboard fc0eaf9. Run 1580 is the evidence. The plan's finding
 3 has the full account.
+
+**G48. The agent runner had no `actions/cache`.** *Fixed 2026-09-27
+(github-emulator 6547571).* Registering an agent in `config.yaml`, which
+the TRIAGE_AUTO_CODE override requires (ADR 0080), activates the reusable
+dispatch's harness-dispatch job, and that job wraps its CLI install in
+`actions/cache/restore` and `actions/cache/save`. The Python runner
+refused both as unsupported and the whole job failed (run 1707). A
+self-hosted runner has no hosted cache service; what it has is a disk. The
+shim keeps entries beside the workspace (the workspace is removed after
+every job) and reproduces the contract: exact hit, restore-keys prefix
+fallback, the three outputs, fail-on-cache-miss, and the combined form's
+post-job save. Ten tests in `tests/actions/test_cache_shim.py`.
+
+**G49. Composite step conditions could not see the action's inputs.**
+*Fixed 2026-09-27 (github-emulator e02ee86).* Run 1712 reached the install
+action for the first time and it skipped all six of its install steps,
+each guarded by `if: inputs.mode == ...`, then reported success; the
+workflow failed two steps later copying a binary that was never installed.
+`_evaluate_step_if` took no inputs, so every such condition was false.
+
+**G50. `${{ runner.temp }}` rendered to an empty string on the server.**
+*Fixed 2026-09-27 (github-emulator e02ee86).* The same run's cache save
+was told to save `/fullsend-cache`. The server renders a step's `with:` at
+job creation and has no runner context. Expressions naming the runner
+root now cross the server unrendered, as `steps.*` do; the Python runner
+resolves them, and for the upstream runner a string with an expression
+inside it becomes the `format()` call the upstream template converter
+emits, since that protocol carries a string as a literal or a whole
+expression only.
+
+**G51. The harness-dispatch job's CLI install has no path that completes
+here.** *Open.* With G48 to G50 fixed, run 1717's install action ran to the
+end of what this stack can do: the target is detected as an upstream
+install (no `.defaults/action.yml` marker), the mirror carries no release
+tag, and the source-build fallback fails on a mirror that has no `go.mod`
+or Makefile, on a runner image with no `make`, and behind an egress policy
+that would refuse the module proxy anyway. Its fallout also showed that
+`.fullsend/bin/fullsend` alone is a shape no real install produces: the
+agent action honours it, the dispatch job's mode detection does not. Two
+ways to close it, materially different in scope:
+
+1. *The release path.* Teach the emulator release assets (upload, list,
+   octet-stream download) and seed a `vX.Y.Z` tag and release at the
+   mirror's head with the built CLI as its asset. The target stays a
+   layered install, which is the common production shape, and the
+   vendored-binary deviation for the agent action can then be retired.
+2. *A real vendored install.* Seed what `fullsend admin install --vendor`
+   writes for a per-repository install: `.defaults/` with the action,
+   scripts and scaffold, the vendor manifest, the reusable workflows under
+   `.github/workflows/` and thin callers pointing at them. That is
+   Fullsend's own air-gapped mode, which is what this stack is; it also
+   means the triage job stops reading the mirror at run time.
+
+The TRIAGE_AUTO_CODE override itself is proven: run 1712 triaged to
+`documentation` + `triaged` with "auto-code disabled for documentation"
+and no code job. Run 1717 triaged to `in-progress` because PR 141, left by
+the last code run before the override, still addressed the same issue
+text; closed with its branch. The reset script already removes such pull
+requests, so a full reset before a conformance run prevents this.

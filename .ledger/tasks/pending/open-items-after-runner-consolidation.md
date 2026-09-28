@@ -32,3 +32,10 @@ decisions or separate work.
 - The seeder triggering the agents mirror's CI on every push.
 - Track F2: the CLI rejects a non-HTTPS `--mint-url` at install time.
 - The mint trust write-up; recording actor, repo, role, workflow, mint exchange and downstream; the narrowest sandbox policy that passes; Fullsend traces and artifacts to MLflow and Observatory; who may start onboarding and how it gets its App credential. All at their checkboxes in `fullsend-integration-conformance-plan.md`.
+
+## Harness-dispatch CLI install (found 2026-09-27, G48–G51 in the conformance plan)
+
+- [x] G48 `actions/cache` shim on the agent runner (github-emulator 6547571).
+- [x] G49 composite conditions see `inputs.*`; G50 `runner.*` left to the runner (github-emulator e02ee86).
+- [ ] G51 pick and build one of: emulator release assets + seeded release (layered install stays), or a full `--vendor` seed of the target. Until then `make host-conformance` is red on the harness-dispatch job even though triage itself is correct.
+- [ ] Push github-emulator (6547571, e02ee86) and breadboard once G51 is decided.

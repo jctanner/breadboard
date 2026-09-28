@@ -4293,3 +4293,25 @@ One consequence worth knowing: a triage token now cannot list pull
 requests, because upstream's canonical triage set has no `pull_requests`
 permission. That matches GitHub, where the same token gets the same 403,
 and Fullsend's triage agent carries on; the run is green with it.
+
+### 2026-09-28 the OOM window replayed, flat; a registration defect found instead
+
+Every distinctive event of the 2026-09-27 19:40-19:52 window was replayed
+against the current emulator with the pod's cgroup and the uvicorn process
+sampled every five seconds: the conformance reset (22 s, flat), a runner
+deployment rolled while its triage job ran (twelve minutes, 331 to 341
+MiB, no trend), the Fullsend dashboard's polling shape for four minutes
+(+4 MiB), twenty Breadboard dashboard root loads (flat), and a
+client-disconnect battery of dropped long-polls, dropped JSON listings and
+aborted clones (flat). Threads 13 to 15, descriptors 40 throughout. No
+watchdog report has fired since the per-endpoint counters went live. The
+window is unreproduced on code that has since changed in every area a
+hypothesis pointed at; the bug note says so and the instrument stays
+armed.
+
+The replay found something else: the rolled runner's triage job stayed
+`in_progress` for the full 900 s timeout. The site-wide registration
+route reused the runner's row and re-keyed it but did not return the
+row's held jobs to the queue, as the repository and enterprise routes do,
+and the stale-runner rule could not fire because the shared row kept
+heartbeating. Fixed in the emulator with a site-wide test.

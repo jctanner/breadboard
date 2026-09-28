@@ -18,7 +18,8 @@ decisions or separate work.
 
 ## Emulator, open with an instrument armed
 
-- **OOM kills, four so far, cause unidentified.** `docs/bugs/open/restart-mid-claim-strands-the-job.md`, defect 2, has every replay and its result. The memory watchdog counts completed requests per endpoint between reports; the next crossing of 512 MiB names the hot endpoint. Raising the 1536Mi limit is a stopgap on offer, not a fix.
+- **OOM kills, four so far, cause unidentified.** `docs/bugs/open/restart-mid-claim-strands-the-job.md`, defect 2, has every replay and its result. *2026-09-28: replayed the 2026-09-27 window's every distinctive event under a five-second sampler on the current code (reset script, a runner rollout mid-job, the Fullsend dashboard's polling shape, the Breadboard dashboard's root page, a client-disconnect battery): all flat within ten megabytes on a 331 MiB pod, threads and descriptors steady. No watchdog report has fired since the counters went live, across about thirty conformance runs. Unreproduced on superseded code; the instrument stays armed and the next 512 MiB crossing names the endpoint.* Raising the 1536Mi limit is a stopgap on offer, not a fix.
+- **Found by the replay and fixed (github-emulator): a site-wide runner re-registering did not take its own jobs back.** The new pod reused the row and re-keyed it, but the route did not release the row's held jobs the way the repository and enterprise routes do, so job 6789 sat in_progress for the whole 900 s timeout. Every reusing route now releases held jobs.
 
 ## Fullsend-side behaviour, decisions rather than bugs
 

@@ -4266,3 +4266,30 @@ server advertises `allow-reachable-sha1-in-want`. The transport now sets
 (github-emulator 5e1cc63): the superseded commit fetches, an unreachable
 one is still `not our ref`, which is GitHub's behaviour. Two tests pin it,
 one of them a real `git fetch` at protocol v0.
+
+### 2026-09-28 the token's own scope is what the emulator enforces
+
+The last two emulator fidelity gaps from the 7a work are closed
+(github-emulator b64e03c). An installation token now carries exactly what
+it was minted with, and the emulator answers for that at the
+authentication chokepoint on every route, reusing the job-token route map:
+a repository outside the token's selection is Not Found, an endpoint the
+token's permissions do not cover is "Resource not accessible by
+integration", and the git transport needs `contents: read` to fetch and
+`contents: write` to push. The mint endpoint refuses a token wider than its
+installation's grant. So the level binds per token, `issues` and
+`pull_requests` are enforced with `contents`, and the earlier caveat that
+the installation's permissions decided rather than the token's is gone.
+
+Proof. The trust check gained a tenth step, "A read-level credential
+cannot write issues either": it mints triage at `read`, sees
+`contents=read,issues=read,metadata=read`, and its comment is refused
+`403` (run 1779, all ten steps green). Conformance run 1778 green: the
+triage stage's write-level token still labels and comments. Five emulator
+tests pin the downscoping, the missing-permission read, the repository
+binding, the widening refusal, and the transport.
+
+One consequence worth knowing: a triage token now cannot list pull
+requests, because upstream's canonical triage set has no `pull_requests`
+permission. That matches GitHub, where the same token gets the same 403,
+and Fullsend's triage agent carries on; the run is green with it.

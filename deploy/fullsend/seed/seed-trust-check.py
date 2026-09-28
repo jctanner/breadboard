@@ -219,6 +219,41 @@ jobs:
             exit 1
           }
 
+      - name: A read-level credential cannot write issues either
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The level downscopes the role: triage at read carries
+          # issues: read, and the forge honours the token's own permissions,
+          # not the installation's. A comment with it must be refused.
+          ASSERTION=$(curl -sSf \\
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \\
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=fullsend-mint" | jq -r '.value')
+          echo "::add-mask::$ASSERTION"
+          RESPONSE=$(curl -sSf \\
+            -H "Authorization: Bearer $ASSERTION" -H 'Content-Type: application/json' \\
+            -d "{\\"role\\":\\"triage\\",\\"repos\\":[\\"${OWN_REPO##*/}\\"],\\"level\\":\\"read\\"}" \\
+            "${MINT_URL}/v1/token")
+          echo "::add-mask::$RESPONSE"
+          READ_CREDENTIAL=$(echo "$RESPONSE" | jq -r '.token')
+          echo "::add-mask::$READ_CREDENTIAL"
+          echo "$RESPONSE" | jq -r '"  level        " + .level + "  permissions " + (.granted_permissions | to_entries | map("\\(.key)=\\(.value)") | join(","))'
+          ISSUE=$(curl -sSf -H "Authorization: token $READ_CREDENTIAL" \\
+            "${GITHUB_API_URL}/repos/${OWN_REPO}/issues?state=all&per_page=1" | jq -r '.[0].number // empty')
+          if [[ -z "$ISSUE" ]]; then
+            echo "  no issue to comment on; skipping the write probe"
+            exit 0
+          fi
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST \\
+            -H "Authorization: token $READ_CREDENTIAL" -H 'Content-Type: application/json' \\
+            -d '{"body":"trust check: this comment must not land"}' \\
+            "${GITHUB_API_URL}/repos/${OWN_REPO}/issues/${ISSUE}/comments")
+          echo "  POST /repos/${OWN_REPO}/issues/${ISSUE}/comments at read level -> ${STATUS} (expected 403)"
+          test "$STATUS" = "403" || {
+            echo "::error::a read-level triage credential wrote a comment; the level does not bind"
+            exit 1
+          }
+
       - name: The credential is refused on another repository
         shell: bash
         run: |

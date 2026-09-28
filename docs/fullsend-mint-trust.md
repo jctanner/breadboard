@@ -138,7 +138,7 @@ conformance run as proof of something it does not test.
 | --- | --- |
 | Mints a fresh GitHub App installation token per request, scoped to the requested repositories, expiring in about an hour | The same, since 2026-09-28 |
 | Downscopes permissions to the role's named privilege level; `level` defaults to `read` | The same, for the two levels `read` and `write`; custom roles and level sets are not supported |
-| Per-role permission sets enforced by the App installation | Enforced for `contents` (writes to contents, refs, git objects, and the git transport). `issues` and `pull_requests` permissions are carried on the token but the emulator does not yet gate those writes on them |
+| Per-role permission sets enforced by the App installation | Enforced per token, on every route: the emulator answers for the token's own repositories (Not Found outside them) and permissions ("Resource not accessible by integration"), the git transport included, and refuses to mint a token wider than its installation |
 | Checks `job_workflow_ref` against registered workflow prefixes | The same: upstream host always accepted, configured host repositories, allowed basenames, deny-all when unset |
 | Org and per-repo allowlists (`ALLOWED_ORGS`, `PER_REPO_WIF_REPOS`) | None. Any repository on the emulator whose job can obtain an assertion may mint for itself |
 | `["*"]` means installation-wide in the shapes ADR 0077 allows | Refused as an invalid repository name. Only bare names and `owner/name` are accepted |
@@ -148,10 +148,11 @@ What is still true, and worth saying plainly: within the allowed
 workflows, the role is chosen by the request, not by the assertion. Any of
 the seven reusable workflows may ask for any role, which is also how
 Fullsend's production mint works; the gate answers "may this workflow mint
-at all", not "which role". And the level downscoping is enforced by the
-emulator through the App's installation permissions, not per token: a
-coder token minted at `read` carries `contents: read` but the emulator
-consults the installation (`contents: write`) when it decides a write.
+at all", not "which role". The level, on the other hand, binds: a token
+minted at `read` carries the read set and the emulator enforces the token's
+own permissions, so it cannot do what its installation could. Evidence: the
+trust-boundary workflow's step "A read-level credential cannot write issues
+either" mints triage at `read` and finds a comment refused `403` (run 1779).
 
 ## Where each identity is recorded
 

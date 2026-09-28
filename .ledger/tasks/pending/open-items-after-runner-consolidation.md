@@ -55,4 +55,4 @@ decisions or separate work.
 - [x] The mint honours `level`; the runner applies composite input defaults so the action's `write` arrives.
 - [x] Role bots hold no collaborator rows; the emulator gates content, ref and git-object writes on installation grants; the trust check proves a triage token cannot write contents (run 1756).
 - [x] Which workflow may mint (`job_workflow_ref`): gated 2026-09-28 the way Fullsend's mintcore does it; the seeded unregistered workflow is refused every role (run 1777).
-- [ ] Still not enforced by the emulator: `issues`/`pull_requests` permissions on issue and pull request writes, and per-token level downscoping (the installation's permissions decide, not the token's).
+- [x] Per-token enforcement (2026-09-28, github-emulator b64e03c): the gateway answers for an installation token's own repositories and permissions on every route, the git transport included, and the mint endpoint refuses to widen a token; the trust check's read-level probe is refused a comment (run 1779).

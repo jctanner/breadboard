@@ -98,12 +98,22 @@ token, and model credentials. OpenShell creates the sandbox through the cluster
 sandbox controller, mounts the workspace, injects its proxy CA, and applies the
 role's filesystem and network policy before the agent starts.
 
-The development smoke policy keeps the system and image paths read-only. Only
-`/sandbox`, `/tmp`, and `/dev/null` are writable. The agent can reach the
-GitHub emulator through a read-only egress rule and can call the permitted
-Vertex AI and Google OAuth endpoints. Other destinations are denied. The
-runner retains status and result files in the shared job volume for the smoke
-harness and dashboard.
+The policy is Fullsend's own. Every harness names upstream's
+`policies/base.yaml` unmodified: system and image paths read-only, only
+`/sandbox`, `/tmp`, and `/dev/null` writable, the process as the `sandbox`
+user. Network access comes from the provider profiles each stage lists, not
+from a policy written here: triage runs with `fullsend-vertex-ai` and
+`fullsend-github-ro` only, and the write-capable `fullsend-github-code`
+profile is named by the code and fix harnesses alone, so a read-only stage
+cannot inherit it. The one local change to those profiles is the emulator's
+host added beside the public ones (`github.local`, read-only, on the
+read-only profile); the conformance script refuses to run if the installed
+profiles have drifted from the mirrored source. The earlier hand-written
+policy, `deploy/fullsend/policies/github-emulator-readonly.yaml`, survives
+only in the legacy direct-token smoke and is not on the conformance path.
+A green run's sandbox log reports `denied_action_count=0` in every activity
+summary; run 1746 is the reference. The runner retains status and result
+files in the shared job volume for the dashboard.
 
 See [fullsend-agent-sandbox.mmd](architecture/diagrams/fullsend-agent-sandbox.mmd)
 for the sandbox boundary and data paths.

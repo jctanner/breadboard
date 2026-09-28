@@ -27,6 +27,7 @@ Mermaid `.mmd` files — render on GitHub or paste into [Mermaid Live Editor](ht
 - [fullsend-integration.md](fullsend-integration.md) — Fullsend services, event flow, token exchange, and sandbox boundaries
 - [fullsend-compatibility-profile.md](fullsend-compatibility-profile.md) — every local substitution this deployment makes, and the two credential deviations that need a reviewer's judgement
 - [fullsend-mint-trust.md](fullsend-mint-trust.md) — what the development token mint trusts and covers, what it does not check, and where each identity is recorded
+- [fullsend-onboarding-authorization.md](fullsend-onboarding-authorization.md) — who may start onboarding from the dashboard, what credential it runs with, and the path to the App installation token
 - [fullsend-openshell-tutorial.md](fullsend-openshell-tutorial.md) — trigger a Fullsend job and watch its OpenShell sandbox
 - [fullsend-services.mmd](architecture/diagrams/fullsend-services.mmd) — Fullsend and Breadboard service topology
 - [fullsend-event-flow.mmd](architecture/diagrams/fullsend-event-flow.mmd) — GitHub event, Actions, OIDC, mint, and agent sequence

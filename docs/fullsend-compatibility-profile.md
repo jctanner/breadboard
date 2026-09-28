@@ -193,8 +193,10 @@ rather than leave a reader to infer it from a manifest.
 Separate path, separate deviation. `fullsend github setup` run from the
 dashboard needs a credential that can write workflows and secrets to a
 repository. The production answer is a short-lived App installation token; this
-deployment holds no App private key, so it falls back to the emulator admin
-token.
+deployment does not wire one up, so it falls back to the emulator admin
+token. (The emulator can issue the App's private key and mint installation
+tokens from a JWT; the path to use it is written down in
+[fullsend-onboarding-authorization.md](fullsend-onboarding-authorization.md).)
 
 This one *is* labelled: `src/dashboard/fullsend_onboarding.py` returns
 `emulator-admin-fallback` as the credential kind, and
@@ -203,4 +205,5 @@ that it appears in the operation's message. WP7 records the App token as open
 by decision, with the missing private key as the reason.
 
 The remedy for either, if a review judges them to exceed decision 3, is an App
-private key in the deployment — not a rewording here.
+private key in the deployment — not a rewording here. For 7b that remedy is
+now specified step by step in the onboarding authorization page.

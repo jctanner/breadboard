@@ -1702,7 +1702,19 @@ Feeds breakpoint B5.
   shown at run time. Keep it simple enough to rebuild often.
 - [x] Verify filesystem, network, binary, and credential boundaries against
   the OpenShell and Fullsend design records.
-- [ ] Replace broad custom policy with the narrowest policy that passes.
+- [x] Replace broad custom policy with the narrowest policy that passes.
+  *2026-09-28:* the broad custom policy
+  (`deploy/fullsend/policies/github-emulator-readonly.yaml`, one network
+  policy for everything) is off the conformance path; it survives only in the
+  legacy direct-token smoke. What runs is upstream's `policies/base.yaml`
+  unmodified plus the per-stage provider profiles the harness names, so
+  triage carries `fullsend-vertex-ai` and `fullsend-github-ro` only and the
+  write-capable `fullsend-github-code` profile is confined to code and fix.
+  That is the narrowest set decision 3 allows: anything narrower would be a
+  local fork of upstream profiles beyond the host substitution. Evidence: run
+  1746's sandbox log, `denied_action_count=0` in every activity summary, so
+  nothing narrower is needed to pass and nothing the stage used was outside
+  what it names. Written into `docs/fullsend-integration.md`, agent sandbox.
 - [x] Verify local CA, `.local` routing, and TLS from both the runner and the
   sandbox.
 - [x] Write the compatibility profile as a separate document containing only
@@ -1791,10 +1803,20 @@ fallback. Always deliver through a pull request so a maintainer reviews the
 generated files before they activate. No direct-commit mode from the normal
 action.
 
-- [ ] Define who may start onboarding from the dashboard.
+- [x] Define who may start onboarding from the dashboard. *2026-09-28:*
+  [`docs/fullsend-onboarding-authorization.md`](../../docs/fullsend-onboarding-authorization.md).
+  Today: anyone who can reach the dashboard, which on this single-host stack
+  is the operator; the gate is the deployment, stated as such. What it should
+  become when the dashboard is exposed: proxy authentication, then a
+  repository-role check in the spirit of Fullsend ADR 0054, then the caller
+  recorded in the result.
 - [x] Add a backend operation that runs the real `fullsend` CLI from the
   canonical checkout and captures the command, exit code, and output.
-- [ ] Provide the short-lived App credential to that operation.
+- [ ] Provide the short-lived App credential to that operation. *Still open,
+  now with a concrete path (2026-09-28):* the emulator issues App private
+  keys and mints one-hour installation tokens from a JWT, so this is a
+  separate onboarding App with write permissions, its key in a Secret, and a
+  per-operation mint; specified in the onboarding authorization page.
 - [x] Return the PR URL, branch, commit, and any failure to the dashboard
   without the credential.
 - [x] Handle repos that already have a scaffold or an open scaffold PR
@@ -4106,3 +4128,17 @@ it, and record the cause as an upstream improvement rather than reshape the
 scenario around it. The cause is in `fullsend-ai/agents`: the triage rule
 counts only open issues as duplicates, while the forge skills it is told to
 use list issues with `--state all`. See the open-items task.
+
+### 2026-09-28 the two remaining write-ups
+
+Work package 4's policy item closes as a finding rather than a change: the
+conformance path already runs the narrowest policy decision 3 permits, which
+is upstream's base policy and per-stage profiles, and the broad custom
+policy is confined to the legacy smoke. Work package 7's "who may start
+onboarding" is answered in `docs/fullsend-onboarding-authorization.md` as a
+deployment gate, with the three steps that would turn it into an
+authorization decision once the dashboard is exposed. Writing it found that
+the compatibility profile's reason for the credential fallback, "this
+deployment holds no App private key", is stale: the emulator has the whole
+App token flow, so the remaining WP7 item is a build with a known shape,
+not a blocked one. Both documents are linked from the index.

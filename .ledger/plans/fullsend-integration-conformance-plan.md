@@ -1514,9 +1514,15 @@ called workflow could not be resolved. Nothing past that boundary ran.
   unchanged. B7 is no longer blocked on choosing `repos install` as a
   workaround; the dashboard button can run `github setup` as the reviewer
   required.
-- [ ] **[Track F] F2. The CLI rejects a non-HTTPS `--mint-url` at install time**, a check
+- [x] **[Track F] F2. The CLI rejects a non-HTTPS `--mint-url` at install time**, a check
   separate from the runtime patch. It reinforces the work package 3 item to
-  serve the conformance mint over TLS.
+  serve the conformance mint over TLS. *Closed 2026-09-28: not a gap but
+  Fullsend's own guard, satisfied since the mint went TLS-only; the
+  onboarding button installs against the HTTPS URL and the repository
+  variable and config carry it. One stale fallback remained: the runner
+  deployment's `FULLSEND_MINT_URL` still named the plain-HTTP address, which
+  the mint no longer answers (probed: `http` 000, `https` 200). Corrected,
+  with the dashboard's local default.*
 - [x] **[Track F] F3. The agent action resolves releases against
   `api.github.com` by name.** `action.yml` hardcodes that host in four calls -
   latest release, annotated tag dereference, tag listing, and the release

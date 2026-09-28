@@ -30,7 +30,7 @@ decisions or separate work.
 
 - `fullsend-github-code` in the profile-staleness precondition.
 - The seeder triggering the agents mirror's CI on every push.
-- Track F2: the CLI rejects a non-HTTPS `--mint-url` at install time.
+- ~~Track F2: the CLI rejects a non-HTTPS `--mint-url` at install time.~~ Closed 2026-09-28: satisfied by the TLS-only mint; the runner's stale plain-HTTP fallback corrected.
 - The narrowest sandbox policy that passes; who may start onboarding and how it gets its App credential. (Work package 3 is closed: the mint trust write-up on 2026-09-27 and the per-run `identity.json` on 2026-09-28.)
 - Scenario question from run 1743: repeated conformance issues can be triaged as duplicates of the closed earlier copies. *Decided 2026-09-28: accept it; not a Breadboard fix.* The cause is upstream: in `fullsend-ai/agents`, `agents/triage.md` defines a duplicate as an existing *open* issue, while the `github-forge` and `issue-labels` skills it is told to use list issues with `--state all`, so the model is shown closed issues and then told they do not count. The conformance check keeps asserting only that a label was applied.
 

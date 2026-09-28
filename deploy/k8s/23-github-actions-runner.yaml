@@ -66,8 +66,12 @@ spec:
             # one host and nothing else; see patch 0006.
             - name: FULLSEND_ALLOW_PRIVATE_FORGE
               value: "1"
+            # A fallback for CLI commands run outside a workflow (minttoken,
+            # reconcilestatus); workflows take vars.FULLSEND_MINT_URL and the
+            # config's mint_url. The mint serves TLS only, and Fullsend
+            # refuses a non-HTTPS mint URL at install (conformance plan F2).
             - name: FULLSEND_MINT_URL
-              value: http://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080
+              value: https://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080
             - name: CLAUDE_CODE_USE_VERTEX
               valueFrom:
                 secretKeyRef:

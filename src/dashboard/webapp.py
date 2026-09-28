@@ -130,8 +130,8 @@ def _system_status() -> dict[str, object]:
         },
         {
             "name": "Fullsend Mint",
-            "url": os.getenv("FULLSEND_MINT_URL", "http://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080").rstrip("/"),
-            "check_url": f"{os.getenv('FULLSEND_MINT_URL', 'http://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080').rstrip('/')}/health",
+            "url": os.getenv("FULLSEND_MINT_URL", "https://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080").rstrip("/"),
+            "check_url": f"{os.getenv('FULLSEND_MINT_URL', 'https://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080').rstrip('/')}/health",
         },
     ]
     with ThreadPoolExecutor(max_workers=len(services)) as executor:

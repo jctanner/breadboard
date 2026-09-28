@@ -4093,6 +4093,8 @@ saw no exchange at all, hence run 1743 failing the new check. And run 1743's
 triage labelled the issue `duplicate`, citing the previous conformance issue
 by number: the scenario reuses one issue text and the reset only closes the
 earlier copies, so a model that reads closed issues may call the next one a
-duplicate. The check accepts any label today; whether the scenario should
-vary its text or the reset should hide the earlier copies is a scenario
-question, left open.
+duplicate. The check accepts any label today. Decided 2026-09-28: accept
+it, and record the cause as an upstream improvement rather than reshape the
+scenario around it. The cause is in `fullsend-ai/agents`: the triage rule
+counts only open issues as duplicates, while the forge skills it is told to
+use list issues with `--state all`. See the open-items task.

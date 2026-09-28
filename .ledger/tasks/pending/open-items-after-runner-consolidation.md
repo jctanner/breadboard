@@ -32,7 +32,14 @@ decisions or separate work.
 - The seeder triggering the agents mirror's CI on every push.
 - Track F2: the CLI rejects a non-HTTPS `--mint-url` at install time.
 - The narrowest sandbox policy that passes; who may start onboarding and how it gets its App credential. (Work package 3 is closed: the mint trust write-up on 2026-09-27 and the per-run `identity.json` on 2026-09-28.)
-- Scenario question from run 1743: repeated conformance issues can be triaged as duplicates of the closed earlier copies. Vary the issue text, hide the earlier copies on reset, or accept it. All at their checkboxes in `fullsend-integration-conformance-plan.md`. (MLflow and Observatory telemetry was taken out of the plan on 2026-09-27.)
+- Scenario question from run 1743: repeated conformance issues can be triaged as duplicates of the closed earlier copies. *Decided 2026-09-28: accept it; not a Breadboard fix.* The cause is upstream: in `fullsend-ai/agents`, `agents/triage.md` defines a duplicate as an existing *open* issue, while the `github-forge` and `issue-labels` skills it is told to use list issues with `--state all`, so the model is shown closed issues and then told they do not count. The conformance check keeps asserting only that a label was applied.
+
+## Upstream improvements to record, not build here
+
+- `fullsend-ai/agents`: reconcile the duplicate rule (open issues only, `agents/triage.md` step 2b) with the forge skills' `gh issue list --state all` commands. Evidence: Breadboard conformance run 1743 on the emulator, haiku, `duplicate` of a closed issue with an identical body; the runs either side answered `sufficient`.
+- `fullsend-ai/fullsend`: the dispatch routes every `issues.edited` to triage without reading `changes`; ADR 0002 says title or body only.
+- `fullsend-ai/fullsend`: patch 0003 (the install action's hardcoded github.com clone) and patch 0013 (forge-derived default `allowed_remote_resources`), both written to be sent as-is.
+ All at their checkboxes in `fullsend-integration-conformance-plan.md`. (MLflow and Observatory telemetry was taken out of the plan on 2026-09-27.)
 
 ## Harness-dispatch CLI install (found 2026-09-27, G48–G51 in the conformance plan)
 

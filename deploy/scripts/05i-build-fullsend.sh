@@ -95,14 +95,17 @@ for patch in "${FULLSEND_PATCHES[@]}"; do
 done
 (cd "${FULLSEND_BUILD_ROOT}" && GOTOOLCHAIN=auto go build -buildvcs=false -trimpath -ldflags '-s -w' -o "${BUILD_CONTEXT}/fullsend" ./cmd/fullsend)
 
-# Keep a copy outside the throwaway build context. The conformance seed commits
-# this binary into the target repository as Fullsend's vendored install, so the
-# binary a run executes is provably the same one this image ships rather than a
-# second build that merely resembles it.
+# Keep a copy outside the throwaway build context. The conformance seed
+# publishes this binary as the release asset on the emulator's Fullsend mirror
+# (seed-fullsend-release.py), which both the agent action and the dispatch
+# job's install action download, so the binary a run executes is provably the
+# same one this image ships rather than a second build that merely resembles
+# it. The directory name predates the release path, when the binary was
+# committed into the target repository as a vendored install.
 VENDOR_DIR="${PROJECT_ROOT}/deploy/fullsend/vendor"
 mkdir -p "${VENDOR_DIR}"
 install -m 0755 "${BUILD_CONTEXT}/fullsend" "${VENDOR_DIR}/fullsend"
-echo "==> Published vendorable binary to deploy/fullsend/vendor/fullsend"
+echo "==> Published release binary to deploy/fullsend/vendor/fullsend"
 
 # Fullsend pins the OpenShell version it expects, and its sandbox code passes
 # arguments that only newer builds accept. Building whatever the checkout

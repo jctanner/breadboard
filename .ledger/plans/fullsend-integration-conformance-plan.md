@@ -3995,3 +3995,22 @@ evaluated the condition on its own terms, so run 1717's cache save,
 guarded only by `cache-hit != 'true'`, ran after the copy before it had
 failed and cached an empty directory. Conditions now imply `success()`
 unless they name `always()`, `success()`, `failure()` or `cancelled()`.
+
+### 2026-09-27 the vendored-binary seeder is retired
+
+`seed-vendored-binary.py` existed because the emulator had no release
+assets, so the agent action's second install method always missed and every
+job compiled the CLI. With release v0.0.1 on the mirror that reason is gone:
+the seeder is deleted, the seed script no longer runs it, and the committed
+binary is removed from the conformance target (triage-target 58b212a). The
+agent action now takes the same path the dispatch job does. Run 1732, green,
+triage job log: `SHA 0cee1da2… maps to release tag v0.0.1`, `Found release
+v0.0.1; downloading pre-built binary`, `Downloading from:
+https://github.local/fullsend-ai/fullsend/releases/download/v0.0.1/fullsend_0.0.1_linux_amd64.tar.gz`,
+which is the browser download route the emulator now serves at the root.
+The target is an ordinary layered install again, with no binary in its
+tree. Its git history still holds the earlier binary commits; a recreated
+target would not.
+
+`deploy/fullsend/vendor/` keeps its name: it is where the image build
+publishes the binary the release seeder uploads.

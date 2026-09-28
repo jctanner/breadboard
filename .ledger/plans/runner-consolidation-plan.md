@@ -221,8 +221,11 @@ cannot do.
      spike.
   5. The scaffold carries no vendored CLI, so the agent action fell
      through to building from source, which the runner cannot do (`make`
-     absent, egress closed). The vendored-binary seeder puts the local
-     build at `.fullsend/bin/fullsend`, as the conformance target has.
+     absent, egress closed). The vendored-binary seeder put the local
+     build at `.fullsend/bin/fullsend`, as the conformance target had.
+     (Superseded 2026-09-27: the mirror now carries release v0.0.1 with
+     the CLI as its asset, and the agent action installs from it in any
+     repository; the seeder is retired.)
 
   So "onboarded through the button" is true of the GitHub side the CLI
   owns - shim workflow, config, three variables, two secrets, the scaffold

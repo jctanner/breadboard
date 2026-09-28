@@ -38,10 +38,6 @@ python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-triage-auto-code-off.py"
 # without it. This is what the conformance run actually asserts.
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-behaviour-script.py"
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-conformance-actors.py" > /dev/null
-# The agent action installs the CLI from the workspace, a release, or a source
-# build, in that order. Seeding the first stops every run falling through to the
-# third and compiling the CLI it already has.
-python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-vendored-binary.py"
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-github-app.py"
 # The trust-boundary check breakpoint B4 asks for, plus the private repository
 # it probes against.

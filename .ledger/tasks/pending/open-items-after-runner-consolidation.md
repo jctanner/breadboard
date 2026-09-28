@@ -24,7 +24,7 @@ decisions or separate work.
 
 - **Issue edits trigger triage.** The shim listens to `issues: edited` and the router sends them to triage; thirty edits on 2026-09-27 cost $0.92 in haiku triages. Decide whether to drop `edited` from the shim for this stack or accept it as upstream's intent.
 - **`TRIAGE_AUTO_CODE` on for the conformance path.** *Done 2026-09-27:* off on the conformance target through the per-repository harness override Fullsend ADR 0080 names - `.fullsend/triage.yaml` composed on the mirror's `harness/triage.yaml`, pinned by commit and content hash, referenced from `config.yaml`'s `agents` list. Written by `seed-triage-auto-code-off.py`, which the seed script runs, so a reset restores it. Configuration, not a substitution; recorded in the plan's glossary.
-- **The onboarding button and the two local seeders.** The button covers what the CLI owns; the agents-mirror allowlist and the vendored binary still run by hand per repository (`seed-config-allowlist.py`, `seed-vendored-binary.py`, both taking `FULLSEND_SEED_ORG`/`REPO`). Decide whether the button runs them (runner consolidation plan, phase 2 status).
+- **The onboarding button and the two local seeders.** The button covers what the CLI owns; the agents-mirror allowlist still runs by hand per repository (`seed-config-allowlist.py`, taking `FULLSEND_SEED_ORG`/`REPO`; the vendored-binary seeder is retired, the release on the mirror serves every repository). Decide whether the button runs them (runner consolidation plan, phase 2 status).
 
 ## Conformance plan items open before today
 
@@ -39,5 +39,5 @@ decisions or separate work.
 - [x] G49 composite conditions see `inputs.*`; G50 `runner.*` left to the runner (github-emulator e02ee86).
 - [x] G51 release path: emulator release assets (github-emulator 215183a) and `seed-fullsend-release.py` on the mirror; run 1727 green.
 - [x] G52 step conditions imply `success()` (github-emulator 215183a).
-- [ ] Retire `seed-vendored-binary.py` now that the agent action could install from the release too; the workspace binary is checked first, so today it still wins.
+- [x] Retired `seed-vendored-binary.py` (2026-09-27): the binary is removed from the target and the agent action installs from release v0.0.1.
 - [ ] Push github-emulator (6547571, e02ee86, 215183a) and breadboard.

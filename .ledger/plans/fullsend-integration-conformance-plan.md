@@ -1666,8 +1666,9 @@ Feeds breakpoints B3 (permission check) and B4 (mint exchange).
 - [x] Prove a role credential cannot cross repo or role boundaries via
   environment, mounts, logs, or post-script output.
 - [x] Remove direct `FULLSEND_ROLE_TOKENS` use from the conformance path.
-- [ ] Record actor, repo, role, workflow, mint exchange, and downstream
-  identity in evidence without secret values.
+- [x] Record actor, repo, role, workflow, mint exchange, and downstream
+  identity in evidence without secret values. *2026-09-28:*
+  `identity.json` per conformance run, asserted on; run 1746.
 
 **Done when:** mint and dispatch tests show the trust model works, permission
 failures stop the run, and no long-lived token passes through the sandbox.
@@ -3410,6 +3411,7 @@ the optimism this plan keeps having to correct:
   it. (Written 2026-09-27: `docs/fullsend-mint-trust.md`.)
 - *WP3 record actor, repo, role, workflow, mint exchange and downstream calls.*
   The trust check prints these for one run. There is no durable record.
+  (Done 2026-09-28: `identity.json` in every conformance evidence folder.)
 - *WP4 collect examples from the review and code harnesses.* Only triage has
   been exercised.
 - *WP4 compatibility profile as a separate document.* The patch set serves
@@ -4063,3 +4065,34 @@ actor, repository, role, workflow, exchange, and downstream identity, stays
 open; the page lists where each is recorded today, across three places.
 The stale paragraph in `docs/fullsend-integration.md` that still described
 the opaque `FULLSEND_DEV_OIDC_TOKEN` broker is replaced.
+
+### 2026-09-28 the per-run identity record
+
+Work package 3 is closed. `24-run-conformance-triage.sh` now writes
+`identity.json` beside the other evidence: the run's workflow path and the
+reusable workflows it called, the trigger's author and the run actor, each
+job that ran with its runner, permissions, and mint exchanges (the
+mint-token step's request and grant, and the post-script re-mints), and the
+downstream comment authors, label actors, and state changes. Sources are the
+run, jobs, issue, comments, and issue-events APIs plus every ran job's log,
+parsed by exact line shape; a token-shaped value anywhere in the record
+aborts the write. The check asserts the triage job minted the triage role
+for the target repository, that only the triage bot applied labels, and that
+the run names the reusable dispatch. Run 1746 is the first green run with
+the record and the assertions.
+
+Two emulator additions made it possible from the API rather than from
+logs: the run JSON carries GitHub's `path` and `referenced_workflows`, the
+latter from the per-job `workflow_ref` recorded for G46 and computed on the
+single-run endpoint only (github-emulator 44d9e37).
+
+Two observations from the runs. The mint-token step sends an empty `level`
+on the triage path (the reusable triage workflow passes none), which the
+development mint ignores anyway; the first draft's parser required one and
+saw no exchange at all, hence run 1743 failing the new check. And run 1743's
+triage labelled the issue `duplicate`, citing the previous conformance issue
+by number: the scenario reuses one issue text and the reset only closes the
+earlier copies, so a model that reads closed issues may call the next one a
+duplicate. The check accepts any label today; whether the scenario should
+vary its text or the reset should hide the earlier copies is a scenario
+question, left open.

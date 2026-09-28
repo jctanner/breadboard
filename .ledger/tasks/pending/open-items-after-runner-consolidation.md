@@ -31,7 +31,8 @@ decisions or separate work.
 - `fullsend-github-code` in the profile-staleness precondition.
 - The seeder triggering the agents mirror's CI on every push.
 - Track F2: the CLI rejects a non-HTTPS `--mint-url` at install time.
-- Recording actor, repo, role, workflow, mint exchange and downstream in one durable per-run record (the mint trust write-up is done: `docs/fullsend-mint-trust.md`, 2026-09-27); the narrowest sandbox policy that passes; who may start onboarding and how it gets its App credential. All at their checkboxes in `fullsend-integration-conformance-plan.md`. (MLflow and Observatory telemetry was taken out of the plan on 2026-09-27.)
+- The narrowest sandbox policy that passes; who may start onboarding and how it gets its App credential. (Work package 3 is closed: the mint trust write-up on 2026-09-27 and the per-run `identity.json` on 2026-09-28.)
+- Scenario question from run 1743: repeated conformance issues can be triaged as duplicates of the closed earlier copies. Vary the issue text, hide the earlier copies on reset, or accept it. All at their checkboxes in `fullsend-integration-conformance-plan.md`. (MLflow and Observatory telemetry was taken out of the plan on 2026-09-27.)
 
 ## Harness-dispatch CLI install (found 2026-09-27, G48–G51 in the conformance plan)
 

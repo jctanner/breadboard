@@ -132,10 +132,20 @@ they are, but in three different places rather than one record:
 | Mint exchange outcome | The step's exit status and the `Granted scope` line; the trust check's assertions | Yes. The mint itself keeps no record |
 | Downstream identity | Comments and labels are authored by the role's bot user (`fullsend-triage[bot]` in the conformance summary's `comment authors`); commits and pull requests by `fullsend-code[bot]` | Yes |
 
-The trust-boundary workflow is the only place the assertion's own claims are
-printed, because ordinary runs mask the token before anything can decode it.
-A single durable record per run, collected by the conformance script rather
-than reconstructed from logs, remains the open half of that work item.
+The conformance script gathers these into one record per run,
+`var/conformance/run-<id>/identity.json` (schema
+`breadboard.fullsend.identity/1`): the run's workflow path and the reusable
+workflows it called (from the run API's `path` and `referenced_workflows`),
+the trigger's author, each job's runner, permissions, and mint exchanges
+(role asked, level, repositories requested and granted, permissions granted,
+and the post-script re-mints with their expiry), and the downstream comment
+authors and label actors. The exchange lines are parsed by exact shape from
+the step logs, and the record is refused if anything token-shaped would
+reach it. The script asserts on it: the triage job's exchange granted the
+triage role on the target repository, every label was applied by the triage
+bot, and the run names the reusable dispatch. The trust-boundary workflow
+remains the only place the assertion's own claims are printed, because
+ordinary runs mask the token before anything can decode it.
 
 ## Confinement to the legacy fixtures
 

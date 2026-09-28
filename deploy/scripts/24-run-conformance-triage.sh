@@ -233,8 +233,18 @@ JOB_ID="${JOB_ID:-}"; RUNNER_NAME="${RUNNER_NAME:-}"
 [ -n "${JOB_ID}" ] && api "${API}/actions/jobs/${JOB_ID}/logs" > "${EVIDENCE}/triage-job.log" || true
 api "${API}/issues/${ISSUE}" > "${EVIDENCE}/issue.json"
 api "${API}/issues/${ISSUE}/comments" > "${EVIDENCE}/issue-comments.json"
+api "${API}/issues/${ISSUE}/events" > "${EVIDENCE}/issue-events.json"
 api "${API}/actions/runs/${RUN_ID}" > "${EVIDENCE}/run.json"
+api "${API}/actions/runs/${RUN_ID}/jobs" > "${EVIDENCE}/jobs.json"
 api "${API}/actions/runs/${RUN_ID}/artifacts" > "${EVIDENCE}/artifacts.json"
+# Every job that ran, so the identity record can read each mint exchange.
+mkdir -p "${EVIDENCE}/jobs"
+for id in $(python3 -c '
+import json, sys
+for j in json.load(open(sys.argv[1])).get("jobs", []):
+    if j.get("conclusion") != "skipped": print(j["id"])' "${EVIDENCE}/jobs.json"); do
+  api "${API}/actions/jobs/${id}/logs" > "${EVIDENCE}/jobs/${id}.log" || true
+done
 
 ARTIFACT_ID="$(python3 -c '
 import json, sys
@@ -244,6 +254,89 @@ if [ -n "${ARTIFACT_ID}" ]; then
   api "${API}/actions/artifacts/${ARTIFACT_ID}/zip" > "${EVIDENCE}/evidence.zip"
   api "${API}/actions/artifacts/${ARTIFACT_ID}" > "${EVIDENCE}/artifact-index.json"
 fi
+
+# --- Identity record --------------------------------------------------------
+# One durable record per run of who and what acted, without secret values:
+# the event actor, the repository, the workflow and the reusable workflows it
+# called, each job's runner and mint exchange (role asked, scope granted), and
+# the identities that wrote downstream (comments, labels). Until now these
+# were spread over the OIDC claims nobody could decode, masked step logs, and
+# the issue API; docs/fullsend-mint-trust.md says where each lived. The
+# exchange lines are parsed by exact shape from the step logs, and the record
+# is refused if anything token-shaped reaches it.
+python3 - "${EVIDENCE}" "${REPO}" "${ISSUE}" <<'PY'
+import json, re, sys, pathlib
+E = pathlib.Path(sys.argv[1]); target, issue_number = sys.argv[2], int(sys.argv[3])
+load = lambda name: json.loads((E / name).read_text())
+run, jobs, issue = load("run.json"), load("jobs.json").get("jobs", []), load("issue.json")
+comments, events = load("issue-comments.json"), load("issue-events.json")
+
+REQUEST = re.compile(r"Requesting token: role=(\S+) level=(\S*) repos=(\S*)")
+GRANTED = re.compile(r"Granted scope: repos=(\S*) permissions=(\S*) repo_selection=(\S*)")
+REMINT = re.compile(r"Minting agent token \(role: ([\w-]+)\)")
+MINTED = re.compile(r"Agent token minted \(expires (\S+)\)")
+
+def exchanges(text):
+    """Every mint exchange a job log shows, in order, secrets never read."""
+    found = []
+    for line in text.splitlines():
+        m = REQUEST.search(line)
+        if m:
+            found.append({"where": "mint-token step", "role": m.group(1), "level": m.group(2),
+                          "requested_repos": [r for r in m.group(3).split(",") if r], "outcome": "requested"})
+            continue
+        m = GRANTED.search(line)
+        if m and found and found[-1]["outcome"] == "requested":
+            found[-1].update({"outcome": "granted",
+                              "granted_repos": [r for r in m.group(1).split(",") if r],
+                              "granted_permissions": dict(p.split("=", 1) for p in m.group(2).split(",") if "=" in p),
+                              "repository_selection": m.group(3) or None})
+            continue
+        m = REMINT.search(line)
+        if m:
+            found.append({"where": "post-script", "role": m.group(1), "outcome": "requested"})
+            continue
+        m = MINTED.search(line)
+        if m and found and found[-1]["where"] == "post-script" and found[-1]["outcome"] == "requested":
+            found[-1].update({"outcome": "granted", "expires_at": m.group(1)})
+    return found
+
+record_jobs = []
+for j in jobs:
+    if j.get("conclusion") == "skipped":
+        continue
+    log = E / "jobs" / f"{j['id']}.log"
+    text = log.read_text(errors="replace") if log.exists() else ""
+    record_jobs.append({
+        "id": j["id"], "name": j["name"], "conclusion": j.get("conclusion"),
+        "runner": j.get("runner_name"), "permissions": j.get("permissions") or {},
+        "mint_exchanges": exchanges(text),
+    })
+
+record = {
+    "schema": "breadboard.fullsend.identity/1",
+    "run": {"id": run["id"], "event": run.get("event"), "workflow": run.get("name"),
+            "path": run.get("path"), "referenced_workflows": run.get("referenced_workflows") or [],
+            "head_sha": run.get("head_sha"), "conclusion": run.get("conclusion"),
+            "actor": (run.get("actor") or {}).get("login")},
+    "repository": target,
+    "trigger": {"issue": issue_number, "author": (issue.get("user") or {}).get("login")},
+    "jobs": record_jobs,
+    "downstream": {
+        "comments": [{"id": c["id"], "author": c["user"]["login"]} for c in comments],
+        "labels": [{"event": e["event"], "label": (e.get("label") or {}).get("name"),
+                    "actor": (e.get("actor") or {}).get("login")}
+                   for e in events if e.get("event") in ("labeled", "unlabeled")],
+        "state_changes": [{"event": e["event"], "actor": (e.get("actor") or {}).get("login")}
+                          for e in events if e.get("event") in ("closed", "reopened", "assigned")],
+    },
+}
+text = json.dumps(record, indent=2)
+leak = re.search(r"gh[pousr]_[A-Za-z0-9]{8,}|github_pat_[A-Za-z0-9_]{8,}|eyJ[A-Za-z0-9_-]{20,}\.", text)
+if leak:
+    sys.exit(f"identity record would contain a token-shaped value ({leak.group(0)[:6]}...); not written")
+(E / "identity.json").write_text(text + "\n")
+PY
 
 # Revisions, so a failure can be tied to the source that produced it.
 python3 - "${PROJECT_ROOT}" "${EVIDENCE}" "${RUN_ID}" "${JOB_ID}" "${ISSUE}" "${CONCLUSION}" "${RUNNER_NAME}" <<'PY'
@@ -316,6 +409,26 @@ if wrong:
     # token outranked the minted one. Nothing in the log said so.
     problems.append(f"comments written by {sorted(set(wrong))}, expected only {expect_author!r}")
 
+identity = json.loads((E / "identity.json").read_text()) if (E / "identity.json").exists() else None
+if identity is None:
+    problems.append("no identity record was written")
+else:
+    triage = next((j for j in identity["jobs"] if j["name"] == "Triage"), None)
+    granted = [x for x in (triage or {}).get("mint_exchanges", []) if x["where"] == "mint-token step" and x["outcome"] == "granted"]
+    if not granted:
+        problems.append("the triage job shows no completed mint exchange")
+    else:
+        bare = identity["repository"].split("/", 1)[1]
+        if granted[0]["role"] != "triage":
+            problems.append(f"the triage job minted role {granted[0]['role']!r}")
+        if not any(r in (bare, identity["repository"]) for r in granted[0]["granted_repos"]):
+            problems.append(f"the mint granted {granted[0]['granted_repos']}, not the target repository")
+    label_actors = {l["actor"] for l in identity["downstream"]["labels"]}
+    if label_actors - {expect_author}:
+        problems.append(f"labels applied by {sorted(label_actors - {expect_author})}, expected only {expect_author!r}")
+    if not identity["run"]["referenced_workflows"]:
+        problems.append("the run names no referenced workflow; the reusable dispatch should appear")
+
 log = E / "triage-job.log"
 if log.exists():
     text = log.read_text(errors="replace")
@@ -329,6 +442,12 @@ print(f"  runner          {runner}")
 print(f"  artifact        {arts.get('total_count', 0)} ({(E / 'evidence.zip').stat().st_size if (E / 'evidence.zip').exists() else 0} bytes)")
 print(f"  labels          {[l['name'] for l in issue.get('labels', [])]}")
 print(f"  comment authors {sorted(set(authors))}")
+if identity:
+    ex = next((x for j in identity["jobs"] if j["name"] == "Triage" for x in j["mint_exchanges"] if x["outcome"] == "granted"), {})
+    print(f"  identity        actor={identity['trigger']['author']} run-actor={identity['run']['actor']} "
+          f"mint={ex.get('role')}->{','.join(ex.get('granted_repos', []))} "
+          f"labels-by={sorted({l['actor'] for l in identity['downstream']['labels']})} "
+          f"via={[w['path'].rsplit('/', 1)[-1] for w in identity['run']['referenced_workflows']]}")
 
 if problems:
     print("\nCONFORMANCE FAIL:", file=sys.stderr)

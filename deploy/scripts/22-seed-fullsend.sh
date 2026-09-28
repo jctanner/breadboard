@@ -39,6 +39,10 @@ python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-triage-auto-code-off.py"
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-behaviour-script.py"
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-conformance-actors.py" > /dev/null
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-github-app.py"
+# The App the dashboard onboards repositories with: its key goes to a Secret
+# the dashboard mounts, and each onboarding mints a one-hour installation
+# token scoped to the one repository (conformance plan, work package 7).
+python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-onboarding-app.py"
 # The trust-boundary check breakpoint B4 asks for, plus the private repository
 # it probes against.
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-trust-check.py"

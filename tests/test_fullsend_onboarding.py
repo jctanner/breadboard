@@ -40,6 +40,7 @@ def _credential(monkeypatch):
     monkeypatch.setenv("GITHUB_EMULATOR_TOKEN", TOKEN)
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
     monkeypatch.delenv("FULLSEND_ONBOARD_APP_TOKEN", raising=False)
+    monkeypatch.delenv("FULLSEND_ONBOARD_APP_DIR", raising=False)
     monkeypatch.setattr(MODULE, "find_open_scaffold_pr", lambda *a, **k: None)
     monkeypatch.setattr(MODULE, "verify_credential", lambda *a, **k: None)
 
@@ -191,3 +192,84 @@ def test_no_runner_image_means_the_cli_default(monkeypatch):
     capture: dict = {}
     MODULE.onboard_repository("acme/widget", runner=_run(capture=capture))
     assert "FULLSEND_RUNNER_IMAGE" not in capture["env"]
+
+
+# --- the App installation token ------------------------------------------------
+#
+# The plan's rule is a short-lived App installation token. The seeded
+# onboarding App's key is mounted as files; a ten-minute JWT signed with it is
+# exchanged at the forge for a one-hour token scoped to the one repository.
+
+def _seed_app(tmp_path, monkeypatch):
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    pem = key.private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.TraditionalOpenSSL, serialization.NoEncryption()
+    ).decode()
+    (tmp_path / "app-id").write_text("2001\n")
+    (tmp_path / "installation-id").write_text("7\n")
+    (tmp_path / "private-key").write_text(pem)
+    monkeypatch.setenv("FULLSEND_ONBOARD_APP_DIR", str(tmp_path))
+    return key.public_key()
+
+
+class _Response:
+    def __init__(self, status_code, payload, text=""):
+        self.status_code, self._payload, self.text = status_code, payload, text
+
+    def json(self):
+        return self._payload
+
+
+def test_a_seeded_app_mints_a_token_for_the_one_repository(tmp_path, monkeypatch):
+    import jwt
+
+    public_key = _seed_app(tmp_path, monkeypatch)
+    calls = {}
+
+    def fake_post(url, headers=None, json=None, timeout=None, verify=None):
+        calls.update(url=url, headers=headers, json=json)
+        return _Response(201, {"token": "ghs_mintedforthisrun", "expires_at": "later"})
+
+    monkeypatch.setattr(MODULE.requests, "post", fake_post)
+    capture = {}
+    result = MODULE.onboard_repository("acme/widget", runner=_run(capture=capture))
+    assert result.status == "created"
+    assert "app-installation" in result.message
+    assert capture["env"]["GH_TOKEN"] == "ghs_mintedforthisrun"
+    assert calls["url"].endswith("/app/installations/7/access_tokens")
+    assert calls["json"] == {"repositories": ["widget"]}
+    assertion = calls["headers"]["Authorization"].split(" ", 1)[1]
+    claims = jwt.decode(assertion, public_key, algorithms=["RS256"])
+    assert claims["iss"] == "2001"
+    assert claims["exp"] - claims["iat"] == 600
+    assert "ghs_mintedforthisrun" not in result.output
+
+
+def test_a_seeded_app_that_cannot_mint_is_an_error_not_a_fallback(tmp_path, monkeypatch):
+    _seed_app(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        MODULE.requests, "post",
+        lambda *a, **k: _Response(422, {}, text="requested repository is not installed"),
+    )
+    with pytest.raises(MODULE.OnboardingError) as refused:
+        MODULE.onboard_repository("acme/widget", runner=_run())
+    assert "not installed" in str(refused.value)
+    assert "emulator-admin-fallback" not in str(refused.value)
+
+
+def test_an_incomplete_app_directory_means_no_app(tmp_path, monkeypatch):
+    (tmp_path / "app-id").write_text("2001")
+    monkeypatch.setenv("FULLSEND_ONBOARD_APP_DIR", str(tmp_path))
+    token, kind = MODULE.resolve_credential(None, "acme/widget")
+    assert kind == "emulator-admin-fallback"
+    assert token == TOKEN
+
+
+def test_a_ready_made_app_token_still_wins(tmp_path, monkeypatch):
+    _seed_app(tmp_path, monkeypatch)
+    monkeypatch.setenv("FULLSEND_ONBOARD_APP_TOKEN", "ghs_handedin")
+    monkeypatch.setattr(MODULE.requests, "post", lambda *a, **k: (_ for _ in ()).throw(AssertionError("no mint")))
+    assert MODULE.resolve_credential(None, "acme/widget") == ("ghs_handedin", "app-installation")

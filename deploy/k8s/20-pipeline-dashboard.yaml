@@ -115,6 +115,15 @@ spec:
         # named so nobody reads it as one.
         - name: FULLSEND_GCP_WIF_PROVIDER
           value: projects/000/locations/global/workloadIdentityPools/not-used-here/providers/not-used-here
+        # The onboarding App: id, installation id and private key as files in
+        # a mounted Secret written by seed-onboarding-app.py. Files rather
+        # than environment values so a stack seeded after the pod started
+        # still finds the App. Each onboarding signs a ten-minute JWT with the
+        # key and exchanges it for a one-hour installation token scoped to the
+        # one repository; the admin token below is the labelled fallback for a
+        # stack that has no App.
+        - name: FULLSEND_ONBOARD_APP_DIR
+          value: /var/run/secrets/fullsend-onboarding-app
         # The forge credential used to onboard a repository to Fullsend.
         # Deliberately separate from GITHUB_TOKEN, which is a different
         # credential for a different forge: handing that one to the CLI
@@ -162,6 +171,10 @@ spec:
         - name: gcp-credentials
           mountPath: /home/pipelineagent/.config/gcloud
           readOnly: true
+        # The onboarding App's id, installation id and private key.
+        - name: fullsend-onboarding-app
+          mountPath: /var/run/secrets/fullsend-onboarding-app
+          readOnly: true
 
         resources:
           requests:
@@ -208,4 +221,10 @@ spec:
       - name: gcp-credentials
         secret:
           secretName: gcp-credentials
+          optional: true
+      # Optional: a stack seeded without the App falls back to the admin
+      # token and says so.
+      - name: fullsend-onboarding-app
+        secret:
+          secretName: fullsend-onboarding-app
           optional: true

@@ -190,20 +190,23 @@ rather than leave a reader to infer it from a manifest.
 
 ### 7b. The dashboard onboarding credential
 
-Separate path, separate deviation. `fullsend github setup` run from the
-dashboard needs a credential that can write workflows and secrets to a
-repository. The production answer is a short-lived App installation token; this
-deployment does not wire one up, so it falls back to the emulator admin
-token. (The emulator can issue the App's private key and mint installation
-tokens from a JWT; the path to use it is written down in
-[fullsend-onboarding-authorization.md](fullsend-onboarding-authorization.md).)
+Separate path, and since 2026-09-28 no longer a deviation. `fullsend github
+setup` run from the dashboard needs a credential that can write workflows and
+secrets to a repository. The production answer is a short-lived App
+installation token, and that is what runs: a seeded onboarding App whose
+private key the dashboard mounts from a Secret, a ten-minute JWT signed per
+operation, exchanged at the emulator for a one-hour token scoped to the one
+repository. The emulator issues App keys and mints installation tokens from a
+JWT, and grants an installed App's bot the repository access its installation
+carries. Details in
+[fullsend-onboarding-authorization.md](fullsend-onboarding-authorization.md).
 
-This one *is* labelled: `src/dashboard/fullsend_onboarding.py` returns
+The admin-token fallback remains for a stack seeded without the App, and it
+is labelled: `src/dashboard/fullsend_onboarding.py` returns
 `emulator-admin-fallback` as the credential kind, and
 `tests/test_fullsend_onboarding.py` asserts both that the label is returned and
-that it appears in the operation's message. WP7 records the App token as open
-by decision, with the missing private key as the reason.
+that it appears in the operation's message. A seeded App that fails to mint
+is an error, not a fallback.
 
-The remedy for either, if a review judges them to exceed decision 3, is an App
-private key in the deployment — not a rewording here. For 7b that remedy is
-now specified step by step in the onboarding authorization page.
+The remedy for 7a, if a review judges it to exceed decision 3, is a mint that
+issues installation tokens the same way — not a rewording here.

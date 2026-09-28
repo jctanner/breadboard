@@ -27,7 +27,9 @@ from __future__ import annotations
 import os
 import re
 import shlex
+import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Callable
 
 import requests
@@ -120,21 +122,89 @@ class OnboardingConfig:
         self.verify_tls = os.getenv("FULLSEND_ONBOARD_VERIFY_TLS", "0") == "1"
 
 
-def resolve_credential() -> tuple[str, str]:
+def _onboarding_app() -> tuple[str, str, str] | None:
+    """The onboarding App's id, installation id, and private key, if seeded.
+
+    Read from files in ``FULLSEND_ONBOARD_APP_DIR`` rather than from the
+    environment: the directory is a mounted Secret, which the kubelet keeps
+    current, so a stack seeded after the dashboard started still finds the
+    App without a restart. Absent or incomplete means "no App", not an error.
+    """
+    directory = os.getenv("FULLSEND_ONBOARD_APP_DIR", "").strip()
+    if not directory:
+        return None
+
+    def read(name: str) -> str:
+        path = Path(directory) / name
+        try:
+            return path.read_text().strip() if path.is_file() else ""
+        except OSError:
+            return ""
+
+    app_id, installation_id, key = read("app-id"), read("installation-id"), read("private-key")
+    if not (app_id and installation_id and key):
+        return None
+    return app_id, installation_id, key
+
+
+def mint_installation_token(config: "OnboardingConfig", repository: str) -> str:
+    """Exchange the onboarding App's key for a one-hour installation token.
+
+    The plan's rule: a short-lived GitHub App installation token with repo
+    and workflow write scope only. The App's private key signs a ten-minute
+    JWT naming the App, the forge answers with a ``ghs_`` token scoped to the
+    one repository being onboarded and the installation's permissions, and
+    the token expires on its own after an hour. The key never leaves this
+    process and the token never reaches the browser.
+    """
+    app = _onboarding_app()
+    if app is None:
+        raise OnboardingError("no onboarding App is seeded")
+    app_id, installation_id, key = app
+    import jwt  # PyJWT, with cryptography for RS256
+
+    now = int(time.time())
+    assertion = jwt.encode({"iat": now - 60, "exp": now + 540, "iss": app_id}, key, algorithm="RS256")
+    name = repository.split("/", 1)[1]
+    try:
+        response = requests.post(
+            f"{config.api_url}/app/installations/{installation_id}/access_tokens",
+            headers={"Authorization": f"Bearer {assertion}", "Accept": "application/vnd.github+json"},
+            json={"repositories": [name]},
+            timeout=15,
+            verify=config.verify_tls,
+        )
+    except requests.RequestException as exc:
+        raise OnboardingError(f"could not reach the forge to mint an installation token: {exc}") from exc
+    if response.status_code != 201:
+        raise OnboardingError(
+            f"the forge refused to mint an installation token for {repository} "
+            f"(HTTP {response.status_code}): {response.text[:200]}"
+        )
+    token = str(response.json().get("token", "")).strip()
+    if not token:
+        raise OnboardingError("the forge minted no token")
+    return token
+
+
+def resolve_credential(config: "OnboardingConfig | None" = None, repository: str = "") -> tuple[str, str]:
     """Return ``(token, kind)`` for the onboarding run.
 
     The plan asks for a short-lived GitHub App installation token scoped to
     repo and workflow writes, and calls a stored personal token "a
-    deliberately scoped local fallback". Minting an installation token needs
-    the App's private key to sign a JWT, and nothing in this deployment holds
-    one — the seeded App reports ``private_key_returned: false`` and no
-    secret carries it. So this returns the fallback and *says which it is*,
-    rather than presenting a personal token as though the rule were met. The
-    caller surfaces `kind` so the dashboard can show it.
+    deliberately scoped local fallback". In order: a token handed in ready
+    made, one minted from the seeded onboarding App's key for this
+    repository, and only then the fallbacks. A seeded App that fails to mint
+    is an error, not a reason to fall back: the fallback is for a stack that
+    has no App, and using it silently would hide a broken exchange behind an
+    admin credential. The caller surfaces `kind` so the dashboard can show
+    which was used.
     """
     app_token = os.getenv("FULLSEND_ONBOARD_APP_TOKEN", "").strip()
     if app_token:
         return app_token, "app-installation"
+    if repository and _onboarding_app() is not None:
+        return mint_installation_token(config or OnboardingConfig(), repository), "app-installation"
     # GITHUB_EMULATOR_TOKEN before GITHUB_TOKEN: this deployment carries both,
     # and they are credentials for different forges. Reading the wrong one
     # handed the CLI a token the forge refuses, which surfaced as a 401
@@ -174,8 +244,8 @@ def verify_credential(config: "OnboardingConfig", token: str) -> None:
     if response.status_code in (401, 403):
         raise OnboardingError(
             f"the forge at {config.api_url} refused the onboarding credential "
-            f"(HTTP {response.status_code}). Check GITHUB_EMULATOR_TOKEN, or set "
-            "FULLSEND_ONBOARD_APP_TOKEN."
+            f"(HTTP {response.status_code}). Check the seeded onboarding App, "
+            "GITHUB_EMULATOR_TOKEN, or FULLSEND_ONBOARD_APP_TOKEN."
         )
 
 
@@ -274,7 +344,7 @@ def onboard_repository(
         )
 
     config = config or OnboardingConfig()
-    token, credential_kind = resolve_credential()
+    token, credential_kind = resolve_credential(config, repository)
     verify_credential(config, token)
 
     existing = find_open_scaffold_pr(repository, config, token)

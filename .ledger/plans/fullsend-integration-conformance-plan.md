@@ -1812,11 +1812,15 @@ action.
   recorded in the result.
 - [x] Add a backend operation that runs the real `fullsend` CLI from the
   canonical checkout and captures the command, exit code, and output.
-- [ ] Provide the short-lived App credential to that operation. *Still open,
-  now with a concrete path (2026-09-28):* the emulator issues App private
-  keys and mints one-hour installation tokens from a JWT, so this is a
-  separate onboarding App with write permissions, its key in a Secret, and a
-  per-operation mint; specified in the onboarding authorization page.
+- [x] Provide the short-lived App credential to that operation.
+  *2026-09-28:* a seeded onboarding App (`seed-onboarding-app.py`,
+  `breadboard-onboarding[bot]`, write permissions, installed on the
+  organisation with selection "all"), its key in the
+  `fullsend-onboarding-app` Secret the dashboard mounts, a ten-minute JWT per
+  operation exchanged for a one-hour token scoped to the one repository.
+  Verified through the dashboard endpoint on a throwaway repository: kind
+  `app-installation`, the scaffold pull request authored by the bot. Work
+  package 7 is closed.
 - [x] Return the PR URL, branch, commit, and any failure to the dashboard
   without the credential.
 - [x] Handle repos that already have a scaffold or an open scaffold PR
@@ -4142,3 +4146,36 @@ the compatibility profile's reason for the credential fallback, "this
 deployment holds no App private key", is stale: the emulator has the whole
 App token flow, so the remaining WP7 item is a build with a known shape,
 not a blocked one. Both documents are linked from the index.
+
+### 2026-09-28 the App installation token
+
+Work package 7's last item is built. The dashboard now onboards with a
+short-lived GitHub App installation token, as the plan's rule says: a
+seeded onboarding App with the write permissions a scaffold needs and no
+more, installed on the seed organisation with repository selection "all" so
+a repository that does not yet exist can still be onboarded; its private key
+in a Secret the dashboard mounts as files, never in the environment; a
+ten-minute JWT signed per operation and exchanged at the emulator for a
+one-hour `ghs_` token scoped to the one repository, discarded when the run
+ends. The admin token stays as a labelled fallback for a stack seeded
+without the App, and a seeded App that fails to mint is an error rather than
+a silent fallback. Four unit tests cover the mint, the error, an incomplete
+Secret, and a ready-made token still winning.
+
+Two emulator defects had to go first (github-emulator 96ccf1c, da2da67).
+A GitHub App's bot had no repository access at all: the permission endpoint
+answered 404 and a push was refused for every bot, because access was only
+ever a collaborator row. An installation now grants its bot the
+installation's `contents` permission on the repositories it covers,
+explicitly or as "all", which is what GitHub does; and `access_tokens`
+refused every repository of an "all" installation. A taken App id was a 500
+rather than a 409, which is how the first seed attempt failed: the mint's
+role Apps already hold ids 1001 to 1006.
+
+Live: `POST /api/fullsend/onboard` on a throwaway repository returned
+`app-installation`, the CLI logged `User breadboard-onboarding[bot] has
+write access`, the scaffold pull request and its commit were authored by
+that bot, three variables and two secrets were set, and nothing
+token-shaped reached the response. The compatibility profile's 7b is closed
+as a deviation; 7a, the run-time mint's static role tokens, is the one
+credential deviation left.

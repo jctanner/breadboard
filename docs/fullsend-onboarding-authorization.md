@@ -5,8 +5,9 @@ repository in the runner pod and returns the scaffold pull request. This page
 answers the two questions work package 7 of the conformance plan left open:
 who is allowed to press that button, and where the credential it runs with
 comes from. The first is answered by the deployment and stated here as such.
-The second is answered by a labelled fallback today, with the short-lived App
-credential the plan asks for now a concrete path rather than a missing piece.
+The second is the short-lived App installation token the plan asks for,
+minted per operation, with the admin token kept as a labelled fallback for a
+stack seeded without the App.
 
 ## What the operation does
 
@@ -76,24 +77,22 @@ the result and its message:
 
 | Order | Source | Kind reported | Standing |
 | --- | --- | --- | --- |
-| 1 | `FULLSEND_ONBOARD_APP_TOKEN` | `app-installation` | The plan's rule: a short-lived App installation token with repository and workflow write scope. Not populated in this deployment |
-| 2 | `GITHUB_EMULATOR_TOKEN` | `emulator-admin-fallback` | What runs today: the emulator admin token from the `github-actions-runner-credentials` Secret. Labelled as the fallback it is |
-| 3 | `GITHUB_TOKEN` | `personal-fallback` | The generic fallback; not used here |
+| 1 | `FULLSEND_ONBOARD_APP_TOKEN` | `app-installation` | A ready-made installation token handed in by the environment. Not populated here; kept for a deployment that mints elsewhere |
+| 2 | The seeded onboarding App, from files under `FULLSEND_ONBOARD_APP_DIR` | `app-installation` | **What runs.** A ten-minute JWT signed with the App's mounted key, exchanged at the forge for a one-hour `ghs_` token scoped to the one repository being onboarded |
+| 3 | `GITHUB_EMULATOR_TOKEN` | `emulator-admin-fallback` | The emulator admin token from the `github-actions-runner-credentials` Secret, for a stack seeded without the App. Labelled as the fallback it is |
+| 4 | `GITHUB_TOKEN` | `personal-fallback` | The generic fallback; not used here |
 
 The rule in the plan is: use a short-lived App installation token with repo
 and workflow write scope only, never send it to the browser, never keep it
 after the run, and treat a stored personal token as a deliberately scoped
-local fallback. The first and third parts hold; the second and fourth are
-what the fallback is a fallback from. The admin token can do anything on the
-emulator, and it lives in the dashboard pod's environment for as long as the
-pod does.
+local fallback. All four parts now hold on a seeded stack. A seeded App that
+fails to mint is an error, not a reason to fall back: the fallback exists for
+a stack with no App, and using it silently would hide a broken exchange
+behind an admin credential.
 
-## The App credential is now a concrete path
+## The App credential, as built
 
-The compatibility profile records "this deployment holds no App private key"
-as the reason the fallback is used. That was true when written and is no
-longer the whole story. The emulator now implements the GitHub App token
-flow end to end:
+The emulator implements the GitHub App token flow end to end:
 
 - an App has a private key, returned once on creation and again from
   `GET /admin/apps/{app_id}/private-key` or regenerated at
@@ -103,29 +102,45 @@ flow end to end:
   installation's repositories and permissions, refusing any repository not
   installed.
 
-So providing the credential the plan asks for is deployment and dashboard
-work, in this order:
+On that, the credential the plan asks for is built as follows:
 
-1. **Seed an onboarding App**, separate from the seeded "Fullsend Triage"
-   App, whose installation carries only `contents: read`. Onboarding writes
-   workflows, variables, and secrets, so its App needs `contents: write`,
-   `workflows: write`, `actions_variables: write`, and `secrets: write`, and
-   its installation must list the repositories that may be onboarded, or the
-   organisation, as the enrolment boundary.
-2. **Hold the key in a Secret**, not in the dashboard's environment as a
-   token. `seed-github-app.py` already creates Apps idempotently and can
-   write the key to a Kubernetes Secret the dashboard mounts.
-3. **Mint per operation.** Replace the first row of the table with: sign a
-   JWT with the mounted key, call `access_tokens` for the installation with
-   `repositories: [the one being onboarded]`, and use the result for that run
-   only. It expires in an hour on its own; the dashboard discards it when
-   the run ends, as it discards the fallback today.
-4. **Keep the label.** The kind becomes `app-installation` and the fallback
-   stays available and labelled for a stack seeded without the App.
+1. **An onboarding App of its own.** `deploy/fullsend/seed/seed-onboarding-app.py`
+   seeds "Breadboard Onboarding" (`breadboard-onboarding[bot]`), separate
+   from the seeded "Fullsend Triage" App whose installation carries only
+   `contents: read`. It holds `contents`, `workflows`, `actions_variables`,
+   `secrets`, and `pull_requests` to write and `metadata` to read, and it is
+   installed on the seed organisation with repository selection "all", so a
+   repository that does not exist yet when the seed runs can still be
+   onboarded. The enrolment boundary is the organisation.
+2. **The key in a Secret.** The seeder writes the App id, installation id,
+   and private key to the `fullsend-onboarding-app` Secret, which the
+   dashboard mounts as files. Files rather than environment values: the
+   kubelet keeps a mounted Secret current, so a stack seeded after the
+   dashboard started finds the App without a restart, and the key never
+   appears in the pod's environment.
+3. **Mint per operation.** `mint_installation_token` signs a JWT with the
+   mounted key (`iss` the App id, ten minutes), calls `access_tokens` for
+   the installation with `repositories: [the one being onboarded]`, and hands
+   the resulting `ghs_` token to the CLI for that run only. It expires in an
+   hour on its own; the dashboard discards it when the run ends.
+4. **The label kept.** The kind is `app-installation`, and the admin
+   fallback stays available and labelled for a stack seeded without the App.
 
-That closes the credential deviation in the compatibility profile without a
-rewording, which is what its section 7b asks for. It is not done; the plan's
-checkbox stays open with this as its content.
+Two emulator changes made it work rather than merely mint. A bot had no
+repository access at all, because the emulator answered "not a
+collaborator" for every bot: the permission endpoint returned 404 and a
+push was refused. Now an installation on the repository's owner that covers
+the repository, explicitly or as "all", grants its bot the installation's
+`contents` permission, which is what GitHub does. And `access_tokens`
+refused every repository of an "all" installation.
+
+Verified by onboarding a throwaway repository through the dashboard
+endpoint: the result named `app-installation`, the CLI logged
+`User breadboard-onboarding[bot] has write access`, the scaffold pull
+request and its commit were authored by that bot, three variables and two
+secrets were set, and nothing token-shaped reached the response. The
+repository was deleted afterwards. That closes the credential deviation in
+the compatibility profile's section 7b.
 
 ## Related
 

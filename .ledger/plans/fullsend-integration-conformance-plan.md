@@ -4320,4 +4320,13 @@ fails on its current step with "The self-hosted runner lost communication
 with the server" and its run concludes. A plain requeue was tried first
 (run 1786): the re-run triage failed because the dead runner's sandbox
 still held the provider profile the new attempt wanted to replace, which
-is the practical reason GitHub does not re-run such a job.
+is the practical reason GitHub does not re-run such a job. The second
+live replay (run 1789) settled the run 71 s after the rollout instead of
+900, and showed two more things, both fixed: the failure on the current
+step was not being written (the loaded step dicts were mutated in place,
+which SQLAlchemy saw as no change), and the old runner pod, with no
+SIGTERM handler, kept working through its grace period, created a
+sandbox nobody would delete and posted logs with a re-keyed token. The
+runner now stops the step's process group on SIGTERM, TERM first so the
+CLI can delete its sandbox, and fails the step with GitHub's "The runner
+has received a shutdown signal" wording.

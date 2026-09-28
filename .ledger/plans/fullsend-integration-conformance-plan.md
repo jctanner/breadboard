@@ -1522,7 +1522,9 @@ called workflow could not be resolved. Nothing past that boundary ran.
   variable and config carry it. One stale fallback remained: the runner
   deployment's `FULLSEND_MINT_URL` still named the plain-HTTP address, which
   the mint no longer answers (probed: `http` 000, `https` 200). Corrected,
-  with the dashboard's local default.*
+  with the dashboard's local default. Decided the same day: plain HTTP is
+  null and void as a concern from here on. Nothing in the stack speaks it, so
+  it is not tracked as an item anywhere.*
 - [x] **[Track F] F3. The agent action resolves releases against
   `api.github.com` by name.** `action.yml` hardcodes that host in four calls -
   latest release, annotated tag dereference, tag listing, and the release

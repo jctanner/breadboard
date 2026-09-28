@@ -31,8 +31,8 @@ python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-fullsend-release.py"
 # The CLI resolves its agent definitions from fullsend-ai/agents at run time,
 # so that repository has to exist here too or the run reaches the internet.
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-upstream-agents.py"
-# ...and the repository has to allow fetching from it.
-python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-config-allowlist.py"
+# ...and the CLI allows fetching from it on its own: patch 0013 derives the
+# forge's prefixes into the default allowlist, at scaffold time and at run time.
 python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-triage-auto-code-off.py"
 # The dummy runtime runs a scripted scenario instead of a model, and hard-fails
 # without it. This is what the conformance run actually asserts.

@@ -4014,3 +4014,21 @@ target would not.
 
 `deploy/fullsend/vendor/` keeps its name: it is where the image build
 publishes the binary the release seeder uploads.
+
+### 2026-09-27 the allowlist seeder is retired: patch 0013
+
+`seed-config-allowlist.py` appended the emulator's prefix to a scaffolded
+`.fullsend/config.yaml` after the fact, because the CLI's default
+`allowed_remote_resources` named only raw.githubusercontent.com while patch
+0005 had it fetch agents from the configured forge. A repository onboarded
+through the dashboard button therefore failed its first triage until someone
+ran the seeder. The gap is closed where it was opened: patch 0013 derives
+the forge's `fullsend-ai/fullsend/` and `fullsend-ai/agents/` prefixes from
+`GITHUB_SERVER_URL` in `DefaultAllowedRemoteResources`, which is what the
+scaffold writes, what `EnsureDefaultAllowedRemoteResources` merges at run
+time, and what the lock and enumerate fallbacks read. github.com hosts add
+nothing, so upstream behaviour is unchanged; the Go tests cover the three
+cases. Verified by onboarding `fullsend-dev/allowlist-probe` through
+`POST /api/fullsend/onboard`: the scaffold pull request's config listed both
+local prefixes with no seeder run (repository deleted afterwards), and run
+1738 is green on the rebuilt CLI. Written to be sent upstream like 0005.

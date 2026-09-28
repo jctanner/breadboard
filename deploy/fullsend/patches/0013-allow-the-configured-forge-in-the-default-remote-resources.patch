@@ -1,0 +1,130 @@
+Subject: fix(config): allow the configured forge in the default remote-resource allowlist
+
+The CLI resolves fullsend-ai/agents and fullsend-ai/fullsend against
+GITHUB_SERVER_URL, and an enterprise host serves raw content from itself at
+<host>/<owner>/<repo>/raw/<ref>/<path> rather than from
+raw.githubusercontent.com. The default allowed_remote_resources named only the
+two public prefixes, so on such a host every URL the CLI builds was refused by
+its own allowlist:
+
+  Error: resolving agent "triage": remote resource not allowed
+
+and a config scaffolded there by `admin install` carried the refusal into the
+repository, where the first run failed until someone edited the list by hand.
+
+Derive two more prefixes, for the same two repositories on the configured
+forge, from the variable that already decides where the fetches go. Every
+caller of the default benefits: the scaffold writes them, EnsureDefault merges
+them into an existing config at run time, and the lock and enumerate fallbacks
+see them. Anything on github.com keeps the two public prefixes and nothing
+else, so behaviour there is unchanged.
+
+Breadboard note: patches Go source, so it belongs to the build patch list in
+deploy/scripts/05i-build-fullsend.sh. It replaces deploy/fullsend/seed/
+seed-config-allowlist.py, which appended the local prefix after the scaffold
+merged. Written to be sent upstream as-is. Add a DCO sign-off before
+submitting it as a human-authored change.
+
+diff --git a/internal/config/config.go b/internal/config/config.go
+index 7ec2138..dce9e59 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -2,6 +2,8 @@ package config
+ 
+ import (
+ 	"fmt"
++	"net/url"
++	"os"
+ 	"path"
+ 	"regexp"
+ 	"slices"
+@@ -440,12 +442,50 @@ func PerRepoDefaultRoles() []string {
+ }
+ 
+ // DefaultAllowedRemoteResources returns the standard allowlist prefixes
+-// for base composition and agent registration URLs.
++// for base composition and agent registration URLs: the public raw hosts
++// for the two first-party repositories, plus the same two repositories on
++// the configured forge when that forge is not github.com.
++//
++// The CLI resolves those repositories against GITHUB_SERVER_URL, and an
++// enterprise host serves raw content from itself at
++// <host>/<owner>/<repo>/raw/<ref>/<path> rather than from
++// raw.githubusercontent.com. An allowlist naming only the public hosts then
++// refuses every URL the CLI builds there, including the harness it needs to
++// run at all; and a config scaffolded on such a host carried that refusal
++// into the repository. Deriving the prefixes from the same variable keeps
++// the allowlist consistent with where the fetches go. Anything on github.com
++// keeps the two public prefixes and nothing else, so behaviour there is
++// unchanged.
+ func DefaultAllowedRemoteResources() []string {
+-	return []string{
++	resources := []string{
+ 		"https://raw.githubusercontent.com/fullsend-ai/fullsend/",
+ 		"https://raw.githubusercontent.com/fullsend-ai/agents/",
+ 	}
++	if server := configuredForgeServer(); server != "" {
++		resources = append(resources,
++			server+"/fullsend-ai/fullsend/",
++			server+"/fullsend-ai/agents/",
++		)
++	}
++	return resources
++}
++
++// configuredForgeServer returns GITHUB_SERVER_URL without a trailing slash
++// when it names a host other than github.com, and "" otherwise.
++func configuredForgeServer() string {
++	server := strings.TrimRight(strings.TrimSpace(os.Getenv("GITHUB_SERVER_URL")), "/")
++	if server == "" {
++		return ""
++	}
++	parsed, err := url.Parse(server)
++	if err != nil || parsed.Host == "" {
++		return ""
++	}
++	host := strings.ToLower(parsed.Hostname())
++	if host == "github.com" || strings.HasSuffix(host, ".github.com") {
++		return ""
++	}
++	return server
+ }
+ 
+ // EnsureDefaultAllowedRemoteResources returns a new slice with default
+diff --git a/internal/config/config_test.go b/internal/config/config_test.go
+index 4dcf480..e6d6db1 100644
+--- a/internal/config/config_test.go
++++ b/internal/config/config_test.go
+@@ -2192,12 +2192,32 @@ func TestPerRepoConfig_Marshal_WithAgents(t *testing.T) {
+ // --- DefaultAllowedRemoteResources tests ---
+ 
+ func TestDefaultAllowedRemoteResources(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "")
+ 	resources := DefaultAllowedRemoteResources()
+ 	assert.Len(t, resources, 2)
+ 	assert.Contains(t, resources, "https://raw.githubusercontent.com/fullsend-ai/fullsend/")
+ 	assert.Contains(t, resources, "https://raw.githubusercontent.com/fullsend-ai/agents/")
+ }
+ 
++func TestDefaultAllowedRemoteResources_GitHubServerAddsNothing(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://github.com")
++	assert.Len(t, DefaultAllowedRemoteResources(), 2)
++}
++
++func TestDefaultAllowedRemoteResources_EnterpriseForgeIsAllowed(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://ghe.example.internal/")
++	resources := DefaultAllowedRemoteResources()
++	assert.Len(t, resources, 4)
++	assert.Contains(t, resources, "https://raw.githubusercontent.com/fullsend-ai/agents/")
++	assert.Contains(t, resources, "https://ghe.example.internal/fullsend-ai/fullsend/")
++	assert.Contains(t, resources, "https://ghe.example.internal/fullsend-ai/agents/")
++}
++
++func TestDefaultAllowedRemoteResources_MalformedServerIsIgnored(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "not a url")
++	assert.Len(t, DefaultAllowedRemoteResources(), 2)
++}
++
+ func TestNewOrgConfig_UsesDefaultAllowedRemoteResources(t *testing.T) {
+ 	cfg := NewOrgConfig(nil, nil, nil, "", "")
+ 	assert.Equal(t, DefaultAllowedRemoteResources(), cfg.AllowedResources())

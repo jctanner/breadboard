@@ -4233,3 +4233,36 @@ collection is removed rather than left behind. Live: the agents mirror
 answers 403 to a manual dispatch; the narrowed fullsend mirror's push
 (commit f045bf65, 60 files) dispatched nothing; the release seeder re-tagged
 the new head and conformance run 1760 installed from it, green.
+
+### 2026-09-28 the mint gates on workflow provenance
+
+The mint now checks which workflow is asking, the way Fullsend's
+`mintcore.ValidateWorkflowRef` does in per-repo mode: `job_workflow_ref`
+must name a workflow file in `FULLSEND_ALLOWED_WORKFLOW_FILES`, hosted by
+`fullsend-ai/fullsend` (always accepted) or a repository in
+`FULLSEND_WORKFLOW_HOST_REPOS`; an unset list denies everything, as
+upstream does. The deployment allows the seven reusable workflows and the
+trust check, and registers the conformance target as a host for the
+latter. Role permission sets now follow upstream's canonical table, and the
+retro and prioritize roles have Apps (1007, 1008), since their reusable
+workflows mint them. Six mint tests cover the rule.
+
+Proof, both directions. The trust check (run 1765) still mints and still
+finds the triage credential refused a contents write. A second seeded
+workflow, `fullsend-trust-check-unregistered.yaml`, deliberately absent
+from the allowed list, asks for triage, coder, and fullsend with a valid
+assertion and is refused all three with `workflow file ... not in allowed
+list` (run 1777). Conformance run 1772 green.
+
+One transport defect found on the way. Run 1766's harness-dispatch job
+failed its checkout with `Server does not allow request for unadvertised
+object`: the trust-check seeder had pushed to the target during the run, so
+the run's own commit was reachable but no longer the tip. The earlier
+transport measurement (2026-09-19) drove upload-pack with a raw `want` and
+concluded reachable commits were served with no configuration; that is true
+of the server and false of the client, which refuses to ask unless the
+server advertises `allow-reachable-sha1-in-want`. The transport now sets
+`uploadpack.allowReachableSHA1InWant` on the advertisement and the upload
+(github-emulator 5e1cc63): the superseded commit fetches, an unreachable
+one is still `not our ref`, which is GitHub's behaviour. Two tests pin it,
+one of them a real `git fetch` at protocol v0.

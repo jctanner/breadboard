@@ -54,4 +54,5 @@ decisions or separate work.
 - [x] 7a: the mint issues one-hour App installation tokens per exchange; static role tokens remain only for the legacy smoke.
 - [x] The mint honours `level`; the runner applies composite input defaults so the action's `write` arrives.
 - [x] Role bots hold no collaborator rows; the emulator gates content, ref and git-object writes on installation grants; the trust check proves a triage token cannot write contents (run 1756).
-- [ ] Still not gated: which workflow may ask for which role (`job_workflow_ref`), and `issues`/`pull_requests` permissions on the emulator's issue and pull request writes.
+- [x] Which workflow may mint (`job_workflow_ref`): gated 2026-09-28 the way Fullsend's mintcore does it; the seeded unregistered workflow is refused every role (run 1777).
+- [ ] Still not enforced by the emulator: `issues`/`pull_requests` permissions on issue and pull request writes, and per-token level downscoping (the installation's permissions decide, not the token's).

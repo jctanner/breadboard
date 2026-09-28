@@ -49,6 +49,15 @@ spec:
               value: /etc/fullsend-mint/role-apps/role-apps.json
             - name: FULLSEND_FORGE_API_URL
               value: https://github.local/api/v3
+            # Which workflow may ask for a role (Fullsend's WORKFLOW_HOST_REPOS
+            # and ALLOWED_WORKFLOW_FILES): the job must have been defined by
+            # one of these files, hosted by fullsend-ai/fullsend (always) or a
+            # listed repository. The conformance target hosts the trust-check
+            # workflow, which mints on purpose to prove the boundary.
+            - name: FULLSEND_WORKFLOW_HOST_REPOS
+              value: fullsend-dev/triage-target
+            - name: FULLSEND_ALLOWED_WORKFLOW_FILES
+              value: reusable-dispatch.yml,reusable-triage.yml,reusable-code.yml,reusable-review.yml,reusable-fix.yml,reusable-retro.yml,reusable-prioritize.yml,fullsend-trust-check.yaml
           volumeMounts:
             - name: breadboard-ca
               mountPath: /etc/breadboard-ca

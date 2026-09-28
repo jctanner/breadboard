@@ -47,18 +47,24 @@ ensure_app() {
 }
 
 echo "==> Ensuring separate Fullsend App/bot identities"
+# Permissions follow Fullsend's canonicalRolePermissions (write level), so an
+# installation carries exactly what the role's tokens may be downscoped from.
 ensure_app 1001 "Fullsend Triage" fullsend-triage \
   '{"contents":"read","issues":"write","metadata":"read"}'
 ensure_app 1002 "Fullsend Scribe" fullsend-scribe \
   '{"contents":"read","issues":"write","metadata":"read"}'
 ensure_app 1003 "Fullsend Code" fullsend-code \
-  '{"contents":"write","issues":"write","pull_requests":"write","metadata":"read"}'
+  '{"contents":"write","packages":"read","pull_requests":"write","issues":"write","checks":"read","metadata":"read"}'
 ensure_app 1004 "Fullsend Review" fullsend-review \
-  '{"contents":"read","issues":"write","pull_requests":"write","metadata":"read"}'
+  '{"contents":"read","pull_requests":"write","issues":"write","checks":"read","metadata":"read"}'
 ensure_app 1005 "Fullsend Fix" fullsend-fix \
-  '{"contents":"write","issues":"write","pull_requests":"write","metadata":"read"}'
+  '{"contents":"write","packages":"read","pull_requests":"write","issues":"write","metadata":"read"}'
 ensure_app 1006 "Fullsend" fullsend \
-  '{"contents":"write","issues":"write","pull_requests":"write","metadata":"read"}'
+  '{"actions":"write","actions_variables":"read","contents":"write","pull_requests":"write","workflows":"write","metadata":"read"}'
+ensure_app 1007 "Fullsend Retro" fullsend-retro \
+  '{"actions":"read","contents":"read","pull_requests":"write","issues":"write","metadata":"read"}'
+ensure_app 1008 "Fullsend Prioritize" fullsend-prioritize \
+  '{"contents":"read","issues":"write","organization_projects":"write","metadata":"read"}'
 
 # The Code and Fix bots used to be granted push as collaborators here. Their
 # access now comes from their Apps' installations (contents: write), which is
@@ -125,7 +131,8 @@ def call(url, body=None, method=None):
             payload = r.read(); return r.status, (json.loads(payload) if payload else None)
     except urllib.error.HTTPError as e:
         payload = e.read(); return e.code, (json.loads(payload) if payload else None)
-roles = {"triage": "1001", "scribe": "1002", "coder": "1003", "review": "1004", "fix": "1005", "fullsend": "1006"}
+roles = {"triage": "1001", "scribe": "1002", "coder": "1003", "review": "1004", "fix": "1005",
+         "fullsend": "1006", "retro": "1007", "prioritize": "1008"}
 out = {}
 for role, app_id in roles.items():
     status, app = call(f"{base}/admin/api/apps/{app_id}")

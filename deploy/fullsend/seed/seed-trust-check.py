@@ -277,34 +277,90 @@ def ensure_off_limits() -> str:
     return full_name
 
 
-def put_workflow(other_repo: str) -> None:
-    content = WORKFLOW.replace("OWNER/OFF_LIMITS", other_repo)
+def put_workflow(other_repo: str, path: str = None, content: str = None, label: str = "trust check") -> None:
+    path = path or WORKFLOW_PATH
+    content = (content or WORKFLOW).replace("OWNER/OFF_LIMITS", other_repo)
     encoded = base64.b64encode(content.encode()).decode()
     body = {
-        "message": "Seed the B4 trust-boundary check",
+        "message": f"Seed the B4 {label}",
         "content": encoded,
         "branch": "main",
     }
-    status, existing = api_request(
-        "GET", f"/repos/{ORG}/{REPO}/contents/{WORKFLOW_PATH}"
-    )
+    status, existing = api_request("GET", f"/repos/{ORG}/{REPO}/contents/{path}")
     if status == 200 and isinstance(existing, dict):
         if existing.get("content", "").replace("\n", "") == encoded:
-            print(f"trust check already current at {ORG}/{REPO}:{WORKFLOW_PATH}")
+            print(f"{label} already current at {ORG}/{REPO}:{path}")
             return
         body["sha"] = existing["sha"]
-    status, payload = api_request(
-        "PUT", f"/repos/{ORG}/{REPO}/contents/{WORKFLOW_PATH}", body
-    )
+    status, payload = api_request("PUT", f"/repos/{ORG}/{REPO}/contents/{path}", body)
     if status not in (200, 201):
-        raise RuntimeError(f"write {WORKFLOW_PATH} failed: HTTP {status}: {payload}")
-    print(f"seeded trust check at {ORG}/{REPO}:{WORKFLOW_PATH}")
+        raise RuntimeError(f"write {path} failed: HTTP {status}: {payload}")
+    print(f"seeded {label} at {ORG}/{REPO}:{path}")
+
+
+# A workflow the mint has never heard of. It is deliberately absent from
+# FULLSEND_ALLOWED_WORKFLOW_FILES, so its job_workflow_ref is not one the
+# mint accepts, and the exchange must be refused however valid the assertion
+# is. This is the provenance gate, distinct from the repository and role
+# bindings the main check proves: it answers "may this workflow ask for a
+# role at all", which is what stops a workflow someone wrote in a repository
+# from minting the roles Fullsend's reusable workflows are entitled to.
+ROGUE_PATH = ".github/workflows/fullsend-trust-check-unregistered.yaml"
+ROGUE = """# Seeded by deploy/fullsend/seed/seed-trust-check.py for breakpoint B4.
+# Not part of Fullsend. Deliberately not registered with the mint.
+name: Fullsend trust check (unregistered workflow)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  rogue:
+    name: An unregistered workflow cannot mint
+    runs-on: fullsend
+    env:
+      MINT_URL: ${{ vars.FULLSEND_MINT_URL }}
+      OWN_REPO: ${{ github.repository }}
+    steps:
+      - name: The mint refuses a workflow it does not know, for every role
+        shell: bash
+        run: |
+          set -euo pipefail
+          ASSERTION=$(curl -sSf \\
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \\
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=fullsend-mint" | jq -r '.value')
+          echo "::add-mask::$ASSERTION"
+          # Informational; the payload's base64 is unpadded, so decode may
+          # complain, and pipefail must not turn that into the verdict.
+          { echo "$ASSERTION" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null \\
+            | jq -r '"  job_workflow_ref  " + .job_workflow_ref'; } || true
+          for ROLE in triage coder fullsend; do
+            BODY=$(mktemp)
+            STATUS=$(curl -s -o "$BODY" -w '%{http_code}' \\
+              -H "Authorization: Bearer $ASSERTION" -H 'Content-Type: application/json' \\
+              -d "{\\"role\\":\\"$ROLE\\",\\"repos\\":[\\"${OWN_REPO##*/}\\"],\\"level\\":\\"write\\"}" \\
+              "${MINT_URL}/v1/token")
+            echo "  role=$ROLE -> ${STATUS} (expected 403): $(jq -r '.error // empty' "$BODY")"
+            test "$STATUS" = "403" || {
+              echo "::error::the mint minted the $ROLE role for a workflow it should not know"
+              exit 1
+            }
+            if jq -e '.token' "$BODY" > /dev/null 2>&1; then
+              echo "::error::a token came back with the refusal"
+              exit 1
+            fi
+          done
+"""
 
 
 def main() -> None:
     other = ensure_off_limits()
     print(f"off-limits repository: {other} (private, no agent collaborators)")
     put_workflow(other)
+    put_workflow(other, ROGUE_PATH, ROGUE, label="unregistered-workflow check")
 
 
 if __name__ == "__main__":

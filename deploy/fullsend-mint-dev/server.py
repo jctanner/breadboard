@@ -47,12 +47,15 @@ from jwt import PyJWKClient
 # when a request names none, is the same set with every write downgraded to
 # read, as Fullsend ADR 0073 defines it.
 ROLE_PERMISSIONS = {
+    # Fullsend's canonicalRolePermissions (internal/mintcore/github.go), write level.
     "triage": {"contents": "read", "issues": "write", "metadata": "read"},
     "scribe": {"contents": "read", "issues": "write", "metadata": "read"},
-    "coder": {"contents": "write", "issues": "write", "pull_requests": "write", "metadata": "read"},
-    "review": {"contents": "read", "issues": "write", "pull_requests": "write", "metadata": "read"},
-    "fix": {"contents": "write", "issues": "write", "pull_requests": "write", "metadata": "read"},
-    "fullsend": {"contents": "write", "issues": "write", "pull_requests": "write", "metadata": "read"},
+    "coder": {"contents": "write", "packages": "read", "pull_requests": "write", "issues": "write", "checks": "read", "metadata": "read"},
+    "review": {"contents": "read", "pull_requests": "write", "issues": "write", "checks": "read", "metadata": "read"},
+    "fix": {"contents": "write", "packages": "read", "pull_requests": "write", "issues": "write", "metadata": "read"},
+    "retro": {"actions": "read", "contents": "read", "pull_requests": "write", "issues": "write", "metadata": "read"},
+    "prioritize": {"contents": "read", "issues": "write", "organization_projects": "write", "metadata": "read"},
+    "fullsend": {"actions": "write", "actions_variables": "read", "contents": "write", "pull_requests": "write", "workflows": "write", "metadata": "read"},
 }
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 REPO_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
@@ -83,6 +86,46 @@ def parse_level(value: object) -> str:
     if level not in LEVELS:
         raise ValueError(f"unknown level {level!r}; expected one of {', '.join(LEVELS)}")
     return level
+
+
+UPSTREAM_WORKFLOW_HOST = "fullsend-ai/fullsend"
+
+
+def split_csv(value: str | None) -> list[str]:
+    return [item.strip() for item in str(value or "").split(",") if item.strip()]
+
+
+def validate_workflow_ref(ref: str, host_repos: list[str], allowed_files: list[str]) -> None:
+    """Refuse a request whose job was not defined by an allowed workflow.
+
+    Fullsend's mint (mintcore.ValidateWorkflowRef, per-repo mode): the
+    ``job_workflow_ref`` claim names the workflow that defined the job, as
+    ``owner/repo/.github/workflows/file@ref``. Its repository must be
+    fullsend-ai/fullsend, always accepted, or one of the configured workflow
+    host repositories; its basename must be in the allowed list, where ``*``
+    allows any. An empty allowed list denies every request, as upstream does
+    when ALLOWED_WORKFLOW_FILES is unset. This is what stops a workflow
+    someone wrote from asking the mint for a role: the roles are the
+    reusable workflows' to request, not any job's.
+    """
+    if not ref:
+        raise ClaimsRejected("missing job_workflow_ref claim")
+    lower = ref.lower()
+    relative = None
+    for host in [UPSTREAM_WORKFLOW_HOST, *host_repos]:
+        prefix = host.lower().rstrip("/") + "/"
+        if lower.startswith(prefix):
+            relative = lower[len(prefix):]
+            break
+    if relative is None:
+        raise ClaimsRejected("job_workflow_ref does not reference an allowed workflow host repo")
+    relative = relative.split("@", 1)[0]
+    if not relative.startswith(".github/workflows/"):
+        raise ClaimsRejected("job_workflow_ref does not reference a workflow file")
+    basename = relative[len(".github/workflows/"):]
+    if any(allowed == "*" or allowed.lower() == basename for allowed in allowed_files):
+        return
+    raise ClaimsRejected(f"workflow file {basename!r} not in allowed list")
 
 
 def load_role_apps(path: str) -> dict[str, dict[str, str]]:
@@ -207,7 +250,10 @@ class _JwksCache:
 
 
 def _config() -> tuple[dict[str, dict[str, str]], str, str, str]:
-    """Role Apps, issuer, JWKS URL, and the forge API the Apps are on."""
+    """Role Apps, issuer, JWKS URL, and the forge API the Apps are on.
+
+    Workflow provenance is read separately by ``_provenance()``.
+    """
     issuer = os.environ.get("FULLSEND_OIDC_ISSUER", "").rstrip("/")
     jwks_url = os.environ.get("FULLSEND_OIDC_JWKS_URL", "")
     if not issuer or not jwks_url:
@@ -224,6 +270,16 @@ def _config() -> tuple[dict[str, dict[str, str]], str, str, str]:
         )
     forge_api = os.environ.get("FULLSEND_FORGE_API_URL", "").rstrip("/") or f"{issuer}/api/v3"
     return load_role_apps(role_apps_file), issuer, jwks_url, forge_api
+
+
+def _provenance() -> tuple[list[str], list[str]]:
+    """Workflow host repositories and allowed workflow files, from the
+    environment Fullsend's own mint reads (WORKFLOW_HOST_REPOS,
+    ALLOWED_WORKFLOW_FILES), under this deployment's prefix."""
+    return (
+        split_csv(os.environ.get("FULLSEND_WORKFLOW_HOST_REPOS")),
+        split_csv(os.environ.get("FULLSEND_ALLOWED_WORKFLOW_FILES")),
+    )
 
 
 def _verify(token: str, issuer: str, jwks: _JwksCache) -> dict:
@@ -283,6 +339,8 @@ class Handler(BaseHTTPRequestHandler):
                 "roles": sorted(self.server.role_apps),
                 "levels": list(LEVELS),
                 "credential": "app-installation",
+                "workflow_host_repos": [UPSTREAM_WORKFLOW_HOST, *self.server.host_repos],
+                "allowed_workflow_files": self.server.allowed_files,
                 "oidc": {"issuer": self.server.issuer, "audience": AUDIENCE},
             })
             return
@@ -303,6 +361,13 @@ class Handler(BaseHTTPRequestHandler):
             claims = _verify(presented, issuer, self.server.jwks)
         except ClaimsRejected as exc:
             self._send(HTTPStatus.UNAUTHORIZED, {"error": f"OIDC token rejected: {exc}"})
+            return
+        try:
+            validate_workflow_ref(
+                str(claims.get("job_workflow_ref") or ""), self.server.host_repos, self.server.allowed_files,
+            )
+        except ClaimsRejected as exc:
+            self._send(HTTPStatus.FORBIDDEN, {"error": f"workflow not allowed to mint: {exc}"})
             return
 
         try:
@@ -376,6 +441,7 @@ def main() -> None:
     server.issuer = issuer
     server.forge_api = forge_api
     server.role_apps = role_apps
+    server.host_repos, server.allowed_files = _provenance()
     server.jwks = _JwksCache(jwks_url)
 
     # Serve TLS when a certificate is mounted. Fullsend refuses a non-HTTPS

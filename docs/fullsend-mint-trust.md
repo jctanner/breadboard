@@ -51,9 +51,16 @@ job (id-token: write)
    `fullsend-mint`, and current `exp`, `nbf`, `iat`. It then refuses the
    request if any repository in `repos` is not the token's `repository`
    claim. A bare name is resolved against the token's `repository_owner`.
+   Before any of that it checks **which workflow is asking**: the
+   `job_workflow_ref` claim must name a workflow file in
+   `FULLSEND_ALLOWED_WORKFLOW_FILES` hosted by `fullsend-ai/fullsend`
+   (always accepted) or a repository in `FULLSEND_WORKFLOW_HOST_REPOS`,
+   the same rule as Fullsend's `mintcore.ValidateWorkflowRef` in per-repo
+   mode. Any other workflow, however valid its assertion, is `403`.
 4. **The mint mints as the role's App.** Each role is a GitHub App on the
    emulator (`fullsend-triage`, `fullsend-scribe`, `fullsend-code`,
-   `fullsend-review`, `fullsend-fix`, `fullsend`), installed on the seed
+   `fullsend-review`, `fullsend-fix`, `fullsend-retro`,
+   `fullsend-prioritize`, `fullsend`), installed on the seed
    organisation with repository selection "all". The mint holds the Apps'
    private keys in the `fullsend-mint-role-apps` Secret, mounted as one
    file. It signs a ten-minute JWT naming the role's App, finds that App's
@@ -110,10 +117,14 @@ assertion is answered `401`.
   applies that default (it used to arrive empty).
 - **Short-lived credentials.** The installation token expires after one
   hour on the forge's side; nothing long-lived is issued.
-- **Provenance in the claims.** `job_workflow_ref` names the called reusable
-  workflow (`fullsend-ai/fullsend/.github/workflows/reusable-*.yml@main`),
-  not the caller, since G46 was fixed. The mint does not yet act on it, but
-  the claim a production mint would check is present and correct.
+- **Workflow provenance.** `job_workflow_ref` names the workflow that
+  defined the job (`fullsend-ai/fullsend/.github/workflows/reusable-*.yml@main`
+  for every stage job, since G46 was fixed), and the mint acts on it: only
+  the seven reusable workflows and the trust check may mint. Evidence: the
+  seeded workflow `fullsend-trust-check-unregistered.yaml`, deliberately
+  absent from the allowed list, asks for the triage, coder, and fullsend
+  roles with a valid assertion and is refused all three with
+  `workflow file ... not in allowed list` (run 1777).
 - **Short assertion lifetime.** 300 seconds, with a replay-resistant `jti`.
   The role token it is exchanged for is a different matter, below.
 
@@ -128,18 +139,19 @@ conformance run as proof of something it does not test.
 | Mints a fresh GitHub App installation token per request, scoped to the requested repositories, expiring in about an hour | The same, since 2026-09-28 |
 | Downscopes permissions to the role's named privilege level; `level` defaults to `read` | The same, for the two levels `read` and `write`; custom roles and level sets are not supported |
 | Per-role permission sets enforced by the App installation | Enforced for `contents` (writes to contents, refs, git objects, and the git transport). `issues` and `pull_requests` permissions are carried on the token but the emulator does not yet gate those writes on them |
-| Checks `job_workflow_ref` against registered workflow prefixes | Not checked |
+| Checks `job_workflow_ref` against registered workflow prefixes | The same: upstream host always accepted, configured host repositories, allowed basenames, deny-all when unset |
 | Org and per-repo allowlists (`ALLOWED_ORGS`, `PER_REPO_WIF_REPOS`) | None. Any repository on the emulator whose job can obtain an assertion may mint for itself |
 | `["*"]` means installation-wide in the shapes ADR 0077 allows | Refused as an invalid repository name. Only bare names and `owner/name` are accepted |
 | Audit log of every exchange | None. The mint logs nothing by design, to keep tokens out of pod logs |
 
-What is still true, and worth saying plainly: the role is chosen by the
-caller's request, not by anything in the assertion. A triage job that asked
-the mint for the code role would get a code token, because the mint has no
-registry of which workflow may ask for which role. Fullsend's production
-mint gates that on `job_workflow_ref`; here the claim is present and correct
-but unchecked. So the role binding proven is "a token for role R does what R
-may do and nothing more", not "workflow W can only obtain role R".
+What is still true, and worth saying plainly: within the allowed
+workflows, the role is chosen by the request, not by the assertion. Any of
+the seven reusable workflows may ask for any role, which is also how
+Fullsend's production mint works; the gate answers "may this workflow mint
+at all", not "which role". And the level downscoping is enforced by the
+emulator through the App's installation permissions, not per token: a
+coder token minted at `read` carries `contents: read` but the emulator
+consults the installation (`contents: write`) when it decides a write.
 
 ## Where each identity is recorded
 

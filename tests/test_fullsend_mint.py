@@ -143,12 +143,16 @@ def test_config_refuses_to_start_without_issuer_settings(monkeypatch):
 # repository and the requested level.
 
 def test_the_read_level_downgrades_every_write():
+    """Upstream's canonical table: coder, write and read levels."""
     assert mint.permissions_for("coder", "write") == {
-        "contents": "write", "issues": "write", "pull_requests": "write", "metadata": "read",
+        "contents": "write", "packages": "read", "pull_requests": "write", "issues": "write",
+        "checks": "read", "metadata": "read",
     }
     assert mint.permissions_for("coder", "read") == {
-        "contents": "read", "issues": "read", "pull_requests": "read", "metadata": "read",
+        "contents": "read", "packages": "read", "pull_requests": "read", "issues": "read",
+        "checks": "read", "metadata": "read",
     }
+    assert set(mint.ROLE_PERMISSIONS) == {"triage", "scribe", "coder", "review", "fix", "retro", "prioritize", "fullsend"}
 
 
 def test_an_omitted_or_empty_level_is_read_and_an_unknown_one_is_refused():
@@ -240,3 +244,54 @@ def test_config_requires_the_role_apps_file(monkeypatch):
     monkeypatch.delenv("FULLSEND_ROLE_APPS_FILE", raising=False)
     with pytest.raises(RuntimeError):
         mint._config()
+
+
+# --- workflow provenance -----------------------------------------------------------
+#
+# Which workflow may ask for a role. Fullsend's mint keys this on the
+# job_workflow_ref claim: the job must have been defined by an allowed
+# workflow file hosted by fullsend-ai/fullsend or a configured host repo.
+
+UPSTREAM = "fullsend-ai/fullsend/.github/workflows/reusable-dispatch.yml@refs/heads/main"
+
+
+def test_an_upstream_reusable_workflow_is_always_an_allowed_host():
+    mint.validate_workflow_ref(UPSTREAM, [], ["reusable-dispatch.yml"])
+    mint.validate_workflow_ref(UPSTREAM.upper(), [], ["reusable-dispatch.yml"])  # case-insensitive
+
+
+def test_a_workflow_in_the_calling_repository_needs_the_repository_registered():
+    ref = "fullsend-dev/triage-target/.github/workflows/fullsend-trust-check.yaml@refs/heads/main"
+    with pytest.raises(mint.ClaimsRejected, match="allowed workflow host"):
+        mint.validate_workflow_ref(ref, [], ["*"])
+    mint.validate_workflow_ref(ref, ["fullsend-dev/triage-target"], ["fullsend-trust-check.yaml"])
+
+
+def test_the_basename_must_be_allowed_and_star_allows_any():
+    with pytest.raises(mint.ClaimsRejected, match="not in allowed list"):
+        mint.validate_workflow_ref(UPSTREAM, [], ["reusable-triage.yml"])
+    mint.validate_workflow_ref(UPSTREAM, [], ["*"])
+
+
+def test_an_empty_allowed_list_denies_everything_as_upstream_does():
+    with pytest.raises(mint.ClaimsRejected):
+        mint.validate_workflow_ref(UPSTREAM, [], [])
+
+
+def test_a_ref_outside_the_workflows_directory_or_missing_is_refused():
+    with pytest.raises(mint.ClaimsRejected, match="workflow file"):
+        mint.validate_workflow_ref("fullsend-ai/fullsend/action.yml@main", [], ["*"])
+    with pytest.raises(mint.ClaimsRejected, match="missing"):
+        mint.validate_workflow_ref("", [], ["*"])
+
+
+def test_provenance_is_read_from_the_environment(monkeypatch):
+    monkeypatch.setenv("FULLSEND_WORKFLOW_HOST_REPOS", "fullsend-dev/triage-target, other/repo")
+    monkeypatch.setenv("FULLSEND_ALLOWED_WORKFLOW_FILES", "reusable-dispatch.yml,fullsend-trust-check.yaml")
+    assert mint._provenance() == (
+        ["fullsend-dev/triage-target", "other/repo"],
+        ["reusable-dispatch.yml", "fullsend-trust-check.yaml"],
+    )
+    monkeypatch.delenv("FULLSEND_WORKFLOW_HOST_REPOS")
+    monkeypatch.delenv("FULLSEND_ALLOWED_WORKFLOW_FILES")
+    assert mint._provenance() == ([], [])

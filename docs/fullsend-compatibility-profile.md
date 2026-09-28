@@ -182,9 +182,9 @@ a one-hour token scoped to the calling repository at the requested level.
 The static per-role tokens it used to hand out are gone from the mint; they
 remain in a Secret for the named legacy smoke only. This is no longer a
 deviation. What remains different from Fullsend's production mint is listed
-in [fullsend-mint-trust.md](fullsend-mint-trust.md): no `job_workflow_ref`
-gate, no allowlists, no audit log, and `issues`/`pull_requests` permissions
-carried but not yet enforced by the emulator.
+in [fullsend-mint-trust.md](fullsend-mint-trust.md): no org allowlists, no
+audit log, and `issues`/`pull_requests` permissions carried but not yet
+enforced by the emulator. The workflow provenance gate is in place.
 
 ### 7b. The dashboard onboarding credential
 

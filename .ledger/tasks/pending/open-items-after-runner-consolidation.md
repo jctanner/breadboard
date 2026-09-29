@@ -38,7 +38,7 @@ decisions or separate work.
 
 - `fullsend-ai/agents`: reconcile the duplicate rule (open issues only, `agents/triage.md` step 2b) with the forge skills' `gh issue list --state all` commands. Evidence: Breadboard conformance run 1743 on the emulator, haiku, `duplicate` of a closed issue with an identical body; the runs either side answered `sufficient`.
 - `fullsend-ai/fullsend`: the dispatch routes every `issues.edited` to triage without reading `changes`; ADR 0002 says title or body only.
-- `fullsend-ai/fullsend`: patch 0003 (the install action's hardcoded github.com clone) and patch 0013 (forge-derived default `allowed_remote_resources`), both written to be sent as-is.
+- `fullsend-ai/fullsend`: patch 0003 (the install action's hardcoded github.com clone), patch 0013 (forge-derived default `allowed_remote_resources`), and patch 0014 (the three GitHub clients 0005 missed: the post-job status reconciliation, the token-scope check, the eval-measure manifest fetch; found 2026-09-29 from the `Error: listing comments … api.github.com` line every run logged; verified on `experiment/testrepo2` run 1803 after the rebuild and release reseed: no api.github.com line in the job, the scope check reported `Token scoped to: experiment/testrepo2`, the eval-measure lookup resolved on the forge, and the reconcile step ran clean), all written to be sent as-is.
  All at their checkboxes in `fullsend-integration-conformance-plan.md`. (MLflow and Observatory telemetry was taken out of the plan on 2026-09-27.)
 
 ## Harness-dispatch CLI install (found 2026-09-27, G48–G51 in the conformance plan)

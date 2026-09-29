@@ -99,6 +99,8 @@ two substitutions above, not because they are deviations.
 | 0010 | do not report success for a profile import that replaced nothing |
 | 0011 | address the configured forge in the `github` subcommands |
 | 0012 | let an installation name the runner its workflows target |
+| 0013 | allow the configured forge in the default remote-resource allowlist |
+| 0014 | address the configured forge in the three remaining GitHub clients: the post-job status reconciliation, the token-scope check, and the eval-measure manifest fetch |
 
 **Agents tree, applied to the mirror at seed time**
 (`seed-upstream-agents.py`):

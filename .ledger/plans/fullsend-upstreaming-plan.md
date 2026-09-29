@@ -170,9 +170,9 @@ review.
 
 ## What goes, and what never does
 
-Sixteen patch files across three lists: eleven in
+Eighteen patch files across three lists: thirteen in
 `deploy/fullsend/patches/` and five in `deploy/fullsend/patches/agents/`.
-Thirteen are upstream-bound, two are local-only and must never be submitted,
+Fifteen are upstream-bound, two are local-only and must never be submitted,
 one is retired.
 
 The three lists are not interchangeable and the build scripts say so: Go source
@@ -192,6 +192,8 @@ patch in the wrong list does nothing, and does it silently.
 | 0010 | do not report success for a profile import that replaced nothing | yes |
 | 0011 | address the configured forge in the `github` subcommands | yes |
 | 0012 | let an installation name the runner its workflows target | yes |
+| 0013 | allow the configured forge in the default remote-resource allowlist | yes |
+| 0014 | address the configured forge in the three remaining GitHub clients (status reconciliation, token-scope check, eval-measure manifest) | yes |
 
 ### Upstream-bound — `fullsend-ai/fullsend`, action YAML
 
@@ -248,9 +250,16 @@ Gathered from `CONTRIBUTING.md` and `COMMITS.md` rather than assumed:
 
 ## The grouping question, decided up front
 
-Seven of the thirteen upstream-bound patches are one problem wearing different hats: *github.com
-is assumed where the configured host should be used*. Go 0005, 0007, 0008, 0011
-and agents 0001, 0002, 0005 all fix instances of it.
+Nine of the fifteen upstream-bound patches are one problem wearing different hats: *github.com
+is assumed where the configured host should be used*. Go 0005, 0007, 0008, 0011,
+0013, 0014 and agents 0001, 0002, 0005 all fix instances of it. 0014 was found
+last (2026-09-29) and is the strongest single argument for the cluster: 0005
+had already moved the run's own status comment onto the configured host, and
+the post-job step that reconciles an orphaned one was still built with the bare
+constructor, so a hard-killed run's "Started" comment could never be
+finalized. A grep for `gh.New(` after the cluster lands should find only the
+constructor itself and `newGitHubLiveClient`; say so in the PR body, because it
+is the check a reviewer can repeat.
 
 "Focused PRs — one problem area per PR" pulls two ways here. Submitting seven
 separate PRs for one root cause invites seven reviews of the same argument.

@@ -1,0 +1,206 @@
+Subject: fix(cli): address the configured forge in the three remaining GitHub clients
+
+Three code paths still named api.github.com after the agents-repo fallback and
+the run's own status comment were moved onto the configured host. On an
+enterprise install or an emulator, where every workflow sets GITHUB_API_URL,
+each one leaves the appliance and is refused, and each logs on every run:
+
+  ! Token scope check: fetching token scope: listing installation repositories:
+    Get "https://api.github.com/installation/repositories?per_page=100": dial tcp
+    140.82.112.5:443: connect: connection refused
+  ! Could not resolve fullsend-ai/agents@main: get ref fullsend-ai/agents@heads/main:
+    http GET /repos/fullsend-ai/agents/git/ref/heads/main: Get "https://api.github.com/...":
+    dial tcp ...: connect: connection refused
+  Error: listing comments: list issue comments page 1: http GET
+    /repos/<owner>/<repo>/issues/<n>/comments?per_page=100&page=1: Get
+    "https://api.github.com/...": dial tcp ...: connect: connection refused
+  ::warning::Could not reconcile orphaned status comment
+
+The first two are warnings. The third is not harmless: `reconcile-status` is
+the post-job step that finalizes a status comment left in the "Started" state
+when the fullsend process died without posting its completion. It built its
+client with a bare gh.New, which targets api.github.com regardless of
+GITHUB_API_URL, so on any other host the safety net never reaches the forge
+and a hard-killed or cancelled run keeps its "Started" comment forever. The
+completion comment the run posts about itself already goes through
+newGitHubLiveClient; this makes its fallback do the same.
+
+The token-scope check (run.go) passed the literal "https://api.github.com" as
+the base URL. It now asks tokenScopeBaseURL, which returns GITHUB_API_URL when
+set and the public host otherwise, so the introspection reaches the forge that
+minted the token. The eval-measure fetch context (evalmeasure.go) resolves the
+measurement manifest in fullsend-ai/agents through a bare gh.New too, and now
+uses newGitHubLiveClient like the harness fallback next to it.
+
+All three keep the public host as the default, so behaviour on github.com is
+unchanged. One test per site: tokenScopeBaseURL with and without the
+variable, and the base URL of the client each of the other two constructs.
+
+Breadboard note: patches Go source, so it belongs to the build patch list in
+deploy/scripts/05i-build-fullsend.sh rather than the mirror list; the mirror
+patches files a workflow reads at run time, and these do not survive
+compilation. Written to be sent upstream as-is, as one more facet of the host
+assumption that 0005, 0007, 0008 and 0011 fix. Add a DCO sign-off before
+submitting it as a human-authored change.
+
+diff --git a/internal/cli/evalmeasure.go b/internal/cli/evalmeasure.go
+index f769600f..b0e36ceb 100644
+--- a/internal/cli/evalmeasure.go
++++ b/internal/cli/evalmeasure.go
+@@ -13,7 +13,6 @@ import (
+ 	"github.com/fullsend-ai/fullsend/internal/evalmeasure"
+ 	"github.com/fullsend-ai/fullsend/internal/fetch"
+ 	"github.com/fullsend-ai/fullsend/internal/forge"
+-	gh "github.com/fullsend-ai/fullsend/internal/forge/github"
+ 	"github.com/fullsend-ai/fullsend/internal/harness"
+ 	"github.com/fullsend-ai/fullsend/internal/ui"
+ )
+@@ -244,7 +243,7 @@ func evalMeasureFetchContext(fullsendDir string, offline bool, printer *ui.Print
+ 		AuditLogPath:  filepath.Join(abs, ".fullsend-cache", "fetch-audit.jsonl"),
+ 		OrgAllowlist:  orgAllowlist,
+ 		GitToken:      token,
+-	}, gh.New(token)
++	}, newGitHubLiveClient(token, "")
+ }
+ 
+ func printMeasurementResults(printer *ui.Printer, results []evalmeasure.EvaluationResult, wroteOK bool) {
+diff --git a/internal/cli/evalmeasure_test.go b/internal/cli/evalmeasure_test.go
+index 726c4775..cf1ef650 100644
+--- a/internal/cli/evalmeasure_test.go
++++ b/internal/cli/evalmeasure_test.go
+@@ -13,6 +13,7 @@ import (
+ 	"github.com/stretchr/testify/require"
+ 
+ 	"github.com/fullsend-ai/fullsend/internal/evalmeasure"
++	gh "github.com/fullsend-ai/fullsend/internal/forge/github"
+ 	"github.com/fullsend-ai/fullsend/internal/telemetry"
+ 	"github.com/fullsend-ai/fullsend/internal/ui"
+ )
+@@ -565,3 +566,14 @@ func TestRunEvalMeasure_OTLPFailWarns(t *testing.T) {
+ 	_, statErr := os.Stat(filepath.Join(out, evalmeasure.MeasurementsFile))
+ 	require.NoError(t, statErr, "local JSONL must still be written")
+ }
++
++func TestEvalMeasureFetchContext_HonoursConfiguredHost(t *testing.T) {
++	// The measurement manifest is resolved through the forge API; on an
++	// enterprise install the agents repo lives on the configured host.
++	printer := ui.New(io.Discard)
++	t.Setenv("GITHUB_API_URL", "https://ghes.example.com/api/v3")
++	_, client := evalMeasureFetchContext(t.TempDir(), true, printer)
++	live, ok := client.(*gh.LiveClient)
++	require.True(t, ok, "expected a live GitHub client")
++	assert.Equal(t, "https://ghes.example.com/api/v3", live.BaseURL())
++}
+diff --git a/internal/cli/reconcilestatus.go b/internal/cli/reconcilestatus.go
+index 2e952407..905efcef 100644
+--- a/internal/cli/reconcilestatus.go
++++ b/internal/cli/reconcilestatus.go
+@@ -9,7 +9,6 @@ import (
+ 
+ 	"github.com/fullsend-ai/fullsend/internal/config"
+ 	"github.com/fullsend-ai/fullsend/internal/forge"
+-	gh "github.com/fullsend-ai/fullsend/internal/forge/github"
+ 	gl "github.com/fullsend-ai/fullsend/internal/forge/gitlab"
+ 	"github.com/fullsend-ai/fullsend/internal/mintclient"
+ 	"github.com/fullsend-ai/fullsend/internal/mintcore"
+@@ -18,8 +17,15 @@ import (
+ )
+ 
+ var reconcileMintToken = mintclient.MintToken
++
++// newGitHubLiveClient honours GITHUB_API_URL. A bare gh.New addresses
++// api.github.com by name, so on an enterprise install or an emulator the
++// post-job reconciliation that finalizes an orphaned "Started" comment
++// left the appliance and was refused, and a hard-killed run kept its
++// "Started" comment forever. The main run's completion comment already
++// uses the same constructor; this is its safety net catching up.
+ var reconcileNewForgeClient = func(token string) forge.Client {
+-	return gh.New(token)
++	return newGitHubLiveClient(token, "")
+ }
+ var reconcileOrphaned = statuscomment.ReconcileOrphaned
+ 
+diff --git a/internal/cli/reconcilestatus_test.go b/internal/cli/reconcilestatus_test.go
+index 823086fa..9928e728 100644
+--- a/internal/cli/reconcilestatus_test.go
++++ b/internal/cli/reconcilestatus_test.go
+@@ -777,3 +777,12 @@ func TestNewReconcileStatusCmd_NoEvent_FallsBackToForge(t *testing.T) {
+ 	err := cmd.Execute()
+ 	require.NoError(t, err)
+ }
++
++func TestReconcileNewForgeClient_HonoursConfiguredHost(t *testing.T) {
++	// The post-job reconciliation is the safety net for a hard-killed run;
++	// it must address the forge the run used, not api.github.com.
++	t.Setenv("GITHUB_API_URL", "https://ghes.example.com/api/v3")
++	client, ok := reconcileNewForgeClient("ghs_test").(*gh.LiveClient)
++	require.True(t, ok, "expected a live GitHub client")
++	assert.Equal(t, "https://ghes.example.com/api/v3", client.BaseURL())
++}
+diff --git a/internal/cli/run.go b/internal/cli/run.go
+index ab143262..0cdf761c 100644
+--- a/internal/cli/run.go
++++ b/internal/cli/run.go
+@@ -1190,7 +1190,7 @@ func runAgent(ctx context.Context, agentName, fullsendDir, outputBase, targetRep
+ 	// Non-fatal: if the check fails (e.g., non-installation token), log a
+ 	// warning and continue.
+ 	if ghToken := envGHToken(); ghToken != "" {
+-		repos, err := fetchTokenScope(context.Background(), ghToken, "https://api.github.com")
++		repos, err := fetchTokenScope(context.Background(), ghToken, tokenScopeBaseURL())
+ 		if err != nil {
+ 			printer.StepWarn("Token scope check: " + err.Error())
+ 		} else if len(repos) > 0 {
+diff --git a/internal/cli/tokenscope.go b/internal/cli/tokenscope.go
+index 323adfac..8987fc2b 100644
+--- a/internal/cli/tokenscope.go
++++ b/internal/cli/tokenscope.go
+@@ -4,6 +4,8 @@ import (
+ 	"context"
+ 	"fmt"
+ 	"net/http"
++	"os"
++	"strings"
+ 	"time"
+ 
+ 	gh "github.com/fullsend-ai/fullsend/internal/forge/github"
+@@ -11,6 +13,19 @@ import (
+ 
+ var tokenScopeClient = &http.Client{Timeout: 10 * time.Second}
+ 
++// tokenScopeBaseURL is the REST base the scope check introspects the token
++// against: GITHUB_API_URL when the workflow sets it, as it does on an
++// enterprise install or an emulator, and api.github.com otherwise. The
++// check used to name api.github.com outright, so on any other host it
++// dialled a server the token was never minted for and logged a warning on
++// every run.
++func tokenScopeBaseURL() string {
++	if base := strings.TrimSpace(os.Getenv("GITHUB_API_URL")); base != "" {
++		return strings.TrimRight(base, "/")
++	}
++	return "https://api.github.com"
++}
++
+ // fetchTokenScope introspects a GitHub installation token by calling
+ // GET /installation/repositories and returning the full_name of each
+ // accessible repo. Returns (nil, nil) when the token is empty or not an
+diff --git a/internal/cli/tokenscope_test.go b/internal/cli/tokenscope_test.go
+index 702dbf40..a0dca2b8 100644
+--- a/internal/cli/tokenscope_test.go
++++ b/internal/cli/tokenscope_test.go
+@@ -114,3 +114,16 @@ func TestFetchTokenScope_CancelledContext(t *testing.T) {
+ 	assert.Error(t, err)
+ 	assert.Nil(t, repos)
+ }
++
++func TestTokenScopeBaseURL_DefaultsToGitHubCom(t *testing.T) {
++	t.Setenv("GITHUB_API_URL", "")
++	assert.Equal(t, "https://api.github.com", tokenScopeBaseURL())
++}
++
++func TestTokenScopeBaseURL_HonoursConfiguredHost(t *testing.T) {
++	// An enterprise install or an emulator sets GITHUB_API_URL in every
++	// workflow; the scope check must introspect the token there rather than
++	// at api.github.com, which the token was never minted for.
++	t.Setenv("GITHUB_API_URL", "https://ghes.example.com/api/v3/")
++	assert.Equal(t, "https://ghes.example.com/api/v3", tokenScopeBaseURL())
++}

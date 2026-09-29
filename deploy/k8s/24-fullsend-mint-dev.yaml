@@ -56,6 +56,16 @@ spec:
             # workflow, which mints on purpose to prove the boundary.
             - name: FULLSEND_WORKFLOW_HOST_REPOS
               value: fullsend-dev/triage-target
+            # Who may use the mint at all (Fullsend's ALLOWED_ORGS and
+            # PER_REPO_WIF_REPOS): the seed organisation, per-org, so any
+            # repository onboarded into it may mint for itself; nothing is
+            # enrolled per-repo. A repository elsewhere is refused before its
+            # workflow or role is looked at. Every outcome is audited to the
+            # pod's log as a JSON line with no secret in it.
+            - name: FULLSEND_ALLOWED_ORGS
+              value: fullsend-dev
+            - name: FULLSEND_PER_REPO_WIF_REPOS
+              value: ""
             - name: FULLSEND_ALLOWED_WORKFLOW_FILES
               value: reusable-dispatch.yml,reusable-triage.yml,reusable-code.yml,reusable-review.yml,reusable-fix.yml,reusable-retro.yml,reusable-prioritize.yml,fullsend-trust-check.yaml
           volumeMounts:

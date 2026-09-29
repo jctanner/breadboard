@@ -57,3 +57,8 @@ decisions or separate work.
 - [x] Role bots hold no collaborator rows; the emulator gates content, ref and git-object writes on installation grants; the trust check proves a triage token cannot write contents (run 1756).
 - [x] Which workflow may mint (`job_workflow_ref`): gated 2026-09-28 the way Fullsend's mintcore does it; the seeded unregistered workflow is refused every role (run 1777).
 - [x] Per-token enforcement (2026-09-28, github-emulator b64e03c): the gateway answers for an installation token's own repositories and permissions on every route, the git transport included, and the mint endpoint refuses to widen a token; the trust check's read-level probe is refused a comment (run 1779).
+
+## Mint differences (closed 2026-09-29)
+
+- [x] Org and per-repo allowlists, Fullsend's rule under `FULLSEND_ALLOWED_ORGS` / `FULLSEND_PER_REPO_WIF_REPOS`.
+- [x] A secret-free audit line per exchange on the mint's log.

@@ -181,10 +181,14 @@ keys, and every exchange signs a JWT as the role's App and asks the forge for
 a one-hour token scoped to the calling repository at the requested level.
 The static per-role tokens it used to hand out are gone from the mint; they
 remain in a Secret for the named legacy smoke only. This is no longer a
-deviation. What remains different from Fullsend's production mint is listed
-in [fullsend-mint-trust.md](fullsend-mint-trust.md): no org allowlists and
-no audit log. The workflow provenance gate is in place, and the emulator
-enforces each token's own repositories and permissions.
+deviation. The mint now applies the same authorization as Fullsend's:
+the caller's organisation or per-repo enrolment, the workflow's
+provenance, the repository binding, the role's permissions at the
+requested level, and a secret-free audit line per exchange; the emulator
+enforces each token's own repositories and permissions. What differs is
+listed in [fullsend-mint-trust.md](fullsend-mint-trust.md), and is down
+to the shapes a multi-tenant mint has for cross-organisation grants and
+custom roles.
 
 ### 7b. The dashboard onboarding credential
 

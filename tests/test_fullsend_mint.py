@@ -9,6 +9,8 @@ properties that make that worth doing.
 """
 
 import importlib.util
+import json
+import threading
 import time
 from pathlib import Path
 
@@ -295,3 +297,119 @@ def test_provenance_is_read_from_the_environment(monkeypatch):
     monkeypatch.delenv("FULLSEND_WORKFLOW_HOST_REPOS")
     monkeypatch.delenv("FULLSEND_ALLOWED_WORKFLOW_FILES")
     assert mint._provenance() == ([], [])
+
+
+# --- who may use the mint, and what it records ----------------------------------
+
+def test_a_repository_enrolled_per_repo_needs_no_org_membership():
+    claims = {"repository": "someone/else", "repository_owner": "someone"}
+    assert mint.authorize_caller(claims, ["fullsend-dev"], ["someone/else"]) == "per-repo"
+    assert mint.authorize_caller(claims, [], ["*"]) == "per-repo"
+    assert mint.authorize_caller({"repository": "Someone/Else", "repository_owner": "Someone"}, [], ["someone/else"]) == "per-repo"
+
+
+def test_an_org_in_the_allowed_list_is_admitted_per_org_and_others_are_refused():
+    claims = {"repository": "fullsend-dev/triage-target", "repository_owner": "fullsend-dev"}
+    assert mint.authorize_caller(claims, ["Fullsend-Dev"], []) == "per-org"
+    assert mint.authorize_caller(claims, ["*"], []) == "per-org"
+    with pytest.raises(mint.ClaimsRejected, match="not in allowed orgs"):
+        mint.authorize_caller(claims, ["other-org"], [])
+    with pytest.raises(mint.ClaimsRejected, match="not in allowed orgs"):
+        mint.authorize_caller(claims, [], [])  # nothing configured admits nobody
+    with pytest.raises(mint.ClaimsRejected, match="repository_owner"):
+        mint.authorize_caller({"repository": "x/y"}, ["*"], [])
+
+
+def test_authorization_is_read_from_the_environment(monkeypatch):
+    monkeypatch.setenv("FULLSEND_ALLOWED_ORGS", "fullsend-dev, phase2")
+    monkeypatch.setenv("FULLSEND_PER_REPO_WIF_REPOS", "")
+    assert mint._authorization() == (["fullsend-dev", "phase2"], [])
+
+
+def test_the_audit_line_is_json_with_no_secret_in_it(monkeypatch, capsys, tmp_path):
+    monkeypatch.setenv("FULLSEND_MINT_AUDIT_FILE", str(tmp_path / "audit" / "audit.jsonl"))
+    mint.audit("minted", role="triage", token_prefix="ghs_abcd", repository="fullsend-dev/triage-target")
+    out = capsys.readouterr().out.strip()
+    record = json.loads(out)
+    assert record["event"] == "minted" and record["role"] == "triage" and record["ts"].endswith("Z")
+    assert (tmp_path / "audit" / "audit.jsonl").read_text().strip() == out
+
+
+def _serve(monkeypatch, allowed_orgs, per_repo, signing_key):
+    """The real handler on a random port, with the forge and the verifier stubbed."""
+    from http.server import ThreadingHTTPServer
+    server = ThreadingHTTPServer(("127.0.0.1", 0), mint.Handler)
+    server.issuer = ISSUER
+    server.forge_api = "https://forge.test/api/v3"
+    server.role_apps = {"triage": {"app_id": "1001", "private_key": "k"}}
+    server.jwks = _StubJwks(signing_key.public_key())
+    server.host_repos, server.allowed_files = [], ["reusable-dispatch.yml"]
+    server.allowed_orgs, server.per_repo_repos = allowed_orgs, per_repo
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    monkeypatch.setattr(mint, "mint_installation_token", lambda *a, **k: {
+        "token": "ghs_verysecretvalue", "expires_at": "2026-09-29T00:00:00Z",
+        "permissions": {"contents": "read", "issues": "write", "metadata": "read"},
+        "repository_selection": "all", "installation_id": 8,
+    })
+    return server
+
+
+def _post(server, token, body):
+    import urllib.request, urllib.error
+    request = urllib.request.Request(
+        f"http://127.0.0.1:{server.server_address[1]}/v1/token",
+        data=json.dumps(body).encode(),
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request) as response:
+            return response.status, json.loads(response.read())
+    except urllib.error.HTTPError as exc:
+        return exc.code, json.loads(exc.read())
+
+
+def test_the_handler_admits_an_allowed_org_and_audits_the_mint(monkeypatch, capsys, signing_key):
+    server = _serve(monkeypatch, ["fullsend-dev"], [], signing_key)
+    try:
+        token = _token(signing_key, job_workflow_ref="fullsend-ai/fullsend/.github/workflows/reusable-dispatch.yml@refs/heads/main", actor="admin")
+        status, body = _post(server, token, {"role": "triage", "repos": ["triage-target"], "level": "write"})
+        assert status == 200, body
+        assert body["token"] == "ghs_verysecretvalue" and body["level"] == "write"
+        out = capsys.readouterr().out
+        lines = [json.loads(line) for line in out.splitlines() if line.startswith("{")]
+        minted = next(line for line in lines if line["event"] == "minted")
+        assert minted["mode"] == "per-org" and minted["role"] == "triage" and minted["installation_id"] == 8
+        assert minted["repository"] == REPOSITORY and minted["actor"] == "admin"
+        assert minted["job_workflow_ref"].endswith("reusable-dispatch.yml@refs/heads/main")
+        assert minted["token_prefix"] == "ghs_very"
+        assert "ghs_verysecretvalue" not in out and token not in out
+    finally:
+        server.shutdown()
+
+
+def test_the_handler_refuses_an_org_outside_the_allowlist_and_audits_why(monkeypatch, capsys, signing_key):
+    server = _serve(monkeypatch, ["other-org"], [], signing_key)
+    try:
+        token = _token(signing_key, job_workflow_ref="fullsend-ai/fullsend/.github/workflows/reusable-dispatch.yml@refs/heads/main")
+        status, body = _post(server, token, {"role": "triage", "repos": ["triage-target"]})
+        assert status == 403 and "not in allowed orgs" in body["error"]
+        lines = [json.loads(line) for line in capsys.readouterr().out.splitlines() if line.startswith("{")]
+        refused = next(line for line in lines if line["event"] == "refused")
+        assert refused["stage"] == "authorization" and refused["repository_owner"] == "fullsend-dev"
+    finally:
+        server.shutdown()
+
+
+def test_the_handler_refuses_an_unregistered_workflow_after_admitting_the_caller(monkeypatch, capsys, signing_key):
+    server = _serve(monkeypatch, ["fullsend-dev"], [], signing_key)
+    try:
+        token = _token(signing_key, job_workflow_ref="fullsend-dev/triage-target/.github/workflows/rogue.yaml@refs/heads/main")
+        status, body = _post(server, token, {"role": "triage", "repos": ["triage-target"]})
+        assert status == 403 and "workflow not allowed" in body["error"]
+        lines = [json.loads(line) for line in capsys.readouterr().out.splitlines() if line.startswith("{")]
+        refused = next(line for line in lines if line["event"] == "refused")
+        assert refused["stage"] == "provenance" and refused["mode"] == "per-org"
+    finally:
+        server.shutdown()

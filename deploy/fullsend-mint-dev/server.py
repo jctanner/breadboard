@@ -32,6 +32,7 @@ import json
 import os
 import re
 import ssl
+import sys
 import threading
 import time
 import urllib.error
@@ -89,6 +90,69 @@ def parse_level(value: object) -> str:
 
 
 UPSTREAM_WORKFLOW_HOST = "fullsend-ai/fullsend"
+
+
+def authorize_caller(claims: dict, allowed_orgs: list[str], per_repo_repos: list[str]) -> str:
+    """Whether the calling repository may use this mint at all, and how.
+
+    Fullsend's ``mintcore.AuthorizeToken``: ``repository_owner`` must be
+    present; a repository enrolled in PER_REPO_WIF_REPOS (or ``*``) gets
+    per-repo treatment without an org check; otherwise the owner must be in
+    ALLOWED_ORGS, where ``*`` is public mint mode. Returns the mode the
+    caller was admitted under, "per-repo" or "per-org", for the audit line.
+    An empty ALLOWED_ORGS with no per-repo enrolment admits nobody, as
+    upstream's does.
+    """
+    owner = str(claims.get("repository_owner") or "").strip()
+    repository = str(claims.get("repository") or "").strip().lower()
+    if not owner:
+        raise ClaimsRejected("missing repository_owner claim")
+    enrolled = {item.lower() for item in per_repo_repos}
+    if "*" in enrolled or repository in enrolled:
+        return "per-repo"
+    if "*" in allowed_orgs or any(entry.lower() == owner.lower() for entry in allowed_orgs):
+        return "per-org"
+    raise ClaimsRejected(f"repository_owner {owner!r} not in allowed orgs")
+
+
+_AUDIT_LOCK = threading.Lock()
+
+
+def audit(event: str, **fields: object) -> None:
+    """One JSON line per exchange, refused or minted, with no secret in it.
+
+    Upstream's mint logs each outcome with the org, role, level, App,
+    installation, repositories and workflow ref; this does the same as
+    structured lines on stdout, where the pod's log keeps them, and to
+    FULLSEND_MINT_AUDIT_FILE when set. The assertion and the token never
+    appear; a minted token is identified by its first eight characters,
+    the way the forge's own token listing identifies it.
+    """
+    record = {"ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "event": event, **fields}
+    line = json.dumps(record, separators=(",", ":"), sort_keys=True)
+    with _AUDIT_LOCK:
+        sys.stdout.write(line + "\n")
+        sys.stdout.flush()
+        path = os.environ.get("FULLSEND_MINT_AUDIT_FILE", "")
+        if path:
+            try:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, "a", encoding="utf-8") as handle:
+                    handle.write(line + "\n")
+            except OSError:
+                pass
+
+
+def _claim_fields(claims: dict) -> dict[str, object]:
+    """The identity a request carried, for the audit line: never a secret."""
+    return {
+        "subject": claims.get("sub", ""),
+        "repository": claims.get("repository", ""),
+        "repository_owner": claims.get("repository_owner", ""),
+        "run_id": claims.get("run_id", ""),
+        "actor": claims.get("actor", ""),
+        "job_workflow_ref": claims.get("job_workflow_ref", ""),
+    }
 
 
 def split_csv(value: str | None) -> list[str]:
@@ -212,6 +276,7 @@ def mint_installation_token(
         "expires_at": str(minted.get("expires_at", "")),
         "permissions": minted.get("permissions") or permissions,
         "repository_selection": minted.get("repository_selection", "selected"),
+        "installation_id": installation.get("id"),
     }
 
 
@@ -270,6 +335,15 @@ def _config() -> tuple[dict[str, dict[str, str]], str, str, str]:
         )
     forge_api = os.environ.get("FULLSEND_FORGE_API_URL", "").rstrip("/") or f"{issuer}/api/v3"
     return load_role_apps(role_apps_file), issuer, jwks_url, forge_api
+
+
+def _authorization() -> tuple[list[str], list[str]]:
+    """Allowed orgs and per-repo enrolments, Fullsend's ALLOWED_ORGS and
+    PER_REPO_WIF_REPOS under this deployment's prefix."""
+    return (
+        split_csv(os.environ.get("FULLSEND_ALLOWED_ORGS")),
+        split_csv(os.environ.get("FULLSEND_PER_REPO_WIF_REPOS")),
+    )
 
 
 def _provenance() -> tuple[list[str], list[str]]:
@@ -341,6 +415,9 @@ class Handler(BaseHTTPRequestHandler):
                 "credential": "app-installation",
                 "workflow_host_repos": [UPSTREAM_WORKFLOW_HOST, *self.server.host_repos],
                 "allowed_workflow_files": self.server.allowed_files,
+                "allowed_orgs": self.server.allowed_orgs,
+                "per_repo_wif_repos": self.server.per_repo_repos,
+                "audit": "stdout" + (" + file" if os.environ.get("FULLSEND_MINT_AUDIT_FILE") else ""),
                 "oidc": {"issuer": self.server.issuer, "audience": AUDIENCE},
             })
             return
@@ -360,13 +437,22 @@ class Handler(BaseHTTPRequestHandler):
         try:
             claims = _verify(presented, issuer, self.server.jwks)
         except ClaimsRejected as exc:
+            audit("refused", stage="oidc", reason=str(exc), client=self.client_address[0])
             self._send(HTTPStatus.UNAUTHORIZED, {"error": f"OIDC token rejected: {exc}"})
+            return
+        identity = _claim_fields(claims)
+        try:
+            mode = authorize_caller(claims, self.server.allowed_orgs, self.server.per_repo_repos)
+        except ClaimsRejected as exc:
+            audit("refused", stage="authorization", reason=str(exc), **identity)
+            self._send(HTTPStatus.FORBIDDEN, {"error": f"caller not authorized: {exc}"})
             return
         try:
             validate_workflow_ref(
                 str(claims.get("job_workflow_ref") or ""), self.server.host_repos, self.server.allowed_files,
             )
         except ClaimsRejected as exc:
+            audit("refused", stage="provenance", reason=str(exc), mode=mode, **identity)
             self._send(HTTPStatus.FORBIDDEN, {"error": f"workflow not allowed to mint: {exc}"})
             return
 
@@ -374,23 +460,27 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", "0"))
             body = json.loads(self.rfile.read(length))
         except (ValueError, json.JSONDecodeError):
+            audit("refused", stage="request", reason="body is not JSON", mode=mode, **identity)
             self._send(HTTPStatus.BAD_REQUEST, {"error": "request body must be JSON"})
             return
 
         role = str(body.get("role", ""))
         repos = body.get("repos", [])
         if role not in ROLE_PERMISSIONS:
+            audit("refused", stage="request", reason=f"unknown role {role!r}", mode=mode, **identity)
             self._send(HTTPStatus.BAD_REQUEST, {"error": "unknown role"})
             return
         try:
             level = parse_level(body.get("level"))
         except ValueError as exc:
+            audit("refused", stage="request", reason=str(exc), role=role, mode=mode, **identity)
             self._send(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
             return
         if not isinstance(repos, list) or not repos or not all(
             isinstance(repo, str) and (REPO_RE.fullmatch(repo) or REPO_NAME_RE.fullmatch(repo))
             for repo in repos
         ):
+            audit("refused", stage="request", reason="repos malformed", role=role, level=level, mode=mode, **identity)
             self._send(HTTPStatus.BAD_REQUEST, {"error": "repos must contain repository names or owner/name values"})
             return
         # A bare name is resolved against the owner the token was issued
@@ -407,18 +497,29 @@ class Handler(BaseHTTPRequestHandler):
         try:
             _authorize_repos(claims, granted_repos)
         except ClaimsRejected as exc:
+            audit("refused", stage="repos", reason=str(exc), role=role, level=level,
+                  requested_repos=granted_repos, mode=mode, **identity)
             self._send(HTTPStatus.FORBIDDEN, {"error": str(exc)})
             return
 
         app = role_apps.get(role)
         if app is None:
+            audit("refused", stage="mint", reason=f"no App for role {role}", role=role, level=level, mode=mode, **identity)
             self._send(HTTPStatus.SERVICE_UNAVAILABLE, {"error": f"no App configured for role {role}"})
             return
         try:
             minted = mint_installation_token(forge_api, role, app, default_owner, granted_repos, level)
         except MintFailed as exc:
+            audit("refused", stage="mint", reason=str(exc), role=role, level=level, app_id=app["app_id"],
+                  requested_repos=granted_repos, mode=mode, **identity)
             self._send(HTTPStatus.BAD_GATEWAY, {"error": str(exc)})
             return
+        audit(
+            "minted", mode=mode, role=role, level=level, app_id=app["app_id"],
+            installation_id=minted.get("installation_id"), requested_repos=repos, granted_repos=granted_repos,
+            permissions=minted["permissions"], repository_selection=minted["repository_selection"],
+            expires_at=minted["expires_at"], token_prefix=minted["token"][:8], **identity,
+        )
 
         self._send(HTTPStatus.OK, {
             "token": minted["token"],
@@ -442,6 +543,10 @@ def main() -> None:
     server.forge_api = forge_api
     server.role_apps = role_apps
     server.host_repos, server.allowed_files = _provenance()
+    server.allowed_orgs, server.per_repo_repos = _authorization()
+    audit("started", issuer=issuer, forge_api=forge_api, roles=sorted(role_apps),
+          allowed_orgs=server.allowed_orgs, per_repo_wif_repos=server.per_repo_repos,
+          workflow_host_repos=[UPSTREAM_WORKFLOW_HOST, *server.host_repos], allowed_workflow_files=server.allowed_files)
     server.jwks = _JwksCache(jwks_url)
 
     # Serve TLS when a certificate is mounted. Fullsend refuses a non-HTTPS

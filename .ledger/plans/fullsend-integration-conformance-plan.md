@@ -4347,3 +4347,26 @@ emulator does on its own for a lost runner. The frontend gained reusable
 components for it (a paged list with scope toggle, filters and pager; run
 and job rows; a status pill), with component tests, and the Actions tab
 moved onto them beside a new Jobs tab.
+
+### 2026-09-29 the mint's last two differences: allowlists and an audit line
+
+The development mint now admits a caller the way Fullsend's
+`mintcore.AuthorizeToken` does: `repository_owner` must be an allowed
+organisation (`FULLSEND_ALLOWED_ORGS`, per-org) unless the repository is
+enrolled (`FULLSEND_PER_REPO_WIF_REPOS`, per-repo); `*` is public mode;
+nothing configured admits nobody. The deployment allows the seed
+organisation per-org, so any repository onboarded into it may mint for
+itself and a repository elsewhere is refused before its workflow or role is
+looked at. And every outcome, refused at any stage or minted, is one JSON
+line on the pod's log with what upstream's mint logs: subject, repository,
+owner, run, actor, `job_workflow_ref`, admission mode, role, level, App,
+installation, repositories requested and granted, permissions, expiry, and
+the token's first eight characters; never the assertion or the token, and
+the HTTP request logger stays off. Thirteen more mint tests, three of them
+running the real handler on a loopback port with the forge stubbed and the
+audit captured. Live: the trust check (run 1796) and the unregistered
+workflow (run 1797) both pass, and the mint's log shows the exchanges as
+JSON lines: five `minted` per-org triage exchanges at write and read, the
+repository-binding refusal the trust check provokes, and three
+`provenance` refusals for the unregistered workflow, with no token-shaped
+value anywhere in the log. Conformance run 1795 green.

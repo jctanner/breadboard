@@ -51,7 +51,12 @@ job (id-token: write)
    `fullsend-mint`, and current `exp`, `nbf`, `iat`. It then refuses the
    request if any repository in `repos` is not the token's `repository`
    claim. A bare name is resolved against the token's `repository_owner`.
-   Before any of that it checks **which workflow is asking**: the
+   Before any of that it checks **who is asking**, as Fullsend's
+   `mintcore.AuthorizeToken` does: the assertion's `repository_owner` must
+   be an allowed organisation (`FULLSEND_ALLOWED_ORGS`, per-org treatment),
+   unless the repository itself is enrolled (`FULLSEND_PER_REPO_WIF_REPOS`,
+   per-repo treatment); nothing configured admits nobody. Then it checks
+   **which workflow is asking**: the
    `job_workflow_ref` claim must name a workflow file in
    `FULLSEND_ALLOWED_WORKFLOW_FILES` hosted by `fullsend-ai/fullsend`
    (always accepted) or a repository in `FULLSEND_WORKFLOW_HOST_REPOS`,
@@ -70,9 +75,15 @@ job (id-token: write)
    `read` (the default when the level is omitted) has every write
    downgraded to read, as Fullsend ADR 0073 defines. The token is a `ghs_`
    token that expires in one hour. A role whose App is not installed on the
-   owner, or a forge refusal, is a `502` naming the reason. Neither the
-   request nor the response is logged; the mint's request logger is
-   disabled.
+   owner, or a forge refusal, is a `502` naming the reason. Every outcome,
+   refused at any stage or minted, is written as one JSON line to the pod's
+   log (and to `FULLSEND_MINT_AUDIT_FILE` when set): the subject,
+   repository, owner, run, actor and `job_workflow_ref` from the assertion,
+   the mode the caller was admitted under, the role, level, App,
+   installation, repositories requested and granted, permissions, expiry,
+   and the minted token's first eight characters. The assertion and the
+   token themselves never appear, and the HTTP request logger stays off so
+   an `Authorization` header cannot leak either.
 5. **The runner uses it.** The token becomes `GH_TOKEN` for the checkout,
    `gh`, git pushes, and the post-script. The sandbox receives it through
    Fullsend's normal provider path and never sees an App key or an admin
@@ -87,7 +98,7 @@ job (id-token: write)
 | The issuer and audience strings | `FULLSEND_OIDC_ISSUER`, `FULLSEND_OIDC_AUDIENCE` in `deploy/k8s/24-fullsend-mint-dev.yaml` | Misconfiguration only; the values are not secrets |
 | The `repository` and `repository_owner` claims | Set by the emulator from the job, never from the caller | Only by forging the assertion, which needs the key above |
 | The role Apps' private keys | `fullsend-mint-role-apps` Secret, written by `deploy/scripts/18-deploy-fullsend-mint-dev.sh` from the emulator's admin API | Anyone with `get secret` in the namespace can sign as any role's App and mint for any repository that App is installed on; the mint is not what protects the keys |
-| The network path | The mint listens on TLS with a cert-manager certificate from the internal CA | There is no NetworkPolicy on the mint. Any pod in the cluster can reach it. The assertion is the only gate |
+| The network path | The mint listens on TLS with a cert-manager certificate from the internal CA | There is no NetworkPolicy on the mint. Any pod in the cluster can reach it. The assertion, and the allowlist it is checked against, are the gate |
 
 The mint does **not** trust: the caller's chosen subject (there is none), the
 `level` field (ignored, see below), the `repos` list beyond checking it
@@ -130,9 +141,11 @@ assertion is answered `401`.
 
 ## What the mint does not cover
 
-These are the gaps between this substitute and Fullsend's production mint.
-Each is a deliberate simplification, listed so nobody reads a green
-conformance run as proof of something it does not test.
+This table is kept as the checklist it started as. Every row now reads
+"the same" apart from the shapes Fullsend's multi-tenant mint has for
+cross-organisation grants and custom roles, which a single-organisation
+development stack has no use for; the earlier gaps are recorded in the
+plan's dated entries.
 
 | Production mint (Fullsend ADRs 0029, 0073, 0077, 0078) | Development mint |
 | --- | --- |
@@ -140,9 +153,9 @@ conformance run as proof of something it does not test.
 | Downscopes permissions to the role's named privilege level; `level` defaults to `read` | The same, for the two levels `read` and `write`; custom roles and level sets are not supported |
 | Per-role permission sets enforced by the App installation | Enforced per token, on every route: the emulator answers for the token's own repositories (Not Found outside them) and permissions ("Resource not accessible by integration"), the git transport included, and refuses to mint a token wider than its installation |
 | Checks `job_workflow_ref` against registered workflow prefixes | The same: upstream host always accepted, configured host repositories, allowed basenames, deny-all when unset |
-| Org and per-repo allowlists (`ALLOWED_ORGS`, `PER_REPO_WIF_REPOS`) | None. Any repository on the emulator whose job can obtain an assertion may mint for itself |
+| Org and per-repo allowlists (`ALLOWED_ORGS`, `PER_REPO_WIF_REPOS`) | The same rule, as `FULLSEND_ALLOWED_ORGS` and `FULLSEND_PER_REPO_WIF_REPOS`: the seed organisation is allowed per-org, nothing is enrolled per-repo, and a repository elsewhere is refused before its workflow or role is looked at |
 | `["*"]` means installation-wide in the shapes ADR 0077 allows | Refused as an invalid repository name. Only bare names and `owner/name` are accepted |
-| Audit log of every exchange | None. The mint logs nothing by design, to keep tokens out of pod logs |
+| Audit log of every exchange | The same in substance: one JSON line per outcome to the pod's log, secret-free, with the fields upstream's mint logs |
 
 What is still true, and worth saying plainly: within the allowed
 workflows, the role is chosen by the request, not by the assertion. Any of

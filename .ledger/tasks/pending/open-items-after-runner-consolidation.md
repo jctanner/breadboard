@@ -52,8 +52,11 @@ the first full refresh ran 27 handlers. Open from it, in order:
 
 - Seed a roster: people with GitHub logins and teams, through the
   team-structure API, so team-tracker has anyone to compute for.
-- Jira emulator: JQL relative dates (`resolutiondate >= -26w`) are refused by
-  the parser; the releases velocity query uses them.
+- ~~Jira emulator: JQL relative dates (`resolutiondate >= -26w`) are refused by
+  the parser; the releases velocity query uses them.~~ Fixed 2026-09-29,
+  jira-emulator a49a6cb plus the ORDER BY follow-up: relative and literal
+  dates and the resolved field, filtering and ordering. Same day: `/browse/KEY`
+  pages and a public BASE_URL for the Jira emulator.
 - The releases module's settings (target-version JQL fragment or product
   shortnames) and the Google service-account handlers are configuration, not
   code, and can wait for a use.

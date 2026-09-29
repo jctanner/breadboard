@@ -100,16 +100,21 @@ the work that remains, none of it transport:
   the team-tracker metrics, GitHub and GitLab handlers fail on a null
   organisation until people and teams are seeded through the team-structure
   API.
-- **The Jira emulator's JQL parser rejects relative dates** such as
-  `resolutiondate >= -26w`, which the releases module's velocity query uses.
-  That is a Jira emulator addition.
+- **The Jira emulator's JQL parser rejected relative dates** such as
+  `resolutiondate >= -26w`, which the releases module's velocity query uses,
+  and had no `resolutiondate` field. Fixed the same day (jira-emulator
+  a49a6cb and the ORDER BY follow-up): relative dates unquoted and quoted
+  multi-part, literal dates, day equality, and the resolved field for
+  filtering and ordering, on both search routes. The emulator also gained
+  Jira's own page URLs, `/browse/KEY-123` and `/projects/KEY`, and the
+  manifest sets its public base URL so the API's self and browse links
+  name `jira.local` rather than localhost.
 - **Module configuration.** The releases handlers want a target-version JQL
   fragment or product shortnames in their settings, and two want a Google
   service-account key; those are Settings-UI and credential matters, not
   code.
 
-Seeding the roster and teaching the emulator relative dates are the next
-pieces.
+Seeding the roster is the next piece.
 
 ## Demo mode
 

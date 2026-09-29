@@ -99,6 +99,10 @@ spec:
           value: /etc/tls/tls.key
         - name: JIRA_EMULATOR_HOSTNAME
           value: jira-emulator.ai-pipeline.svc.cluster.local
+        # The address the emulator writes into its own links (self, browse):
+        # the browser-facing name, as the GitHub emulator's is.
+        - name: BASE_URL
+          value: https://jira.local
         # Database
         - name: DATABASE_URL
           value: "sqlite+aiosqlite:////data/jira.db"

@@ -4330,3 +4330,20 @@ sandbox nobody would delete and posted logs with a re-keyed token. The
 runner now stops the step's process group on SIGTERM, TERM first so the
 CLI can delete its sandbox, and fails the step with GitHub's "The runner
 has received a shutdown signal" wording.
+
+### 2026-09-29 the emulator's admin page lists jobs, paged and filtered
+
+Both defects the OOM replay found were job-shaped, and both had to be
+found by hand against the API: the admin page listed unfinished runs
+only, unpaged, and showed a job only nested under its run while the run
+was open. The emulator now has paged, filterable listings for runs and
+jobs (github-emulator): unfinished by default, widened with `scope=all`,
+filtered by status and repository, and for jobs by runner and label,
+bounded to 200 a page with no relationship loads, since those are the
+tables that grow. A job row shows its runner, the labels it waits on, and
+its current step's message, which is where a job settled as lost says
+why. Two per-job settlements, requeue and fail-as-lost, expose what the
+emulator does on its own for a lost runner. The frontend gained reusable
+components for it (a paged list with scope toggle, filters and pager; run
+and job rows; a status pill), with component tests, and the Actions tab
+moved onto them beside a new Jobs tab.

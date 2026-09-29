@@ -57,13 +57,17 @@ spec:
             - name: FULLSEND_WORKFLOW_HOST_REPOS
               value: fullsend-dev/triage-target
             # Who may use the mint at all (Fullsend's ALLOWED_ORGS and
-            # PER_REPO_WIF_REPOS): the seed organisation, per-org, so any
-            # repository onboarded into it may mint for itself; nothing is
-            # enrolled per-repo. A repository elsewhere is refused before its
-            # workflow or role is looked at. Every outcome is audited to the
-            # pod's log as a JSON line with no secret in it.
+            # PER_REPO_WIF_REPOS): the organisations enrolled with this
+            # stack, per-org, so any repository onboarded into one of them
+            # may mint for itself; nothing is enrolled per-repo. A repository
+            # elsewhere is refused before its workflow or role is looked at.
+            # Onboarding a repository in a new organisation installs the
+            # Fullsend Apps there (the dashboard does that) but cannot edit
+            # this list: add the organisation here and redeploy the mint.
+            # Every outcome is audited to the pod's log as a JSON line with no
+            # secret in it.
             - name: FULLSEND_ALLOWED_ORGS
-              value: fullsend-dev
+              value: fullsend-dev,experiment
             - name: FULLSEND_PER_REPO_WIF_REPOS
               value: ""
             - name: FULLSEND_ALLOWED_WORKFLOW_FILES

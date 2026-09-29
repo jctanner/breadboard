@@ -147,7 +147,87 @@ def _onboarding_app() -> tuple[str, str, str] | None:
     return app_id, installation_id, key
 
 
-def mint_installation_token(config: "OnboardingConfig", repository: str) -> str:
+def _app_assertion(app_id: str, key: str) -> str:
+    import jwt  # PyJWT, with cryptography for RS256
+
+    now = int(time.time())
+    return jwt.encode({"iat": now - 60, "exp": now + 540, "iss": app_id}, key, algorithm="RS256")
+
+
+def _installation_for(config: "OnboardingConfig", assertion: str, owner: str) -> int | None:
+    """The onboarding App's installation on ``owner``, or None."""
+    try:
+        response = requests.get(
+            f"{config.api_url}/app/installations",
+            headers={"Authorization": f"Bearer {assertion}", "Accept": "application/vnd.github+json"},
+            timeout=15,
+            verify=config.verify_tls,
+        )
+    except requests.RequestException as exc:
+        raise OnboardingError(f"could not list the onboarding App's installations: {exc}") from exc
+    if response.status_code != 200:
+        raise OnboardingError(
+            f"the forge refused to list the onboarding App's installations (HTTP {response.status_code})"
+        )
+    for installation in response.json() or []:
+        login = ((installation.get("account") or {}).get("login") or "")
+        if login.lower() == owner.lower():
+            return int(installation["id"])
+    return None
+
+
+def enrol_owner(config: "OnboardingConfig", owner: str) -> list[str]:
+    """Install every Fullsend App on ``owner``, the way an organisation's
+    administrator installs them on GitHub before the first repository is
+    onboarded.
+
+    An owner the Apps are not installed on cannot be onboarded (the
+    onboarding App has no installation to mint from) and cannot run agents
+    (the mint finds no role App installed there). Both are one act on
+    GitHub, install the Apps on the organisation, and the dashboard performs
+    it with the emulator's admin API, which is the only place that act
+    exists here. Repository selection "all", so later repositories in the
+    owner are covered. Returns the slugs that were newly installed.
+    """
+    token = os.getenv("GITHUB_EMULATOR_TOKEN", "").strip()
+    if not token:
+        raise OnboardingError(
+            f"the Fullsend Apps are not installed on {owner} and no admin credential "
+            "is available to install them"
+        )
+    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github+json"}
+    try:
+        listed = requests.get(
+            f"{config.server_url}/admin/api/apps", headers=headers, timeout=15, verify=config.verify_tls,
+        )
+    except requests.RequestException as exc:
+        raise OnboardingError(f"could not list the forge's Apps: {exc}") from exc
+    if listed.status_code != 200:
+        raise OnboardingError(f"the forge refused the App listing (HTTP {listed.status_code})")
+    installed: list[str] = []
+    for app in listed.json() or []:
+        slug = str(app.get("slug") or "")
+        if not (slug.startswith("fullsend") or slug == "breadboard-onboarding"):
+            continue
+        owners = {str(i.get("owner") or "").lower() for i in (app.get("installations") or [])}
+        if owner.lower() in owners:
+            continue
+        created = requests.post(
+            f"{config.api_url}/admin/apps/{app['app_id']}/installations",
+            headers=headers,
+            json={"account_login": owner, "account_type": "Organization", "repositories": []},
+            timeout=15,
+            verify=config.verify_tls,
+        )
+        if created.status_code not in (200, 201):
+            raise OnboardingError(
+                f"could not install {slug} on {owner} (HTTP {created.status_code}): {created.text[:200]}"
+            )
+        installed.append(slug)
+    return installed
+
+
+def mint_installation_token(config: "OnboardingConfig", repository: str) -> tuple[str, list[str]]:
     """Exchange the onboarding App's key for a one-hour installation token.
 
     The plan's rule: a short-lived GitHub App installation token with repo
@@ -156,21 +236,33 @@ def mint_installation_token(config: "OnboardingConfig", repository: str) -> str:
     one repository being onboarded and the installation's permissions, and
     the token expires on its own after an hour. The key never leaves this
     process and the token never reaches the browser.
+
+    The installation is the one on the repository's owner, looked up rather
+    than assumed: the seeded installation is on the seed organisation, and a
+    repository elsewhere minted against it got a token for a repository of
+    the wrong owner and then Not Found on its own (2026-09-29,
+    experiment/testrepo). An owner with no installation is enrolled first.
+    The repository is named in full for the same reason. Returns the token
+    and the App slugs newly installed on the way.
     """
     app = _onboarding_app()
     if app is None:
         raise OnboardingError("no onboarding App is seeded")
-    app_id, installation_id, key = app
-    import jwt  # PyJWT, with cryptography for RS256
-
-    now = int(time.time())
-    assertion = jwt.encode({"iat": now - 60, "exp": now + 540, "iss": app_id}, key, algorithm="RS256")
-    name = repository.split("/", 1)[1]
+    app_id, _seeded_installation, key = app
+    owner = repository.split("/", 1)[0]
+    assertion = _app_assertion(app_id, key)
+    enrolled: list[str] = []
+    installation_id = _installation_for(config, assertion, owner)
+    if installation_id is None:
+        enrolled = enrol_owner(config, owner)
+        installation_id = _installation_for(config, assertion, owner)
+        if installation_id is None:
+            raise OnboardingError(f"the onboarding App is still not installed on {owner}")
     try:
         response = requests.post(
             f"{config.api_url}/app/installations/{installation_id}/access_tokens",
             headers={"Authorization": f"Bearer {assertion}", "Accept": "application/vnd.github+json"},
-            json={"repositories": [name]},
+            json={"repositories": [repository]},
             timeout=15,
             verify=config.verify_tls,
         )
@@ -184,10 +276,10 @@ def mint_installation_token(config: "OnboardingConfig", repository: str) -> str:
     token = str(response.json().get("token", "")).strip()
     if not token:
         raise OnboardingError("the forge minted no token")
-    return token
+    return token, enrolled
 
 
-def resolve_credential(config: "OnboardingConfig | None" = None, repository: str = "") -> tuple[str, str]:
+def resolve_credential(config: "OnboardingConfig | None" = None, repository: str = "") -> tuple[str, str, list[str]]:
     """Return ``(token, kind)`` for the onboarding run.
 
     The plan asks for a short-lived GitHub App installation token scoped to
@@ -202,16 +294,17 @@ def resolve_credential(config: "OnboardingConfig | None" = None, repository: str
     """
     app_token = os.getenv("FULLSEND_ONBOARD_APP_TOKEN", "").strip()
     if app_token:
-        return app_token, "app-installation"
+        return app_token, "app-installation", []
     if repository and _onboarding_app() is not None:
-        return mint_installation_token(config or OnboardingConfig(), repository), "app-installation"
+        token, enrolled = mint_installation_token(config or OnboardingConfig(), repository)
+        return token, "app-installation", enrolled
     # GITHUB_EMULATOR_TOKEN before GITHUB_TOKEN: this deployment carries both,
     # and they are credentials for different forges. Reading the wrong one
     # handed the CLI a token the forge refuses, which surfaced as a 401
     # several minutes into a run and looked like a Fullsend bug.
     token = os.getenv("GITHUB_EMULATOR_TOKEN", "").strip()
     if token:
-        return token, "emulator-admin-fallback"
+        return token, "emulator-admin-fallback", []
     token = os.getenv("GITHUB_TOKEN", "").strip()
     if not token:
         raise OnboardingError(
@@ -219,7 +312,7 @@ def resolve_credential(config: "OnboardingConfig | None" = None, repository: str
             "to a GitHub App installation token, or GITHUB_EMULATOR_TOKEN for the "
             "local fallback."
         )
-    return token, "personal-fallback"
+    return token, "personal-fallback", []
 
 
 def verify_credential(config: "OnboardingConfig", token: str) -> None:
@@ -344,7 +437,13 @@ def onboard_repository(
         )
 
     config = config or OnboardingConfig()
-    token, credential_kind = resolve_credential(config, repository)
+    token, credential_kind, enrolled = resolve_credential(config, repository)
+    enrolment_note = (
+        f" Installed the Fullsend Apps on {repository.split('/', 1)[0]} first "
+        f"({', '.join(enrolled)}); add that owner to the mint's FULLSEND_ALLOWED_ORGS "
+        "before running agents there."
+        if enrolled else ""
+    )
     verify_credential(config, token)
 
     existing = find_open_scaffold_pr(repository, config, token)
@@ -389,7 +488,7 @@ def onboard_repository(
             pull_request_number=pr_number,
             branch=SCAFFOLD_BRANCH,
             message=(
-                f"Onboarded {repository} using a {credential_kind} credential. "
+                f"Onboarded {repository} using a {credential_kind} credential.{enrolment_note} "
                 "Review and merge the scaffold pull request to activate it."
             ),
         )

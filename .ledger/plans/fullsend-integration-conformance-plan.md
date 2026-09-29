@@ -4370,3 +4370,34 @@ JSON lines: five `minted` per-org triage exchanges at write and read, the
 repository-binding refusal the trust check provokes, and three
 `provenance` refusals for the unregistered workflow, with no token-shaped
 value anywhere in the log. Conformance run 1795 green.
+
+### 2026-09-29 onboarding a repository in a new organisation
+
+Onboarding `experiment/testrepo` from the dashboard failed with
+"repository not found". The repository existed; the form of the name was
+right. The dashboard minted its App installation token with the bare
+repository name, the emulator resolved that name against the seeded
+installation's account (the seed organisation, the only one the
+onboarding App was installed on), and the token came back bound to a
+repository of the wrong owner, so the real repository answered Not Found
+under the per-token binding. Three things were wrong at once and are
+fixed:
+
+- The dashboard names the repository in full and looks the installation up
+  on the repository's owner instead of assuming the seeded one.
+- An owner the Fullsend Apps are not installed on is enrolled first: the
+  dashboard installs every Fullsend App, role Apps and the onboarding App,
+  on the owner through the emulator's admin API, repository selection
+  "all", which is what an organisation administrator does on GitHub before
+  the first repository is onboarded. The result names what it installed
+  and says the owner still has to be added to the mint's allowlist, which
+  is deployment configuration the dashboard cannot edit.
+- The emulator's per-token permission check reused the job-token route
+  map, which files repository variables and secrets under `actions`;
+  GitHub grants them to Apps as `actions_variables` and `secrets`, which is
+  exactly what the onboarding App carries, so setting the first variable
+  was refused. Those routes now resolve to the App permission that
+  governs them.
+
+The mint's `FULLSEND_ALLOWED_ORGS` gained `experiment`, since that is the
+organisation being experimented in.

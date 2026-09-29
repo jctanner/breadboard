@@ -135,7 +135,7 @@ def test_the_emulator_token_is_preferred_over_github_token(monkeypatch):
     # minutes later as a confusing CLI error.
     monkeypatch.setenv("GITHUB_TOKEN", "ghe_wrongforgecredential")
     monkeypatch.setenv("GITHUB_EMULATOR_TOKEN", TOKEN)
-    token, kind = MODULE.resolve_credential()
+    token, kind, _enrolled = MODULE.resolve_credential()
     assert token == TOKEN
     assert kind == "emulator-admin-fallback"
 
@@ -229,18 +229,29 @@ def test_a_seeded_app_mints_a_token_for_the_one_repository(tmp_path, monkeypatch
     public_key = _seed_app(tmp_path, monkeypatch)
     calls = {}
 
+    def fake_get(url, headers=None, timeout=None, verify=None, params=None):
+        assert url.endswith("/app/installations")
+        # The seeded installation is on another owner; the one that counts
+        # is the repository's owner's.
+        return _Response(200, [
+            {"id": 7, "account": {"login": "seed-org"}},
+            {"id": 9, "account": {"login": "Acme"}},
+        ])
+
     def fake_post(url, headers=None, json=None, timeout=None, verify=None):
         calls.update(url=url, headers=headers, json=json)
         return _Response(201, {"token": "ghs_mintedforthisrun", "expires_at": "later"})
 
+    monkeypatch.setattr(MODULE.requests, "get", fake_get)
     monkeypatch.setattr(MODULE.requests, "post", fake_post)
     capture = {}
     result = MODULE.onboard_repository("acme/widget", runner=_run(capture=capture))
     assert result.status == "created"
     assert "app-installation" in result.message
+    assert "Installed the Fullsend Apps" not in result.message
     assert capture["env"]["GH_TOKEN"] == "ghs_mintedforthisrun"
-    assert calls["url"].endswith("/app/installations/7/access_tokens")
-    assert calls["json"] == {"repositories": ["widget"]}
+    assert calls["url"].endswith("/app/installations/9/access_tokens")
+    assert calls["json"] == {"repositories": ["acme/widget"]}
     assertion = calls["headers"]["Authorization"].split(" ", 1)[1]
     claims = jwt.decode(assertion, public_key, algorithms=["RS256"])
     assert claims["iss"] == "2001"
@@ -250,6 +261,10 @@ def test_a_seeded_app_mints_a_token_for_the_one_repository(tmp_path, monkeypatch
 
 def test_a_seeded_app_that_cannot_mint_is_an_error_not_a_fallback(tmp_path, monkeypatch):
     _seed_app(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        MODULE.requests, "get",
+        lambda *a, **k: _Response(200, [{"id": 9, "account": {"login": "acme"}}]),
+    )
     monkeypatch.setattr(
         MODULE.requests, "post",
         lambda *a, **k: _Response(422, {}, text="requested repository is not installed"),
@@ -263,7 +278,7 @@ def test_a_seeded_app_that_cannot_mint_is_an_error_not_a_fallback(tmp_path, monk
 def test_an_incomplete_app_directory_means_no_app(tmp_path, monkeypatch):
     (tmp_path / "app-id").write_text("2001")
     monkeypatch.setenv("FULLSEND_ONBOARD_APP_DIR", str(tmp_path))
-    token, kind = MODULE.resolve_credential(None, "acme/widget")
+    token, kind, _enrolled = MODULE.resolve_credential(None, "acme/widget")
     assert kind == "emulator-admin-fallback"
     assert token == TOKEN
 
@@ -272,4 +287,51 @@ def test_a_ready_made_app_token_still_wins(tmp_path, monkeypatch):
     _seed_app(tmp_path, monkeypatch)
     monkeypatch.setenv("FULLSEND_ONBOARD_APP_TOKEN", "ghs_handedin")
     monkeypatch.setattr(MODULE.requests, "post", lambda *a, **k: (_ for _ in ()).throw(AssertionError("no mint")))
-    assert MODULE.resolve_credential(None, "acme/widget") == ("ghs_handedin", "app-installation")
+    assert MODULE.resolve_credential(None, "acme/widget") == ("ghs_handedin", "app-installation", [])
+
+
+def test_an_owner_without_the_apps_is_enrolled_before_minting(tmp_path, monkeypatch):
+    """experiment/testrepo, 2026-09-29: the onboarding App was installed on
+    the seed organisation only, the bare repository name minted a token
+    against that installation for a repository of the wrong owner, and the
+    real repository answered Not Found. Now the owner is enrolled first."""
+    _seed_app(tmp_path, monkeypatch)
+    monkeypatch.setenv("GITHUB_EMULATOR_TOKEN", TOKEN)
+    installed_on: dict[str, list[str]] = {"experiment": []}
+    posts: list[tuple[str, dict]] = []
+
+    def fake_get(url, headers=None, timeout=None, verify=None, params=None):
+        if url.endswith("/app/installations"):
+            installations = [{"id": 8, "account": {"login": "fullsend-dev"}}]
+            if "breadboard-onboarding" in installed_on["experiment"]:
+                installations.append({"id": 42, "account": {"login": "experiment"}})
+            return _Response(200, installations)
+        if url.endswith("/admin/api/apps"):
+            return _Response(200, [
+                {"app_id": "1001", "slug": "fullsend-triage", "installations": [{"owner": "fullsend-dev"}]},
+                {"app_id": "1100", "slug": "breadboard-onboarding", "installations": [{"owner": "fullsend-dev"}]},
+                {"app_id": "9", "slug": "unrelated-app", "installations": []},
+            ])
+        raise AssertionError(url)
+
+    def fake_post(url, headers=None, json=None, timeout=None, verify=None):
+        posts.append((url, json))
+        if "/admin/apps/" in url:
+            slug = "fullsend-triage" if "/1001/" in url else "breadboard-onboarding"
+            installed_on["experiment"].append(slug)
+            return _Response(201, {"id": 42})
+        return _Response(201, {"token": "ghs_forexperiment", "expires_at": "later"})
+
+    monkeypatch.setattr(MODULE.requests, "get", fake_get)
+    monkeypatch.setattr(MODULE.requests, "post", fake_post)
+    capture = {}
+    result = MODULE.onboard_repository("experiment/testrepo", runner=_run(capture=capture))
+    assert result.status == "created", result.message
+    assert capture["env"]["GH_TOKEN"] == "ghs_forexperiment"
+    admin_posts = [(u, b) for u, b in posts if "/admin/apps/" in u]
+    assert [u.rsplit("/admin/apps/", 1)[1].split("/")[0] for u, _ in admin_posts] == ["1001", "1100"]
+    assert all(b == {"account_login": "experiment", "account_type": "Organization", "repositories": []} for _, b in admin_posts)
+    mint = next((u, b) for u, b in posts if u.endswith("/access_tokens"))
+    assert mint[0].endswith("/app/installations/42/access_tokens") and mint[1] == {"repositories": ["experiment/testrepo"]}
+    assert "Installed the Fullsend Apps on experiment first (fullsend-triage, breadboard-onboarding)" in result.message
+    assert "FULLSEND_ALLOWED_ORGS" in result.message

@@ -72,6 +72,7 @@ bash "${SCRIPT_DIR}/05k-build-github-actions-real-runner.sh"
 bash "${SCRIPT_DIR}/05h-build-fullsend-mint-dev.sh"
 bash "${SCRIPT_DIR}/05i-build-fullsend.sh"
 bash "${SCRIPT_DIR}/05j-build-fullsend-dashboard.sh"
+bash "${SCRIPT_DIR}/05l-build-org-pulse.sh"
 echo ""
 
 # Step 7: Deploy storage
@@ -127,6 +128,11 @@ echo "Step 16/19: Deploying GitLab emulator..."
 bash "${SCRIPT_DIR}/14-deploy-gitlab-emulator.sh"
 echo ""
 
+# Deploy Org Pulse (AI Engineering flavour, demo mode)
+echo "Deploying Org Pulse..."
+bash "${SCRIPT_DIR}/26-deploy-org-pulse.sh"
+echo ""
+
 # Step 17: Deploy GitLab Runner (in-cluster Kubernetes executor)
 echo "Step 17/19: Deploying GitLab Runner..."
 bash "${SCRIPT_DIR}/15-deploy-gitlab-runner.sh"
@@ -173,6 +179,8 @@ kubectl wait --for=condition=Available --timeout=300s \
   deployment/markovd-postgres -n ai-pipeline || true
 kubectl wait --for=condition=Available --timeout=300s \
   deployment/github-actions-runner -n ai-pipeline || true
+kubectl wait --for=condition=Available --timeout=300s \
+  deployment/org-pulse-backend -n ai-pipeline || true
 echo ""
 
 # Run validations
@@ -239,6 +247,10 @@ echo "  - http://${INGRESS_IP} -H 'Host: gitlab.local'"
 echo "  - https://${INGRESS_IP} -H 'Host: gitlab.local' (TLS)"
 echo ""
 
+echo "Org Pulse (demo mode):"
+echo "  - https://${INGRESS_IP} -H 'Host: orgpulse.local' (TLS)"
+echo ""
+
 echo "Internal Service URLs (from pods):"
 echo "  - GitHub:      https://github-emulator.ai-pipeline.svc.cluster.local:443"
 echo "  - Jira:        https://jira-emulator.ai-pipeline.svc.cluster.local:443"
@@ -246,6 +258,7 @@ echo "  - Dashboard:   http://pipeline-dashboard.ai-pipeline.svc.cluster.local:5
 echo "  - MLflow:      http://mlflow.ai-pipeline.svc.cluster.local:5000"
 echo "  - Observatory: http://observatory.ai-pipeline.svc.cluster.local:8000"
 echo "  - GitLab:      https://gitlab-emulator.ai-pipeline.svc.cluster.local:443"
+echo "  - Org Pulse:   http://org-pulse-frontend.ai-pipeline.svc.cluster.local:8080"
 echo ""
 
 echo "Cluster Status:"

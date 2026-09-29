@@ -47,6 +47,7 @@ bash test-application.sh
 3. **GitHub Emulator**: Local GitHub API emulator for testing
 4. **Pipeline Dashboard**: Web UI for monitoring pipeline activity
 5. **Pipeline Jobs**: Kubernetes Jobs for running pipeline phases
+6. **Org Pulse**: the AI Engineering dashboard (`rhai-org-pulse` layered on `org-pulse-core`) with a MongoDB pod, in demo mode at `https://orgpulse.local`; see `docs/org-pulse.md`
 
 ### Infrastructure
 
@@ -269,7 +270,7 @@ For easier access from your host machine:
 
 ```bash
 # Get the VM IP (192.168.56.10)
-echo "192.168.56.10 dashboard.local fullsend.local github.local" | sudo tee -a /etc/hosts
+echo "192.168.56.10 dashboard.local fullsend.local github.local orgpulse.local" | sudo tee -a /etc/hosts
 ```
 
 Then access via:

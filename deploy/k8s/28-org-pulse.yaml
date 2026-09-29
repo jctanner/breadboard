@@ -1,0 +1,399 @@
+---
+# Org Pulse: the AI Engineering engineering dashboard (rhai-org-pulse layered
+# on org-pulse-core), running in demo mode.
+#
+# Upstream deploys this on OpenShift through kustomize with an OAuth proxy
+# sidecar, an ExternalName MongoDB and a refresh CronJob. This stack keeps the
+# same three parts, backend, nginx frontend and MongoDB, as plain manifests:
+#   - no OAuth proxy: the backend identifies a caller by X-Forwarded-Email and
+#     falls back to the first ADMIN_EMAILS entry when the header is absent,
+#     the same local-dev fallback upstream uses without a proxy;
+#   - MongoDB is a pod with a PVC rather than an external service;
+#   - no refresh CronJob: demo mode answers every refresh with "skipped".
+# Demo mode serves fixture data and never calls Jira, GitHub, GitLab or the
+# roster sources, so no credentials are mounted. The Jira client is Jira
+# Cloud only (REST v3) and the GitHub client names api.github.com, so neither
+# emulator would satisfy them without patching; that is separate work.
+# Build: deploy/scripts/05l-build-org-pulse.sh. Deploy: 26-deploy-org-pulse.sh.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: org-pulse-config
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+data:
+  NODE_ENV: production
+  API_PORT: "3001"
+  DEMO_MODE: "true"
+  DB_NAME: org-pulse
+  JIRA_HOST: https://redhat.atlassian.net
+  # The identity every unauthenticated request runs as (see above). In demo
+  # mode the role assignments come from the fixtures, not from this list, so
+  # it has to name one of the fixture admins (fixtures/roles.json) for the
+  # admin pages to open.
+  ADMIN_EMAILS: demo@example.com
+  CRON_ADMIN_EMAIL: demo@example.com
+---
+# MongoDB credentials for the local pod. Development values for a local
+# stack, like the other services' dev keys here; nothing outside the cluster
+# can reach the database.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: org-pulse-mongodb
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+type: Opaque
+stringData:
+  MONGO_INITDB_ROOT_USERNAME: orgpulse
+  MONGO_INITDB_ROOT_PASSWORD: orgpulse-dev-password
+  MONGODB_URI: mongodb://orgpulse:orgpulse-dev-password@org-pulse-mongodb.ai-pipeline.svc.cluster.local:27017/?authSource=admin
+---
+# The frontend's nginx configuration: upstream's nginx-app.conf.template with
+# the backend named by its Service here and the proxy secret left empty, so
+# no init container has to render it.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: org-pulse-nginx
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+data:
+  default.conf: |
+    server {
+        listen       8080;
+        server_name  localhost;
+
+        root /usr/share/nginx/html;
+        index index.html;
+
+        # SPA fallback: serve index.html for all non-file routes
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        # Module content requests go to the backend (^~ beats regex locations)
+        location ^~ /modules/ {
+            proxy_pass http://org-pulse-backend.ai-pipeline.svc.cluster.local:3001;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Email $http_x_forwarded_email;
+            proxy_set_header X-Forwarded-User $http_x_forwarded_user;
+            proxy_read_timeout 120s;
+        }
+
+        # API requests go to the backend
+        location ^~ /api/ {
+            proxy_pass http://org-pulse-backend.ai-pipeline.svc.cluster.local:3001;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Email $http_x_forwarded_email;
+            proxy_set_header X-Forwarded-User $http_x_forwarded_user;
+            proxy_read_timeout 120s;
+        }
+
+        location /healthz {
+            access_log off;
+            return 200 'ok';
+            add_header Content-Type text/plain;
+        }
+
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+---
+# MongoDB
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: org-pulse-mongodb-data
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-path
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: org-pulse-mongodb
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+    component: mongodb
+spec:
+  type: ClusterIP
+  selector:
+    app: org-pulse
+    component: mongodb
+  ports:
+    - name: mongodb
+      port: 27017
+      targetPort: 27017
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: org-pulse-mongodb
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+    component: mongodb
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: org-pulse
+      component: mongodb
+  template:
+    metadata:
+      labels:
+        app: org-pulse
+        component: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          # Upstream's compose.yaml names quay.io/mongodb/mongodb-community-
+          # server. That image's entrypoint refuses to start on Linux 6.19
+          # and newer (MongoDB 8.0's tcmalloc has a known problem with those
+          # kernels) and offers no bypass, on every tag including 7.0, and
+          # this host runs a newer kernel. The official image has no such
+          # check; 7.0 predates the allocator change and serves the same
+          # driver. Move back to upstream's image once it starts on current
+          # kernels.
+          image: docker.io/library/mongo:7.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mongodb
+              containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: org-pulse-mongodb
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: org-pulse-mongodb
+                  key: MONGO_INITDB_ROOT_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+          readinessProbe:
+            exec:
+              command: ["mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            # mongosh takes longer than the one-second default to start; a
+            # probe that always times out leaves the Service without
+            # endpoints and the backend with a refused connection.
+            timeoutSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 27017
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: org-pulse-mongodb-data
+---
+# Backend
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: org-pulse-data
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: org-pulse-backend
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+    component: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: org-pulse
+    component: backend
+  ports:
+    - name: http
+      port: 3001
+      targetPort: 3001
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: org-pulse-backend
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+    component: backend
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: org-pulse
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: org-pulse
+        component: backend
+    spec:
+      containers:
+        - name: backend
+          image: org-pulse-backend:k3s
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 3001
+          envFrom:
+            - configMapRef:
+                name: org-pulse-config
+          env:
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: org-pulse-mongodb
+                  key: MONGODB_URI
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: org-pulse-data
+---
+# Frontend
+apiVersion: v1
+kind: Service
+metadata:
+  name: org-pulse-frontend
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+    component: frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: org-pulse
+    component: frontend
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: org-pulse-frontend
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+    component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: org-pulse
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: org-pulse
+        component: frontend
+    spec:
+      containers:
+        - name: nginx
+          image: org-pulse-frontend:k3s
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 96Mi
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: org-pulse-nginx

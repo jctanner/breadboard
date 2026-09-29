@@ -234,3 +234,41 @@ spec:
             name: observatory
             port:
               number: 8000
+---
+# Ingress for Org Pulse
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: org-pulse-https
+  namespace: ai-pipeline
+  annotations:
+    cert-manager.io/issuer: internal-ca-issuer
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - org-pulse-frontend.ai-pipeline.svc.cluster.local
+    - orgpulse.local
+    secretName: org-pulse-tls
+  rules:
+  - host: org-pulse-frontend.ai-pipeline.svc.cluster.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: org-pulse-frontend
+            port:
+              number: 8080
+  - host: orgpulse.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: org-pulse-frontend
+            port:
+              number: 8080

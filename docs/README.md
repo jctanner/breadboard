@@ -22,6 +22,10 @@ Mermaid `.mmd` files — render on GitHub or paste into [Mermaid Live Editor](ht
 
 - [README.md](deployment/README.md) — K3s deployment quick start, .env setup, troubleshooting
 
+## Org Pulse
+
+- [org-pulse.md](org-pulse.md) — the two Org Pulse repositories, how the AI Engineering flavour is built on core here, and what demo mode leaves out
+
 ## Fullsend Integration
 
 - [fullsend-integration.md](fullsend-integration.md) — Fullsend services, event flow, token exchange, and sandbox boundaries

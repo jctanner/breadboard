@@ -237,6 +237,19 @@ vagrant-rebuild-observatory: ## Rebuild and redeploy Observatory
 vagrant-logs-observatory: ## Follow Observatory logs
 	vagrant ssh -c "kubectl logs -n ai-pipeline -l app=observatory -f"
 
+vagrant-rebuild-org-pulse: ## Rebuild and redeploy Org Pulse
+	@echo "==> Building Org Pulse images..."
+	vagrant ssh -c "cd /vagrant && sudo bash deploy/scripts/05l-build-org-pulse.sh"
+	@echo "==> Applying manifest and restarting Org Pulse..."
+	vagrant ssh -c "kubectl apply -f /vagrant/deploy/k8s/28-org-pulse.yaml"
+	vagrant ssh -c "kubectl rollout restart deployment/org-pulse-backend deployment/org-pulse-frontend -n ai-pipeline"
+	vagrant ssh -c "kubectl rollout status deployment/org-pulse-backend -n ai-pipeline --timeout=180s"
+	vagrant ssh -c "kubectl rollout status deployment/org-pulse-frontend -n ai-pipeline --timeout=120s"
+	@echo "✓ Org Pulse rebuilt and redeployed"
+
+vagrant-logs-org-pulse: ## Follow Org Pulse backend logs
+	vagrant ssh -c "kubectl logs -n ai-pipeline -l app=org-pulse,component=backend -f"
+
 ##@ Vagrant: Backup & Restore
 
 vagrant-backup: ## Backup all service data to ./backups/<timestamp>/
@@ -428,6 +441,22 @@ host-rebuild-observatory: ## Rebuild and redeploy Observatory on host
 
 host-logs-observatory: ## Follow Observatory logs on host
 	kubectl logs -n ai-pipeline -l app=observatory -f
+
+host-deploy-org-pulse: ## Deploy Org Pulse (first time) on host
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/26-deploy-org-pulse.sh
+
+host-rebuild-org-pulse: ## Rebuild and redeploy Org Pulse on host
+	@echo "==> Building Org Pulse images..."
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05l-build-org-pulse.sh
+	@echo "==> Applying manifest and restarting Org Pulse..."
+	kubectl apply -f deploy/k8s/28-org-pulse.yaml
+	kubectl rollout restart deployment/org-pulse-backend deployment/org-pulse-frontend -n ai-pipeline
+	kubectl rollout status deployment/org-pulse-backend -n ai-pipeline --timeout=180s
+	kubectl rollout status deployment/org-pulse-frontend -n ai-pipeline --timeout=120s
+	@echo "✓ Org Pulse rebuilt and redeployed"
+
+host-logs-org-pulse: ## Follow Org Pulse backend logs on host
+	kubectl logs -n ai-pipeline -l app=org-pulse,component=backend -f
 
 host-logs-dashboard: ## Follow dashboard logs on host
 	kubectl logs -n ai-pipeline -l app=pipeline-dashboard -f

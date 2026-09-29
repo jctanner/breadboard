@@ -178,3 +178,27 @@ spec:
   issuerRef:
     name: internal-ca-issuer
     kind: Issuer
+---
+# Certificate for Org Pulse
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: org-pulse-tls
+  namespace: ai-pipeline
+spec:
+  secretName: org-pulse-tls
+  duration: 8760h
+  renewBefore: 720h
+  commonName: org-pulse-frontend.ai-pipeline.svc.cluster.local
+  dnsNames:
+    - org-pulse-frontend
+    - org-pulse-frontend.ai-pipeline
+    - org-pulse-frontend.ai-pipeline.svc
+    - org-pulse-frontend.ai-pipeline.svc.cluster.local
+    - orgpulse.local
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  issuerRef:
+    name: internal-ca-issuer
+    kind: Issuer

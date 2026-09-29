@@ -123,6 +123,8 @@ spec:
     - observatory.local
     - gitlab-emulator.ai-pipeline.svc.cluster.local
     - gitlab.local
+    - org-pulse-frontend.ai-pipeline.svc.cluster.local
+    - orgpulse.local
   issuerRef:
     name: internal-ca-issuer
     kind: Issuer

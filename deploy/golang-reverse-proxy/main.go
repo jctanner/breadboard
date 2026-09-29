@@ -83,6 +83,14 @@ var routes = []Route{
 		Host:    "gitlab.local",
 		Backend: "https://gitlab-emulator.ai-pipeline.svc.cluster.local:443",
 	},
+	{
+		Host:    "org-pulse-frontend.ai-pipeline.svc.cluster.local",
+		Backend: "http://org-pulse-frontend.ai-pipeline.svc.cluster.local:8080",
+	},
+	{
+		Host:    "orgpulse.local",
+		Backend: "http://org-pulse-frontend.ai-pipeline.svc.cluster.local:8080",
+	},
 }
 
 var (

@@ -1,6 +1,6 @@
 # ADR-0003: Org Pulse joins the stack as the AI Engineering flavour, in demo mode
 
-Date: 2026-09-29. Status: accepted.
+Date: 2026-09-29. Status: accepted; the mode decision superseded the same day, see the amendment at the end.
 
 ## Context
 
@@ -41,3 +41,15 @@ ingress, host-proxy route and dashboard link. Documented in
 `docs/org-pulse.md`. Making Org Pulse talk to the emulators is a separate
 plan of the Fullsend host-assumption kind; Observatory's existing import of
 `org-pulse-config.json` is the natural starting thread.
+
+## Amendment, 2026-09-29: live mode against the emulators
+
+The "demo" decision rested on the clients' host assumptions. Those were
+patched the same day on feature branches of the forks (org-pulse-core
+`feature/configurable-github-api-url`, rhai-org-pulse
+`feature/configurable-forge-hosts`), the GitHub emulator gained
+`user.contributionsCollection`, and the Jira emulator already served Jira
+Cloud's v3 shapes. The deployment now points at the emulators with the
+cluster CA trusted through `NODE_EXTRA_CA_CERTS` and the emulators'
+development credentials; `DEMO_MODE=true` remains the switch back. The
+other three decisions stand. `docs/org-pulse.md` has the details.

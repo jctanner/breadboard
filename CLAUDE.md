@@ -146,7 +146,7 @@ The active deployment includes:
 | Fullsend Mint | Exchanges development OIDC assertions for scoped GitHub credentials |
 | Fullsend runner and OpenShell | Runs role-specific agent work inside the sandbox boundary |
 | Fullsend dashboard | Read-only operational view of Actions, jobs, pods, and events |
-| Org Pulse | AI Engineering engineering dashboard (`rhai-org-pulse` on `org-pulse-core`) with its MongoDB, in demo mode; see [`docs/org-pulse.md`](docs/org-pulse.md) |
+| Org Pulse | AI Engineering engineering dashboard (`rhai-org-pulse` on `org-pulse-core`) with its MongoDB, pointed at the emulators; see [`docs/org-pulse.md`](docs/org-pulse.md) |
 | Traefik, cert-manager, and host proxy | Internal TLS and `*.local` service routing |
 
 Fullsend is GitHub-first. Its current development flow starts from the

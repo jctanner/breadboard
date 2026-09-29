@@ -42,6 +42,23 @@ decisions or separate work.
 - `fullsend-ai/fullsend`: patch 0003 (the install action's hardcoded github.com clone), patch 0013 (forge-derived default `allowed_remote_resources`), and patch 0014 (the three GitHub clients 0005 missed: the post-job status reconciliation, the token-scope check, the eval-measure manifest fetch; found 2026-09-29 from the `Error: listing comments … api.github.com` line every run logged; verified on `experiment/testrepo2` run 1803 after the rebuild and release reseed: no api.github.com line in the job, the scope check reported `Token scoped to: experiment/testrepo2`, the eval-measure lookup resolved on the forge, and the reconcile step ran clean), all written to be sent as-is.
  All at their checkboxes in `fullsend-integration-conformance-plan.md`. (MLflow and Observatory telemetry was taken out of the plan on 2026-09-27.)
 
+## Org Pulse live mode (2026-09-29)
+
+Org Pulse runs against the emulators from two fork feature branches
+(org-pulse-core `feature/configurable-github-api-url`, rhai-org-pulse
+`feature/configurable-forge-hosts`, neither pushed) and the emulator's new
+`user.contributionsCollection`. Transport proven from inside the backend;
+the first full refresh ran 27 handlers. Open from it, in order:
+
+- Seed a roster: people with GitHub logins and teams, through the
+  team-structure API, so team-tracker has anyone to compute for.
+- Jira emulator: JQL relative dates (`resolutiondate >= -26w`) are refused by
+  the parser; the releases velocity query uses them.
+- The releases module's settings (target-version JQL fragment or product
+  shortnames) and the Google service-account handlers are configuration, not
+  code, and can wait for a use.
+- `docs/org-pulse.md` carries the details.
+
 ## Harness-dispatch CLI install (found 2026-09-27, G48–G51 in the conformance plan)
 
 - [x] G48 `actions/cache` shim on the agent runner (github-emulator 6547571).

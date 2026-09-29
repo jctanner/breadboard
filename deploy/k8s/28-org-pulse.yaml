@@ -1,19 +1,23 @@
 ---
 # Org Pulse: the AI Engineering engineering dashboard (rhai-org-pulse layered
-# on org-pulse-core), running in demo mode.
+# on org-pulse-core), pointed at this stack's emulators.
 #
 # Upstream deploys this on OpenShift through kustomize with an OAuth proxy
 # sidecar, an ExternalName MongoDB and a refresh CronJob. This stack keeps the
-# same three parts, backend, nginx frontend and MongoDB, as plain manifests:
+# same parts as plain manifests:
 #   - no OAuth proxy: the backend identifies a caller by X-Forwarded-Email and
 #     falls back to the first ADMIN_EMAILS entry when the header is absent,
 #     the same local-dev fallback upstream uses without a proxy;
 #   - MongoDB is a pod with a PVC rather than an external service;
-#   - no refresh CronJob: demo mode answers every refresh with "skipped".
-# Demo mode serves fixture data and never calls Jira, GitHub, GitLab or the
-# roster sources, so no credentials are mounted. The Jira client is Jira
-# Cloud only (REST v3) and the GitHub client names api.github.com, so neither
-# emulator would satisfy them without patching; that is separate work.
+#   - the refresh CronJob, addressed to the backend Service here.
+# The forge hosts follow the feature branches the images are built from
+# (org-pulse-core feature/configurable-github-api-url, rhai-org-pulse
+# feature/configurable-forge-hosts): JIRA_HOST, GITHUB_API_URL,
+# GITHUB_SERVER_URL and GITLAB_BASE_URL name the emulators, and the cluster
+# CA is handed to Node through NODE_EXTRA_CA_CERTS, the variable the image
+# already uses for a private CA. The credentials are the emulators'
+# development ones. DEMO_MODE=true turns all of that off and serves the
+# shipped fixtures instead.
 # Build: deploy/scripts/05l-build-org-pulse.sh. Deploy: 26-deploy-org-pulse.sh.
 apiVersion: v1
 kind: ConfigMap
@@ -25,15 +29,38 @@ metadata:
 data:
   NODE_ENV: production
   API_PORT: "3001"
-  DEMO_MODE: "true"
+  DEMO_MODE: "false"
   DB_NAME: org-pulse
-  JIRA_HOST: https://redhat.atlassian.net
-  # The identity every unauthenticated request runs as (see above). In demo
-  # mode the role assignments come from the fixtures, not from this list, so
-  # it has to name one of the fixture admins (fixtures/roles.json) for the
-  # admin pages to open.
-  ADMIN_EMAILS: demo@example.com
-  CRON_ADMIN_EMAIL: demo@example.com
+  # The emulators, by their in-cluster names (the ones their certificates
+  # carry). GITHUB_SERVER_URL is the host pull-request links are written
+  # with, which is the browser-facing name.
+  JIRA_HOST: https://jira-emulator.ai-pipeline.svc.cluster.local
+  GITHUB_API_URL: https://github-emulator.ai-pipeline.svc.cluster.local/api/v3
+  GITHUB_SERVER_URL: https://github.local
+  GITLAB_BASE_URL: https://gitlab-emulator.ai-pipeline.svc.cluster.local
+  # Node's fetch trusts this bundle in addition to the system roots; the
+  # file is the cluster CA, mounted from the internal-ca-cert ConfigMap.
+  NODE_EXTRA_CA_CERTS: /etc/org-pulse/ca/ca.crt
+  # The identity every unauthenticated request runs as (see above), and the
+  # admin the role store is seeded with on first start.
+  ADMIN_EMAILS: admin@breadboard.local
+  CRON_ADMIN_EMAIL: admin@breadboard.local
+---
+# Credentials for the emulators: the Jira emulator accepts any basic-auth
+# pair in its default permissive mode, and the GitHub emulator seeds an
+# admin personal access token. Development values, like the other services'.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: org-pulse-forge-credentials
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+type: Opaque
+stringData:
+  JIRA_EMAIL: admin
+  JIRA_TOKEN: admin
+  GITHUB_TOKEN: ghp_admin_default_token
 ---
 # MongoDB credentials for the local pod. Development values for a local
 # stack, like the other services' dev keys here; nothing outside the cluster
@@ -296,9 +323,27 @@ spec:
                 secretKeyRef:
                   name: org-pulse-mongodb
                   key: MONGODB_URI
+            - name: JIRA_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: org-pulse-forge-credentials
+                  key: JIRA_EMAIL
+            - name: JIRA_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: org-pulse-forge-credentials
+                  key: JIRA_TOKEN
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: org-pulse-forge-credentials
+                  key: GITHUB_TOKEN
           volumeMounts:
             - name: data
               mountPath: /app/data
+            - name: cluster-ca
+              mountPath: /etc/org-pulse/ca
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /healthz
@@ -322,6 +367,9 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: org-pulse-data
+        - name: cluster-ca
+          configMap:
+            name: internal-ca-cert
 ---
 # Frontend
 apiVersion: v1
@@ -397,3 +445,76 @@ spec:
         - name: nginx-config
           configMap:
             name: org-pulse-nginx
+---
+# The refresh CronJob, as upstream ships it in its kustomize base, addressed
+# to the backend Service here and without the proxy secret. Every fifteen
+# minutes it asks the backend to sync module content and run every refresh
+# handler whose cadence is due, then waits for the run to finish.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: org-pulse-sync-refresh
+  namespace: ai-pipeline
+  labels:
+    app: org-pulse
+    component: sync-refresh
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 1800
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: org-pulse
+            component: sync-refresh
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: sync-refresh
+              image: registry.access.redhat.com/ubi9/ubi-minimal:latest
+              envFrom:
+                - configMapRef:
+                    name: org-pulse-config
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  BACKEND="http://org-pulse-backend.ai-pipeline.svc.cluster.local:3001"
+                  AUTH_HEADER="X-Forwarded-Email: ${CRON_ADMIN_EMAIL}"
+                  echo "=== Triggering module sync ==="
+                  curl -sf -X POST "$BACKEND/api/admin/modules/sync" -H "$AUTH_HEADER" || echo "Module sync skipped (no modules configured)"
+                  echo "=== Triggering unified refresh-all ==="
+                  REFRESH_RESP=$(curl -s -X POST "$BACKEND/api/admin/refresh-all" -H "$AUTH_HEADER" -w "\n%{http_code}")
+                  HTTP_CODE=$(echo "$REFRESH_RESP" | tail -1)
+                  BODY=$(echo "$REFRESH_RESP" | sed '$d')
+                  if [ "$HTTP_CODE" = "409" ]; then echo "Refresh already running"; exit 0; fi
+                  if [ "$HTTP_CODE" != "202" ]; then echo "ERROR: refresh-all answered $HTTP_CODE: $BODY"; exit 1; fi
+                  HANDLERS_DUE=$(echo "$BODY" | grep -o '"handlersDue":[0-9]*' | grep -o '[0-9]*' || echo "")
+                  echo "Refresh started; handlers due: ${HANDLERS_DUE:-unknown}"
+                  if [ "$HANDLERS_DUE" = "0" ]; then exit 0; fi
+                  ATTEMPTS=0
+                  while [ $ATTEMPTS -lt 120 ]; do
+                    sleep 5
+                    ATTEMPTS=$((ATTEMPTS + 1))
+                    STATUS=$(curl -sf "$BACKEND/api/admin/refresh/status" -H "$AUTH_HEADER")
+                    if ! echo "$STATUS" | grep -q '"running":true'; then
+                      echo "Refresh complete after $ATTEMPTS checks"
+                      FAILED=$(echo "$STATUS" | grep -o '"state":"failed"' | wc -l | tr -d ' ')
+                      [ "$FAILED" -gt 0 ] && echo "WARNING: $FAILED handler(s) failed (see admin UI)"
+                      break
+                    fi
+                  done
+                  echo "=== Sync and refresh completed ==="
+              resources:
+                requests:
+                  memory: "32Mi"
+                  cpu: "10m"
+                limits:
+                  memory: "64Mi"
+                  cpu: "50m"

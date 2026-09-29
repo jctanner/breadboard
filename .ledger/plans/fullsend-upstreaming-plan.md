@@ -168,6 +168,26 @@ patches that carry tests, a real pull request remains materially better once
 vouched, because an issue gets no CI, no coverage report and no line-level
 review.
 
+Three observations belong in this queue as reports rather than patches,
+because each is a prompt or policy question upstream should decide, and a
+patch would presume the answer. They are listed with their evidence in
+`.ledger/tasks/pending/open-items-after-runner-consolidation.md` under
+"Upstream improvements to record, not build here":
+
+- the dispatch re-triages on every `issues.edited` without reading `changes`,
+  against its own ADR 0002;
+- the triage agent's duplicate rule (open issues only) against the forge
+  skill's `--state all` listing;
+- `agents/triage.md` names `ISSUE_URL` as an input without saying it is an
+  environment variable, and haiku sometimes asks for it instead of reading
+  it, making no tool call and failing validation. Three occurrences here,
+  each with the harness side proven; a one-sentence prompt change.
+
+The third is the best first report of the three: it has the cleanest
+evidence (two identical runs that differ only in the model's first action),
+the smallest fix, and it is the kind of thing a maintainer running on a
+smaller model would hit themselves.
+
 ## What goes, and what never does
 
 Eighteen patch files across three lists: thirteen in

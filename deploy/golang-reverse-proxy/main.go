@@ -182,6 +182,32 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	wrapped := *proxy
 	wrapped.Director = director
 
+	// The backend sees its own service name as the Host (set above so its
+	// certificate matches), and a framework that builds an absolute redirect
+	// from the Host it saw, as Starlette does for a missing trailing slash,
+	// answers with that name. The browser cannot resolve it. Point such a
+	// Location back at the name the request came in on, with its scheme.
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	wrapped.ModifyResponse = func(resp *http.Response) error {
+		location := resp.Header.Get("Location")
+		if location == "" {
+			return nil
+		}
+		target, err := url.Parse(location)
+		if err != nil || target.Host == "" {
+			return nil
+		}
+		if strings.EqualFold(target.Hostname(), backendURL.Hostname()) {
+			target.Scheme = scheme
+			target.Host = r.Host
+			resp.Header.Set("Location", target.String())
+		}
+		return nil
+	}
+
 	log.Printf("%s %s -> %s%s", r.Method, r.Host, backend, r.URL.Path)
 
 	wrapped.ServeHTTP(w, r)

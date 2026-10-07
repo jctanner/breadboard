@@ -1,0 +1,145 @@
+# Project work index
+
+## Current milestone
+
+- **New, divergent POC:** [Native Fullsend strategy agents](plans/fullsend-agent-led-strategy-poc.md).
+  Checkout `checkouts.fullsend_agent_led_poc/jctanner.strat-creator`, branch
+  `feat/fullsend-agent-led-strategy`; strat-single/strat-batch prompts on
+  released, unmodified Fullsend. Prior script-led POC remains complete.
+  CI will live on `feat/fullsend-agent-led-poc` in the existing local GitLab
+  `redhat/rhel-ai/agentic-ci/strat-pipeline` project.
+  [A1 done](tasks/done/agent-led-strategy-foundation.md): fork main = upstream
+  `cc1ba8c`, branch created, baseline 768 passed/1 skipped.
+  [A2 done](tasks/done/agent-led-strategy-prompts.md): fork branch
+  `508ea33`; host-side discovery/locking, strat-single + strat-batch,
+  830 passed/1 skipped. Next (awaiting go):
+  [A3 wire CI/single run](tasks/pending/agent-led-strategy-single-ci.md), and
+  [A4 batch/events](tasks/pending/agent-led-strategy-batch-events.md).
+  Reuse the working Fullsend setup; no separate infrastructure smoke milestone.
+  [Decision](decisions/ADR-0012-native-fullsend-strategy-agent-poc.md).
+- **M8 complete — [Batch strategy CI and pipeline cleanup](tasks/done/fullsend-strategy-batch-ci.md).**
+  Pushed efcf946; 520 unit / 784 full tests passed (1 skipped).
+  Batch 2053/3993 processed RHAIRFE-2/RHAIRFE-3 into RHAISTRAT-2/3 on actual
+  Opus 4.6; both reviews approve 8/8. Results, Org Pulse (after standard Jira
+  sync recovery), fresh dashboard 2055/3996, redaction and cleanup verified.
+  Normal pipelines contain no diagnostics; no test work/schedules remain.
+  batch-selected is deferred. [Org Pulse stale-key follow-up](bugs/open/org-pulse-ingest-recreated-jira-keys-stay-stale.md)
+  remains open alongside the existing DNS/emulator/coverage/hook follow-ups.
+- **Pre-M8 complete:** [Pin strategy to claude-opus-4-6](tasks/done/fullsend-strategy-pin-opus-4-6.md).
+  Pushed strat-creator 68614f6; create/refine/review regression passed.
+  Vertex smoke 2047/3981 reports actual claude-opus-4-6, provider vertex,
+  one turn, clean artifacts and cleanup. Historical M6 remains a 4.8 run.
+  The subsequent M8 work is tracked above.
+- **M4.1 complete:** [Reuse rfe-autofixer images](tasks/done/strat-creator-rfe-autofixer-images.md).
+  Pushed SHA `602766cdd96ca857e433385d2c6a2b30f27e5d4f`; GitLab pipeline
+  2011, jobs 3898/3899 passed. M4.2 subsequently fixed and proved sandbox
+  Jira access below.
+- **M4 complete:** [Prepare, commit, and push strat-creator's
+  `feat/fullsend-strategy-entrypoint` branch](tasks/done/strat-creator-entrypoint-poc.md).
+  Remote SHA `97562dbee8cf2aa792de01160890a6dcfda61cde`; unit tests (509) and
+  full suite (773 passed, 1 skipped) passed. The live workflow subsequently passed in M6.
+- **M4.2 complete:** [Sandbox Jira connectivity](tasks/done/fullsend-sandbox-jira-connectivity.md).
+  Pushed `bd20534f5b904ae7808d167ad3cde671e17d5ab1`; fresh pipelines
+  2022/2023 passed. Temporary runner/credentials/branches removed.
+- **M5 complete:** [Jira reset and seed](tasks/done/fullsend-strategy-seed-rfe.md).
+  `RHAIRFE-1` is eligible; restored bot credentials are in
+  `ai-pipeline/fullsend-strategy-jira`. Repeat and strategy Python read passed.
+- **M6 complete:** [Real Vertex strategy workflow](tasks/done/fullsend-strategy-poc-integration.md).
+  Pipeline 2037/job 3955 created RHAISTRAT-1 from RHAIRFE-1; publication,
+  artifact redaction, cancellation, SIGKILL and fresh recovery passed.
+  Review recommends revision (5/8, needs-attention).
+
+- **M3 accepted for the POC:** [Fullsend entrypoint implementation](tasks/done/fullsend-entrypoint-feature.md).
+  Functional review fixes passed. The user deferred coverage thresholds under
+  [ADR-0008](decisions/ADR-0008-defer-poc-coverage-gate.md); the measured 72.73%
+  remains below the floor. [Coverage follow-up](tasks/pending/fullsend-entrypoint-patch-coverage.md)
+  is due before upstream PR preparation and does not block integration work.
+- **M7 complete:** [Maintained runner consolidation](tasks/done/consolidate-gitlab-runner-capabilities.md).
+  Capability matrix 2042 passed, including two concurrent OpenShell jobs.
+  Runner-only reset, duplicate cleanup, repeat deployment and emulator restart
+  leave one registration/ready manager. Post-restart ordinary CI 3976 passed.
+  Full wipe control flow was checked with mocked kubectl; service PVCs were preserved.
+- **M1–M7 POC delivery milestones complete.** The pre-M8 exact model gate
+  is also complete. M8 adds batch delivery; other follow-ups are listed below.
+- [Sandbox hooks switch](tasks/pending/fullsend-sandbox-hooks-switch.md)
+  remains a separate follow-up, required before configuring an explicit opt-out.
+- [Immutable hook installation](tasks/pending/fullsend-immutable-hook-installation.md)
+  is a separate investigation and does not gate M3.
+
+- **M1/M2 gates complete:** [Podman inside k3s evidence](notes/podman-in-k3s-m1-evidence.md)
+  and [OpenShell Podman gateway evidence](notes/openshell-podman-gateway-m2-evidence.md).
+- [Fullsend entrypoint and strategy POC plan](plans/fullsend-entrypoint-strategy-poc.md)
+- [M3 Fullsend entrypoint implementation](tasks/done/fullsend-entrypoint-feature.md).
+  Scope: Claude only, preserving current strat-pipeline behavior.
+- [Strat-creator harness](tasks/done/strat-creator-entrypoint-poc.md)
+- [Breadboard integration and validation](tasks/done/fullsend-strategy-poc-integration.md)
+- [Final single-runner consolidation](tasks/done/consolidate-gitlab-runner-capabilities.md)
+- [One GitLab runner requirement](decisions/ADR-0005-single-gitlab-runner.md)
+- [Claude-only POC scope](decisions/ADR-0006-claude-strategy-poc-scope.md)
+- [Job-owned OpenShell gateway decision](decisions/ADR-0004-fullsend-ci-owned-docker-gateway.md)
+
+Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
+
+## Resolved integration bugs
+
+- [Sandbox Jira connectivity](bugs/fixed/fullsend-sandbox-jira-connectivity.md) — fixed and verified by M4.2.
+- [Jira TLS passthrough decision](decisions/ADR-0010-jira-sandbox-tls-passthrough.md).
+
+## Open integration bugs
+
+- [Jira component ID references silently ignored](bugs/open/jira-emulator-component-id-ref-ignored.md).
+  M5 uses verified component names; does not block M6.
+
+- [Deferred Vertex service-account bootstrap capability](bugs/open/fullsend-vertex-service-account-bootstrap.md).
+
+- **M6 credential override:** use Vertex with existing Breadboard credentials;
+  dedicated service-account credentials are no longer required for this POC.
+
+- [Downstream bridge scheduling difference](bugs/open/gitlab-emulator-downstream-trigger-runs-before-upstream.md).
+- [Local service TLS verification](decisions/ADR-0011-local-strategy-services-tls-passthrough.md).
+
+- [Fixed owned-lock interpretation](bugs/fixed/fullsend-strategy-child-misreads-owned-lock.md).
+- [Fixed retained artifact credential redaction](bugs/fixed/fullsend-strategy-artifact-credential-redaction.md).
+- [Canceled-job classification difference](bugs/open/gitlab-emulator-canceled-job-status-overwritten.md).
+
+- [Intermittent nested Podman DNS startup](bugs/open/nested-podman-aardvark-dns-startup-intermittent.md).
+  Fresh concurrent checks passed; the earlier failure remains unexplained.
+- [Emulator skips after_script on failure](bugs/open/gitlab-emulator-after-script-skipped-on-script-failure.md).
+  EXIT sanitizer mitigates artifact exposure; intentional failure 2044/3975 verified.
+- [Maintained GitLab runner operations](../docs/deployment/gitlab-runner.md).
+
+## Batch logging verification
+
+- [Fresh two-RFE batch after CI progress fix](tasks/done/fullsend-ci-progress-batch-test.md).
+
+- [Results clone HTTP/2 error](bugs/open/fullsend-results-clone-http2-stream-error.md): first attempt failed before writes; retry recovered.
+- [Skipped architecture verdict becomes approve](bugs/open/strategy-review-skipped-architecture-recorded-as-approve.md).
+- [Fixed long-running active job warning](bugs/fixed/gitlab-long-active-job-marked-stale.md).
+
+- [Remove unused Claude assessment directory permission](tasks/done/fullsend-strategy-unused-directory-warning.md): complete; source 78bc04c, 789 full tests passed (1 skipped), both CI pins published.
+
+- [Two-issue settings/log verification](tasks/current/fullsend-settings-log-batch-test.md): attempt failed at results clone (emulator OOM); retry awaits user decision.
+
+- [Strategy entrypoint startup banner](tasks/done/strat-entrypoint-start-banner.md): complete; 774cf10 pushed, 790 tests passed, both CI pins published.
+
+- [Runner trace offset mismatch and emulator OOM](bugs/fixed/gitlab-runner-trace-range-mismatch-stalls-terminal-status.md): fixed and deployed; 4011 recovered as failed (results clone killed by emulator OOM).
+
+- [Historical Claude stderr replay](bugs/fixed/strategy-ci-replays-historical-claude-stderr.md): fixed in3343f23; trust configured and per-invocation stderr retained.
+
+- [CI trust and stderr isolation](tasks/done/strat-ci-trust-and-stderr.md): complete;3343f23 pushed,792 tests passed, both future CI pins published.
+
+- [Use Fullsend's built-in Vertex provider](tasks/pending/strat-use-builtin-vertex-provider.md): verify credential refresh parity and remove the deprecated reserved profile import.
+
+- [Bash injection scanner false positives](tasks/pending/fullsend-bash-injection-scan-false-positives.md): refine environment-enumeration matching; eight ordinary Bash expressions currently trigger warnings.
+
+- [Visible initial architecture fetch](tasks/done/strat-entrypoint-visible-context-fetch.md): complete;43a6457 pushed,795 tests passed, both CI pins published.
+
+- [One-RFE batch with setup logs](tasks/done/strat-one-rfe-context-log-batch.md): started2067/4021 for fresh8, batch size1, latest entrypoint source.
+
+- [Sandbox policy denies architecture-context Git fetch](bugs/fixed/fullsend-sandbox-architecture-context-git-fetch-denied.md): L7 `read-only` preset denied `POST git-upload-pack`; fixed in strat-creator3fd1563, pins published; live2070/4027 fetch and policy denials verified.
+
+- [Verify sandbox architecture fetch policy](tasks/done/verify-sandbox-architecture-fetch-policy.md): complete;2070/4027 passed live fetch/denials/cleanup,5 fixture checks passed.
+
+- [One-RFE batch after verified policy](tasks/done/strat-one-rfe-verified-policy-batch-start.md): started2071/4029 for freshRHAIRFE-9, size1, verified source3fd1563.
+
+- [Repeat one-RFE batch](tasks/done/strat-one-rfe-policy-repeat-batch-start.md): started2073/4033 for freshRHAIRFE-10, size1, verified policy.

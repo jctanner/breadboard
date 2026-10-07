@@ -12,8 +12,11 @@
   `cc1ba8c`, branch created, baseline 768 passed/1 skipped.
   [A2 done](tasks/done/agent-led-strategy-prompts.md): fork branch
   `508ea33`; host-side discovery/locking, strat-single + strat-batch,
-  830 passed/1 skipped. Next (awaiting go):
-  [A3 wire CI/single run](tasks/pending/agent-led-strategy-single-ci.md), and
+  830 passed/1 skipped.
+  [A3 done](tasks/done/agent-led-strategy-single-ci.md): GitLab branch
+  `feat/fullsend-agent-led-poc`; pipeline 2078 ran RHAIRFE-12 -> RHAISTRAT-12
+  on Opus 4.6, validated and published (`28c3825`); failure paths 2080/2081.
+  Next (awaiting go):
   [A4 batch/events](tasks/pending/agent-led-strategy-batch-events.md).
   Reuse the working Fullsend setup; no separate infrastructure smoke milestone.
   [Decision](decisions/ADR-0012-native-fullsend-strategy-agent-poc.md).

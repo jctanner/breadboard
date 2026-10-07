@@ -226,3 +226,37 @@ B2.2 go; stayed on Fullsend 0.43.0 (v0.45.0 adds no pre-script run dir or
 always-run hook). Wrote `.fullsend/README.md`, committed and pushed
 `feat/fullsend-agent-led-strategy` at `508ea33` (830 passed/1 skipped on the
 committed tree). A2 moved to done. Next: A3, awaiting go.
+
+## 2026-10-07 — Agent-led POC A3 at breakpoint B3.1
+
+Published `feat/fullsend-agent-led-poc` (from main `14d8131`, head `7677bfd`).
+Pipeline 2075 failed: Fullsend 0.43.0 rejects unset harness host variables,
+so CI now exports optional ones as empty. Pipeline 2076 (strat-batch, no
+work) succeeded on released 0.43.0: gateway up, context fetched, native skip
+(exit 78), no model, clean teardown. Waiting for the B3.1 verdict.
+
+## 2026-10-07 — B3.2 attempt 1: real run, validator false failure
+
+Seeded RHAIRFE-11 (DSP artifact retention). Pipeline 2077 ran native
+strat-single on Opus 4.6 (parent and 6 subagents): RHAISTRAT-11 created,
+refined, pushed and reviewed, approve 6/8. The host validator wrongly
+required unanimous prose reviewers, so publication was skipped; locks were
+released and cleanup was fine. Fixed in fork `a2b888a`, CI repinned. A
+second RFE scenario is ready; waiting for go.
+
+## 2026-10-07 — B3.2 succeeded (attempt 2)
+
+Seeded RHAIRFE-12 (Model Registry serving guard). Pipeline 2078/job 4039:
+native strat-single on Opus 4.6 (parent and 6 subagents), RHAISTRAT-12
+approve 8/8, validated including the Jira readback, published to
+strat-pipeline-data (`28c3825`, summary `2db3a1b`). Org Pulse read back after
+the documented `releases:jira-sync` stale-key recovery. Fresh dashboard
+2079/4040 shows the run. Lock released, clean teardown, 0 credential hits.
+Waiting for the B3.2 verdict.
+
+## 2026-10-07 — A3 complete (B3.3 failure paths)
+
+Pipelines 2080 (context failure before lock) and 2081 (invalid key) failed in
+the pre-script as intended: no sandbox, no lock, no Jira change, clean
+teardown, 0 credential hits. A3 moved to done with the remaining
+differences recorded. Next: A4, awaiting go.

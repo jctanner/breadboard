@@ -1,0 +1,78 @@
+# Agent-led strategy POC: native Fullsend strat-single/strat-batch agents.
+# Published to strat-pipeline branch feat/fullsend-agent-led-poc by
+# var/demos/fullsend-agent-led-poc/publish.py in Breadboard. Pipelines are
+# created explicitly through the API; pushes never start one.
+workflow:
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "push"
+    when: never
+  - when: always
+
+default:
+  # The GitLab emulator skips after_script when script fails, so the EXIT
+  # trap is the redaction guarantee; after_script repeats it where it runs.
+  before_script:
+  - trap 'rc=$?; trap - EXIT; if ! python3 ci-scripts/agent-led-redact.py; then rm
+    -rf fullsend-ci-artifacts fullsend-run-output; exit 1; fi; exit "$rc"' EXIT
+  after_script:
+  - python3 ci-scripts/agent-led-redact.py || { rm -rf fullsend-ci-artifacts fullsend-run-output;
+    exit 1; }
+
+stages:
+- strategy
+
+variables:
+  STRAT_CREATOR_REPO: https://github.com/jctanner-opendatahub-io/strat-creator.git
+  STRAT_CREATOR_BRANCH: feat/fullsend-agent-led-strategy
+  STRAT_CREATOR_SHA: a2b888aba60837817d37f13e091abdfc5e9ebaa6
+  FULLSEND_VERSION: 0.43.0
+  FULLSEND_TARBALL_SHA256: e56be72bb2af7210418307e784d65a8ead4ff736540c077f75d258865e595f10
+  # Shared with the script-led POC by decision (2026-10-07); each run adds its
+  # own timestamped RHAISTRAT/<run>/ directory.
+  RESULTS_REPO_URL: https://gitlab.local/redhat/rhel-ai/agentic-ci/strat-pipeline-data.git
+  RESULTS_GIT_USER: admin
+  ORG_PULSE_URL: https://orgpulse.local
+  CLOUD_ML_REGION: global
+  STRATEGY_MODE: ''
+  RFE_KEY: ''
+  BATCH_SIZE: ''
+  BATCH_OFFSET: ''
+  BATCH_EXPECTED_KEYS: ''
+
+strat-single:
+  stage: strategy
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags:
+  - aipcc-small-x86_64
+  timeout: 2h
+  resource_group: strat-agent-led
+  rules:
+  - if: $STRATEGY_MODE == "strat-single" && $RFE_KEY != ""
+  script:
+  - bash ci-scripts/agent-led-source.sh
+  - bash ci-scripts/agent-led-strategy.sh strat-single
+  artifacts:
+    when: always
+    paths:
+    - fullsend-ci-artifacts/
+    - fullsend-run-output/
+    expire_in: 30 days
+
+strat-batch:
+  stage: strategy
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags:
+  - aipcc-small-x86_64
+  timeout: 5h
+  resource_group: strat-agent-led
+  rules:
+  - if: $STRATEGY_MODE == "strat-batch" && $RFE_KEY == ""
+  script:
+  - bash ci-scripts/agent-led-source.sh
+  - bash ci-scripts/agent-led-strategy.sh strat-batch
+  artifacts:
+    when: always
+    paths:
+    - fullsend-ci-artifacts/
+    - fullsend-run-output/
+    expire_in: 30 days

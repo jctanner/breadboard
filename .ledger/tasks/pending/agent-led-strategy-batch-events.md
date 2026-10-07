@@ -1,6 +1,6 @@
 # A4: Native strategy batch and Fullsend event dispatch
 
-Depends on [A3 single CI](agent-led-strategy-single-ci.md); use its tested release.
+Depends on [A3 single CI](../done/agent-led-strategy-single-ci.md); use its tested release.
 
 ## Acceptance criteria
 

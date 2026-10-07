@@ -23,7 +23,7 @@ with its existing branches, results and evidence.
 | Base | Rebase and publish fork `origin/main` onto fetched `upstream/main`, then branch |
 | Breadboard fixture | `var/demos/fullsend-agent-led-poc/` |
 | Local CI | Existing `gitlab.local/redhat/rhel-ai/agentic-ci/strat-pipeline`, new branch `feat/fullsend-agent-led-poc`; same maintained runner |
-| Results | Separate results repository and matching dashboard target |
+| Results | Existing `gitlab.local/.../strat-pipeline-data` and strat-dashboard `main`, shared with the script-led POC (user decision at B3.1, 2026-10-07; supersedes "separate results repository") |
 | Model/provider | `claude-opus-4-6`, effort high, Vertex with existing authorized Breadboard credentials |
 
 Read the checkout's instructions before edits and locally ignore its parent
@@ -125,7 +125,7 @@ Document this necessary difference from rfe-autofixer.
    as part of wiring this workflow. Run native strat-single and verify real
    4.6 inference, Jira effects,
    validated output, publication/readback, redaction and cleanup.
-   [Task](../tasks/pending/agent-led-strategy-single-ci.md).
+   [Task](../tasks/done/agent-led-strategy-single-ci.md).
 4. **A4 — Batch and event selection.** Extend the same GitLab branch and
    process two fresh RFEs with strat-batch.
    Prove native event triggers select and dispatch the correct agent with the
@@ -155,4 +155,4 @@ or prepare an upstream PR. Planning starts no checkout, CI job or model run.
 
 ## Status
 
-Implementation plan, 2026-10-07. A1 done (fork main = upstream `cc1ba8c`; branch created). A2 done (branch `508ea33`; host-side locking per ADR-0012 amendment; Fullsend 0.43.0 kept). A3–A4 pending. Standalone smoke milestone removed.
+Implementation plan, 2026-10-07. A1 done (fork main = upstream `cc1ba8c`; branch created). A2 done (branch `508ea33`; host-side locking per ADR-0012 amendment; Fullsend 0.43.0 kept). A3 done (fork `a2b888a`, GitLab branch head `242608b`; pipeline 2078 success; results shared with the script-led POC by decision). A4 pending. Standalone smoke milestone removed.

@@ -24,7 +24,7 @@ stages:
 variables:
   STRAT_CREATOR_REPO: https://github.com/jctanner-opendatahub-io/strat-creator.git
   STRAT_CREATOR_BRANCH: feat/fullsend-agent-led-strategy
-  STRAT_CREATOR_SHA: a2b888aba60837817d37f13e091abdfc5e9ebaa6
+  STRAT_CREATOR_SHA: 9350c89bcf1fd09acc0a3d1ef44ec6a59e47efe3
   FULLSEND_VERSION: 0.43.0
   FULLSEND_TARBALL_SHA256: e56be72bb2af7210418307e784d65a8ead4ff736540c077f75d258865e595f10
   # Shared with the script-led POC by decision (2026-10-07); each run adds its
@@ -64,8 +64,11 @@ strat-batch:
   tags:
   - aipcc-small-x86_64
   timeout: 5h
-  resource_group: strat-agent-led
+  # Same group as strat-pipeline's native batch job: one batch at a time.
+  resource_group: strat-batch
   rules:
+  # Scheduled batch, as in strat-pipeline and rfe-autofixer.
+  - if: $CI_PIPELINE_SOURCE == "schedule" && $RFE_KEY == ""
   - if: $STRATEGY_MODE == "strat-batch" && $RFE_KEY == ""
   script:
   - bash ci-scripts/agent-led-source.sh

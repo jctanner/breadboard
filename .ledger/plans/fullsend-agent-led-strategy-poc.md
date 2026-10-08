@@ -126,12 +126,17 @@ Document this necessary difference from rfe-autofixer.
    4.6 inference, Jira effects,
    validated output, publication/readback, redaction and cleanup.
    [Task](../tasks/done/agent-led-strategy-single-ci.md).
-4. **A4 — Batch and event selection.** Extend the same GitLab branch and
+4. **A4 — Scheduled batch (amended 2026-10-07).** Event-trigger dispatch
+   and polling are out of scope by user decision: neither reference pipeline
+   uses Fullsend `trigger:` routing or Jira polling. Batch runs from a GitLab
+   pipeline schedule, as in strat-pipeline and rfe-autofixer; single stays
+   a manual or API pipeline. The original A4 text follows for the record.
+   **Was: Batch and event selection.** Extend the same GitLab branch and
    process two fresh RFEs with strat-batch.
    Prove native event triggers select and dispatch the correct agent with the
    correct inputs; direct CLI selection alone is not event evidence. Compare
    outputs/failure recovery with the script-led baseline.
-   [Task](../tasks/pending/agent-led-strategy-batch-events.md).
+   [Task](../tasks/current/agent-led-strategy-batch-events.md).
 
 ## Open choices and constraints
 

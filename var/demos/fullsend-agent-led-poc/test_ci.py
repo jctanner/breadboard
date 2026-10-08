@@ -17,12 +17,15 @@ def test_jobs_and_rules():
     assert CI['workflow']['rules'][0] == {'if': '$CI_PIPELINE_SOURCE == "push"', 'when': 'never'}
     single, batch = CI['strat-single'], CI['strat-batch']
     assert single['rules'] == [{'if': '$STRATEGY_MODE == "strat-single" && $RFE_KEY != ""'}]
-    assert batch['rules'] == [{'if': '$STRATEGY_MODE == "strat-batch" && $RFE_KEY == ""'}]
+    assert single['resource_group'] == 'strat-agent-led'
+    assert batch['rules'] == [
+        {'if': '$CI_PIPELINE_SOURCE == "schedule" && $RFE_KEY == ""'},
+        {'if': '$STRATEGY_MODE == "strat-batch" && $RFE_KEY == ""'}]
+    assert batch['resource_group'] == 'strat-batch'
     for job, agent in ((single, 'strat-single'), (batch, 'strat-batch')):
         assert job['image'] == 'quay.io/aipcc/agentic-ci/openshell:0.3.46'
         assert job['script'][-1] == f'bash ci-scripts/agent-led-strategy.sh {agent}'
         assert job['artifacts']['when'] == 'always'
-        assert job['resource_group'] == 'strat-agent-led'
 
 
 def test_pins_and_results_target():

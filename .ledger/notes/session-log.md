@@ -260,3 +260,14 @@ Pipelines 2080 (context failure before lock) and 2081 (invalid key) failed in
 the pre-script as intended: no sandbox, no lock, no Jira change, clean
 teardown, 0 credential hits. A3 moved to done with the remaining
 differences recorded. Next: A4, awaiting go.
+
+## 2026-10-08 — A4: scheduled batch, mid-batch stop, retry fix, recovery
+
+Scope amended: event triggers and polling are out (user). Batch is wired to
+a GitLab schedule with `resource_group: strat-batch` (2082, no-work). Batch
+2083 stopped mid-batch on a headless `end_turn`; the user chose rfe-creator's
+retry with resume (fork `9350c89`). Batch 2084 (RHAIRFE-15/16) succeeded and
+published, with no cross-contamination and a truthful revise. Recovery 2086
+imported RHAISTRAT-14 via Path A with no duplicate clone; refine repeated as
+predicted. The comparison with the script-led POC is recorded. Waiting for
+the verdict to close A4.

@@ -49,4 +49,14 @@ Unlike rfe-autofixer and epic-decomposer, which pass JQL to the skill and
 serialize with `resource_group`, discovery stays bounded and deterministic;
 the cost is no in-agent wave processing and whole-run locks, as today.
 
+## Amendment, 2026-10-07: one in-run validation retry
+
+After pipeline 2083's mid-batch `end_turn`, the user chose rfe-creator's
+pattern: `max_iterations: 2`, where the retry resumes from durable
+repository progress (`tmp/strat-progress.yaml`) rather than repeating
+completed phases. This replaces "start with one agent attempt". The
+remaining risk is a partly finished phase. A per-strategy step can repeat
+when the agent stopped after its Jira effect but before its marker; the
+skills' verdict-label gates bound this for review.
+
 See [the plan](../plans/fullsend-agent-led-strategy-poc.md).

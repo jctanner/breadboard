@@ -17,7 +17,7 @@
   `feat/fullsend-agent-led-poc`; pipeline 2078 ran RHAIRFE-12 -> RHAISTRAT-12
   on Opus 4.6, validated and published (`28c3825`); failure paths 2080/2081.
   Next (awaiting go):
-  [A4 batch/events](tasks/pending/agent-led-strategy-batch-events.md).
+  [A4 batch/events](tasks/current/agent-led-strategy-batch-events.md).
   Reuse the working Fullsend setup; no separate infrastructure smoke milestone.
   [Decision](decisions/ADR-0012-native-fullsend-strategy-agent-poc.md).
 - **M8 complete — [Batch strategy CI and pipeline cleanup](tasks/done/fullsend-strategy-batch-ci.md).**

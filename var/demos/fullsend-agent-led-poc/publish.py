@@ -16,6 +16,8 @@ import json
 import os
 import re
 import sys
+import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
 
@@ -46,6 +48,9 @@ def main():
     run.add_argument('--rfe', help='Create a strat-single pipeline for this RFE')
     run.add_argument('--batch', action='store_true',
                      help='Create a strat-batch pipeline (native discovery)')
+    run.add_argument('--schedule-once', action='store_true',
+                     help='Start strat-batch from a one-shot pipeline schedule, '
+                          'then delete the schedule (no recurring schedule remains)')
     parser.add_argument('--context-path',
                         help='Failure-path testing: set STRAT_ARCHITECTURE_CONTEXT_PATH')
     parser.add_argument('--batch-size', type=int)
@@ -57,8 +62,8 @@ def main():
     if args.rfe and not RFE_RE.match(args.rfe) and not args.allow_invalid_rfe:
         parser.error('--rfe must look like RHAIRFE-NNNN')
     limits = (args.batch_size, args.batch_offset, args.expected_keys)
-    if not args.batch and any(v is not None for v in limits):
-        parser.error('batch limits require --batch')
+    if not (args.batch or args.schedule_once) and any(v is not None for v in limits):
+        parser.error('batch limits require --batch or --schedule-once')
     if any(v is not None and v < 0 for v in limits[:2]):
         parser.error('batch limits must be non-negative')
 
@@ -123,6 +128,9 @@ def main():
             if changed:
                 sys.exit(f'protected branches moved unexpectedly: {changed}')
 
+        if args.schedule_once:
+            report.update(schedule_once(api, pid, args))
+
         if args.rfe or args.batch:
             if args.rfe:
                 variables = [{'key': 'STRATEGY_MODE', 'value': 'strat-single'},
@@ -143,6 +151,44 @@ def main():
             report['pipeline_url'] = pipeline.get('web_url')
             report['pipeline_variables'] = variables
         print(json.dumps(report, indent=2))
+
+
+def schedule_once(api, pid, args):
+    """Create a schedule for one minute a few minutes ahead (it would next
+    recur a year later), wait for its pipeline, then delete it."""
+    fire = (datetime.now(timezone.utc) + timedelta(minutes=3)).replace(second=0, microsecond=0)
+    cron = f'{fire.minute} {fire.hour} {fire.day} {fire.month} *'
+    schedule = api('POST', f'/projects/{pid}/pipeline_schedules', json={
+        'description': 'agent-led POC one-shot strat-batch (deleted after firing)',
+        'ref': BRANCH, 'cron': cron, 'cron_timezone': 'UTC', 'active': True})
+    sid = schedule['id']
+    report = {'schedule_id': sid, 'schedule_cron': cron, 'schedule_variables': []}
+    try:
+        for key, value in (('BATCH_SIZE', args.batch_size),
+                           ('BATCH_OFFSET', args.batch_offset),
+                           ('BATCH_EXPECTED_KEYS', args.expected_keys)):
+            if value is not None:
+                api('POST', f'/projects/{pid}/pipeline_schedules/{sid}/variables',
+                    json={'key': key, 'value': str(value)})
+                report['schedule_variables'].append({'key': key, 'value': str(value)})
+        deadline = time.time() + 600
+        while time.time() < deadline:
+            current = api('GET', f'/projects/{pid}/pipeline_schedules/{sid}')
+            last = current.get('last_pipeline') or {}
+            if last.get('id'):
+                report['pipeline_id'] = last['id']
+                break
+            time.sleep(15)
+        else:
+            report['pipeline_id'] = None
+    finally:
+        api('DELETE', f'/projects/{pid}/pipeline_schedules/{sid}')
+        remaining = api('GET', f'/projects/{pid}/pipeline_schedules')
+        report['schedules_remaining'] = len(remaining)
+    if report.get('pipeline_id'):
+        pipeline = api('GET', f'/projects/{pid}/pipelines/{report["pipeline_id"]}')
+        report['pipeline_source'] = pipeline.get('source')
+    return report
 
 
 if __name__ == '__main__':

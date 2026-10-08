@@ -8,8 +8,18 @@ Each scenario here is a different area that the fetched architecture context
 - `dsp-retention` (RHAIRFE-11, run in pipeline 2077): Data Science Pipelines
   artifact retention (data-science-pipelines-operator, persistence agent,
   Argo WorkflowArtifactGCTask).
-- `registry-serving-guard`: Model Registry protection for served versions
-  (the registry's InferenceService sync controller).
+- `registry-serving-guard` (RHAIRFE-12, pipeline 2078): Model Registry
+  protection for served versions (the registry's InferenceService sync
+  controller).
+- `workbench-cull-exemption` (A4 batch): per-workbench idle-culling
+  exemptions (the notebook controller's optional culling).
+- `trustyai-drift-alerts` (A4 batch): alerting on scheduled TrustyAI drift
+  metrics (the service's metric scheduler and Prometheus publication).
+  RHAIRFE-13/14 ran in pipeline 2083, which stopped mid-batch.
+- `feast-scheduled-materialization` (A4 batch 2): scheduled incremental
+  materialization of Feast feature views (feature server materialization).
+- `kueue-admission-visibility` (A4 batch 2): explaining why a queued
+  workload is not admitted (Kueue LocalQueue/ClusterQueue admission).
 
 Content is fictional; no customer or person names.
 
@@ -124,6 +134,163 @@ backend, or both, and how cross-namespace registry selection affects the
 check.
 """
 
+WORKBENCH_CULL_EXEMPTION = """h2. Problem Statement
+
+Workbenches are stopped automatically when they look idle, which saves GPU
+and memory for everyone. Data scientists who run long training or data
+preparation cells inside a notebook lose that work when the culler decides
+the kernel is idle because nobody has touched the browser tab for a while.
+Today the only escape is to ask an administrator to disable culling for the
+whole cluster, or to keep a browser tab open and click around.
+
+h2. Desired Outcome
+
+A user can mark a single workbench as temporarily exempt from idle culling
+for a bounded period, within limits an administrator sets. The exemption is
+visible on the workbench, expires on its own, and is recorded so
+administrators can see who is holding resources and why.
+
+h2. Acceptance Criteria
+
+* A workbench can be exempted from idle culling for a chosen period, up to an administrator-defined maximum
+* Administrators can disable exemptions entirely or limit them per project
+* The exemption and its expiry are visible in the dashboard on the workbench
+* When the exemption expires, normal idle culling resumes without restarting the workbench
+* Exemptions are recorded with user, workbench, start, end and an optional reason
+* Workbenches without an exemption are culled exactly as today
+* Upgrading leaves existing culling configuration and behaviour unchanged
+
+h2. User Stories
+
+* As a data scientist, I want my overnight training cell to finish without my workbench being stopped.
+* As a platform administrator, I want exemptions to be bounded and visible so idle resources are still reclaimed.
+
+h2. Technical Notes
+
+Idle culling is an optional behaviour of the notebook controller. The
+strategy should decide where an exemption is stored, how the culler reads it,
+and how the dashboard presents it, without changing culling for other
+workbenches.
+"""
+
+TRUSTYAI_DRIFT_ALERTS = """h2. Problem Statement
+
+Teams configure scheduled drift and fairness metrics for deployed models in
+TrustyAI. The values are calculated in the background and exposed as
+Prometheus metrics, but nothing tells the model owner when a metric crosses
+an acceptable threshold. Owners find out from dashboards they rarely open, or
+after a downstream complaint, by which time a drifting model may have served
+bad predictions for days.
+
+h2. Desired Outcome
+
+When a scheduled metric for a model crosses a threshold the owner set, the
+project's owners are notified through the cluster's existing alerting, with
+the model, metric, value, threshold and a link to the details. Thresholds are
+set alongside the scheduled metric, and alerts clear when the metric
+recovers.
+
+h2. Acceptance Criteria
+
+* A threshold and severity can be set on a scheduled drift or fairness metric
+* Crossing the threshold raises an alert through the cluster's existing alerting stack; no new notification service is required
+* The alert identifies project, model, metric, current value and threshold
+* The alert resolves automatically when the metric returns within the threshold
+* Metrics without a threshold behave exactly as today
+* Alert rules are created and removed with the scheduled metric, scoped to the project
+* Missing or stale metric data produces a distinct, lower-severity alert rather than silence
+
+h2. User Stories
+
+* As a model owner, I want to be told when my model drifts so I can retrain before users notice.
+* As a platform administrator, I want alerts to use the alerting we already run.
+
+h2. Technical Notes
+
+TrustyAI Service already calculates configured metrics on a schedule and
+publishes them through Prometheus-compatible metrics. The strategy should
+decide whether thresholds live with the metric request or in separate
+alert-rule resources, and who owns the rules' lifecycle.
+"""
+
+FEAST_SCHEDULED_MATERIALIZATION = """h2. Problem Statement
+
+Data scientists define feature views in a project's feature store and serve
+them online to models. Keeping the online store current means running
+materialization by hand or from a home-grown cron job per feature view. When
+someone forgets, or the job breaks, models quietly read old feature values,
+and nobody can see when a feature view was last loaded or whether the last
+load succeeded.
+
+h2. Desired Outcome
+
+A feature view owner can give a feature view a materialization schedule.
+The platform then loads only the new data since the last successful run, on
+that schedule, and shows each feature view's last successful
+materialization, the next scheduled run and the outcome of recent runs.
+
+h2. Acceptance Criteria
+
+* A schedule (interval or cron expression) can be set per feature view
+* Scheduled runs materialize incrementally from the last successful end time
+* A failed run is retried with backoff and does not advance the last successful end time
+* Each feature view shows last successful materialization time, next run and recent run outcomes
+* Runs for one feature view never overlap; a run still in progress delays the next one
+* Feature views without a schedule are unchanged and can still be materialized on demand
+* Schedules are removed when their feature view is deleted
+
+h2. User Stories
+
+* As a data scientist, I want my online features refreshed on a schedule without maintaining my own cron job.
+* As a model owner, I want to see how fresh the features behind my model are.
+
+h2. Technical Notes
+
+The feature server already exposes materialization and incremental
+materialization. The strategy should decide where schedules run (a
+platform scheduler, a per-feature-store controller or pipelines) and where
+run history is kept.
+"""
+
+KUEUE_ADMISSION_VISIBILITY = """h2. Problem Statement
+
+Training jobs and other batch workloads submitted from a project wait in a
+queue until the cluster admits them. Users see only that their job is
+pending. They cannot tell whether it is waiting for quota, blocked by a
+higher-priority workload, or will never fit, so they resubmit, delete and
+recreate jobs, or ask administrators to investigate a queue they cannot see.
+
+h2. Desired Outcome
+
+For any pending workload in their project, users can see its position in
+the queue, the reason it has not been admitted in plain language, and the
+quota it is waiting for. Administrators can see the same information across
+queues, without granting users access to cluster-scoped queue
+configuration.
+
+h2. Acceptance Criteria
+
+* A pending workload shows its queue, its position and the current reason it is not admitted
+* Reasons distinguish insufficient quota, preemption by higher priority, and requests that can never fit the queue
+* A request that can never fit is reported as such immediately, not left pending silently
+* Users see only workloads in projects they can access; cluster-scoped queue details are summarised, not exposed
+* Administrators can list pending workloads across queues with the same reasons
+* The information is available in the dashboard and through the CLI
+* Workloads in namespaces not managed by queueing are unaffected
+
+h2. User Stories
+
+* As a data scientist, I want to know why my training job is still pending and roughly when it will start.
+* As a platform administrator, I want to answer "why is my job stuck?" without reading queue internals.
+
+h2. Technical Notes
+
+Admission is handled by Kueue through namespaced LocalQueues and
+cluster-scoped ClusterQueues, and only for namespaces opted in to queueing.
+The strategy should decide how pending reasons and positions are derived and
+exposed to project users without widening their RBAC.
+"""
+
 SCENARIOS = {
     'dsp-retention': ('fullsend-agent-led-poc-a3',
                       'Configurable retention for Data Science Pipelines run artifacts',
@@ -131,6 +298,18 @@ SCENARIOS = {
     'registry-serving-guard': ('fullsend-agent-led-poc-a3-registry',
                                'Block archiving Model Registry versions that are still being served',
                                REGISTRY_SERVING_GUARD),
+    'workbench-cull-exemption': ('fullsend-agent-led-poc-a4-workbench',
+                                 'Per-workbench exemptions from idle culling for long-running work',
+                                 WORKBENCH_CULL_EXEMPTION),
+    'trustyai-drift-alerts': ('fullsend-agent-led-poc-a4-trustyai',
+                              'Alert model owners when scheduled TrustyAI drift metrics cross a threshold',
+                              TRUSTYAI_DRIFT_ALERTS),
+    'feast-scheduled-materialization': ('fullsend-agent-led-poc-a4-feast',
+                                        'Scheduled incremental materialization for feature store feature views',
+                                        FEAST_SCHEDULED_MATERIALIZATION),
+    'kueue-admission-visibility': ('fullsend-agent-led-poc-a4-kueue',
+                                   'Show users why a queued workload is not admitted and its queue position',
+                                   KUEUE_ADMISSION_VISIBILITY),
 }
 
 

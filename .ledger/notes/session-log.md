@@ -271,3 +271,15 @@ published, with no cross-contamination and a truthful revise. Recovery 2086
 imported RHAISTRAT-14 via Path A with no duplicate clone; refine repeated as
 predicted. The comparison with the script-led POC is recorded. Waiting for
 the verdict to close A4.
+
+## 2026-10-08 — A4 closed; follow-up milestones A5–A7
+
+User verdict: close A4 and put the open items in new milestones. A4 moved
+to done. Added to the plan, each with a pending task and breakpoints:
+- **A5:** Org Pulse stale-key fix, GitLab emulator bridge ordering (native
+  dashboard trigger), and publishing RHAISTRAT-11 from retained artifacts.
+- **A6:** in-run retry and partial/blocked locks proven in CI; closes the
+  end_turn bug.
+- **A7:** GitLab runner job pods left in `Error`.
+
+Next: A5, awaiting go.

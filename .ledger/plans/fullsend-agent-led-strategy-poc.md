@@ -136,7 +136,39 @@ Document this necessary difference from rfe-autofixer.
    Prove native event triggers select and dispatch the correct agent with the
    correct inputs; direct CLI selection alone is not event evidence. Compare
    outputs/failure recovery with the script-led baseline.
-   [Task](../tasks/current/agent-led-strategy-batch-events.md).
+   [Task](../tasks/done/agent-led-strategy-batch-events.md).
+
+### Follow-up milestones (added 2026-10-08)
+
+A1–A4 close the POC. These carry its open items forward. Each keeps the
+same branches, pins and shared targets, and stops at breakpoints.
+
+5. **A5 — Publication and dashboard without manual recovery.** Remove the
+   two recoveries every run needed. Fix Org Pulse so a valid new ingest
+   clears a stale flag on a recreated Jira key, without the manual
+   `releases:jira-sync`
+   ([bug](../bugs/open/org-pulse-ingest-recreated-jira-keys-stay-stale.md)).
+   Fix the GitLab emulator so a downstream bridge waits for its upstream
+   jobs as in real GitLab, and add strat-pipeline's `build-dashboard`
+   trigger job to the agent-led CI, so the native trigger replaces the hand
+   rebuild
+   ([bug](../bugs/open/gitlab-emulator-downstream-trigger-runs-before-upstream.md)).
+   Then publish the missing RHAIRFE-11 / RHAISTRAT-11 run from its
+   retained artifacts, without new model work.
+   [Task](../tasks/pending/agent-led-strategy-publication-recovery.md).
+6. **A6 — Recovery paths proven in CI.** Show the in-run validation retry
+   (iteration 2 resumes from progress markers and repeats no Jira effects)
+   in a real pipeline, and close
+   [the end_turn bug](../bugs/open/agent-led-batch-ends-turn-after-skill-report.md).
+   Run the partial- and blocked-lock cases in CI with a temporary Jira
+   label write, removed afterwards. How iteration 1 is made to fail is a
+   breakpoint decision, checked against rfe-creator first.
+   [Task](../tasks/pending/agent-led-strategy-recovery-ci.md).
+7. **A7 — Runner job pod cleanup.** Find why Kubernetes-executor job pods
+   stay in `Error` after the job finishes, fix it in the runner deployment,
+   prove a new job's pod is removed, then delete the retained evidence pods
+   ([bug](../bugs/open/gitlab-runner-job-pods-left-in-error.md)).
+   [Task](../tasks/pending/gitlab-runner-job-pod-cleanup.md).
 
 ## Open choices and constraints
 
@@ -153,11 +185,11 @@ Prompt instructions cannot guarantee cleanup after termination. Prove durable
 owned-lock recording and trusted outer cleanup; hard runner loss requires
 reconciliation before retry. Do not automatically replay partial Jira effects.
 
-Known DNS, GitLab scheduling/cancellation, Org Pulse stale-key and review-schema
-issues remain separate. Apply documented recovery where needed and disclose
+Known DNS, GitLab cancellation and review-schema issues remain separate.
+The Org Pulse stale-key and eager-bridge issues moved into A5 (2026-10-08). Apply documented recovery where needed and disclose
 its limits. This plan does not reset service data, change the completed POC,
 or prepare an upstream PR. Planning starts no checkout, CI job or model run.
 
 ## Status
 
-Implementation plan, 2026-10-07. A1 done (fork main = upstream `cc1ba8c`; branch created). A2 done (branch `508ea33`; host-side locking per ADR-0012 amendment; Fullsend 0.43.0 kept). A3 done (fork `a2b888a`, GitLab branch head `242608b`; pipeline 2078 success; results shared with the script-led POC by decision). A4 pending. Standalone smoke milestone removed.
+Implementation plan, 2026-10-07. A1 done (fork main = upstream `cc1ba8c`; branch created). A2 done (branch `508ea33`; host-side locking per ADR-0012 amendment; Fullsend 0.43.0 kept). A3 done (fork `a2b888a`, GitLab branch head `242608b`; pipeline 2078 success; results shared with the script-led POC by decision). A4 done (fork `9350c89`, GitLab branch head `6e3ab46`; batch 2084, recovery 2086; event dispatch withdrawn). Standalone smoke milestone removed. A5–A7 added 2026-10-08 for the open items; all pending.

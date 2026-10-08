@@ -37,6 +37,7 @@ Depends on [A3 single CI](../done/agent-led-strategy-single-ci.md); use its test
 
 | Breakpoint | Verdict | Date | Notes |
 | --- | --- | --- | --- |
+| B4.1–B4.3 | Close; carry open items forward | 2026-10-08 | User: put the open items in new milestones (A5 publication, A6 recovery in CI, A7 runner pods) |
 
 ## Scope amendment (2026-10-07)
 
@@ -188,5 +189,8 @@ and a manual dashboard rebuild because of the eager-bridge bug.
 
 ## Status
 
-Current, 2026-10-08. B4.2 and B4.3 evidence complete; waiting for the
-verdict to close A4. Batch-selected and reprocess-strat remain outside this POC.
+Done, 2026-10-08. Closed with the open items carried forward to
+[A5](../pending/agent-led-strategy-publication-recovery.md),
+[A6](../pending/agent-led-strategy-recovery-ci.md) and
+[A7](../pending/gitlab-runner-job-pod-cleanup.md). Batch-selected and
+reprocess-strat remain outside this POC.

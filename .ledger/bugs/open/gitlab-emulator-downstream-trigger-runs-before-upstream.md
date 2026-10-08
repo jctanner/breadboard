@@ -23,3 +23,10 @@ Preserve the native trigger, record this production difference, and dispatch
 and verify a fresh dashboard build after successful results publication.
 Emulator scheduler correction remains separate work; do not claim the early
 build proves final results were rendered.
+
+## Scope (2026-10-08)
+
+Only bridge (`trigger:`) jobs are affected; the runner already gates
+ordinary jobs on stage order and `needs:`. Real GitLab runs bridges under
+the same rules. The fix is tracked in
+[A5](../../tasks/pending/agent-led-strategy-publication-recovery.md).

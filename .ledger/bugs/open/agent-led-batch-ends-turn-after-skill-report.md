@@ -73,4 +73,5 @@ must show a real retry. Kept open until then.
 
 ## Related Tasks
 
-- tasks/current/agent-led-strategy-batch-events.md
+- tasks/done/agent-led-strategy-batch-events.md
+- tasks/pending/agent-led-strategy-recovery-ci.md (A6: prove the retry in CI)

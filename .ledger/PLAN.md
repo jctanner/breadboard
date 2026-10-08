@@ -16,8 +16,14 @@
   [A3 done](tasks/done/agent-led-strategy-single-ci.md): GitLab branch
   `feat/fullsend-agent-led-poc`; pipeline 2078 ran RHAIRFE-12 -> RHAISTRAT-12
   on Opus 4.6, validated and published (`28c3825`); failure paths 2080/2081.
-  Next (awaiting go):
-  [A4 batch/events](tasks/current/agent-led-strategy-batch-events.md).
+  [A4 done](tasks/done/agent-led-strategy-batch-events.md): fork `9350c89`
+  (retry with resume), GitLab head `6e3ab46`; scheduled batch 2084
+  (RHAIRFE-15/16, revise 5/8 and approve 6/8) and recovery 2086 (RHAISTRAT-14,
+  approve 8/8) published; event dispatch withdrawn by decision.
+  Pending follow-ups (awaiting go):
+  [A5 publication and dashboard without manual recovery](tasks/pending/agent-led-strategy-publication-recovery.md),
+  [A6 recovery paths in CI](tasks/pending/agent-led-strategy-recovery-ci.md),
+  [A7 runner job pod cleanup](tasks/pending/gitlab-runner-job-pod-cleanup.md).
   Reuse the working Fullsend setup; no separate infrastructure smoke milestone.
   [Decision](decisions/ADR-0012-native-fullsend-strategy-agent-poc.md).
 - **M8 complete — [Batch strategy CI and pipeline cleanup](tasks/done/fullsend-strategy-batch-ci.md).**

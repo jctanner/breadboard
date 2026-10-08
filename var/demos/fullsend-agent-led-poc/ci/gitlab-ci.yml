@@ -20,6 +20,7 @@ default:
 
 stages:
 - strategy
+- trigger
 
 variables:
   STRAT_CREATOR_REPO: https://github.com/jctanner-opendatahub-io/strat-creator.git
@@ -79,3 +80,15 @@ strat-batch:
     - fullsend-ci-artifacts/
     - fullsend-run-output/
     expire_in: 30 days
+
+# Rebuild the dashboard after the strategy job, as strat-pipeline's
+# build-dashboard does. Runs only if that job succeeded (on_success).
+build-dashboard:
+  stage: trigger
+  rules:
+  - if: $STRATEGY_MODE == "strat-single" && $RFE_KEY != ""
+  - if: $CI_PIPELINE_SOURCE == "schedule" && $RFE_KEY == ""
+  - if: $STRATEGY_MODE == "strat-batch" && $RFE_KEY == ""
+  trigger:
+    project: redhat/rhel-ai/agentic-ci/strat-dashboard
+    branch: main

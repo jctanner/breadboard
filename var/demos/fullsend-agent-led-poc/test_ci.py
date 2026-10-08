@@ -13,7 +13,8 @@ CI = yaml.safe_load((HERE / 'ci' / 'gitlab-ci.yml').read_text())
 
 def test_jobs_and_rules():
     assert {k for k in CI if k not in ('workflow', 'default', 'stages', 'variables')} \
-        == {'strat-single', 'strat-batch'}
+        == {'strat-single', 'strat-batch', 'build-dashboard'}
+    assert CI['stages'] == ['strategy', 'trigger']
     assert CI['workflow']['rules'][0] == {'if': '$CI_PIPELINE_SOURCE == "push"', 'when': 'never'}
     single, batch = CI['strat-single'], CI['strat-batch']
     assert single['rules'] == [{'if': '$STRATEGY_MODE == "strat-single" && $RFE_KEY != ""'}]
@@ -26,6 +27,14 @@ def test_jobs_and_rules():
         assert job['image'] == 'quay.io/aipcc/agentic-ci/openshell:0.3.46'
         assert job['script'][-1] == f'bash ci-scripts/agent-led-strategy.sh {agent}'
         assert job['artifacts']['when'] == 'always'
+    # The dashboard bridge follows the strategy stage and runs whenever either
+    # strategy job does, as in strat-pipeline.
+    bridge = CI['build-dashboard']
+    assert bridge['stage'] == 'trigger' and 'script' not in bridge
+    assert bridge['trigger'] == {
+        'project': 'redhat/rhel-ai/agentic-ci/strat-dashboard', 'branch': 'main'}
+    assert {r['if'] for r in bridge['rules']} == \
+        {r['if'] for r in single['rules'] + batch['rules']}
 
 
 def test_pins_and_results_target():

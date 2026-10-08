@@ -15,6 +15,10 @@ after the jobs finished; GitLab status and artifacts were unaffected
 kept as evidence. Likely in the runner's pod-deletion path, or a grace
 period or finalizer interaction in K3s.
 
+More evidence (2026-10-08): the job pods for pipelines 2087 and 2088
+(`runner-emulator--project-7-concurrent-{0,1}-*`) were also left in `Error`,
+one after a failed job and one after a successful job.
+
 ## Acceptance criteria
 
 - [ ] Root cause found from runner logs, pod events and the runner config

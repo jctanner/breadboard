@@ -26,6 +26,10 @@ Mermaid `.mmd` files — render on GitHub or paste into [Mermaid Live Editor](ht
 
 - [org-pulse.md](org-pulse.md) — the two Org Pulse repositories, how the AI Engineering flavour is built on core here, and what demo mode leaves out
 
+## Model Relay
+
+- [model-relay.md](model-relay.md) — Model Relay endpoints at relay.local and relay-api.local, deployment, and admin key handling
+
 ## Fullsend Integration
 
 - [fullsend-integration.md](fullsend-integration.md) — Fullsend services, event flow, token exchange, and sandbox boundaries

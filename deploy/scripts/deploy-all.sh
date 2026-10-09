@@ -73,6 +73,7 @@ bash "${SCRIPT_DIR}/05h-build-fullsend-mint-dev.sh"
 bash "${SCRIPT_DIR}/05i-build-fullsend.sh"
 bash "${SCRIPT_DIR}/05j-build-fullsend-dashboard.sh"
 bash "${SCRIPT_DIR}/05l-build-org-pulse.sh"
+bash "${SCRIPT_DIR}/05m-build-model-relay.sh"
 echo ""
 
 # Step 7: Deploy storage
@@ -133,6 +134,11 @@ echo "Deploying Org Pulse..."
 bash "${SCRIPT_DIR}/26-deploy-org-pulse.sh"
 echo ""
 
+# Deploy Model Relay (mock backend until accounts are connected)
+echo "Deploying Model Relay..."
+bash "${SCRIPT_DIR}/27-deploy-model-relay.sh"
+echo ""
+
 # Step 17: Deploy GitLab Runner (in-cluster Kubernetes executor)
 echo "Step 17/19: Deploying GitLab Runner..."
 bash "${SCRIPT_DIR}/15-deploy-gitlab-runner.sh"
@@ -181,6 +187,8 @@ kubectl wait --for=condition=Available --timeout=300s \
   deployment/github-actions-runner -n ai-pipeline || true
 kubectl wait --for=condition=Available --timeout=300s \
   deployment/org-pulse-backend -n ai-pipeline || true
+kubectl wait --for=condition=Available --timeout=300s \
+  deployment/model-relay -n ai-pipeline || true
 echo ""
 
 # Run validations
@@ -251,6 +259,11 @@ echo "Org Pulse (demo mode):"
 echo "  - https://${INGRESS_IP} -H 'Host: orgpulse.local' (TLS)"
 echo ""
 
+echo "Model Relay:"
+echo "  - https://${INGRESS_IP} -H 'Host: relay.local' (admin console, TLS)"
+echo "  - https://${INGRESS_IP} -H 'Host: relay-api.local' (inference, TLS)"
+echo ""
+
 echo "Internal Service URLs (from pods):"
 echo "  - GitHub:      https://github-emulator.ai-pipeline.svc.cluster.local:443"
 echo "  - Jira:        https://jira-emulator.ai-pipeline.svc.cluster.local:443"
@@ -259,6 +272,7 @@ echo "  - MLflow:      http://mlflow.ai-pipeline.svc.cluster.local:5000"
 echo "  - Observatory: http://observatory.ai-pipeline.svc.cluster.local:8000"
 echo "  - GitLab:      https://gitlab-emulator.ai-pipeline.svc.cluster.local:443"
 echo "  - Org Pulse:   http://org-pulse-frontend.ai-pipeline.svc.cluster.local:8080"
+echo "  - Model Relay: http://model-relay.ai-pipeline.svc.cluster.local:8080"
 echo ""
 
 echo "Cluster Status:"

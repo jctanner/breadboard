@@ -1,0 +1,173 @@
+# Model Relay: Rust gateway with Vertex and Anthropic Messages interfaces,
+# SQLite usage telemetry, and managed upstream OAuth accounts.
+# Source: checkouts/model-relay. Image: 05m-build-model-relay.sh.
+#
+# Two listeners:
+#   8080  inference (Vertex rawPredict/streamRawPredict, /v1/messages, /health)
+#   8081  admin console (/admin/) and /api/private/v1/* (admin bearer key)
+#
+# The admin key Secret (model-relay-admin) is created by
+# 27-deploy-model-relay.sh when absent; it is never stored in this manifest.
+# A fresh deployment uses the mock backend; connect upstream accounts and
+# create projects through the admin console at https://relay.local.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: model-relay-config
+  namespace: ai-pipeline
+  labels:
+    app: model-relay
+data:
+  # Client key registry; projects and their keys are managed in SQLite.
+  keys.json: |
+    { "keys": [] }
+  # Empty: managed projects use upstream catalog grants.
+  models.json: |
+    {}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-relay-data
+  namespace: ai-pipeline
+  labels:
+    app: model-relay
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-relay
+  namespace: ai-pipeline
+  labels:
+    app: model-relay
+spec:
+  selector:
+    app: model-relay
+  ports:
+    - name: inference
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-relay-admin
+  namespace: ai-pipeline
+  labels:
+    app: model-relay
+spec:
+  selector:
+    app: model-relay
+  ports:
+    - name: admin
+      port: 8081
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-relay
+  namespace: ai-pipeline
+  labels:
+    app: model-relay
+spec:
+  # SQLite and managed credentials are single-owner; the relay refuses a
+  # second owner of the data volume, so never overlap pods.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: model-relay
+  template:
+    metadata:
+      labels:
+        app: model-relay
+    spec:
+      # The relay never calls the Kubernetes API.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+      containers:
+        - name: relay
+          image: model-relay:latest
+          imagePullPolicy: Never
+          ports:
+            - name: inference
+              containerPort: 8080
+            - name: admin
+              containerPort: 8081
+          env:
+            - name: SHIM_BACKEND
+              value: mock
+            - name: SHIM_LISTEN
+              value: 0.0.0.0:8080
+            - name: SHIM_ADMIN_LISTEN
+              value: 0.0.0.0:8081
+            - name: SHIM_KEYS_FILE
+              value: /config/keys.json
+            - name: SHIM_MODELS_FILE
+              value: /config/models.json
+            - name: SHIM_ADMIN_KEY_FILE
+              value: /run/secrets/model-relay/admin-api-key
+            - name: SHIM_DB
+              value: /data/telemetry.sqlite
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: admin-key
+              mountPath: /run/secrets/model-relay
+              readOnly: true
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: config
+          configMap:
+            name: model-relay-config
+        - name: admin-key
+          secret:
+            secretName: model-relay-admin
+            items:
+              - key: admin-api-key
+                path: admin-api-key
+        - name: data
+          persistentVolumeClaim:
+            claimName: model-relay-data
+        - name: tmp
+          emptyDir: {}

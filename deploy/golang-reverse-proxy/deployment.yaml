@@ -125,6 +125,9 @@ spec:
     - gitlab.local
     - org-pulse-frontend.ai-pipeline.svc.cluster.local
     - orgpulse.local
+    - model-relay.ai-pipeline.svc.cluster.local
+    - relay.local
+    - relay-api.local
   issuerRef:
     name: internal-ca-issuer
     kind: Issuer

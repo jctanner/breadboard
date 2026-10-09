@@ -91,6 +91,18 @@ var routes = []Route{
 		Host:    "orgpulse.local",
 		Backend: "http://org-pulse-frontend.ai-pipeline.svc.cluster.local:8080",
 	},
+	{
+		Host:    "model-relay.ai-pipeline.svc.cluster.local",
+		Backend: "http://model-relay.ai-pipeline.svc.cluster.local:8080",
+	},
+	{
+		Host:    "relay-api.local",
+		Backend: "http://model-relay.ai-pipeline.svc.cluster.local:8080",
+	},
+	{
+		Host:    "relay.local",
+		Backend: "http://model-relay-admin.ai-pipeline.svc.cluster.local:8081",
+	},
 }
 
 var (

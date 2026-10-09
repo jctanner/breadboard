@@ -272,3 +272,53 @@ spec:
             name: org-pulse-frontend
             port:
               number: 8080
+---
+# Ingress for Model Relay: relay.local is the admin console (8081),
+# relay-api.local and the service name are inference (8080).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: model-relay-https
+  namespace: ai-pipeline
+  annotations:
+    cert-manager.io/issuer: internal-ca-issuer
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - model-relay.ai-pipeline.svc.cluster.local
+    - relay.local
+    - relay-api.local
+    secretName: model-relay-tls
+  rules:
+  - host: model-relay.ai-pipeline.svc.cluster.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: model-relay
+            port:
+              number: 8080
+  - host: relay-api.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: model-relay
+            port:
+              number: 8080
+  - host: relay.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: model-relay-admin
+            port:
+              number: 8081

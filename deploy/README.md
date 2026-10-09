@@ -48,6 +48,7 @@ bash test-application.sh
 4. **Pipeline Dashboard**: Web UI for monitoring pipeline activity
 5. **Pipeline Jobs**: Kubernetes Jobs for running pipeline phases
 6. **Org Pulse**: the AI Engineering dashboard (`rhai-org-pulse` layered on `org-pulse-core`) with a MongoDB pod, pointed at the emulators, at `https://orgpulse.local`; see `docs/org-pulse.md`
+7. **Model Relay**: Vertex/Anthropic Messages gateway from `checkouts/model-relay`, admin console at `https://relay.local` and inference at `https://relay-api.local`; see `docs/model-relay.md`
 
 ### Infrastructure
 
@@ -270,7 +271,7 @@ For easier access from your host machine:
 
 ```bash
 # Get the VM IP (192.168.56.10)
-echo "192.168.56.10 dashboard.local fullsend.local github.local orgpulse.local" | sudo tee -a /etc/hosts
+echo "192.168.56.10 dashboard.local fullsend.local github.local orgpulse.local relay.local relay-api.local" | sudo tee -a /etc/hosts
 ```
 
 Then access via:

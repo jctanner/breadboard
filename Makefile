@@ -250,6 +250,18 @@ vagrant-rebuild-org-pulse: ## Rebuild and redeploy Org Pulse
 vagrant-logs-org-pulse: ## Follow Org Pulse backend logs
 	vagrant ssh -c "kubectl logs -n ai-pipeline -l app=org-pulse,component=backend -f"
 
+vagrant-rebuild-relay: ## Rebuild and redeploy Model Relay
+	@echo "==> Building Model Relay image..."
+	vagrant ssh -c "cd /vagrant && sudo bash deploy/scripts/05m-build-model-relay.sh"
+	@echo "==> Applying manifest and restarting Model Relay..."
+	vagrant ssh -c "kubectl apply -f /vagrant/deploy/k8s/29-model-relay.yaml"
+	vagrant ssh -c "kubectl rollout restart deployment/model-relay -n ai-pipeline"
+	vagrant ssh -c "kubectl rollout status deployment/model-relay -n ai-pipeline --timeout=180s"
+	@echo "✓ Model Relay rebuilt and redeployed"
+
+vagrant-logs-relay: ## Follow Model Relay logs
+	vagrant ssh -c "kubectl logs -n ai-pipeline -l app=model-relay -f"
+
 ##@ Vagrant: Backup & Restore
 
 vagrant-backup: ## Backup all service data to ./backups/<timestamp>/
@@ -457,6 +469,24 @@ host-rebuild-org-pulse: ## Rebuild and redeploy Org Pulse on host
 
 host-logs-org-pulse: ## Follow Org Pulse backend logs on host
 	kubectl logs -n ai-pipeline -l app=org-pulse,component=backend -f
+
+host-deploy-relay: ## Deploy Model Relay (first time) on host
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/27-deploy-model-relay.sh
+
+host-rebuild-relay: ## Rebuild and redeploy Model Relay on host
+	@echo "==> Building Model Relay image..."
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05m-build-model-relay.sh
+	@echo "==> Applying manifest and restarting Model Relay..."
+	kubectl apply -f deploy/k8s/29-model-relay.yaml
+	kubectl rollout restart deployment/model-relay -n ai-pipeline
+	kubectl rollout status deployment/model-relay -n ai-pipeline --timeout=180s
+	@echo "✓ Model Relay rebuilt and redeployed"
+
+host-relay-admin-key: ## Print the Model Relay admin console key
+	@kubectl get secret model-relay-admin -n ai-pipeline -o jsonpath='{.data.admin-api-key}' | base64 -d; echo
+
+host-logs-relay: ## Follow Model Relay logs on host
+	kubectl logs -n ai-pipeline -l app=model-relay -f
 
 host-logs-dashboard: ## Follow dashboard logs on host
 	kubectl logs -n ai-pipeline -l app=pipeline-dashboard -f

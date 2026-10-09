@@ -49,6 +49,7 @@ make host-status
 make host-rebuild-dashboard
 make host-rebuild-fullsend-dashboard
 make host-rebuild-org-pulse
+make host-rebuild-relay
 make security
 ```
 
@@ -56,8 +57,8 @@ The integrated stack uses the `ai-pipeline` Kubernetes namespace and exposes
 the local services through the host proxy. The main user interfaces are
 `https://dashboard.local`, `https://fullsend.local`, `https://github.local`,
 `https://gitlab.local`, `https://jira.local`, `https://markov.local`,
-`https://observatory.local`, and `https://orgpulse.local` when the stack is
-running.
+`https://observatory.local`, `https://orgpulse.local`, and
+`https://relay.local` when the stack is running.
 
 ## Prerequisites and environment
 
@@ -147,6 +148,7 @@ The active deployment includes:
 | Fullsend runner and OpenShell | Runs role-specific agent work inside the sandbox boundary |
 | Fullsend dashboard | Read-only operational view of Actions, jobs, pods, and events |
 | Org Pulse | AI Engineering engineering dashboard (`rhai-org-pulse` on `org-pulse-core`) with its MongoDB, pointed at the emulators; see [`docs/org-pulse.md`](docs/org-pulse.md) |
+| Model Relay | Vertex/Anthropic Messages gateway with usage telemetry and managed upstream accounts (`checkouts/model-relay`); console at `relay.local`, inference at `relay-api.local`; see [`docs/model-relay.md`](docs/model-relay.md) |
 | Traefik, cert-manager, and host proxy | Internal TLS and `*.local` service routing |
 
 Fullsend is GitHub-first. Its current development flow starts from the
@@ -169,6 +171,7 @@ Host targets are defined in `Makefile`. Useful targets include:
 - `host-rebuild-dashboard` for the Breadboard dashboard;
 - `host-rebuild-fullsend-dashboard` for the Fullsend operations dashboard;
 - `host-rebuild-org-pulse` for Org Pulse, both layers;
+- `host-rebuild-relay` for Model Relay;
 - `host-rebuild-agent`, `host-rebuild-markov`, and the emulator rebuild targets
   for component changes; and
 - `security` for the repository security scan.

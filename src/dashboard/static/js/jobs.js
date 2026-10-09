@@ -1,61 +1,115 @@
 if (K8S_AVAILABLE) {
-  // Skill / FQN / Prompt mode toggle
-  let inputMode = 'skill'; // 'skill' | 'fqn' | 'prompt'
-  const toggleBtn = document.getElementById('toggle-fqn');
-  const togglePromptBtn = document.getElementById('toggle-prompt');
+  const form = document.getElementById('submit-form');
   const skillSelect = document.getElementById('skill');
   const fqnInput = document.getElementById('skill-fqn');
   const promptInput = document.getElementById('skill-prompt');
-  const pluginFields = document.getElementById('plugin-fields');
+  const pluginSection = document.getElementById('plugin-section');
+  const advancedSection = document.getElementById('advanced-section');
+  const harnessSelect = document.getElementById('harness');
+  const modelSelect = document.getElementById('model');
+  const runnerSelect = document.getElementById('runner');
+  const executionSelect = document.getElementById('execution');
+  const formNote = document.getElementById('form-note');
 
-  const togglePluginsBtn = document.getElementById('toggle-plugins');
-  let pluginsVisible = false;
+  // --- What to run: Skill / FQN / Prompt tabs ---
+  // Each tab keeps its own value; only the active tab's value is submitted.
+  let inputMode = 'skill';
+  const MODE_INPUTS = { skill: skillSelect, fqn: fqnInput, prompt: promptInput };
 
   function setInputMode(mode) {
     inputMode = mode;
-    skillSelect.style.visibility = mode === 'skill' ? '' : 'hidden';
-    if (mode !== 'skill') skillSelect.value = '';
-    fqnInput.style.display = mode === 'fqn' ? '' : 'none';
-    if (mode !== 'fqn') fqnInput.value = '';
-    promptInput.style.display = mode === 'prompt' ? '' : 'none';
-    if (mode !== 'prompt') promptInput.value = '';
-    toggleBtn.style.display = mode === 'fqn' ? 'none' : '';
-    togglePromptBtn.style.display = mode === 'prompt' ? 'none' : '';
-    if (mode === 'skill') {
-      toggleBtn.textContent = 'or enter FQN...';
-      togglePromptBtn.textContent = 'or enter prompt...';
-    } else if (mode === 'fqn') {
-      togglePromptBtn.textContent = 'or enter prompt...';
-    } else if (mode === 'prompt') {
-      toggleBtn.textContent = 'or enter FQN...';
-    }
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.setAttribute('aria-selected', tab.dataset.mode === mode ? 'true' : 'false');
+    });
+    document.querySelectorAll('.mode-panel').forEach(panel => {
+      panel.hidden = panel.dataset.mode !== mode;
+    });
+    // Registries and plugins matter most for prompts; open them there and
+    // fold them away elsewhere unless they hold something.
+    if (mode === 'prompt') pluginSection.open = true;
+    else if (!hasPluginValues()) pluginSection.open = false;
   }
 
-  function setPluginsVisible(show) {
-    pluginsVisible = show;
-    pluginFields.style.display = show ? '' : 'none';
-    togglePluginsBtn.textContent = show ? '- registries/plugins' : '+ registries/plugins';
-  }
-
-  togglePluginsBtn.addEventListener('click', () => {
-    setPluginsVisible(!pluginsVisible);
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      setInputMode(tab.dataset.mode);
+      MODE_INPUTS[tab.dataset.mode].focus();
+    });
   });
 
-  // Harness-dependent model options
+  // --- Collapsed section summaries ---
+  function splitLines(value) {
+    return value.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  }
+
+  function hasPluginValues() {
+    return splitLines(document.getElementById('registries').value).length > 0 ||
+      splitLines(document.getElementById('plugins').value).length > 0;
+  }
+
+  const ADVANCED_DEFAULTS = {
+    'enable-force': [false, 'force on'],
+    'enable-strace': [true, 'strace off'],
+    'enable-mlflow': [true, 'MLflow off'],
+    'enable-otel': [true, 'OTel off'],
+    'enable-api-dump': [true, 'API dump off'],
+  };
+
+  function advancedChanges() {
+    const changes = [];
+    for (const [id, [def, label]] of Object.entries(ADVANCED_DEFAULTS)) {
+      if (document.getElementById(id).checked !== def) changes.push(label);
+    }
+    if (document.getElementById('extra-kwargs').value.trim()) changes.push('kwargs');
+    if (document.getElementById('extra-env').value.trim()) changes.push('env vars');
+    return changes;
+  }
+
+  function updateSummaries() {
+    const regs = splitLines(document.getElementById('registries').value).length;
+    const plugs = splitLines(document.getElementById('plugins').value).length;
+    const parts = [];
+    if (regs) parts.push(regs + (regs === 1 ? ' registry' : ' registries'));
+    if (plugs) parts.push(plugs + (plugs === 1 ? ' plugin' : ' plugins'));
+    document.getElementById('plugin-summary').textContent = parts.length ? '· ' + parts.join(', ') : '';
+    const changes = advancedChanges();
+    document.getElementById('advanced-summary').textContent = changes.length ? '· ' + changes.join(', ') : '';
+  }
+
+  form.addEventListener('input', updateSummaries);
+  form.addEventListener('change', updateSummaries);
+
+  // --- Harness-dependent model and runner options ---
+  // Claude Code takes an alias or a pinned model ID. Pinned IDs are the Vertex
+  // catalog the relay reports for vertex-shim-local; "Other…" accepts any ID.
+  const OTHER_MODEL = '__other__';
   const HARNESS_MODELS = {
     'claude-code': [
-      { value: 'haiku', label: 'haiku' },
-      { value: 'sonnet', label: 'sonnet' },
-      { value: 'opus', label: 'opus', selected: true },
+      { group: 'Aliases', options: [
+        { value: 'haiku', label: 'haiku' },
+        { value: 'sonnet', label: 'sonnet' },
+        { value: 'opus', label: 'opus', selected: true },
+      ] },
+      { group: 'Pinned', options: [
+        'claude-opus-5-5', 'claude-opus-5', 'claude-opus-4-8', 'claude-opus-4-7',
+        'claude-opus-4-6', 'claude-opus-4-5@20251101',
+        'claude-sonnet-5-5', 'claude-sonnet-5', 'claude-sonnet-4-6',
+        'claude-sonnet-4-5@20250929',
+        'claude-haiku-5-5', 'claude-haiku-4-5@20251001',
+        'claude-fable-5-1', 'claude-fable-5',
+      ].map(id => ({ value: id, label: id })) },
+      { options: [{ value: OTHER_MODEL, label: 'Other…' }] },
     ],
     'opencode': [
-      { value: 'google-vertex-anthropic/claude-haiku-4-5@20251001', label: 'claude-haiku-4-5' },
-      { value: 'google-vertex-anthropic/claude-sonnet-4-6@default', label: 'claude-sonnet-4-6' },
-      { value: 'google-vertex-anthropic/claude-opus-4-6@default', label: 'claude-opus-4-6', selected: true },
+      { options: [
+        { value: 'google-vertex-anthropic/claude-haiku-4-5@20251001', label: 'claude-haiku-4-5' },
+        { value: 'google-vertex-anthropic/claude-sonnet-4-6@default', label: 'claude-sonnet-4-6' },
+        { value: 'google-vertex-anthropic/claude-opus-4-6@default', label: 'claude-opus-4-6', selected: true },
+        { value: OTHER_MODEL, label: 'Other…' },
+      ] },
     ],
   };
 
-  // Harness-dependent runner options
   const HARNESS_RUNNERS = {
     'claude-code': [
       { value: 'cli', label: 'CLI', selected: true },
@@ -69,96 +123,217 @@ if (K8S_AVAILABLE) {
     ],
   };
 
-  document.getElementById('harness').addEventListener('change', function() {
-    const modelSelect = document.getElementById('model');
-    const models = HARNESS_MODELS[this.value] || HARNESS_MODELS['claude-code'];
-    modelSelect.innerHTML = models.map(m =>
-      `<option value="${m.value}"${m.selected ? ' selected' : ''}>${m.label}</option>`
-    ).join('');
+  function fillOptions(select, options) {
+    select.innerHTML = '';
+    options.forEach(o => {
+      const opt = new Option(o.label, o.value, false, !!o.selected);
+      select.add(opt);
+    });
+  }
 
-    const runnerSelect = document.getElementById('runner');
-    const runners = HARNESS_RUNNERS[this.value] || HARNESS_RUNNERS['claude-code'];
-    runnerSelect.innerHTML = runners.map(r =>
-      `<option value="${r.value}"${r.selected ? ' selected' : ''}>${r.label}</option>`
-    ).join('');
-  });
+  // Options in optional groups: [{ group?, options: [...] }].
+  function fillGroupedOptions(select, groups) {
+    select.innerHTML = '';
+    groups.forEach(g => {
+      const parent = g.group ? document.createElement('optgroup') : select;
+      if (g.group) {
+        parent.label = g.group;
+        select.appendChild(parent);
+      }
+      g.options.forEach(o => parent.appendChild(new Option(o.label, o.value, false, !!o.selected)));
+    });
+  }
 
-  toggleBtn.addEventListener('click', () => {
-    if (inputMode === 'skill') {
-      setInputMode('fqn');
-      fqnInput.focus();
-    } else {
-      setInputMode('skill');
+  // Select a value, adding it as an option when a past job used one this
+  // form no longer lists.
+  function selectValue(select, value) {
+    if (!value) return;
+    if (![...select.options].some(o => o.value === value)) {
+      select.add(new Option(value, value));
     }
+    select.value = value;
+  }
+
+  const modelCustom = document.getElementById('model-custom');
+
+  function syncModelCustom() {
+    const other = modelSelect.value === OTHER_MODEL;
+    modelCustom.hidden = !other;
+    modelCustom.required = other;
+  }
+
+  // A model the list does not offer goes into the "Other…" field.
+  function setModel(value) {
+    if (value && ![...modelSelect.options].some(o => o.value === value && o.value !== OTHER_MODEL)) {
+      modelSelect.value = OTHER_MODEL;
+      modelCustom.value = value;
+    } else if (value) {
+      modelSelect.value = value;
+      modelCustom.value = '';
+    }
+    syncModelCustom();
+  }
+
+  function modelValue() {
+    return modelSelect.value === OTHER_MODEL ? modelCustom.value.trim() : modelSelect.value;
+  }
+
+  modelSelect.addEventListener('change', () => {
+    syncModelCustom();
+    if (!modelCustom.hidden) modelCustom.focus();
   });
 
-  togglePromptBtn.addEventListener('click', () => {
-    if (inputMode !== 'prompt') {
+  function setHarness(harness) {
+    harnessSelect.value = harness;
+    fillGroupedOptions(modelSelect, HARNESS_MODELS[harness] || HARNESS_MODELS['claude-code']);
+    modelCustom.value = '';
+    modelCustom.placeholder = harness === 'opencode'
+      ? 'google-vertex-anthropic/claude-opus-4-6@default'
+      : 'claude-opus-4-6';
+    syncModelCustom();
+    fillOptions(runnerSelect, HARNESS_RUNNERS[harness] || HARNESS_RUNNERS['claude-code']);
+  }
+
+  harnessSelect.addEventListener('change', () => setHarness(harnessSelect.value));
+  setHarness(harnessSelect.value);
+
+  // --- Reset and prefill ---
+  function resetForm() {
+    form.reset();
+    setHarness('claude-code');
+    executionSelect.value = 'kubernetes';
+    setInputMode('skill');
+    pluginSection.open = false;
+    advancedSection.open = false;
+    formNote.textContent = '';
+    updateSummaries();
+  }
+
+  document.getElementById('form-reset').addEventListener('click', () => {
+    resetForm();
+    document.getElementById('submit-status').innerHTML = '';
+  });
+
+  // Load a past job into the form so it can be edited and submitted again.
+  function fillForm(opts, jobName) {
+    resetForm();
+    if (opts.prompt) {
       setInputMode('prompt');
-      promptInput.focus();
+      promptInput.value = opts.prompt;
+    } else if (opts.fqn) {
+      setInputMode('fqn');
+      fqnInput.value = opts.fqn;
     } else {
       setInputMode('skill');
+      if (opts.phase) {
+        if (![...skillSelect.options].some(o => o.value === opts.phase)) {
+          skillSelect.add(new Option(SKILL_MAP[opts.phase] || opts.phase, opts.phase));
+        }
+        skillSelect.value = opts.phase;
+      }
     }
-  });
 
-  // Submit job form
-  document.getElementById('submit-form').addEventListener('submit', async (e) => {
+    document.getElementById('registries').value = (opts.registries || []).join('\n');
+    document.getElementById('plugins').value = (opts.plugins || []).join('\n');
+    if (hasPluginValues()) pluginSection.open = true;
+
+    setHarness(opts.harness || 'claude-code');
+    setModel(opts.model);
+    selectValue(runnerSelect, opts.runner || 'cli');
+
+    const notes = [];
+    const execution = opts.execution || 'kubernetes';
+    if ([...executionSelect.options].some(o => o.value === execution)) {
+      executionSelect.value = execution;
+    } else {
+      notes.push('Execution ' + execution + ' is not available here, so Kubernetes Job is selected');
+    }
+    if (opts.issue && opts.issue !== 'all') {
+      document.getElementById('issue').value = opts.issue.toUpperCase();
+    }
+
+    document.getElementById('extra-kwargs').value = opts.extra_kwargs || '';
+    document.getElementById('extra-env').value =
+      Object.entries(opts.extra_env || {}).map(([k, v]) => `${k}=${v}`).join(' ');
+    document.getElementById('enable-force').checked = !!opts.force;
+    document.getElementById('enable-strace').checked = !!opts.strace;
+    document.getElementById('enable-mlflow').checked = opts.mlflow !== false;
+    document.getElementById('enable-otel').checked = opts.otel !== false;
+    document.getElementById('enable-api-dump').checked = opts.api_dump !== false;
+    if (advancedChanges().length) advancedSection.open = true;
+
+    updateSummaries();
+    formNote.textContent = 'Loaded from ' + jobName + '. Edit and submit.' +
+      (notes.length ? ' ' + notes.join('. ') + '.' : '');
+    document.getElementById('submit-status').innerHTML = '';
+    document.getElementById('submit-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    MODE_INPUTS[inputMode].focus({ preventScroll: true });
+  }
+
+  // --- Submit ---
+  function buildBody() {
+    const value = inputMode === 'skill'
+      ? skillSelect.value
+      : MODE_INPUTS[inputMode].value.trim();
+    if (!value) {
+      const what = { skill: 'Select a skill', fqn: 'Enter an FQN', prompt: 'Enter a prompt' };
+      throw new Error(what[inputMode]);
+    }
+
+    const model = modelValue();
+    if (!model) throw new Error('Enter a model ID');
+    const args = {
+      model,
+      runner: runnerSelect.value,
+      harness: harnessSelect.value,
+    };
+    const issue = document.getElementById('issue').value.trim();
+    if (issue) args.issue = issue.toUpperCase();
+    const extraKwargs = document.getElementById('extra-kwargs').value.trim();
+    if (extraKwargs) args.extra_kwargs = extraKwargs;
+    const extraEnvStr = document.getElementById('extra-env').value.trim();
+    if (extraEnvStr) {
+      args.extra_env = {};
+      extraEnvStr.split(/\s+/).forEach(kv => {
+        const eq = kv.indexOf('=');
+        if (eq > 0) args.extra_env[kv.slice(0, eq)] = kv.slice(eq + 1);
+      });
+    }
+    if (document.getElementById('enable-force').checked) args.force = true;
+    if (document.getElementById('enable-strace').checked) args.strace = true;
+    if (!document.getElementById('enable-mlflow').checked) args.mlflow = false;
+    if (!document.getElementById('enable-otel').checked) args.otel = false;
+    if (!document.getElementById('enable-api-dump').checked) args.api_dump = false;
+
+    const registries = splitLines(document.getElementById('registries').value);
+    if (registries.length) args.registries = registries;
+    const plugins = splitLines(document.getElementById('plugins').value);
+    if (plugins.length) args.plugins = plugins;
+
+    const execution = executionSelect.value;
+    if (inputMode === 'prompt') {
+      args.prompt = value;
+      return { args, execution };
+    }
+    if (inputMode === 'fqn') return { fqn: value, args, execution };
+    return { command: value, args, execution };
+  }
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const skill = document.getElementById('skill').value;
-    const fqn = document.getElementById('skill-fqn').value.trim();
-    const prompt = document.getElementById('skill-prompt').value.trim();
-    const issueRaw = document.getElementById('issue').value.trim();
-    const issue = issueRaw ? issueRaw.toUpperCase() : '';
-    const model = document.getElementById('model').value;
-    const runner = document.getElementById('runner').value;
-    const harness = document.getElementById('harness').value;
-    const execution = document.getElementById('execution').value;
     const statusDiv = document.getElementById('submit-status');
 
-    if (!skill && !fqn && !prompt) {
-      statusDiv.innerHTML = '<strong style="color: #e74c3c;">✗ Error:</strong> Select a skill, enter an FQN, or enter a prompt';
+    let body;
+    try {
+      body = buildBody();
+    } catch (err) {
+      statusDiv.innerHTML = '<strong style="color: #e74c3c;">✗ Error:</strong> ' + err.message;
       return;
     }
 
     statusDiv.innerHTML = '<em style="color: #3498db;">Submitting job...</em>';
 
     try {
-      const args = { model, runner, harness };
-      if (issue) args.issue = issue;
-      const extraKwargs = document.getElementById('extra-kwargs').value.trim();
-      if (extraKwargs) args.extra_kwargs = extraKwargs;
-      const extraEnvStr = document.getElementById('extra-env').value.trim();
-      if (extraEnvStr) {
-        args.extra_env = {};
-        extraEnvStr.split(/\s+/).forEach(kv => {
-          const eq = kv.indexOf('=');
-          if (eq > 0) args.extra_env[kv.slice(0, eq)] = kv.slice(eq + 1);
-        });
-      }
-      if (document.getElementById('enable-force').checked) args.force = true;
-      if (document.getElementById('enable-strace').checked) args.strace = true;
-      if (!document.getElementById('enable-mlflow').checked) args.mlflow = false;
-      if (!document.getElementById('enable-otel').checked) args.otel = false;
-      if (!document.getElementById('enable-api-dump').checked) args.api_dump = false;
-
-      const registriesVal = document.getElementById('registries').value.trim();
-      if (registriesVal) {
-        args.registries = registriesVal.split(/\n+/).map(s => s.trim()).filter(Boolean);
-      }
-      const pluginsVal = document.getElementById('plugins').value.trim();
-      if (pluginsVal) {
-        args.plugins = pluginsVal.split(/\n+/).map(s => s.trim()).filter(Boolean);
-      }
-      if (prompt) args.prompt = prompt;
-
-      let body;
-      if (prompt) {
-        body = { args, execution };
-      } else if (fqn) {
-        body = { fqn, args, execution };
-      } else {
-        body = { command: skill, args, execution };
-      }
       const response = await fetch('/api/jobs/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -169,12 +344,7 @@ if (K8S_AVAILABLE) {
 
       if (response.ok) {
         statusDiv.innerHTML = '<strong style="color: #27ae60;">✓ Job submitted:</strong> ' + data.job_name;
-        document.getElementById('submit-form').reset();
-        setInputMode('skill');
-        setPluginsVisible(false);
-        document.getElementById('harness').value = 'claude-code';
-        document.getElementById('harness').dispatchEvent(new Event('change'));
-        document.getElementById('execution').value = 'kubernetes';
+        resetForm();
         await refreshJobs();
         openJobModal(data.job_name);
       } else {
@@ -364,7 +534,7 @@ if (K8S_AVAILABLE) {
       // Action buttons
       const actionsEl = document.getElementById('modal-actions');
       let btns = '';
-      btns += `<button class="btn-rerun" onclick="modalRerun(window._rerunOpts)">Re-run</button>`;
+      btns += `<button class="btn-rerun" onclick="modalRerun(window._rerunOpts)" title="Load this job into the form to edit and submit">Edit &amp; re-run</button>`;
       if (job.status === 'running' || job.status === 'pending') {
         btns += `<button class="btn-stop" onclick="modalStop('${jobName}')">Stop</button>`;
       }
@@ -420,7 +590,7 @@ if (K8S_AVAILABLE) {
           // Update actions (remove Stop button)
           const actionsEl = document.getElementById('modal-actions');
           let btns = '';
-          btns += `<button class="btn-rerun" onclick="modalRerun(window._rerunOpts)">Re-run</button>`;
+          btns += `<button class="btn-rerun" onclick="modalRerun(window._rerunOpts)" title="Load this job into the form to edit and submit">Edit &amp; re-run</button>`;
           btns += `<button class="btn-delete" onclick="modalDelete('${jobName}')">Delete</button>`;
           actionsEl.innerHTML = btns;
 
@@ -482,47 +652,10 @@ if (K8S_AVAILABLE) {
     }
   }
 
-  async function modalRerun(opts) {
-    opts = opts || {};
-    const args = { model: opts.model, runner: opts.runner, harness: opts.harness || 'claude-code' };
-    if (opts.issue && opts.issue !== 'all') args.issue = opts.issue.toUpperCase();
-    if (opts.extra_kwargs) args.extra_kwargs = opts.extra_kwargs;
-    if (opts.extra_env && Object.keys(opts.extra_env).length) args.extra_env = opts.extra_env;
-    if (opts.force) args.force = true;
-    if (opts.strace) args.strace = true;
-    if (opts.mlflow === false) args.mlflow = false;
-    if (opts.otel === false) args.otel = false;
-    if (opts.api_dump === false) args.api_dump = false;
-    if (opts.registries && opts.registries.length) args.registries = opts.registries;
-    if (opts.plugins && opts.plugins.length) args.plugins = opts.plugins;
-    if (opts.prompt) args.prompt = opts.prompt;
-
-    let body;
-    if (opts.prompt) {
-      body = { args, execution: opts.execution || 'kubernetes' };
-    } else if (opts.fqn) {
-      body = { fqn: opts.fqn, args, execution: opts.execution || 'kubernetes' };
-    } else {
-      body = { command: opts.phase, args, execution: opts.execution || 'kubernetes' };
-    }
-
-    try {
-      const res = await fetch('/api/jobs/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        closeJobModal();
-        refreshJobs();
-      } else {
-        alert('Error re-running job: ' + (data.error || 'Unknown error'));
-      }
-    } catch (err) {
-      alert('Error re-running job: ' + err.message);
-    }
+  function modalRerun(opts) {
+    const jobName = currentModalJob;
+    closeJobModal();
+    fillForm(opts || {}, jobName);
   }
 
   // Make functions global

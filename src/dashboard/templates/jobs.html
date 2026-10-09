@@ -35,6 +35,22 @@
     font-size: 0.75rem; line-height: 1.5;
     white-space: pre-wrap; word-wrap: break-word;
   }
+  .mode-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid #e5e7eb; margin-bottom: 0.75rem; }
+  html.dark .mode-tabs { border-bottom-color: #374151; }
+  .mode-tab {
+    background: transparent; border: none; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; padding: 0.4rem 0.9rem; font-size: 0.875rem; font-weight: 500;
+    color: #6b7280; cursor: pointer;
+  }
+  .mode-tab:hover { color: #374151; }
+  html.dark .mode-tab { color: #9ca3af; }
+  html.dark .mode-tab:hover { color: #e5e7eb; }
+  .mode-tab[aria-selected="true"] { color: #2563eb; border-bottom-color: currentColor; }
+  html.dark .mode-tab[aria-selected="true"] { color: #60a5fa; }
+  .form-section { border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.6rem 0.9rem; }
+  html.dark .form-section { border-color: #374151; }
+  .form-section + .form-section { margin-top: 0.75rem; }
+  #submit-card { scroll-margin-top: 5rem; }
 </style>
 
 <h1 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Pipeline Jobs</h1>
@@ -46,104 +62,113 @@
 </div>
 {% else %}
 
-<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 mb-6">
+<div id="submit-card" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 mb-6">
   <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Submit New Job</h2>
   <form id="submit-form">
-    <div class="flex flex-wrap gap-4 items-end mb-1">
-      <div class="flex-grow" style="min-width:14rem; position:relative;">
-        <label for="skill" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Skill</label>
-        <div style="position:relative;">
-          <select id="skill" name="skill" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
-            <option value="">Select skill...</option>
-            {% for s in skills %}
-            <option value="{{ s.key }}">{{ s.display }}</option>
-            {% endfor %}
-          </select>
-          <input type="text" id="skill-fqn" name="skill_fqn" placeholder="github.local/org/repo@branch:skill" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3" style="display:none; position:absolute; top:0; left:0; right:0;">
-          <input type="text" id="skill-prompt" name="prompt" placeholder="/unit-convert Convert 100 degrees" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3" style="display:none; position:absolute; top:0; left:0; right:0;">
+    <!-- What to run -->
+    <div class="mode-tabs" role="tablist" aria-label="What to run">
+      <button type="button" role="tab" class="mode-tab" data-mode="skill" aria-selected="true">Skill</button>
+      <button type="button" role="tab" class="mode-tab" data-mode="fqn" aria-selected="false">FQN</button>
+      <button type="button" role="tab" class="mode-tab" data-mode="prompt" aria-selected="false">Prompt</button>
+    </div>
+    <div class="mb-4">
+      <div class="mode-panel" data-mode="skill">
+        <select id="skill" name="skill" aria-label="Skill" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
+          <option value="">Select skill...</option>
+          {% for s in skills %}
+          <option value="{{ s.key }}">{{ s.display }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mode-panel" data-mode="fqn" hidden>
+        <input type="text" id="skill-fqn" name="skill_fqn" aria-label="Skill FQN" placeholder="github.local/org/repo@branch:skill" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3 font-mono">
+        <p class="text-xs text-gray-400 mt-1">host/owner/repo@ref:skill-name</p>
+      </div>
+      <div class="mode-panel" data-mode="prompt" hidden>
+        <textarea id="skill-prompt" name="prompt" rows="4" aria-label="Prompt" placeholder="/unit-convert Convert 100 degrees" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3 font-mono"></textarea>
+      </div>
+    </div>
+
+    <!-- Registries and plugins -->
+    <details id="plugin-section" class="form-section">
+      <summary class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none">Registries &amp; plugins <span id="plugin-summary" class="text-gray-400 font-normal"></span></summary>
+      <div class="flex flex-wrap gap-4 pt-3">
+        <div class="flex-grow" style="min-width:14rem;">
+          <label for="registries" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Registries <span class="text-gray-400 text-xs">(one per line)</span></label>
+          <textarea id="registries" name="registries" rows="2" placeholder="github.local/org/registry@main" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3"></textarea>
+        </div>
+        <div class="flex-grow" style="min-width:14rem;">
+          <label for="plugins" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Plugins <span class="text-gray-400 text-xs">(one per line)</span></label>
+          <textarea id="plugins" name="plugins" rows="2" placeholder="metric-converter&#10;imperial-converter" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3"></textarea>
         </div>
       </div>
-      <div style="width:8rem;">
+    </details>
+
+    <!-- Run settings -->
+    <div class="flex flex-wrap gap-4 items-end my-4">
+      <div style="width:9rem;">
         <label for="harness" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Harness</label>
-        <select id="harness" name="harness" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
+        <select id="harness" name="harness" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
           <option value="claude-code" selected>Claude Code</option>
           <option value="opencode">OpenCode</option>
         </select>
       </div>
-      <div style="width:6rem;">
+      <div>
         <label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
-        <select id="model" name="model" required class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
-          <option value="haiku">haiku</option>
-          <option value="sonnet">sonnet</option>
-          <option value="opus" selected>opus</option>
-        </select>
+        <div class="flex gap-2">
+          <select id="model" name="model" required class="rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3" style="width:14rem;">
+            <option value="opus" selected>opus</option>
+          </select>
+          <input type="text" id="model-custom" aria-label="Model ID" placeholder="claude-opus-4-6" class="rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3 font-mono" style="width:15rem;" hidden>
+        </div>
       </div>
-      <div style="width:5rem;">
+      <div style="width:7rem;">
         <label for="runner" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Runner</label>
-        <select id="runner" name="runner" required class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
+        <select id="runner" name="runner" required class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
           <option value="cli" selected>CLI</option>
           <option value="sdk">SDK</option>
           <option value="agentic-ci">agentic-ci</option>
         </select>
       </div>
-      <div style="width:10rem;">
+      <div style="width:11rem;">
         <label for="execution" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Execution</label>
-        <select id="execution" name="execution" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
+        <select id="execution" name="execution" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
           <option value="kubernetes" selected>Kubernetes Job</option>
           {% if openshell_available %}<option value="openshell">OpenShell sandbox</option>{% endif %}
         </select>
       </div>
       <div style="width:12rem;">
         <label for="issue" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Issue Key <span class="text-gray-400 text-xs">(optional)</span></label>
-        <input type="text" id="issue" name="issue" placeholder="RHOAIENG-12345" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
-      </div>
-      <div class="flex-grow" style="min-width:10rem;">
-        <label for="extra-kwargs" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Extra kwargs <span class="text-gray-400 text-xs">(optional)</span></label>
-        <input type="text" id="extra-kwargs" name="extra_kwargs" placeholder="key=value key2=value2" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
-      </div>
-      <div class="flex-grow" style="min-width:10rem;">
-        <label for="extra-env" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Env vars <span class="text-gray-400 text-xs">(optional)</span></label>
-        <input type="text" id="extra-env" name="extra_env" placeholder="KEY=value KEY2=value2" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
-      </div>
-    </div>
-    <div id="plugin-fields" class="flex flex-wrap gap-4 items-end mb-1" style="display:none;">
-      <div class="flex-grow" style="min-width:14rem;">
-        <label for="registries" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Registries <span class="text-gray-400 text-xs">(one per line)</span></label>
-        <textarea id="registries" name="registries" rows="2" placeholder="github.local/org/registry@main" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3"></textarea>
-      </div>
-      <div class="flex-grow" style="min-width:14rem;">
-        <label for="plugins" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Plugins <span class="text-gray-400 text-xs">(one per line)</span></label>
-        <textarea id="plugins" name="plugins" rows="2" placeholder="metric-converter&#10;imperial-converter" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3"></textarea>
+        <input type="text" id="issue" name="issue" placeholder="RHOAIENG-12345" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
       </div>
     </div>
 
-    <div class="mb-3">
-      <button type="button" id="toggle-fqn" class="text-xs text-primary-600 dark:text-primary-400 cursor-pointer bg-transparent border-none p-0">or enter FQN...</button>
-      <button type="button" id="toggle-prompt" class="text-xs text-primary-600 dark:text-primary-400 cursor-pointer bg-transparent border-none p-0 ml-3">or enter prompt...</button>
-      <button type="button" id="toggle-plugins" class="text-xs text-primary-600 dark:text-primary-400 cursor-pointer bg-transparent border-none p-0 ml-3">+ registries/plugins</button>
-    </div>
-    <div class="flex items-center gap-6">
-      <label class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
-        <input type="checkbox" id="enable-force" class="rounded border-gray-300 dark:border-gray-600">
-        force
-      </label>
-      <label class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
-        <input type="checkbox" id="enable-strace" checked class="rounded border-gray-300 dark:border-gray-600">
-        strace
-      </label>
-      <label class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
-        <input type="checkbox" id="enable-mlflow" checked class="rounded border-gray-300 dark:border-gray-600">
-        MLflow
-      </label>
-      <label class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
-        <input type="checkbox" id="enable-otel" checked class="rounded border-gray-300 dark:border-gray-600">
-        OTel
-      </label>
-      <label class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
-        <input type="checkbox" id="enable-api-dump" checked class="rounded border-gray-300 dark:border-gray-600">
-        API dump
-      </label>
-      <button type="submit" class="ml-auto bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium py-2 px-6 rounded-lg transition-colors">Submit Job</button>
+    <!-- Advanced -->
+    <details id="advanced-section" class="form-section">
+      <summary class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none">Advanced <span id="advanced-summary" class="text-gray-400 font-normal"></span></summary>
+      <div class="flex flex-wrap gap-4 pt-3">
+        <div class="flex-grow" style="min-width:14rem;">
+          <label for="extra-kwargs" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Extra kwargs <span class="text-gray-400 text-xs">(optional)</span></label>
+          <input type="text" id="extra-kwargs" name="extra_kwargs" placeholder="key=value key2=value2" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
+        </div>
+        <div class="flex-grow" style="min-width:14rem;">
+          <label for="extra-env" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Env vars <span class="text-gray-400 text-xs">(optional)</span></label>
+          <input type="text" id="extra-env" name="extra_env" placeholder="KEY=value KEY2=value2" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 text-sm py-2 px-3">
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-6 pt-3">
+        <label class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none"><input type="checkbox" id="enable-force" class="rounded border-gray-300 dark:border-gray-600"> force</label>
+        <label class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none"><input type="checkbox" id="enable-strace" checked class="rounded border-gray-300 dark:border-gray-600"> strace</label>
+        <label class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none"><input type="checkbox" id="enable-mlflow" checked class="rounded border-gray-300 dark:border-gray-600"> MLflow</label>
+        <label class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none"><input type="checkbox" id="enable-otel" checked class="rounded border-gray-300 dark:border-gray-600"> OTel</label>
+        <label class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none"><input type="checkbox" id="enable-api-dump" checked class="rounded border-gray-300 dark:border-gray-600"> API dump</label>
+      </div>
+    </details>
+
+    <div class="flex items-center gap-4 mt-4">
+      <span id="form-note" class="text-xs text-gray-500 dark:text-gray-400"></span>
+      <button type="button" id="form-reset" class="ml-auto text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-transparent border-none cursor-pointer">Reset</button>
+      <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium py-2 px-6 rounded-lg transition-colors">Submit Job</button>
     </div>
   </form>
   <div id="submit-status" class="mt-3 text-sm"></div>

@@ -88,6 +88,17 @@ spec:
             secretKeyRef:
               name: pipeline-secrets
               key: JIRA_TOKEN
+        # Job pods submitted from /jobs reach Vertex through Model Relay: the
+        # relay URL becomes ANTHROPIC_VERTEX_BASE_URL, the relay project
+        # replaces ANTHROPIC_VERTEX_PROJECT_ID, and the credentials secret
+        # holds the relay's external_account ADC and workload key. Remove
+        # these three to send jobs straight to Google again.
+        - name: PIPELINE_MODEL_RELAY_URL
+          value: http://model-relay.ai-pipeline.svc.cluster.local:8080/v1
+        - name: PIPELINE_MODEL_RELAY_PROJECT
+          value: vertex-shim-local
+        - name: PIPELINE_GCP_CREDENTIALS_SECRET
+          value: gcp-credentials-relay
         # The local emulator certificates are issued by Breadboard's internal CA.
         - name: NO_SSL_VERIFY
           value: "1"

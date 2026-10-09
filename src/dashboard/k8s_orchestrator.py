@@ -4,6 +4,7 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 from pathlib import Path
 import json
+import os
 import re
 from datetime import datetime
 
@@ -27,6 +28,15 @@ class PipelineOrchestrator:
         self.batch_v1 = client.BatchV1Api()
         self.core_v1 = client.CoreV1Api()
         self.namespace = "ai-pipeline"
+
+        # Model Relay routing for job pods. When the relay URL is set, jobs
+        # send Vertex traffic to the relay under its project and mount the
+        # relay's external_account credentials instead of Google ADC.
+        self.model_relay_url = os.environ.get("PIPELINE_MODEL_RELAY_URL", "")
+        self.model_relay_project = os.environ.get("PIPELINE_MODEL_RELAY_PROJECT", "")
+        self.gcp_credentials_secret = os.environ.get(
+            "PIPELINE_GCP_CREDENTIALS_SECRET", "gcp-credentials"
+        )
 
     def submit_phase_job(
         self,
@@ -461,15 +471,7 @@ fi
                     )
                 )
             ),
-            client.V1EnvVar(
-                name="ANTHROPIC_VERTEX_PROJECT_ID",
-                value_from=client.V1EnvVarSource(
-                    secret_key_ref=client.V1SecretKeySelector(
-                        name="pipeline-secrets",
-                        key="ANTHROPIC_VERTEX_PROJECT_ID"
-                    )
-                )
-            ),
+            self._vertex_project_env(),
             # Jira config
             client.V1EnvVar(
                 name="JIRA_SERVER",
@@ -515,6 +517,20 @@ fi
                 value="/home/pipelineagent/.config/gcloud/credentials.json"
             ),
         ]
+
+        if self.model_relay_url:
+            env_vars.append(client.V1EnvVar(
+                name="ANTHROPIC_VERTEX_BASE_URL",
+                value=self.model_relay_url
+            ))
+            # Without an explicit project, Google's auth library resolves one
+            # for external_account credentials through Cloud Resource Manager,
+            # which rejects the relay's token before any model call is made.
+            if self.model_relay_project:
+                env_vars.append(client.V1EnvVar(
+                    name="GOOGLE_CLOUD_PROJECT",
+                    value=self.model_relay_project
+                ))
 
         if args.get("mlflow") is not False:
             env_vars.append(client.V1EnvVar(
@@ -579,6 +595,23 @@ fi
                 raise ValueError("extra_env keys must be non-empty strings")
             normalized[key] = "" if value is None else str(value)
         return normalized
+
+    def _vertex_project_env(self) -> client.V1EnvVar:
+        """Vertex project: the relay's project when routed, else pipeline-secrets."""
+        if self.model_relay_url and self.model_relay_project:
+            return client.V1EnvVar(
+                name="ANTHROPIC_VERTEX_PROJECT_ID",
+                value=self.model_relay_project
+            )
+        return client.V1EnvVar(
+            name="ANTHROPIC_VERTEX_PROJECT_ID",
+            value_from=client.V1EnvVarSource(
+                secret_key_ref=client.V1SecretKeySelector(
+                    name="pipeline-secrets",
+                    key="ANTHROPIC_VERTEX_PROJECT_ID"
+                )
+            )
+        )
 
     def _build_volume_mounts(self) -> list:
         """Build volume mounts for agent containers."""
@@ -651,7 +684,7 @@ fi
             client.V1Volume(
                 name="gcp-credentials",
                 secret=client.V1SecretVolumeSource(
-                    secret_name="gcp-credentials",
+                    secret_name=self.gcp_credentials_secret,
                     optional=False
                 )
             ),

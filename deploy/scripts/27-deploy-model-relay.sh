@@ -7,11 +7,13 @@ NAMESPACE=ai-pipeline
 
 echo "==> Deploying Model Relay..."
 
-# The admin key is generated once and kept across redeploys.
+# Local development default; override with MODEL_RELAY_ADMIN_KEY. The secret
+# is created once and kept across redeploys.
+ADMIN_KEY="${MODEL_RELAY_ADMIN_KEY:-admin}"
 if ! kubectl get secret model-relay-admin -n "${NAMESPACE}" >/dev/null 2>&1; then
   echo "  Creating admin key secret..."
   kubectl create secret generic model-relay-admin -n "${NAMESPACE}" \
-    --from-literal=admin-api-key="$(openssl rand -hex 32)"
+    --from-literal=admin-api-key="${ADMIN_KEY}"
 fi
 
 kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/02-certificates.yaml"

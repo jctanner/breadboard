@@ -5,9 +5,11 @@
 # Two listeners:
 #   8080  inference (Vertex rawPredict/streamRawPredict, /v1/messages, /health)
 #   8081  admin console (/admin/) and /api/private/v1/* (admin bearer key)
+#   8082  Google token exchange (/v1/token) for external_account ADC clients
 #
 # The admin key Secret (model-relay-admin) is created by
-# 27-deploy-model-relay.sh when absent; it is never stored in this manifest.
+# 27-deploy-model-relay.sh when absent, defaulting to "admin" for local
+# development; it is never stored in this manifest.
 # A fresh deployment uses the mock backend; connect upstream accounts and
 # create projects through the admin console at https://relay.local.
 ---
@@ -55,6 +57,10 @@ spec:
     - name: inference
       port: 8080
       targetPort: 8080
+    # In-cluster only: Google external_account token exchange.
+    - name: token
+      port: 8082
+      targetPort: 8082
 ---
 apiVersion: v1
 kind: Service
@@ -107,6 +113,8 @@ spec:
               containerPort: 8080
             - name: admin
               containerPort: 8081
+            - name: token
+              containerPort: 8082
           env:
             - name: SHIM_BACKEND
               value: mock
@@ -122,6 +130,13 @@ spec:
               value: /run/secrets/model-relay/admin-api-key
             - name: SHIM_DB
               value: /data/telemetry.sqlite
+            # Opens the 8082 listener for /v1/token exchange of project
+            # workload keys. The ID names no registry key on purpose, so the
+            # keyless metadata token endpoint on the same port issues nothing.
+            - name: SHIM_MOCK_ADC_KEY_ID
+              value: metadata-disabled
+            - name: SHIM_MOCK_ADC_PROJECT
+              value: vertex-shim-local
           volumeMounts:
             - name: config
               mountPath: /config

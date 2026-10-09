@@ -114,8 +114,17 @@ if [ -n "$ISSUE_KEY" ]; then
   export PIPELINE_JOB_NAME="${PIPELINE_JOB_NAME:-${SKILL_TAG}-${ISSUE_KEY}}"
 fi
 
+# What this job runs, for log messages: a raw prompt or a skill.
+if [ -n "$RAW_PROMPT" ]; then
+  TASK_KIND="prompt"
+  TASK_LABEL="Running prompt"
+else
+  TASK_KIND="skill"
+  TASK_LABEL="Running skill: ${FQN:-$SKILL}"
+fi
+
 echo "============================================================"
-echo "Running skill: ${FQN:-$SKILL}"
+echo "$TASK_LABEL"
 echo "Issue: $ISSUE_KEY"
 echo "Model: $MODEL"
 echo "============================================================"
@@ -345,7 +354,7 @@ if source:
 if [ -n "$REGISTRY" ]; then
   echo "  Installing plugin: $REGISTRY"
   claude plugin install "$REGISTRY" || true
-else
+elif [ -n "$SKILL" ]; then
   echo "  No external plugin needed for skill: $SKILL"
 fi
 
@@ -376,7 +385,7 @@ if [ -d ~/.claude/plugins/cache ]; then
 fi
 
 echo
-echo "Running skill..."
+echo "Running ${TASK_KIND}..."
 echo
 
 # Resolve skill name from pipeline-skills.yaml (falls back to dash-to-dot conversion)
@@ -493,7 +502,7 @@ if source:
     fi
   elif [ -n "$SKILL_SOURCE" ]; then
     echo "WARNING: No plugin cache, skipping $SKILL_SOURCE lookup"
-  else
+  elif [ "$TASK_KIND" = "skill" ]; then
     echo "Using local skill"
   fi
 fi
@@ -587,7 +596,9 @@ elif [ -d ~/.claude/plugins/cache ]; then
   done
 fi
 
-echo "Resolved skill load mode: ${FQN_LOAD_MODE_RESOLVED:-skill}"
+if [ "$TASK_KIND" = "skill" ]; then
+  echo "Resolved skill load mode: ${FQN_LOAD_MODE_RESOLVED:-skill}"
+fi
 
 # Debug: Show what we're about to run
 echo "Executing: claude --model $MODEL --print ${PLUGIN_ARGS[*]:+${PLUGIN_ARGS[*]} }\"$PROMPT\""
@@ -681,5 +692,13 @@ echo "Exit code: $EXIT_CODE"
 
 echo
 echo "============================================================"
-echo "Skill execution complete"
+if [ "$TASK_KIND" = "prompt" ]; then
+  echo "Prompt execution complete"
+else
+  echo "Skill execution complete"
+fi
 echo "============================================================"
+
+# Propagate the agent's status so the Kubernetes Job (and any Markov step
+# running this script) reports a failed run as failed.
+exit "$EXIT_CODE"

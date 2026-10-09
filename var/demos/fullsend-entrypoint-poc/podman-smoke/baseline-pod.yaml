@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podman-smoke-baseline
+  namespace: ai-pipeline
+  labels:
+    app.kubernetes.io/name: podman-smoke
+    app.kubernetes.io/instance: baseline
+spec:
+  restartPolicy: Never
+  containers:
+    - name: podman
+      image: quay.io/aipcc/agentic-ci/podman:latest
+      imagePullPolicy: Always
+      command: ["/bin/sh", "-c", "sleep infinity"]
+      volumeMounts:
+        - name: podman-storage
+          mountPath: /var/lib/containers
+        - name: workspace
+          mountPath: /workspace
+  volumes:
+    - name: podman-storage
+      emptyDir: {}
+    - name: workspace
+      emptyDir: {}

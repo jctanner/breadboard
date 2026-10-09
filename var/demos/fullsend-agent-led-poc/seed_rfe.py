@@ -20,6 +20,9 @@ Each scenario here is a different area that the fetched architecture context
   materialization of Feast feature views (feature server materialization).
 - `kueue-admission-visibility` (A4 batch 2): explaining why a queued
   workload is not admitted (Kueue LocalQueue/ClusterQueue admission).
+- `kserve-canary-rollback` (A5 single): automatic rollback of a canary
+  model rollout on error or latency regressions (KServe InferenceService
+  canary traffic split).
 
 Content is fictional; no customer or person names.
 
@@ -291,6 +294,45 @@ The strategy should decide how pending reasons and positions are derived and
 exposed to project users without widening their RBAC.
 """
 
+KSERVE_CANARY_ROLLBACK = """h2. Problem Statement
+
+Teams roll out a new model version to a served endpoint by sending a share
+of traffic to it as a canary. Today someone must watch dashboards and
+manually shift traffic back if the new version returns more errors or is
+slower. Regressions found overnight or during busy periods reach many
+users before anyone reacts, and the manual rollback steps differ between
+teams.
+
+h2. Desired Outcome
+
+Model owners can declare health thresholds for a canary rollout. The
+platform compares the canary with the current version during the rollout,
+and either promotes it in steps or rolls it back automatically, recording
+why. Owners are told what happened without watching the rollout.
+
+h2. Acceptance Criteria
+
+* Owners can set error-rate and latency thresholds, an observation window and promotion steps for a rollout
+* During a rollout, canary and current versions are compared over the same window
+* A threshold breach returns all traffic to the current version within one observation window
+* A healthy canary is promoted step by step until it serves all traffic
+* Each promotion or rollback records the metrics and reason, visible in the dashboard and CLI
+* Rollouts without thresholds behave exactly as today
+* Rollback never removes the current version while it still serves traffic
+
+h2. User Stories
+
+* As a model owner, I want a bad model version to be rolled back automatically when it starts failing.
+* As a platform engineer, I want rollouts to follow the same safe procedure across teams.
+
+h2. Technical Notes
+
+Served models use KServe InferenceServices, which already support a canary
+traffic percentage between the previous and latest revisions. The strategy
+should decide where the comparison and promotion logic runs and which
+metrics source it uses.
+"""
+
 SCENARIOS = {
     'dsp-retention': ('fullsend-agent-led-poc-a3',
                       'Configurable retention for Data Science Pipelines run artifacts',
@@ -310,6 +352,9 @@ SCENARIOS = {
     'kueue-admission-visibility': ('fullsend-agent-led-poc-a4-kueue',
                                    'Show users why a queued workload is not admitted and its queue position',
                                    KUEUE_ADMISSION_VISIBILITY),
+    'kserve-canary-rollback': ('fullsend-agent-led-poc-a5-kserve',
+                               'Automatic rollback of canary model rollouts on error or latency regressions',
+                               KSERVE_CANARY_ROLLBACK),
 }
 
 

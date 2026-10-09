@@ -12,6 +12,13 @@ RUNNER_IMAGE="${RUNNER_IMAGE:-alpine:3.20}"
 RUNNER_MANAGER_IMAGE="${RUNNER_MANAGER_IMAGE:-gitlab/gitlab-runner:v19.1.1}"
 RUNNER_NAMESPACE="${RUNNER_NAMESPACE:-gitlab-runner}"
 REGISTRATION_TOKEN="${REGISTRATION_TOKEN:-runner-registration-token}"
+RUNNER_RUN_UNTAGGED="${RUNNER_RUN_UNTAGGED:-false}"
+RUNNER_PRIVILEGED="${RUNNER_PRIVILEGED:-true}"
+source "${PROJECT_ROOT}/deploy/scripts/gitlab-runner-lifecycle.sh"
+[[ "$RUNNER_RUN_UNTAGGED" == true || "$RUNNER_RUN_UNTAGGED" == false ]]
+[[ "$RUNNER_PRIVILEGED" == true || "$RUNNER_PRIVILEGED" == false ]]
+# RBAC inventory and reset use this namespace; reject partial overrides.
+[[ "$RUNNER_NAMESPACE" == gitlab-runner ]] || { echo "Unsupported runner namespace" >&2; exit 1; }
 EMULATOR_URL="https://gitlab-emulator.ai-pipeline.svc.cluster.local"
 
 echo "==> Deploying GitLab Runner (in-cluster Kubernetes executor)..."
@@ -38,31 +45,15 @@ for i in $(seq 1 15); do
   sleep 4
 done
 
-# Step 3: Register runner via emulator API
-echo "--- Registering runner with emulator ---"
-RUNNER_TOKEN=$(kubectl exec -n ai-pipeline deployment/gitlab-emulator -- \
-  python3 -c "
-import httpx, json, sys
-try:
-    r = httpx.post('http://127.0.0.1:8000/api/v4/runners', json={
-        'token': '${REGISTRATION_TOKEN}',
-        'description': '${RUNNER_NAME}',
-        'tag_list': '${RUNNER_TAGS}',
-        'run_untagged': False,
-        'locked': False
-    })
-    r.raise_for_status()
-    print(r.json()['token'])
-except Exception as e:
-    print(f'Registration failed: {e}', file=sys.stderr)
-    sys.exit(1)
-")
-
-if [ -z "$RUNNER_TOKEN" ]; then
-  echo "ERROR: Failed to register runner — no token received"
-  exit 1
-fi
-echo "  Runner registered, token: ${RUNNER_TOKEN:0:12}..."
+# Step 3: Pause/drain, then reuse one persisted registration (or create after reset).
+# Existing registration tokens are recovered privately via the local emulator API.
+echo "--- Draining and reconciling the maintained runner ---"
+runner_drain_and_stop
+runner_remove_experiments
+RUNNER_TOKEN=$(runner_registry reconcile --name "$RUNNER_NAME" \
+  --tags "$RUNNER_TAGS" --run-untagged "$RUNNER_RUN_UNTAGGED" \
+  --registration-token "$REGISTRATION_TOKEN")
+[[ -n "$RUNNER_TOKEN" ]] || { echo "ERROR: no runner token received" >&2; exit 1; }
 
 # Step 4: Extract CA certificate
 echo "--- Extracting CA certificate ---"
@@ -71,8 +62,8 @@ CA_CERT=$(kubectl get configmap internal-ca-cert \
   -o jsonpath='{.data.ca\.crt}' 2>/dev/null || true)
 
 if [ -z "$CA_CERT" ]; then
-  echo "WARNING: Could not extract CA cert from ConfigMap"
-  echo "  Runner may fail TLS verification"
+  echo "ERROR: internal-ca-cert is required for verified runner TLS" >&2
+  exit 1
 fi
 
 # Step 5: Build config.toml
@@ -92,8 +83,18 @@ check_interval = 3
   [runners.kubernetes]
     namespace = "${RUNNER_NAMESPACE}"
     image = "${RUNNER_IMAGE}"
+    privileged = ${RUNNER_PRIVILEGED}
     poll_timeout = 180
     service_account = "gitlab-runner"
+
+    # Per-job emptyDirs: never hostPath or a shared container engine socket.
+    [[runners.kubernetes.volumes.empty_dir]]
+      name = "fullsend-podman-storage"
+      mount_path = "/var/lib/containers"
+
+    [[runners.kubernetes.volumes.empty_dir]]
+      name = "fullsend-podman-run"
+      mount_path = "/run/containers"
 
     [[runners.kubernetes.volumes.secret]]
       name = "gitlab-runner-ca"
@@ -104,18 +105,10 @@ EOF
 
 # Step 6: Create ConfigMap and Secret
 echo "--- Creating runner config and CA secret ---"
-kubectl -n "${RUNNER_NAMESPACE}" delete configmap gitlab-runner-config --ignore-not-found
 kubectl -n "${RUNNER_NAMESPACE}" create configmap gitlab-runner-config \
-  --from-literal=config.toml="${CONFIG_TOML}"
-
-kubectl -n "${RUNNER_NAMESPACE}" delete secret gitlab-runner-ca --ignore-not-found
-if [ -n "$CA_CERT" ]; then
-  kubectl -n "${RUNNER_NAMESPACE}" create secret generic gitlab-runner-ca \
-    --from-literal=ca.crt="${CA_CERT}"
-else
-  kubectl -n "${RUNNER_NAMESPACE}" create secret generic gitlab-runner-ca \
-    --from-literal=ca.crt=""
-fi
+  --from-literal=config.toml="${CONFIG_TOML}" --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n "${RUNNER_NAMESPACE}" create secret generic gitlab-runner-ca \
+  --from-literal=ca.crt="${CA_CERT}" --dry-run=client -o yaml | kubectl apply -f -
 
 # Step 7: Deploy runner manager
 echo "--- Deploying runner manager ---"
@@ -129,6 +122,8 @@ metadata:
     app: gitlab-runner
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: gitlab-runner
@@ -176,7 +171,8 @@ EOF
 # Step 8: Wait for deployment
 echo "--- Waiting for runner manager to be ready ---"
 kubectl rollout status deployment/gitlab-runner \
-  -n "${RUNNER_NAMESPACE}" --timeout=120s || true
+  -n "${RUNNER_NAMESPACE}" --timeout=120s
+runner_registry resume --name "$RUNNER_NAME"
 
 echo ""
 echo "==> GitLab Runner deployed successfully"
@@ -188,11 +184,13 @@ echo "  Namespace:  ${RUNNER_NAMESPACE}"
 echo "  Executor:   kubernetes"
 echo "  Job image:  ${RUNNER_IMAGE}"
 echo "  Manager:    ${RUNNER_MANAGER_IMAGE}"
+echo "  Untagged:   ${RUNNER_RUN_UNTAGGED}"
+echo "  Privileged: ${RUNNER_PRIVILEGED} (applies to every job image)"
 echo ""
 echo "Check status:"
 echo "  kubectl get pods -n ${RUNNER_NAMESPACE}"
 echo "  kubectl logs -n ${RUNNER_NAMESPACE} -l app=gitlab-runner"
 echo ""
 echo "Verify runner is registered:"
-echo "  curl -sk ${EMULATOR_URL}/api/v4/runners"
+echo "  curl --cacert /path/to/internal-ca.pem https://gitlab.local/api/v4/runners"
 echo "  Visit https://gitlab.local/admin/runners"

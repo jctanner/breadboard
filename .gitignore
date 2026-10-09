@@ -112,3 +112,7 @@ deploy/fullsend-sandbox-local/internal-ca.crt
 
 # Generated evidence from deploy/scripts/24-run-conformance-triage.sh.
 var/conformance/
+
+# Local scratch: Playwright MCP captures and prototype checkouts
+.playwright-mcp/
+checkouts.fullsend_prototype/

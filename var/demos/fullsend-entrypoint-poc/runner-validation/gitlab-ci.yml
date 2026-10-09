@@ -1,0 +1,220 @@
+workflow:
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "push"
+    when: never
+  - when: always
+stages:
+- build
+- validate
+variables:
+  STRAT_CREATOR_REPO: https://github.com/jctanner-opendatahub-io/strat-creator.git
+  STRAT_CREATOR_BRANCH: feat/fullsend-strategy-entrypoint
+  STRAT_CREATOR_SHA: 02ad362e77863d524b8015219d649faefc246042
+  M6_HOLD_SECONDS: '90'
+default:
+  before_script:
+  - trap 'rc=$?; trap - EXIT; if ! python3 ci-scripts/fullsend-redact.py; then rm
+    -rf fullsend-ci-artifacts fullsend-run-output; exit 1; fi; exit "$rc"' EXIT
+  after_script:
+  - python3 ci-scripts/fullsend-redact.py || { rm -rf fullsend-ci-artifacts fullsend-run-output;
+    exit 1; }
+ordinary-ci:
+  stage: build
+  image: alpine:3.20
+  tags:
+  - k8s-incluster
+  after_script: []
+  before_script: []
+  rules:
+  - if: ($M7_REDACTION_FAILURE != "1") && $M8_DIAGNOSTIC == ""
+  script:
+  - mkdir -p ordinary-artifacts
+  - test -r /etc/gitlab-runner/certs/ca.crt
+  - test -d /var/lib/containers && test -d /run/containers
+  - echo "M7_ORDINARY_PASS job=$CI_JOB_ID" | tee ordinary-artifacts/result.txt
+  artifacts:
+    paths:
+    - ordinary-artifacts/
+build-fullsend-feature:
+  stage: build
+  image: golang:1.26.5-bookworm
+  tags:
+  - aipcc-small-x86_64
+  rules:
+  - if: $M7_UNTAGGED_PROBE != "1" && $M7_REDACTION_FAILURE != "1"
+  script:
+  - apt-get update && apt-get install -y --no-install-recommends python3 git ca-certificates
+  - bash ci-scripts/fullsend-source.sh
+  - bash target/.fullsend/scripts/ci/build-fullsend.sh
+  artifacts:
+    paths:
+    - fullsend-build/
+    - fullsend-ci-artifacts/source.json
+native-strategy-readonly:
+  stage: validate
+  image: registry.access.redhat.com/ubi9/ubi-minimal:latest
+  tags:
+  - aipcc-small-x86_64
+  rules:
+  - if: ($M7_UNTAGGED_PROBE != "1" && $M7_REDACTION_FAILURE != "1") && $M8_DIAGNOSTIC
+      == ""
+  dependencies: []
+  script:
+  - bash ci-scripts/m7-native.sh
+  artifacts:
+    when: always
+    paths:
+    - fullsend-ci-artifacts/
+nested-podman:
+  stage: validate
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags:
+  - aipcc-small-x86_64
+  rules:
+  - if: ($M7_UNTAGGED_PROBE != "1" && $M7_REDACTION_FAILURE != "1") && $M8_DIAGNOSTIC
+      == ""
+  dependencies: []
+  script:
+  - SMOKE_WORKSPACE="$CI_PROJECT_DIR" SMOKE_NETWORK_MODE=host SMOKE_CGROUPS_MODE=disabled
+    sh ci-scripts/m7-podman.sh
+  artifacts:
+    when: always
+    paths:
+    - nested.txt
+.openshell-validation:
+  stage: validate
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags:
+  - aipcc-small-x86_64
+  rules:
+  - if: ($M7_UNTAGGED_PROBE != "1" && $M7_REDACTION_FAILURE != "1") && $M8_DIAGNOSTIC
+      == ""
+  dependencies:
+  - build-fullsend-feature
+  script:
+  - bash ci-scripts/fullsend-source.sh
+  - bash ci-scripts/fullsend-connectivity.sh
+  artifacts:
+    when: always
+    paths:
+    - fullsend-ci-artifacts/
+    - fullsend-run-output/
+openshell-a:
+  extends: .openshell-validation
+openshell-b:
+  extends: .openshell-validation
+untagged-probe:
+  stage: build
+  image: alpine:3.20
+  tags: []
+  rules:
+  - if: ($M7_UNTAGGED_PROBE == "1") && $M8_DIAGNOSTIC == ""
+  after_script: []
+  before_script: []
+  script:
+  - echo "ERROR untagged job was unexpectedly assigned" && exit 1
+redaction-failure-probe:
+  stage: build
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags:
+  - aipcc-small-x86_64
+  rules:
+  - if: ($M7_REDACTION_FAILURE == "1") && $M8_DIAGNOSTIC == ""
+  variables:
+    M7_REDACTION_TEST_SECRET: m7-synthetic-failure-credential-only
+  script:
+  - mkdir -p fullsend-ci-artifacts
+  - printf '%s\n' "$M7_REDACTION_TEST_SECRET" > fullsend-ci-artifacts/failure-fixture.txt
+  - exit 37
+  artifacts:
+    when: always
+    paths:
+    - fullsend-ci-artifacts/
+sandbox-connectivity:
+  stage: validate
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags:
+  - aipcc-small-x86_64
+  dependencies:
+  - build-fullsend-feature
+  rules:
+  - if: $M8_DIAGNOSTIC == "sandbox-connectivity"
+  script:
+  - bash ci-scripts/fullsend-source.sh
+  - bash ci-scripts/fullsend-connectivity.sh
+  artifacts:
+    when: always
+    paths:
+    - fullsend-ci-artifacts/
+    - fullsend-run-output/
+architecture-fetch:
+  stage: validate
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags:
+  - aipcc-small-x86_64
+  dependencies:
+  - build-fullsend-feature
+  rules:
+  - if: $M8_DIAGNOSTIC == "architecture-fetch"
+  script:
+  - bash ci-scripts/fullsend-source.sh
+  - bash ci-scripts/fullsend-architecture-fetch.sh
+  artifacts:
+    when: always
+    paths:
+    - fullsend-ci-artifacts/
+    - fullsend-run-output/
+model-smoke:
+  stage: validate
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags: &id001
+  - aipcc-small-x86_64
+  dependencies: &id002
+  - build-fullsend-feature
+  rules:
+  - if: $M8_DIAGNOSTIC == "model-smoke"
+  script: &id003
+  - bash ci-scripts/fullsend-source.sh
+  - bash ci-scripts/fullsend-model-strategy.sh
+  artifacts: &id004
+    when: always
+    paths:
+    - fullsend-ci-artifacts/
+    - fullsend-run-output/
+  variables:
+    STRATEGY_MODEL_SMOKE: '1'
+    RESULTS_REPO_URL: https://gitlab.local/redhat/rhel-ai/agentic-ci/strat-pipeline-data.git
+    RESULTS_GIT_USER: admin
+    ORG_PULSE_URL: https://orgpulse.local
+lifecycle-check:
+  stage: validate
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags:
+  - aipcc-small-x86_64
+  dependencies:
+  - build-fullsend-feature
+  rules:
+  - if: $M8_DIAGNOSTIC == "lifecycle-check"
+  script:
+  - bash ci-scripts/fullsend-source.sh
+  - bash ci-scripts/fullsend-connectivity.sh
+  artifacts:
+    when: always
+    paths:
+    - fullsend-ci-artifacts/
+    - fullsend-run-output/
+  variables:
+    M6_HOLD_SECONDS: '600'
+batch-controls:
+  stage: validate
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags: *id001
+  dependencies: *id002
+  rules:
+  - if: $M8_DIAGNOSTIC == "batch-controls"
+  script: *id003
+  artifacts: *id004
+  variables:
+    RESULTS_REPO_URL: https://gitlab.local/redhat/rhel-ai/agentic-ci/strat-pipeline-data.git
+    RESULTS_GIT_USER: admin
+    ORG_PULSE_URL: https://orgpulse.local

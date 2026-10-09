@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: podman-m1-runner-config
+  namespace: gitlab-runner
+data:
+  config.toml: |
+    concurrent = 1
+    check_interval = 3
+
+    [[runners]]
+      name = "podman-m1-k8s-runner"
+      url = "https://gitlab-emulator.ai-pipeline.svc.cluster.local"
+      token = "__RUNNER_TOKEN__"
+      tls-ca-file = "/etc/gitlab-runner/certs/ca.crt"
+      executor = "kubernetes"
+      environment = ["GIT_SSL_CAINFO=/etc/gitlab-runner/certs/ca.crt"]
+
+      [runners.kubernetes]
+        namespace = "gitlab-runner"
+        image = "quay.io/aipcc/agentic-ci/podman:latest"
+        poll_timeout = 180
+        service_account = "gitlab-runner"
+        privileged = true
+
+        [[runners.kubernetes.volumes.secret]]
+          name = "gitlab-runner-ca"
+          mount_path = "/etc/gitlab-runner/certs"
+          read_only = true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podman-m1-gitlab-runner
+  namespace: gitlab-runner
+  labels:
+    app.kubernetes.io/name: podman-m1-gitlab-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: podman-m1-gitlab-runner
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: podman-m1-gitlab-runner
+    spec:
+      serviceAccountName: gitlab-runner
+      containers:
+        - name: gitlab-runner
+          image: gitlab/gitlab-runner:v19.1.1
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-ec"]
+          args:
+            - >-
+              sed "s|__RUNNER_TOKEN__|$PODMAN_M1_RUNNER_TOKEN|" /runner-template/config.toml
+              > /tmp/config.toml;
+              exec gitlab-runner run --working-directory=/home/gitlab-runner
+              --config=/tmp/config.toml --service=gitlab-runner --user=gitlab-runner
+          env:
+            - name: PODMAN_M1_RUNNER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: podman-m1-runner-token
+                  key: token
+          volumeMounts:
+            - name: runner-template
+              mountPath: /runner-template
+              readOnly: true
+            - name: runner-ca
+              mountPath: /etc/gitlab-runner/certs
+              readOnly: true
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+      volumes:
+        - name: runner-template
+          configMap:
+            name: podman-m1-runner-config
+        - name: runner-ca
+          secret:
+            secretName: gitlab-runner-ca

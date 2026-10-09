@@ -3,7 +3,7 @@
 # Scales down services, clears PVC contents, re-registers the GitLab Runner,
 # and scales everything back up.
 #
-# Usage: clean-all.sh [--yes]
+# Usage: clean-all.sh [--yes | --gitlab-runner-only]
 #   --yes   Skip confirmation prompt
 
 set -euo pipefail
@@ -11,6 +11,18 @@ set -euo pipefail
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
 NAMESPACE="ai-pipeline"
 RUNNER_NAMESPACE="gitlab-runner"
+source "${PROJECT_ROOT}/deploy/scripts/gitlab-runner-lifecycle.sh"
+
+# Exercise the same registration-reset lifecycle without erasing service data.
+if [[ "${1:-}" == --gitlab-runner-only ]]; then
+  runner_drain_and_stop
+  runner_registry reset
+  kubectl delete configmap gitlab-runner-config -n "$RUNNER_NAMESPACE" --ignore-not-found
+  kubectl delete secret gitlab-runner-ca -n "$RUNNER_NAMESPACE" --ignore-not-found
+  bash "${PROJECT_ROOT}/deploy/scripts/15-deploy-gitlab-runner.sh"
+  exit 0
+fi
+
 
 # --- Confirmation ---
 if [[ "${1:-}" != "--yes" ]]; then
@@ -37,6 +49,10 @@ if [[ "${1:-}" != "--yes" ]]; then
   fi
   echo ""
 fi
+
+# Drain before the coordinator or its database disappears. Fail closed if busy.
+runner_drain_and_stop
+runner_remove_experiments
 
 echo "==> Scaling down all services..."
 

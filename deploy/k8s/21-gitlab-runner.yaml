@@ -1,4 +1,8 @@
 ---
+# One manager is rendered by 15-deploy-gitlab-runner.sh after registration
+# reconciliation. Job pods use privileged=true and per-pod emptyDirs at
+# /var/lib/containers and /run/containers; no host engine/socket is mounted.
+# See docs/deployment/gitlab-runner.md for the shared privilege boundary.
 apiVersion: v1
 kind: Namespace
 metadata:

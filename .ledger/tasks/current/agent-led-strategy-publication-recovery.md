@@ -68,6 +68,7 @@ with no manual step. Every A3 and A4 run needed two recoveries: a manual
 
 | Breakpoint | Verdict | Date | Notes |
 | --- | --- | --- | --- |
+| B5.1 | Go | 2026-10-08 | User: commit the changes, then go on B5.2 |
 
 ## Files likely involved
 
@@ -142,6 +143,44 @@ Child 2089's pages job 4052 succeeded (12:31:11). Before this fix, the child was
 The job pods for 2087 and 2088 (project 7, concurrent 0 and 1) were also
 left in `Error`; that is A7's bug and is noted there.
 
+## B5.2: real single run, pipeline 2090 (2026-10-08)
+
+- **Seed:** new scenario `kserve-canary-rollback` → RHAIRFE-17 (automatic
+  rollback of KServe canary rollouts).
+- **Org Pulse before the run:** `RHAISTRAT-17.json` exists from pre-reset
+  data, with `_stale.detectedAt` 2026-10-06T16:45:03Z and an old review
+  (approve, 2026-09-30, run `20260930-003929`). If the run creates
+  RHAISTRAT-17, the ingest is an update to a stale key. The old code ran
+  no Jira sync in that case.
+
+- **Pipeline 2090, job 4053:** native strat-single, one iteration, 21
+  parent turns, $7.12; all 540 model messages are `claude-opus-4-6`.
+  RHAIRFE-17 → **RHAISTRAT-17** was created (Cloners link), refined, pushed
+  and reviewed: **approve 6/8** (feasibility 1, testability 1, scope 2,
+  architecture 2). Labels: auto-created, auto-refined, rubric-pass. The
+  review checked the KServe `canaryTrafficPercent` claims against the
+  architecture context.
+- **Validated and published:** results `6c19532f` (run
+  `20261008-164143`), summaries `fead3e23`. The result file records
+  `architecture_context: available` and `publication_ready: true`.
+- **Org Pulse, no manual step:** the ingest reported 0 created and 1
+  updated. AI Impact started `releases:jira-sync`, which logged
+  "0 newly stale, 1 recovered". `RHAISTRAT-17.json` has no `_stale`, the
+  review has run `20261008-164143` (the 2026-09-30 review moved to
+  history), the index lists it, and `GET /api/modules/ai-impact/features/RHAISTRAT-17`
+  returns 200 with the new review. The old code ran no Jira sync for an
+  updated key.
+  - A later post-ingest trigger logged "not started (409)" while a sync
+    was already running; the running sync covered it.
+- **Dashboard, no manual step:** bridge `build-dashboard` stayed `pending`
+  until strat-single finished at 16:41:52, then created child **2091**
+  (`parent_pipeline`, 16:41:53), after the results commit (16:41:47). Its
+  pages job 4055 succeeded; `public/runs/20261008-164143.json`, the
+  summary and `index.html` include the run and RHAISTRAT-17.
+- **Cleanup:** lock released (`release_locks_exit` 0), `cleanup_exit=0`,
+  only the default podman network left, artifact redaction changed 0
+  files; credential scan of 32 files (artifacts and trace): 0 hits.
+
 ## Status
 
-Current, 2026-10-08. B5.1 evidence recorded; waiting for the verdict.
+Current, 2026-10-08. B5.1 done (go given with the commit request). B5.2 evidence recorded (pipeline 2090); waiting for the verdict.

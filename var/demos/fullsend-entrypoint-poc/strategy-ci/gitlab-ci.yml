@@ -1,0 +1,100 @@
+workflow:
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "push"
+    when: never
+  - when: always
+default:
+  before_script:
+  - trap 'rc=$?; trap - EXIT; if ! python3 ci-scripts/fullsend-redact.py; then rm
+    -rf fullsend-ci-artifacts fullsend-run-output; exit 1; fi; exit "$rc"' EXIT
+  after_script:
+  - python3 ci-scripts/fullsend-redact.py || { rm -rf fullsend-ci-artifacts fullsend-run-output;
+    exit 1; }
+stages:
+- build
+- strategy
+- trigger
+variables:
+  STRAT_CREATOR_REPO: https://github.com/jctanner-opendatahub-io/strat-creator.git
+  STRAT_CREATOR_BRANCH: feat/fullsend-strategy-entrypoint
+  STRAT_CREATOR_SHA: 02ad362e77863d524b8015219d649faefc246042
+  RESULTS_REPO_URL: https://gitlab.local/redhat/rhel-ai/agentic-ci/strat-pipeline-data.git
+  RESULTS_GIT_USER: admin
+  CLOUD_ML_REGION: global
+  CLAUDE_CODE_USE_VERTEX: '1'
+  ORG_PULSE_URL: https://orgpulse.local
+  STRATEGY_MODE: ''
+  RFE_KEY: ''
+  BATCH_SIZE: ''
+  BATCH_OFFSET: ''
+  BATCH_EXPECTED_KEYS: ''
+build-fullsend-feature:
+  stage: build
+  image: golang:1.26.5-bookworm
+  tags:
+  - aipcc-small-x86_64
+  script:
+  - apt-get update && apt-get install -y --no-install-recommends python3 git ca-certificates
+  - bash ci-scripts/fullsend-source.sh
+  - bash target/.fullsend/scripts/ci/build-fullsend.sh
+  artifacts:
+    paths:
+    - fullsend-build/
+    - fullsend-ci-artifacts/source.json
+    expire_in: 30 days
+single-rfe:
+  stage: strategy
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags: &id001
+  - aipcc-small-x86_64
+  timeout: 1h
+  rules:
+  - if: $STRATEGY_MODE == "single-rfe" && $RFE_KEY != ""
+    when: manual
+    allow_failure: false
+  dependencies: &id002
+  - build-fullsend-feature
+  script: &id003
+  - bash ci-scripts/fullsend-source.sh
+  - bash ci-scripts/fullsend-strategy.sh
+  artifacts: &id004
+    when: always
+    paths:
+    - fullsend-ci-artifacts/
+    - fullsend-run-output/
+    expire_in: 30 days
+batch-discover:
+  stage: strategy
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags: *id001
+  timeout: 5h
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "schedule" && $RFE_KEY == ""
+  - if: $STRATEGY_MODE == "batch-discover" && $RFE_KEY == ""
+    when: manual
+    allow_failure: false
+  dependencies: *id002
+  script: *id003
+  artifacts: *id004
+  resource_group: strat-batch
+  variables:
+    STRATEGY_MODE: batch-discover
+build-dashboard-single-rfe:
+  stage: trigger
+  needs:
+  - single-rfe
+  rules:
+  - if: $STRATEGY_MODE == "single-rfe" && $RFE_KEY != ""
+  trigger:
+    project: redhat/rhel-ai/agentic-ci/strat-dashboard
+    branch: main
+build-dashboard-batch-discover:
+  stage: trigger
+  needs:
+  - batch-discover
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "schedule" && $RFE_KEY == ""
+  - if: $STRATEGY_MODE == "batch-discover" && $RFE_KEY == ""
+  trigger:
+    project: redhat/rhel-ai/agentic-ci/strat-dashboard
+    branch: main

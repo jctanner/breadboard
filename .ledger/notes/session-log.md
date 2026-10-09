@@ -283,3 +283,17 @@ to done. Added to the plan, each with a pending task and breakpoints:
 - **A7:** GitLab runner job pods left in `Error`.
 
 Next: A5, awaiting go.
+
+## 2026-10-08 — A5 B5.1 and B5.2
+
+B5.1: GitLab emulator bridges now wait for their stage and `needs`
+(emulator `3fc4480`); Org Pulse runs `releases:jira-sync` after an ingest
+touching a stale key (rhai-org-pulse `718ffa29`); the agent-led CI has a
+`build-dashboard` trigger. No-model pipelines 2087 (bridge skipped) and 2088
+(child 2089 after the job) showed the ordering. Breadboard `858e944`.
+
+B5.2: seeded RHAIRFE-17 (KServe canary rollback). Pipeline 2090 produced
+RHAISTRAT-17, approve 6/8, published as run `20261008-164143`. The stale
+pre-reset Org Pulse key recovered automatically, and the native trigger
+rebuilt the dashboard (2091) after the results commit. No manual steps.
+Waiting for the B5.2 verdict; next is B5.3 (publish RHAISTRAT-11).

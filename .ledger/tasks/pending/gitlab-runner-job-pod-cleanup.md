@@ -17,7 +17,9 @@ period or finalizer interaction in K3s.
 
 More evidence (2026-10-08): the job pods for pipelines 2087 and 2088
 (`runner-emulator--project-7-concurrent-{0,1}-*`) were also left in `Error`,
-one after a failed job and one after a successful job.
+one after a failed job and one after a successful job. By 16:45 they,
+and job 4053's pod, were gone; only job 3924's pod remained. So pods may
+be removed late rather than never, apart from 3924's.
 
 ## Acceptance criteria
 

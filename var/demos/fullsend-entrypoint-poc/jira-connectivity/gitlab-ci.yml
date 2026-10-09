@@ -1,0 +1,29 @@
+stages:
+  - build
+  - validate
+
+build-fullsend-feature:
+  stage: build
+  image: golang:1.26.5-bookworm
+  tags: [aipcc-small-x86_64]
+  script:
+    - apt-get update && apt-get install -y --no-install-recommends git ca-certificates
+    - bash scripts/build-fullsend.sh
+  artifacts:
+    paths:
+      - fullsend-build/
+    expire_in: 1 hour
+
+openshell_m42_smoke:
+  stage: validate
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags: [aipcc-small-x86_64]
+  dependencies: [build-fullsend-feature]
+  script:
+    - bash scripts/m42-smoke.sh
+  artifacts:
+    when: always
+    paths:
+      - fullsend-ci-artifacts/
+      - fullsend-run-output/
+    expire_in: 1 day

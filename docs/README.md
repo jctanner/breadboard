@@ -21,6 +21,7 @@ Mermaid `.mmd` files — render on GitHub or paste into [Mermaid Live Editor](ht
 ## Deployment
 
 - [README.md](deployment/README.md) — K3s deployment quick start, .env setup, troubleshooting
+- [gitlab-runner.md](deployment/gitlab-runner.md) — maintained runner capabilities, privilege boundary, deployment and reset
 
 ## Org Pulse
 

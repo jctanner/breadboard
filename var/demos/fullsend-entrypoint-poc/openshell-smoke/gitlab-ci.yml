@@ -1,0 +1,15 @@
+stages:
+  - validate
+
+openshell_podman_smoke:
+  stage: validate
+  image: quay.io/aipcc/agentic-ci/podman@sha256:672706f01b9d7155d3e4595d7920d6608b7f462674fd1bfcaf5c80ea7e802784
+  tags:
+    - aipcc-small-x86_64
+  script:
+    - sh scripts/openshell-smoke.sh
+  artifacts:
+    when: always
+    paths:
+      - openshell-artifacts/
+    expire_in: 1 day

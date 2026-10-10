@@ -1146,3 +1146,30 @@ mix the two.
   - the dashboard's user (uid 1000) read the file and deleted the
     directory, so the dashboard's artifacts wipe can still clear what Markov
     writes.
+
+### 2026-10-10 — Definition graph layout reworked in markovd
+
+The strat-workflow graph in markovd (`/workflows/var-benchmarks-strat-workflow`)
+had three problems:
+- call and return lines overlapped in each gap between columns;
+- the return to `summarize` crossed four columns and the `wipe` group;
+- fit-to-view zoomed out to 21%.
+
+markovd `897d7d6` and `4c1ddd4` (ADR-0006 in markovd's ledger):
+- **Returns stay in the adjacent gap.** A call that ends its workflow
+  returns into the calling step.
+- **Each call and return edge has its own lane** in its gap: the server
+  assigns them and orders them to minimise crossings.
+- **Calls and returns meet a card at separate points,** 25px and 47px from
+  its top.
+- **A child's first step lines up with its caller** where there's room.
+- **Steps are spaced 36px apart** instead of 60px.
+
+**Result on the deployed page:**
+- fit-to-view is now 33% instead of 21%;
+- round → test-variants → run-test now sits in one row;
+- no edges overlap;
+- one crossing is left between the `wipe` return and the `rounds` call,
+  which no lane order can avoid.
+
+The feature-check graph's call and return are both straight lines.

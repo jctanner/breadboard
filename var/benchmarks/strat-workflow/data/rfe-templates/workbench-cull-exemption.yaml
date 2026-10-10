@@ -1,0 +1,41 @@
+# RFE template. Text from var/demos/fullsend-agent-led-poc/seed_rfe.py;
+# written against architecture rhoai-3.6-ea.2. Fictional content.
+summary: Per-workbench exemptions from idle culling for long-running work
+description: |
+  h2. Problem Statement
+
+  Workbenches are stopped automatically when they look idle, which saves GPU
+  and memory for everyone. Data scientists who run long training or data
+  preparation cells inside a notebook lose that work when the culler decides
+  the kernel is idle because nobody has touched the browser tab for a while.
+  Today the only escape is to ask an administrator to disable culling for the
+  whole cluster, or to keep a browser tab open and click around.
+
+  h2. Desired Outcome
+
+  A user can mark a single workbench as temporarily exempt from idle culling
+  for a bounded period, within limits an administrator sets. The exemption is
+  visible on the workbench, expires on its own, and is recorded so
+  administrators can see who is holding resources and why.
+
+  h2. Acceptance Criteria
+
+  * A workbench can be exempted from idle culling for a chosen period, up to an administrator-defined maximum
+  * Administrators can disable exemptions entirely or limit them per project
+  * The exemption and its expiry are visible in the dashboard on the workbench
+  * When the exemption expires, normal idle culling resumes without restarting the workbench
+  * Exemptions are recorded with user, workbench, start, end and an optional reason
+  * Workbenches without an exemption are culled exactly as today
+  * Upgrading leaves existing culling configuration and behaviour unchanged
+
+  h2. User Stories
+
+  * As a data scientist, I want my overnight training cell to finish without my workbench being stopped.
+  * As a platform administrator, I want exemptions to be bounded and visible so idle resources are still reclaimed.
+
+  h2. Technical Notes
+
+  Idle culling is an optional behaviour of the notebook controller. The
+  strategy should decide where an exemption is stored, how the culler reads it,
+  and how the dashboard presents it, without changing culling for other
+  workbenches.

@@ -1,0 +1,41 @@
+# RFE template. Text from var/demos/fullsend-agent-led-poc/seed_rfe.py;
+# written against architecture rhoai-3.6-ea.2. Fictional content.
+summary: Scheduled incremental materialization for feature store feature views
+description: |
+  h2. Problem Statement
+
+  Data scientists define feature views in a project's feature store and serve
+  them online to models. Keeping the online store current means running
+  materialization by hand or from a home-grown cron job per feature view. When
+  someone forgets, or the job breaks, models quietly read old feature values,
+  and nobody can see when a feature view was last loaded or whether the last
+  load succeeded.
+
+  h2. Desired Outcome
+
+  A feature view owner can give a feature view a materialization schedule.
+  The platform then loads only the new data since the last successful run, on
+  that schedule, and shows each feature view's last successful
+  materialization, the next scheduled run and the outcome of recent runs.
+
+  h2. Acceptance Criteria
+
+  * A schedule (interval or cron expression) can be set per feature view
+  * Scheduled runs materialize incrementally from the last successful end time
+  * A failed run is retried with backoff and does not advance the last successful end time
+  * Each feature view shows last successful materialization time, next run and recent run outcomes
+  * Runs for one feature view never overlap; a run still in progress delays the next one
+  * Feature views without a schedule are unchanged and can still be materialized on demand
+  * Schedules are removed when their feature view is deleted
+
+  h2. User Stories
+
+  * As a data scientist, I want my online features refreshed on a schedule without maintaining my own cron job.
+  * As a model owner, I want to see how fresh the features behind my model are.
+
+  h2. Technical Notes
+
+  The feature server already exposes materialization and incremental
+  materialization. The strategy should decide where schedules run (a
+  platform scheduler, a per-feature-store controller or pipelines) and where
+  run history is kept.

@@ -1,0 +1,8 @@
+# Smoke scenario: Jira holds exactly one RFE, and it is eligible.
+# Used by smoke tests S1-S4 (one RFE start to finish through each design).
+description: One eligible RFE, nothing else in Jira.
+reset: true
+rfes:
+  - id: rfe1
+    template: kserve-canary-rollback
+    eligible: true

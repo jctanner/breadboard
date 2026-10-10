@@ -1,0 +1,42 @@
+# RFE template. Text from var/demos/fullsend-agent-led-poc/seed_rfe.py;
+# written against architecture rhoai-3.6-ea.2. Fictional content.
+summary: Alert model owners when scheduled TrustyAI drift metrics cross a threshold
+description: |
+  h2. Problem Statement
+
+  Teams configure scheduled drift and fairness metrics for deployed models in
+  TrustyAI. The values are calculated in the background and exposed as
+  Prometheus metrics, but nothing tells the model owner when a metric crosses
+  an acceptable threshold. Owners find out from dashboards they rarely open, or
+  after a downstream complaint, by which time a drifting model may have served
+  bad predictions for days.
+
+  h2. Desired Outcome
+
+  When a scheduled metric for a model crosses a threshold the owner set, the
+  project's owners are notified through the cluster's existing alerting, with
+  the model, metric, value, threshold and a link to the details. Thresholds are
+  set alongside the scheduled metric, and alerts clear when the metric
+  recovers.
+
+  h2. Acceptance Criteria
+
+  * A threshold and severity can be set on a scheduled drift or fairness metric
+  * Crossing the threshold raises an alert through the cluster's existing alerting stack; no new notification service is required
+  * The alert identifies project, model, metric, current value and threshold
+  * The alert resolves automatically when the metric returns within the threshold
+  * Metrics without a threshold behave exactly as today
+  * Alert rules are created and removed with the scheduled metric, scoped to the project
+  * Missing or stale metric data produces a distinct, lower-severity alert rather than silence
+
+  h2. User Stories
+
+  * As a model owner, I want to be told when my model drifts so I can retrain before users notice.
+  * As a platform administrator, I want alerts to use the alerting we already run.
+
+  h2. Technical Notes
+
+  TrustyAI Service already calculates configured metrics on a schedule and
+  publishes them through Prometheus-compatible metrics. The strategy should
+  decide whether thresholds live with the metric request or in separate
+  alert-rule resources, and who owns the rules' lifecycle.

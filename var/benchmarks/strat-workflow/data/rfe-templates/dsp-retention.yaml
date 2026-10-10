@@ -1,0 +1,49 @@
+# RFE template. Text from var/demos/fullsend-agent-led-poc/seed_rfe.py;
+# written against architecture rhoai-3.6-ea.2. Fictional content.
+summary: Configurable retention for Data Science Pipelines run artifacts
+description: |
+  h2. Problem Statement
+
+  Data science teams run pipelines many times a day while iterating on a model.
+  Every run writes intermediate artifacts (datasets, feature files, model
+  checkpoints, metrics) to the S3-compatible object storage configured for the
+  project's pipeline server. Nothing removes them when the run record is
+  deleted or ages out, so storage grows without bound. Platform administrators
+  find out when the bucket fills or the storage bill arrives, and then clean up
+  by hand with object-store tools, with no reliable way to tell which artifacts
+  still back a registered model or a run someone needs for an audit.
+
+  h2. Desired Outcome
+
+  A project administrator can set an artifact retention policy on the pipeline
+  server for a project: keep artifacts for N days after the run finishes, and
+  always keep artifacts of runs that are pinned or whose outputs were
+  registered as a model version. Expired artifacts are deleted from object
+  storage automatically, and each deletion is recorded so the administrator can
+  see what was removed and why.
+
+  h2. Acceptance Criteria
+
+  * A retention period (in days) can be set per pipeline server; the default keeps today's behaviour (no automatic deletion)
+  * Runs can be pinned so their artifacts are never deleted by the policy
+  * Artifacts referenced by a registered model version are never deleted by the policy
+  * Expired artifacts are removed from the configured object storage without deleting the run record or its metadata
+  * A deletion log records run ID, artifact path, size and reason, and is visible to project administrators
+  * A dry-run mode reports what would be deleted and the storage that would be reclaimed, without deleting anything
+  * Deletion failures (for example, missing permissions on the bucket) are reported and retried, and never block new pipeline runs
+  * Upgrading an existing installation does not delete anything until a retention period is explicitly set
+
+  h2. User Stories
+
+  * As a project administrator, I want artifacts of old experiment runs removed automatically so object storage stays within budget.
+  * As a data scientist, I want to pin the runs that produced a promising model so their artifacts are kept.
+  * As an auditor, I want a record of what was deleted, when, and under which policy.
+
+  h2. Technical Notes
+
+  Pipeline servers are configured per project today. Workflow artifact garbage
+  collection already exists in the underlying workflow engine, and the
+  persistence agent already performs run retention work; the strategy should
+  decide whether to build on those rather than add a new controller. The
+  model registry is the source of truth for which artifacts back a registered
+  model version.

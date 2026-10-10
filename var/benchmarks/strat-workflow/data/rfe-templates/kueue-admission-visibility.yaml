@@ -1,0 +1,41 @@
+# RFE template. Text from var/demos/fullsend-agent-led-poc/seed_rfe.py;
+# written against architecture rhoai-3.6-ea.2. Fictional content.
+summary: Show users why a queued workload is not admitted and its queue position
+description: |
+  h2. Problem Statement
+
+  Training jobs and other batch workloads submitted from a project wait in a
+  queue until the cluster admits them. Users see only that their job is
+  pending. They cannot tell whether it is waiting for quota, blocked by a
+  higher-priority workload, or will never fit, so they resubmit, delete and
+  recreate jobs, or ask administrators to investigate a queue they cannot see.
+
+  h2. Desired Outcome
+
+  For any pending workload in their project, users can see its position in
+  the queue, the reason it has not been admitted in plain language, and the
+  quota it is waiting for. Administrators can see the same information across
+  queues, without granting users access to cluster-scoped queue
+  configuration.
+
+  h2. Acceptance Criteria
+
+  * A pending workload shows its queue, its position and the current reason it is not admitted
+  * Reasons distinguish insufficient quota, preemption by higher priority, and requests that can never fit the queue
+  * A request that can never fit is reported as such immediately, not left pending silently
+  * Users see only workloads in projects they can access; cluster-scoped queue details are summarised, not exposed
+  * Administrators can list pending workloads across queues with the same reasons
+  * The information is available in the dashboard and through the CLI
+  * Workloads in namespaces not managed by queueing are unaffected
+
+  h2. User Stories
+
+  * As a data scientist, I want to know why my training job is still pending and roughly when it will start.
+  * As a platform administrator, I want to answer "why is my job stuck?" without reading queue internals.
+
+  h2. Technical Notes
+
+  Admission is handled by Kueue through namespaced LocalQueues and
+  cluster-scoped ClusterQueues, and only for namespaces opted in to queueing.
+  The strategy should decide how pending reasons and positions are derived and
+  exposed to project users without widening their RBAC.

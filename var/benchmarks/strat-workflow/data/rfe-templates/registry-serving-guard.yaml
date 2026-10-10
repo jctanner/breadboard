@@ -1,0 +1,46 @@
+# RFE template. Text from var/demos/fullsend-agent-led-poc/seed_rfe.py;
+# written against architecture rhoai-3.6-ea.2. Fictional content.
+summary: Block archiving Model Registry versions that are still being served
+description: |
+  h2. Problem Statement
+
+  Teams register model versions in the Model Registry and deploy them with
+  KServe. The registry already learns which versions are being served, but
+  nothing stops someone from archiving a version that a live inference service
+  still uses. When that happens, the version disappears from the default
+  registry views, lineage and approval checks treat it as retired, and the
+  on-call engineer debugging the endpoint cannot find the model it serves.
+  Cleanup jobs that act on archived versions can also remove artifacts that a
+  running service still loads on restart.
+
+  h2. Desired Outcome
+
+  Archiving a model version that is currently deployed is blocked by default.
+  The user sees which inference services, in which namespaces, still serve it,
+  and can archive only after those services stop using it. A registry
+  administrator can override the block with a recorded reason when an
+  emergency requires it.
+
+  h2. Acceptance Criteria
+
+  * Archiving a model version that one or more inference services serve fails with a clear error listing those services and namespaces
+  * The same check applies through the UI, the REST API and the Python client
+  * Versions with no active deployments archive exactly as today
+  * A registry administrator can force-archive with a required reason; the override is recorded with user, time and reason
+  * Deployment status shown for a version reflects the registry's synchronized serving state, including services in other namespaces that select this registry
+  * If serving state is stale or unavailable, the user is warned rather than silently allowed or blocked
+  * Existing archived versions are not changed by the upgrade
+
+  h2. User Stories
+
+  * As an ML engineer, I want to be stopped before I archive a model that production still serves.
+  * As an on-call engineer, I want the model behind a live endpoint to stay discoverable.
+  * As a registry administrator, I want an audited override for emergencies.
+
+  h2. Technical Notes
+
+  The registry already has a controller that watches inference services and
+  synchronizes their serving state into the registry through its API; the
+  strategy should decide whether the guard belongs in the registry API, the UI
+  backend, or both, and how cross-namespace registry selection affects the
+  check.

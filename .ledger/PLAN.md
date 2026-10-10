@@ -2,6 +2,10 @@
 
 ## Current milestone
 
+- **Proposed (awaiting review):** [Testing the strat-creator Claude Workflow](plans/strat-workflow-eval-plan.md).
+  Smoke and full tiers for PR #83's Workflow, run as dashboard jobs through
+  Model Relay (haiku-5-5 to wire up, opus-4-6 for results), with per-test
+  Jira seeding and MLflow experiments.
 - **New, divergent POC:** [Native Fullsend strategy agents](plans/fullsend-agent-led-strategy-poc.md).
   Checkout `checkouts.fullsend_agent_led_poc/jctanner.strat-creator`, branch
   `feat/fullsend-agent-led-strategy`; strat-single/strat-batch prompts on

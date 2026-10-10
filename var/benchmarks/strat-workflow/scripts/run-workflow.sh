@@ -137,17 +137,19 @@ for attempt in 1 2; do
   ITER="$OUT/iteration-$attempt"
   mkdir -p "$ITER/output"
   echo "=== attempt $attempt: claude --agent strat-single (Workflow strat-pipeline) ==="
+  # Nothing sits between claude and its output: the raw stream goes to a file
+  # and the job log shows only this script's lines.
+  echo "output: $ITER/stream.jsonl (stderr: $ITER/claude-stderr.log)"
   (
     cd "$TARGET_REPO_DIR" || exit 1
     export FULLSEND_OUTPUT_DIR="$ITER/output"
     export RFE_SKIP_BOOTSTRAP=1
     export DISABLE_AUTOUPDATER=1
-    timeout "$((TIMEOUT_MINUTES * 60))" claude --print --verbose --output-format stream-json \
+    exec timeout "$((TIMEOUT_MINUTES * 60))" claude --print --verbose --output-format stream-json \
       ${ANTHROPIC_MODEL:+--model "$ANTHROPIC_MODEL"} --effort "${STRAT_EFFORT:-high}" \
       --plugin-dir "$TARGET_REPO_DIR/.fullsend/plugins/strat-pipeline" \
       --agent strat-single --dangerously-skip-permissions "$PROMPT" \
-      2>"$ITER/claude-stderr.log" | tee "$ITER/stream.jsonl" | python3 -u /app/scripts/stream-claude.py
-    exit "${PIPESTATUS[0]}"
+      >"$ITER/stream.jsonl" 2>"$ITER/claude-stderr.log"
   )
   CLAUDE_RC=$?
   echo "claude exit: $CLAUDE_RC"

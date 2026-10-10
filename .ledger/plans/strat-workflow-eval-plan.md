@@ -11,7 +11,14 @@ gsun's PR #83 runs the same steps from a Claude Code **Workflow**: a small
 JavaScript file that Claude runs. It starts one helper agent per step and
 passes the results between them.
 
-The question here is narrow: **does the Workflow version run the steps
+The question underneath is about **orchestration**: is it better to let
+**bash orchestrate** a series of `claude` and script calls (an
+"entrypoint", PR #80), or to use **Claude's native Workflow feature** (PR
+#83)? "Better" means correct, reliable, cheap and fast. fullsend is where
+the debate started, but it isn't what we're testing; we test the two
+orchestration styles.
+
+The first question is narrow: **does the Workflow version run the steps
 correctly and keep its records straight?** We test it in two tiers:
 
 1. **Smoke tests.** One RFE, start to finish. A smoke test is a single run
@@ -36,7 +43,7 @@ Yes. Each choice and what it gives us:
 | Model Relay credentials | Dashboard jobs already go through the relay, which records every model call and its token use per job. That gives cost numbers we would otherwise have to rebuild for the Workflow. |
 | haiku-5-5 to wire things up | Cheap enough to rerun a lot while plumbing is broken. Its results say nothing about quality, which is fine at this stage. |
 | opus-4-6 for the real runs | The model production uses, so the cost and behaviour numbers are comparable with production's (~$8 per RFE). |
-| PR #83's Workflow | Pinned to the PR's commit `6b78355` and mirrored into the GitHub emulator, so every run uses exactly the same code. |
+| PR #83's Workflow | Pinned to the PR's commit `6b78355` in a local copy of strat-creator in the GitHub emulator, so every run uses exactly the same code and we can patch it for the evals. |
 | Jira emulator seeded per test | Each test starts from a known state, and we can read Jira afterwards to check what the run actually did. |
 | An MLflow experiment per test | Repeats of one test land together and different tests stay apart. |
 | The dashboard job API | Every run gets strace, API request dumps, OTel traces to Observatory and an MLflow trace without extra work. |
@@ -84,6 +91,7 @@ Five adjustments:
 
 | Item | Value |
 | --- | --- |
+| strat-creator source | Local copy in the GitHub emulator: `https://github.local/opendatahub-io/strat-creator` (see "strat-creator lives in the GitHub emulator") |
 | PR #83 (Claude Workflow) | `opendatahub-io/strat-creator` branch `pr-83` in the GitHub emulator, commit `6b78355ebc450ff4737fd10ba4857c26086ceac0` |
 | PR #80 (bash entrypoint) | branch `pr-80`, commit `78ab3f1e97b09d02229bd03dd045a7eed97b0c33` |
 | PR #81 (single agent, for later) | branch `pr-81`, commit `9350c89bcf1fd09acc0a3d1ef44ec6a59e47efe3` |
@@ -94,7 +102,7 @@ Five adjustments:
 
 | # | Piece | What it is |
 | --- | --- | --- |
-| 1 | Pinned PR code (done 2026-10-10) | Push PR #83's commit `6b78355` as branch `pr-83` of `opendatahub-io/strat-creator` in the GitHub emulator, which already hosts that repo. Jobs clone it at that exact commit. |
+| 1 | Pinned PR code (done 2026-10-10) | A local copy of strat-creator in the GitHub emulator holding each PR's commit unchanged, plus eval branches that carry our patches on top. Jobs clone it at an exact commit. Details under "strat-creator lives in the GitHub emulator". |
 | 2 | Architecture snapshot (done 2026-10-10) | One fixed copy of the architecture-context documents on the shared `/app/.context` volume, so every run reads the same reference material and nothing is fetched from the internet mid-test. |
 | 3 | Jira seeding (done 2026-10-10) | A script in `var/benchmarks/strat-workflow/scripts/` that resets the Jira emulator and creates the RFEs (and existing strategies, labels and comments) for one named scenario from `data/scenarios/`. It reuses `var/demos/fullsend-entrypoint-poc/jira-seed/prepare.py` and `var/demos/fullsend-agent-led-poc/seed_rfe.py`. |
 | 4 | Script entrypoint in the job API (built 2026-10-10; [task](../tasks/current/strat-workflow-eval-script-mode.md)) | `/api/jobs/submit` accepts a script to run in place of `claude -p`, after the usual setup. Plus two arm scripts in `var/benchmarks/strat-workflow/scripts/`: one runs PR #83's Workflow, one runs PR #80's bash entrypoint. Details below. |
@@ -102,6 +110,48 @@ Five adjustments:
 | 6 | Checks | A script that reads the run's result, progress file, artifacts and Jira, and writes `eval-result.json` with each check's pass or fail and the reason. |
 | 7 | Test driver (Markov) | A Markov workflow that takes a list of tests (scenario, repeats) and one or more variants (named sets of model, skills and commit; see "A/B comparisons"). For each test, variant and repeat it seeds Jira, submits the job through the dashboard API, waits for the job, reads its `eval-result.json`, and adds the outcome to one summary table with the variants side by side. Details below. |
 | 8 | markovd setup | Register Breadboard's GitHub repository as a markovd project, and patch markovd so git imports keep the helper scripts and record their commit. Details under "The Markov test driver". |
+
+### strat-creator lives in the GitHub emulator
+
+We test **local copies** of strat-creator, kept in the GitHub emulator
+(`github.local/opendatahub-io/strat-creator`), so we can **patch the code under test when an eval needs
+it**: making a PR runnable outside fullsend, adding instrumentation, or
+fixing a defect that blocks a test. Patches must never be invisible, so:
+
+- **Unchanged PR commits stay as they are.** Each PR's head is pushed
+  unmodified (for example `pr-83` at `6b78355`), so there's always a
+  baseline that matches the PR exactly.
+- **Patches go on eval branches on top,** one commit per patch, each with a
+  message saying why it exists and which test needs it. For example,
+  `eval/pr-83` is `pr-83` plus our commits.
+- **Every run records the exact commit it used.** `STRAT_CREATOR_REF` in
+  the job and `strat_creator_ref` in the run summary and seed report. A
+  result from a patched commit can always be traced to its patches with
+  `git log pr-83..<commit>`.
+- **Comparisons state their patches.** When designs are compared (A/B or
+  #80 vs #83), each variant lists the patches its commit carries. Patches
+  that change behaviour, not just make the code run here, are called out in
+  the results.
+
+`pr-83`, `pr-80` and `pr-81` are already there unchanged (piece 1), and
+`run-workflow.sh` and `seed_scenario.py` already clone from it.
+
+### Running each design as it is
+
+Each arm runs **as its own design defines it**, and the harness adds
+nothing in between:
+- **Workflow arm (PR #83):** its prepare step, then
+  `claude --agent strat-single --plugin-dir … -p "Run the agent task"` with
+  the settings the design declares (model, `effort: high`), then its checker
+  and post step.
+- **Bash arm (PR #80):** its `strategy-entrypoint.sh`, unchanged, including
+  its own `claude` calls and its own output handling.
+- **No processing of Claude's output in the harness.** Raw output goes to
+  files (`stream.jsonl`, stderr); the job log shows only the arm script's
+  own lines. Our checks read the files after the run.
+- **Instrumentation is environment-level only, and identical for both
+  arms:** relay routing, model pinning, MLflow hooks, OTel export, API
+  dumps and strace. It observes the run and is never in the output path.
 
 ### Script entrypoint jobs
 
@@ -127,8 +177,8 @@ Five adjustments:
 different routes:
 
 1. **PR code (strat-creator), cloned inside the job at a pinned commit.**
-   - PR #83's commit (`6b78355`) and PR #80's head commit are pushed to
-     `opendatahub-io/strat-creator` in the GitHub emulator first (piece 1).
+   - Each PR's commit lives in the local strat-creator copy in the GitHub
+     emulator (piece 1), unchanged or with eval patches on top.
    - The arm script clones that repository at the exact commit.
    - PR #83's Workflow is a file inside that clone,
      `.fullsend/plugins/strat-pipeline/workflows/strat-pipeline.js`, loaded
@@ -581,3 +631,143 @@ driver exists.
   needs; the rest is more cases and repeats.
 - **Running on fullsend.** Running the chosen design on real fullsend and
   OpenShell (Layer B) is also outside this plan.
+
+## Observations
+
+Dated notes from building and running the benchmark, newest last. Facts
+only; interpretation goes in the tier summaries.
+
+### 2026-10-09 — Model Relay and dashboard jobs
+
+- The first relay-routed job failed before any model call. Google's auth
+  library looked up the project for the `external_account` credential
+  through Cloud Resource Manager, which rejected the relay's token (strace:
+  connections to 8082 and Google, none to relay 8080). Setting
+  `GOOGLE_CLOUD_PROJECT` on job pods fixed it.
+- The fixed job's five upstream calls all went through the relay. Two of
+  the three calls sent in the same millisecond got **429 from Anthropic**
+  (Anthropic request IDs recorded); the job still completed. The relay
+  itself has no concurrency limit.
+- `run_skill.sh` never exited with the agent's status, so failed jobs showed
+  Complete. Fixed; prompt jobs also stopped printing skill-only messages.
+- Rebuilding `pipeline-agent` moved Claude Code from 2.1.238 to 2.1.296,
+  because the OpenCode build stage missed the cache and the Claude Code
+  install is unpinned.
+
+### 2026-10-10 — Building pieces 1–5
+
+- Script mode: the selfcheck job passed 14/14 from the image and from a
+  Breadboard clone at a pinned commit; a missing script fails the job.
+- markovd: git import dropped non-YAML files from directory workflows, and
+  imports didn't record their commit. Both were patched (markovd `71cd673`).
+  markovd is served at `markovd.local`; `markov.local` (listed in
+  `CLAUDE.md`) returns 404.
+- The dashboard admin page's "Clear via Job" polled a route that doesn't
+  exist (`/api/jobs/<name>/status`); fixed.
+- Observatory's clear removes only claims, verdicts and explanations. There
+  is no API to clear OTel traces.
+- First full reset: artifacts cleared, MLflow emptied (1 experiment, 46
+  traces), Observatory already empty, Jira reset with RHAIRFE-1 as the only
+  RFE PR #83 discovers. The agent-led POC's Jira data is gone (approved).
+
+### 2026-10-10 — S1, first run (PR #83 Workflow, haiku-5-5, RHAIRFE-1)
+
+Job `script-run-workflow-rhairfe-1-claude-haiku-5-1010-014546-c44d83`, from
+Breadboard `be4791d`. Real skills, real Jira writes, strace on, MLflow
+experiment `strat-workflow-eval/smoke/S1/haiku`.
+
+- **Prepare worked.** `pre-strategy.sh` loaded the pinned snapshot
+  (`rhoai-3.6-ea.2`), locked RHAIRFE-1 with resume point `create`, and wrote
+  the run input.
+- **Launch matched PR #83's own smoke test.** The session ran on
+  `claude-haiku-5-5`; its first tool call was
+  `Workflow {"name": "strat-pipeline:strat-pipeline"}`.
+- **strace covered the whole script:** the first traced process was
+  `bash run-workflow.sh RHAIRFE-1`, with 531 per-process files a few
+  minutes in (55 `claude.exe` execs, ~60 `git`, 20 `python3`).
+- **Attempt 1 failed PR #83's checker.** Create made **RHAISTRAT-1** in
+  Jira. Then the **refine helper agent returned no result** in the shape
+  the Workflow requires, so push and review never ran. Checker output:
+  - `refine: RHAISTRAT-1 returned no result; review: RHAISTRAT-1 not recorded; push: RHAISTRAT-1 not recorded`;
+  - `RHAIRFE-1 has neither a reviewed strategy nor a skip reason`.
+
+  This is the risk the plan names for the Workflow design: each step
+  depends on a helper agent handing back structured output.
+- **Attempt 2** (the validation-loop retry, with the checker's feedback
+  appended) re-ran the Workflow, which resumes from the recorded progress.
+  The agent then waited for it in a Bash `sleep 10` loop. It first read the
+  previous attempt's stale `agent-result.json`, noticed that its freshness
+  check was wrong, and switched to waiting on the resumed run's own output.
+- **Relay:** 101 model calls in the first ~8 minutes, all HTTP 200; no 429s.
+- **The job log goes quiet while the Workflow runs.** `claude`'s output shows
+  only the main session's turns. The helper agents' work doesn't appear,
+  and the main session sat in a Bash `sleep 10` loop, which prints nothing
+  until it returns. The work kept going: at 01:59 the progress file had
+  refine (01:49:26) and push (01:49:49) recorded with review in progress,
+  the relay had 141 calls (latest 01:59:44), and attempt 2's stream had
+  been written seconds earlier. An `agent-result.json` appeared in
+  iteration 2 at about 01:51, before any review; to be explained from the
+  final summary.
+- **Why the job log went quiet: `scripts/stream-claude.py` drops the
+  Workflow's events.** `claude` emitted them all to the stream: 140
+  `system:task_progress` (each Workflow step with tokens, tool uses and
+  time), `task_started`/`task_notification` for the Workflow, the four
+  review sub-agents and the agent's own background waits, and
+  `tool_progress` heartbeats. The parser prints only `init`, `api_retry`,
+  `compact_boundary` and hook events, so none of it reached the job log. It
+  should print these as one line each.
+- **Review ran as four sub-agents.** The stream shows
+  `/strategy-feasibility-review`, `/strategy-testability-review`,
+  `/strategy-scope-review` and `/strategy-architecture-review` each started
+  and completed as `local_agent` tasks during the Workflow's Review step.
+
+### 2026-10-10 — Decision: run each design as it is
+
+The comparison is bash orchestration (an entrypoint script making `claude`
+and script calls) against Claude's native Workflow feature, not fullsend
+itself. Each arm runs as its design defines it. The harness no longer
+pipes Claude's output through Breadboard's `stream-claude.py`; S1's first
+run did, which only affected the job log. Raw output goes to files. See
+"Running each design as it is".
+
+### 2026-10-10 — Decision: patchable local copies of strat-creator
+
+The code under test comes from the local strat-creator copy in the GitHub
+emulator, so we can patch it for the evals. Unchanged PR commits stay as
+baselines, patches go on eval branches one commit each, and every run
+records the commit it used. See "strat-creator lives in the GitHub
+emulator". S1's first run used `pr-83` unchanged.
+- **Outcome: passed on attempt 2, in 20 minutes; job Complete, exit 0.**
+  Attempt 2's resumed Workflow ran the missing steps (refine, push, score,
+  review), PR #83's checker reported `PASS: result matches the run record,
+  progress, artifacts and scores`, `post-strategy.sh` reported
+  `action=completed mode=single dry_run=False`, and `release-locks.sh`
+  released RHAIRFE-1.
+- **Result:** 1 of 1 strategies reviewed; RHAISTRAT-1 got recommendation
+  **revise** (4/8) and `needs_attention: true`. Phases create, refine, push
+  and review all completed; no errors.
+- **Jira after the run, no duplicate writes:**
+  - exactly one RHAISTRAT issue, RHAISTRAT-1, linked to RHAIRFE-1 as Cloners;
+  - its description is the refined strategy (17,471 characters);
+  - **one** review comment, "[Strat Creator] Strategy Review — REVISE
+    (Score: 4/8)", at 02:05:25;
+  - labels `strat-creator-auto-created`, `strat-creator-auto-refined` and
+    `strat-creator-needs-attention`;
+  - no `strat-creator-processing` lock on RHAIRFE-1. The retry didn't
+    re-create, re-push or re-review anything.
+- **Relay: 173 calls, all HTTP 200, no 429s.**
+  - Tokens: 117,425 input, 243,149 output, 5,941,658 cache read and
+    1,016,598 cache write.
+  - 171 calls were `claude-haiku-5-5`. **Two weren't:** 1-token probes
+    (`max_tokens: 1`) to `claude-sonnet-4-5@20250929` and `claude-opus-5-5`
+    at session start (01:46:04), which bypass the model pinning. They're
+    negligible in cost, but A/B accounting must exclude them.
+- **MLflow:** experiment `strat-workflow-eval/smoke/S1/haiku` holds **3
+  traces**, all `claude_code_conversation`; the longest ran 962 s. The
+  Workflow's helper agents don't appear as traces of their own. Per-step
+  detail is in the stream's `task_progress` events and the API dumps.
+- **Saved artifacts:** 1,894 strace files and 335 API-body dumps.
+  `publish/results` holds the strategy, review, originals, report and
+  `pipeline-data.json`; both iterations' streams and validation output are
+  kept too.
+- **Not checked yet:** whether Observatory received the run's OTel.

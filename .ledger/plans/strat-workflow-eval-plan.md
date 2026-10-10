@@ -301,32 +301,38 @@ result.
 ```text
 var/benchmarks/strat-workflow/
   README.md                what the benchmark is and how to run it
-  meta.yaml                required: entrypoint (main) and forks (1)
-  vars.yaml                required: defaults (tier, repeats, pinned
-                           strat-creator commit, dashboard URL, MLflow
-                           experiment prefix)
-  rules.yaml               required: gate rules (every check passed;
-                           429 count under a threshold)
+  meta.yaml                entrypoint (main), namespace, forks (1)
+  vars.yaml                run settings: tier, only_tests, variants,
+                           repeats, Breadboard commit, wipe and review
+                           switches, job timeout, service URLs
+  rules.yaml               the review_stop gate rule
   step_types/
-    dashboard.yaml         submit a job through /api/jobs/submit, and
-                           wait for it (k8s_job_wait)
-    jira.yaml              reset and seed the Jira emulator
+    dashboard.yaml         dashboard_api: a dashboard API call
+    bench.yaml             bench_script: a runner-side script, with the
+                           dashboard and Jira settings in its environment
   workflows/               one workflow per file, named by its name: field
-    main.yaml              pick the tier or comparison, run it, summarize,
-                           pause at the review gate
-    tier1-smoke.yaml       the smoke tests S1–S4
-    tier2-full.yaml        scenarios F1–F11 and the mixed batches
-    ab-compare.yaml        one test list under two or more variants
-    run-test.yaml          one test × variant × repeat: seed, submit,
-                           wait, load eval-result.json, record
-    summarize.yaml         build the summary table
-  scripts/                 helpers run with script_exec
+    main.yaml              plan the runs, wipe once, run each, summarize,
+                           review gate
+    wipe.yaml              clear artifacts, MLflow and Observatory
+    run-test.yaml          one run: seed, submit, wait, check
+  scripts/
+    (job side, run in dashboard job pods)
+    run-workflow.sh        the PR #83 arm
     seed_scenario.py       reset Jira and create one scenario's issues
-    summarize.py           combine eval-result.json files into a table
+    reset_environment.py   the same reset by hand, from the host
+    selfcheck.sh, snapshot-architecture-context.sh
+    (runner side, run by Markov with script_exec; standard library only)
+    benchlib.py            dashboard, Jira and file API helpers
+    plan_runs.py           tests × variants × repeats -> ordered runs
+    dashboard_job.py       preflight, submit, wait, seed report
+    check_run.py           the checks and usage -> eval-result
+    summarize.py           eval-results -> summary tables
   data/
-    variants.yaml          named variants (opus, haiku, ...)
-    tests/                 test lists: tier1.yaml, tier2.yaml, ab-*.yaml
-    scenarios/             one seed definition per scenario (S3, F1–F11)
+    arms.yaml              each design's script source, commit and settings
+    variants.yaml          named variants (haiku, opus)
+    tests/smoke.yaml       tier 1: S1–S4, 3 repeats
+    scenarios/             one seed definition per scenario
+    rfe-templates/         RFE texts the scenarios use
 ```
 
 Notes on the layout:
@@ -397,24 +403,38 @@ It prints one JSON summary and exits 0 only if every step worked and the
 seed check passed. The Markov workflow runs the same steps as its own
 dashboard API calls.
 
-**What one test step does in Markov:**
-1. Reset the environment and seed Jira for the scenario (above).
-2. Submit the "strat workflow" job with a `dashboard_api` step, which posts
-   to `/api/jobs/submit`.
-3. Wait for it with `k8s_job_wait`, which watches the job and keeps its
-   logs.
-4. Load the job's `eval-result.json` and record pass or fail per check.
+**What one test run does in Markov** (built 2026-10-10, `workflows/run-test.yaml`):
+1. Reset Jira and seed the scenario: a script job runs `seed_scenario.py`
+   from the Breadboard commit, and the seed check must pass.
+2. Submit the design's job (`dashboard_job.py submit-run`, a POST to
+   `/api/jobs/submit`).
+3. Wait for it by polling the dashboard. A failed or timed-out job is
+   recorded, not raised, so the tier goes on. `k8s_job_wait` isn't used
+   because it fails the step, and Markov has no "ignore errors", so one
+   failed test would stop the tier.
+4. Run the checks (`check_run.py`): job status, Jira, and usage summed from
+   the job's API dumps. Its output is the run's eval-result, stored in the
+   Markov run. The runner can't write to the artifacts volume.
+
+**Resetting, as built:** the artifacts volume, MLflow and Observatory are
+cleared **once, before the first run** (`wipe_at_start`). Only Jira is reset
+before every run. Wiping everything per run would delete the earlier
+repeats' strace, API dumps and MLflow traces, and an MLflow experiment could
+then never hold more than one run.
 
 **Loops:**
-- `for_each` runs over tests × variants × repeats, sorted so variants
-  alternate (A, B, A, B).
-- Concurrency is 1, because every test resets the one shared Jira emulator.
+- `plan_runs.py` expands tests × variants × repeats into one ordered list,
+  in rounds (S1, S2, … then again), so arms and variants alternate.
+- `for_each` runs the list with concurrency 1, because every run resets the
+  one shared Jira emulator.
 
-**Resume:** Markov saves progress after each step. A tier 2 run that dies
-after 6 hours resumes from the next test instead of starting over.
+**Resume:** Markov saves progress after each step, and a resumed run skips
+the runs already finished. The CLI can resume (`markov resume`); markovd
+can't resume a run yet.
 
-**Review stops** are Markov gates that pause the run until you resume it,
-so they show in `markovd.local` with the summary so far.
+**Review stops** are a Markov gate (`review_stop` rule) at the end. It's off
+by default (`review_stop: "no"`) because markovd can't resume a paused run.
+With the CLI, resume with `--var reviewed=yes`.
 
 **Don't use Markov's own `agent_job` step for model runs.** It creates pods
 directly. The existing benchmark's version mounts `gcp-credentials` and goes
@@ -954,3 +974,38 @@ same snapshot and the same reset):
 | Usage source | Claude `modelUsage` ($0.31 list) | API dumps (88 calls) |
 
 These are single runs. The repeats (3 each) are what count.
+
+### 2026-10-10 — The Markov driver for the smoke tier
+
+`var/benchmarks/strat-workflow/` is now a Markov directory workflow (layout
+under "The Markov test driver"). `markov validate` passes.
+
+- **Tested without model spend:** the Markov CLI (built from markov
+  `c312a4b`) ran the workflow locally against a stand-in dashboard. The
+  stand-in turned submits and clears into no-ops that returned the real S2
+  seed and run jobs, and proxied everything else to the live dashboard.
+  - The run went: plan, wipe, then 4 runs (S1, S2, S1, S2), checks,
+    summary, pause at the gate, and resume with `reviewed=yes`.
+  - On S2's real job, the checks reproduce the figures recorded by hand:
+    88 calls, 173k output, 4.16M cache read and 578k cache write. All 7
+    checks pass.
+- **What the build changed from the design:**
+  - Waiting is a dashboard poll, not `k8s_job_wait`. The latter fails the
+    step on a failed job, and Markov has no "ignore errors", so one failed
+    test would stop the tier.
+  - The wipe (artifacts, MLflow, Observatory) runs once per Markov run; Jira
+    is reset before every run, so repeats keep their evidence.
+  - eval-results live in the Markov run (each `check` step's output), not
+    in `eval-result.json` files: the runner can't write to the artifacts
+    volume.
+  - The review gate is off by default: markovd can't resume a paused run.
+- **Markov quirks found:**
+  - Steps have no `description` field. The arch-context demo's workflows
+    use one, so they don't validate with current Markov.
+  - `--var` overrides arrive typed (`repeats=2` is an integer), and
+    `script_exec` args must be strings. Workflow args use `--name={{ var }}`
+    for that reason.
+  - A template must pipe JSON through `| safe`, or it comes out HTML-escaped.
+- **markovd `d923fe5`:** starting a run now passes the workflow's import
+  commit as `workflow_source_commit`. The benchmark uses it as the Breadboard
+  commit its jobs clone from.

@@ -1,0 +1,37 @@
+# The two designs under test. Each arm says where its job's script comes
+# from and which settings the job gets. Values in {braces} are filled in per
+# run by scripts/plan_runs.py: {model} from the variant, {breadboard_repo} and
+# {breadboard_ref} from the Markov run.
+#
+# Pinned commits are in the local strat-creator copy in the GitHub emulator:
+# unchanged PR baselines on pr-83/pr-80/pr-81, eval patches on eval/* (see the
+# plan, "strat-creator lives in the GitHub emulator").
+arms:
+  workflow:
+    description: Claude Workflow (strat-creator PR #83), run-workflow.sh
+    strat_creator_ref: 6b78355ebc450ff4737fd10ba4857c26086ceac0  # pr-83, unchanged
+    script:
+      repo: "{breadboard_repo}"
+      ref: "{breadboard_ref}"
+      path: var/benchmarks/strat-workflow/scripts/run-workflow.sh
+    extra_env:
+      STRAT_CREATOR_REF: "{strat_creator_ref}"
+      STRAT_ARCHITECTURE_CONTEXT_PATH: /app/.context/snapshots/architecture-context/7d61f097a9220aeb1280837b66b532177ec558b6
+
+  bash:
+    description: bash entrypoint (strat-creator PR #80), strategy-entrypoint.sh
+    # eval/pr-80: PR #80 plus STRAT_MODEL and STRAT_ARCHITECTURE_CONTEXT_PATH
+    strat_creator_ref: c6fc33138320f0c88cf927e2c95eb4f18f9eb3dd
+    script:
+      repo: https://github.local/opendatahub-io/strat-creator
+      ref: "{strat_creator_ref}"
+      path: .fullsend/scripts/strategy-entrypoint.sh
+    extra_env:
+      STRAT_MODEL: "{model}"
+      STRAT_ARCHITECTURE_CONTEXT_PATH: /app/.context/snapshots/architecture-context/7d61f097a9220aeb1280837b66b532177ec558b6
+      CLAUDE_CONFIG_DIR: /home/pipelineagent/.claude
+      # Throwaway results repository; the token is the emulator's
+      # development default from deploy/k8s/10-github-emulator.yaml.
+      RESULTS_REPO_URL: https://github.local/admin/strat-workflow-eval-results.git
+      RESULTS_GIT_USER: admin
+      RESULTS_PUSH_TOKEN: ghp_admin_default_token

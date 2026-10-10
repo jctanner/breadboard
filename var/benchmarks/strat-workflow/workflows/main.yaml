@@ -1,0 +1,70 @@
+name: main
+description: "strat-creator design benchmark: run a tier's tests and summarize them"
+
+steps:
+  - name: resolve_breadboard_ref
+    type: set_fact
+    vars:
+      bench_ref: "{% if breadboard_ref %}{{ breadboard_ref }}{% else %}{{ workflow_source_commit }}{% endif %}"
+
+  - name: check_breadboard_ref
+    type: assert
+    that:
+      - "bench_ref | length == 40"
+    msg: "Set breadboard_ref to a pushed 40-character Breadboard commit (markovd sets workflow_source_commit for git imports)"
+
+  # Expand the tier's tests, variants and repeats into an ordered list of runs
+  - name: plan
+    type: bench_script
+    params:
+      path: plan_runs.py
+      args:
+        - "--tier={{ tier }}"
+        - "--breadboard-ref={{ bench_ref }}"
+        - "--breadboard-repo={{ breadboard_repo }}"
+        - "--only={{ only_tests }}"
+        - "--variants={{ variants }}"
+        - "--repeats={{ repeats }}"
+    register: planned
+
+  - name: load_plan
+    type: set_fact
+    vars:
+      plan: "{{ planned.stdout | from_json }}"
+
+  # Refuse to start while any pipeline job is pending or running
+  - name: preflight
+    type: bench_script
+    params:
+      path: dashboard_job.py
+      args: ["preflight"]
+
+  # Clear the artifacts volume, MLflow and Observatory
+  - name: wipe
+    when: "wipe_at_start == 'yes'"
+    workflow: wipe
+
+  # Each run: seed Jira, run the design as a dashboard job, check the result
+  - name: runs
+    for_each: plan.runs
+    for_each_key: id
+    as: run_item
+    concurrency: 1
+    workflow: run-test
+    vars:
+      run: "{{ run_item }}"
+    register: finished_runs
+
+  - name: summarize
+    type: bench_script
+    params:
+      path: summarize.py
+      args:
+        - "{% for r in finished_runs %}{{ r.eval.stdout | trim | safe }}\n{% endfor %}"
+    register: summary
+
+  # Pause for review; resume with reviewed=yes
+  - name: review
+    type: gate
+    rules:
+      - review_stop

@@ -1,0 +1,10 @@
+bench_script:
+  base: script_exec
+  description: "Run one of this benchmark's runner-side scripts (scripts/)"
+  params:
+    interpreter: python3
+    env:
+      DASHBOARD_BASE: "{{ dashboard_base }}"
+      JIRA_BASE: "{{ jira_base }}"
+      JIRA_USER: "{{ jira_user }}"
+      JIRA_TOKEN: "{{ jira_token }}"

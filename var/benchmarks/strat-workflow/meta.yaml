@@ -1,0 +1,5 @@
+# Markov directory workflow for the strat-creator design benchmark.
+# One test at a time: every test resets the one shared Jira emulator.
+entrypoint: main
+namespace: ai-pipeline
+forks: 1

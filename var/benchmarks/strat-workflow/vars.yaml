@@ -1,0 +1,38 @@
+# Defaults for every run. Override any of them when starting the run
+# (markovd's run form, or markov run --var key=value). Overrides arrive as
+# strings, so switches here are "yes"/"no" strings too.
+
+# Which test list to run: data/tests/<tier>.yaml.
+tier: smoke
+# Only these tests, comma-separated (e.g. "S1,S2"); empty runs the whole tier.
+only_tests: ""
+# Variants to run every test under, comma-separated (e.g. "haiku,opus");
+# empty uses each test's own (data/variants.yaml).
+variants: ""
+# Repeat count; empty uses the tier's.
+repeats: ""
+
+# Breadboard commit the jobs clone their scripts from (run-workflow.sh,
+# seed_scenario.py). Empty means the commit markovd imported this workflow
+# from, which markovd passes in as workflow_source_commit. Either way it must
+# be a pushed, full 40-character commit.
+breadboard_ref: ""
+workflow_source_commit: ""
+breadboard_repo: https://github.com/jctanner/breadboard
+
+# Clear the artifacts volume, MLflow and Observatory once before the first
+# run. Between runs only Jira is reset and seeded, so every run's strace, API
+# dumps and MLflow traces survive for the summary and for comparison.
+wipe_at_start: "yes"
+# Pause at the end for review (the plan's "Stops for review"). Resume the
+# run with reviewed=yes to finish it.
+review_stop: "no"
+reviewed: "no"
+
+# Seconds to wait for one test's job before stopping it.
+job_timeout: "7200"
+
+dashboard_base: http://pipeline-dashboard.ai-pipeline.svc.cluster.local:5000
+jira_base: https://jira-emulator.ai-pipeline.svc.cluster.local
+jira_user: admin
+jira_token: admin

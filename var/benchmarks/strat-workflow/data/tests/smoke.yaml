@@ -1,0 +1,22 @@
+# Tier 1: smoke tests. One eligible RFE, start to finish, through each design.
+# Repeats run in rounds (S1, S2, S3, S4, then again), so the arms alternate.
+# Start a Markov run with only_tests=S1,S2 to run the haiku tests alone.
+tier: smoke
+repeats: 3
+tests:
+  - id: S1
+    arm: workflow
+    variants: [haiku]
+    scenario: smoke-one-rfe
+  - id: S2
+    arm: bash
+    variants: [haiku]
+    scenario: smoke-one-rfe
+  - id: S3
+    arm: workflow
+    variants: [opus]
+    scenario: smoke-one-rfe
+  - id: S4
+    arm: bash
+    variants: [opus]
+    scenario: smoke-one-rfe

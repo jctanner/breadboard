@@ -1,0 +1,77 @@
+name: run-test
+description: "One run: reset and seed Jira, run the design as a dashboard job, check the result"
+vars:
+  run: null
+
+steps:
+  # Reset Jira and seed the scenario (seed_scenario.py at the Breadboard commit)
+  - name: submit_seed
+    type: bench_script
+    params:
+      path: dashboard_job.py
+      args:
+        - "submit-seed"
+        - "{{ run.scenario }}"
+        - "{{ run.strat_creator_ref }}"
+        - "{{ breadboard_repo }}"
+        - "{{ bench_ref }}"
+    register: seed_submitted
+
+  - name: load_seed_job
+    type: set_fact
+    vars:
+      seed_job: "{{ seed_submitted.stdout | from_json }}"
+
+  - name: wait_for_seed
+    type: bench_script
+    params:
+      path: dashboard_job.py
+      args: ["wait", "{{ seed_job.job_name }}", "--timeout=900", "--must-complete"]
+
+  # The seed check: Jira holds the scenario and discovery finds exactly the eligible RFEs
+  - name: seed_report
+    type: bench_script
+    params:
+      path: dashboard_job.py
+      args: ["seed-report", "{{ seed_job.job_name }}"]
+    register: seed_reported
+
+  - name: load_seed
+    type: set_fact
+    vars:
+      seed: "{{ seed_reported.stdout | from_json }}"
+
+  # Run the design as a script job
+  - name: submit_run
+    type: bench_script
+    params:
+      path: dashboard_job.py
+      args:
+        - "submit-run"
+        - "{{ run | to_json | safe }}"
+        - "{{ seed.rfe_key }}"
+    register: run_submitted
+
+  - name: load_run_job
+    type: set_fact
+    vars:
+      run_job: "{{ run_submitted.stdout | from_json }}"
+
+  # Wait for the job; a failed job is recorded by the checks, not raised
+  - name: wait_for_run
+    type: bench_script
+    params:
+      path: dashboard_job.py
+      args: ["wait", "{{ run_job.job_name }}", "--timeout={{ job_timeout }}"]
+    register: run_waited
+
+  # Script checks and usage: the run's eval-result
+  - name: check
+    type: bench_script
+    params:
+      path: check_run.py
+      args:
+        - "{{ run | to_json | safe }}"
+        - "{{ run_job.job_name }}"
+        - "{{ seed.rfe_key }}"
+    register: eval

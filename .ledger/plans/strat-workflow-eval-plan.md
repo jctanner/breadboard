@@ -1303,3 +1303,58 @@ snapshot.
   trigger in S1's runs.
 - **Not specific to this eval:** production hits it whenever
   `STRAT_ARCHITECTURE_CONTEXT_PATH` is set and a review re-runs the script.
+
+### 2026-10-10 — Why the Workflow arm used more tokens (API dumps, smoke tier)
+
+The job's API dumps were grouped into conversations (main session, each
+Workflow helper, each bash-step `claude`, each reviewer). Requests and
+responses have unrelated IDs, so each response was matched through the next
+request that carries it. The script is
+`var/benchmarks/strat-workflow/scripts/conv_breakdown.py`, run inside the
+dashboard pod with job names as arguments. All five passing runs were
+compared by role.
+
+**Per run, cache read (M), S1 Workflow ×3 vs S2 bash ×2:**
+
+| Role | S1 | S2 |
+| --- | --- | --- |
+| refine (the skill's work) | 1.32 / 1.67 / 1.27 | 0.98 / 0.99 |
+| scorer | 0.81 / 0.32 / 0.33 | 0.18 / 0.32 |
+| orchestrating the review | 0.46 / 0.38 / 0.43 | 1.25 / 0.84 |
+| reviewer: architecture | **2.98 / 1.69 / 1.63** | 0.28 / 0.80 |
+| reviewer: feasibility | **1.88 / 0.78 / 1.67** | 0.57 / 0.52 |
+| reviewers: testability + scope | 0.49 / 0.31 / 0.37 | 0.22 / 0.27 |
+| Workflow plumbing (state, record, push, check, orchestrator) | 0.19 / 0.15 / 0.35 | – |
+
+**What the dumps show:**
+- **Most of the gap is the architecture and feasibility reviewers.** In S1
+  they run more turns (architecture: 15–42 calls against 6–11), and every
+  turn re-reads its growing context.
+- **Refine is also consistently dearer** in S1.
+- **Orchestrating the review is cheaper** in S1: the Workflow does that
+  coordination instead of an agent.
+- **Plumbing is small:** 0.15–0.35M per run.
+
+**What's the same in both designs:** the reviewers' system prompt (identical
+once paths are normalised), their task prompt (the same skill), the model,
+adaptive thinking, `effort: high`, and nearly the same tool list (S1 has
+`StructuredOutput` where S2 has `Agent`; neither has `Glob`). Tool calls
+per turn are about the same too: S1 2.0, S2 2.3. So the extra turns aren't
+a batching or configuration difference.
+
+**Friction seen in S1's reviewers:**
+- **Missing `Glob`:** the skill tells them to use `Glob`, which isn't in
+  either session. S1 tried it 6 times in one architecture review; S2 didn't.
+- **Different working directory:** the Workflow's agents start outside the
+  strat-creator checkout, so relative `Read`s failed ("your current working
+  directory is …"), and the agents explored with `ls`/`cat` first.
+- **Small share:** these errors are 9 of 115 tool calls in that review, so
+  they explain only part of the extra turns.
+
+**Still open:**
+- Why S1's refine and reviewers take more turns beyond that friction. It
+  may be how the Workflow phrases each helper's task around the skill
+  (record commands, structured return), or just run-to-run variation; three
+  and two runs are too few to separate the two.
+- strace (time per process) and MLflow (main sessions only) haven't been
+  analysed yet.

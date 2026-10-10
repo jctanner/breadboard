@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-export PATH="/app/.venv/bin:${PATH}"
+export PATH="/app/.venv/bin:/app/scripts/job-bin:${PATH}"
 
 LOG_DIR="/app/artifacts/jobs"
 mkdir -p "$LOG_DIR" 2>/dev/null || true
@@ -124,6 +124,10 @@ mkdir -p "$JOB_ARTIFACT_DIR"
 export SCRIPT_ROOT JOB_ARTIFACT_DIR ISSUE_KEY
 export PIPELINE_MODEL="$MODEL"
 export PIPELINE_JOB_NAME="$JOB_TAG"
+# Entrypoints written for fullsend expect an output directory from their
+# harness; give them one in the job's artifacts unless the job sets it.
+export FULLSEND_OUTPUT_DIR="${FULLSEND_OUTPUT_DIR:-$JOB_ARTIFACT_DIR/output}"
+mkdir -p "$FULLSEND_OUTPUT_DIR"
 
 case "$SCRIPT_FILE" in
   *.sh) RUNNER=(bash "$SCRIPT_FILE") ;;

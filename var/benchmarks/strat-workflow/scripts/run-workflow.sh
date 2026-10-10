@@ -14,8 +14,9 @@
 #      as for PR #80's entrypoint. Raw output goes, unprocessed, to files and
 #      to the job log (tee).
 #   3. PR #83's checker (validate-output.sh), as an observer, and its post
-#      step (post-strategy.sh: hand-off and report, nothing pushed) when the
-#      run validated.
+#      step (post-strategy.sh: hand-off, report, and a push to
+#      RESULTS_REPO_URL when the job sets one, as PR #80 does) when the run
+#      validated.
 #   4. release-locks.sh, always.
 #
 # Environment (from the job; extra_env can override):
@@ -57,7 +58,7 @@ export TARGET_REPO_DIR="$WORK/repo"
 export REPO_DIR="$TARGET_REPO_DIR"
 export STRAT_STATE_DIR="$WORK/state"
 export STRAT_PUBLISH_DIR="$OUT/publish"
-unset RESULTS_REPO_URL ORG_PULSE_URL
+unset ORG_PULSE_URL
 SHARED="$STRAT_STATE_DIR/strat-creator/.fullsend/shared"
 RUN_OUT="$OUT/workflow"
 
@@ -160,7 +161,7 @@ VALIDATE_RC=$?
 cat "$RUN_OUT/validation.txt"
 
 if [ "$VALIDATE_RC" = 0 ]; then
-  echo "=== post-strategy.sh (hand-off and report; nothing pushed) ==="
+  echo "=== post-strategy.sh (hand-off, report${RESULTS_REPO_URL:+, push to $RESULTS_REPO_URL}) ==="
   (cd "$OUT" && FULLSEND_VALIDATED_ITERATION_DIR="$RUN_OUT/output" bash "$SHARED/post-strategy.sh")
   POST_RC=$?
 fi

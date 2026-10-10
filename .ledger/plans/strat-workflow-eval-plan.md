@@ -94,6 +94,8 @@ Five adjustments:
 | strat-creator source | Local copy in the GitHub emulator: `https://github.local/opendatahub-io/strat-creator` (see "strat-creator lives in the GitHub emulator") |
 | PR #83 (Claude Workflow) | `opendatahub-io/strat-creator` branch `pr-83` in the GitHub emulator, commit `6b78355ebc450ff4737fd10ba4857c26086ceac0` |
 | PR #80 (bash entrypoint) | branch `pr-80`, commit `78ab3f1e97b09d02229bd03dd045a7eed97b0c33` |
+| PR #80 eval branch | `eval/pr-80` at `c6fc33138320f0c88cf927e2c95eb4f18f9eb3dd`: PR #80 plus two eval patches, `STRAT_MODEL` and `STRAT_ARCHITECTURE_CONTEXT_PATH`. Both change behaviour only when their variable is set. |
+| PR #80 results repository | `https://github.local/admin/strat-workflow-eval-results.git`, a throwaway repository in the GitHub emulator; PR #80 requires one |
 | PR #81 (single agent, for later) | branch `pr-81`, commit `9350c89bcf1fd09acc0a3d1ef44ec6a59e47efe3` |
 | Architecture snapshot | `/app/.context/snapshots/architecture-context/7d61f097a9220aeb1280837b66b532177ec558b6` (`rhoai-3.6-ea.2` and `overlays/`, 1,845 files, 88 MB) |
 | Smoke scenario | `data/scenarios/smoke-one-rfe.yaml`: one eligible RFE, template `kserve-canary-rollback` |
@@ -261,20 +263,24 @@ it):
 | PR #83, Claude Workflow | `var/benchmarks/strat-workflow/scripts/run-workflow.sh RHAIRFE-N`, from a pinned Breadboard commit | Clone strat-creator at the pinned commit. Run `pre-strategy.sh` (picks and locks the RFE; exit 78 means nothing to do). Run `claude -p --plugin-dir .fullsend/plugins/strat-pipeline "/strat-pipeline:strat-pipeline"` once, with raw output to files. Run PR #83's checker (`validate-output.sh`), and its post step when the run validated. Release the locks, always. |
 | PR #80, bash entrypoint | `.fullsend/scripts/strategy-entrypoint.sh RHAIRFE-N`, from the strat-creator clone at PR #80's commit (or `eval/pr-80`) | The entrypoint itself, unchanged; no wrapper. Our checks run afterwards as a separate step. |
 
-**Things PR #80 needs adapted:**
-- **Model:** its `strategy-model.sh` hard-codes `claude-opus-4-6` for every
-  helper agent. Haiku runs need a recorded patch on `eval/pr-80`, or they
-  would silently use opus.
-- **`fullsend-claude`:** PR #80 calls the helper fullsend installs in its
-  sandbox. It's installed in the pipeline-agent image as environment, next
-  to `claude`.
-- **Results push:** it requires `RESULTS_PUSH_TOKEN` and pushes results to a
-  data repository. Point it at a throwaway repository in the GitLab
-  emulator.
-- **OTel:** it starts its own OTel collector, which may take over the OTel
-  settings from step 1. The first smoke run shows whether Observatory still
-  receives its traces; if not, the stand-in or the script needs to forward
-  them.
+**How the bash arm gets what PR #80 expects from its environment** (built
+2026-10-10):
+
+| PR #80 expects | Provided by |
+| --- | --- |
+| `fullsend-claude` on the PATH | `scripts/job-bin/fullsend-claude` in the pipeline-agent image. It's a stand-in for fullsend's generated helper (fullsend PR #8202, `ClaudeEntrypointHelper`): `claude --print --verbose --output-format stream-json --dangerously-skip-permissions --model <model> --effort high "$@"`. The model comes from the job. fullsend's security hooks and integrity guard aren't reproduced; they belong to fullsend's sandbox. |
+| `FULLSEND_OUTPUT_DIR` | `run_script.sh` defaults it to `$JOB_ARTIFACT_DIR/output` |
+| `CLAUDE_CONFIG_DIR` (`prepare-claude-settings.py` requires it) | job setting: `/home/pipelineagent/.claude` |
+| `RESULTS_REPO_URL`, `RESULTS_GIT_USER`, `RESULTS_PUSH_TOKEN` | job settings: the throwaway results repository, pushed with the emulator's development admin token. The token appears in the job's settings and environment dump; it's the emulator's default, already in a committed manifest. |
+| A non-opus model for haiku runs (`strategy-model.sh` pins `claude-opus-4-6` and unsets `ANTHROPIC_MODEL`) | eval patch: `STRAT_MODEL`, set by the job |
+| The pinned architecture snapshot (the entrypoint always fetched the newest from github.com) | eval patch: `STRAT_ARCHITECTURE_CONTEXT_PATH`, set by the job |
+| Its own OTel collector and `stream-claude.py` | left as they are. PR #80 points OTel at its local collector, so Observatory doesn't receive its OTel. |
+
+**Publishing results, the same for both arms:** PR #80 publishes to the
+results repository on every run. `run-workflow.sh` now passes
+`RESULTS_REPO_URL` through to PR #83's post step too (it used to unset it),
+so both arms publish when the job sets the same three results settings. S1's
+runs so far published nothing.
 
 Each job's settings come from the job API: test ID, RFE key, variant
 (model), MLflow experiment name, dry run or real Jira writes, and any

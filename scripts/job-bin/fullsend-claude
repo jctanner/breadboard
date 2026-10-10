@@ -1,0 +1,20 @@
+#!/bin/sh
+# Stand-in for the fullsend-claude helper that fullsend installs on PATH for
+# entrypoint harnesses with runtime: claude (fullsend PR #8202,
+# internal/runtime/entrypoint.go, ClaudeEntrypointHelper). Same flags: claude
+# headless with stream-json output, the harness's model and effort, then the
+# caller's arguments.
+#
+# Model: FULLSEND_CLAUDE_MODEL, else the job's model (PIPELINE_MODEL, set by
+# run_script.sh). Effort: FULLSEND_CLAUDE_EFFORT, else high.
+# Not reproduced: fullsend's security hooks (--settings) and its integrity
+# guard, which belong to fullsend's sandbox, not to the design under test.
+set -eu
+model="${FULLSEND_CLAUDE_MODEL:-${PIPELINE_MODEL:-}}"
+effort="${FULLSEND_CLAUDE_EFFORT:-high}"
+if [ -n "$model" ]; then
+  exec claude --print --verbose --output-format stream-json --dangerously-skip-permissions \
+    --model "$model" --effort "$effort" "$@"
+fi
+exec claude --print --verbose --output-format stream-json --dangerously-skip-permissions \
+  --effort "$effort" "$@"

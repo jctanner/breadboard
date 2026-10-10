@@ -89,8 +89,16 @@ live. The clone path is unit-tested only. The two arm scripts
 - **Piece 3:** `seed_scenario.py` and `data/scenarios/smoke-one-rfe.yaml`.
   The dry run against the live emulator at PR #83's commit passed. It built
   the labels and the discovery query and reached both projects; 17 RFEs
-  are currently discoverable, all agent-led POC data. **A real seed resets
-  Jira**, which wipes that POC data. Waiting for a go-ahead.
+  were discoverable, all agent-led POC data. A real seed resets Jira, which
+  wipes that data; the user approved the wipe on 2026-10-10.
+  Script job `script-seed-scenario-all-claude-haiku-5-5-1010-010145-5e422d`
+  (Breadboard `08449af`, strat-creator `6b78355`) reset Jira and seeded
+  `smoke-one-rfe`: **RHAIRFE-1** (New, `kserve-canary-rollback`, labels
+  `strat-creator-3.6`, `rfe-creator-autofix-rubric-pass`,
+  `rfe-creator-feasibility-pass` plus benchmark markers). PR #83's discovery
+  query returns exactly `RHAIRFE-1`; `ok: true`.
+- **markovd** rebased onto GitHub `main` (ledger moved to `.ledger/`) and
+  pushed as `71cd673`; rebuilt and redeployed.
 
 ## Next
 - Write `run-workflow.sh` (PR #83) for smoke test S1, after pieces 1–3:

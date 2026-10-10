@@ -71,11 +71,28 @@ live. The clone path is unit-tested only. The two arm scripts
   shows the path and **Re-run**. With `fetch` stubbed, Re-run posted the
   identical script and args.
 
-## Next
+- Clone path verified live (2026-10-10):
+  `script-selfcheck-all-claude-haiku-5-5-1010-005608-42be35` cloned
+  Breadboard at `6ffba40`, ran selfcheck from the clone and passed.
 
-- Verify the clone path live once a script is committed and pushed (for
-  example selfcheck from `https://github.com/jctanner/breadboard` at its
-  commit).
+## Pieces 1–3 (2026-10-10)
+
+- **Piece 1:** PR heads pushed to the GitHub emulator's
+  `opendatahub-io/strat-creator` as `pr-83` (`6b78355`), `pr-80` (`78ab3f1`)
+  and `pr-81` (`9350c89`). Anonymous shallow fetch by commit works; that's
+  how PR #83's prepare step clones.
+- **Piece 2:** `snapshot-architecture-context.sh` ran as script job
+  `script-snapshot-architecture-context-all-cla-1010-010018-7e3619` from
+  Breadboard `08449af`. Snapshot at
+  `/app/.context/snapshots/architecture-context/7d61f097a9220aeb1280837b66b532177ec558b6`:
+  `rhoai-3.6-ea.2`, 1,845 files, 88 MB.
+- **Piece 3:** `seed_scenario.py` and `data/scenarios/smoke-one-rfe.yaml`.
+  The dry run against the live emulator at PR #83's commit passed. It built
+  the labels and the discovery query and reached both projects; 17 RFEs
+  are currently discoverable, all agent-led POC data. **A real seed resets
+  Jira**, which wipes that POC data. Waiting for a go-ahead.
+
+## Next
 - Write `run-workflow.sh` (PR #83) for smoke test S1, after pieces 1–3:
   PR commits in the GitHub emulator, the architecture snapshot and Jira
   seeding.

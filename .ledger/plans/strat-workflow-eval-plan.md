@@ -1358,3 +1358,45 @@ a batching or configuration difference.
   and two runs are too few to separate the two.
 - strace (time per process) and MLflow (main sessions only) haven't been
   analysed yet.
+
+### 2026-10-10 — Where the wall time goes (strace and API dumps, smoke tier)
+
+**Scripts**, both in `var/benchmarks/strat-workflow/scripts/` and run inside
+the dashboard pod with job names as arguments:
+- **`strace_timing.py`:** builds each job's process tree from
+  `strace -ff` and splits every `claude` process's wall time into "model
+  call in flight" (from API dump timestamps), "tools running" (its child
+  processes) and neither.
+- **`concurrency.py`:** counts model calls in flight over time (+1 per
+  request dump, −1 per response dump; the two can't be paired).
+
+**One run of each, split:**
+
+| | Claude wall | Model in flight | Tools running | Neither |
+| --- | --- | --- | --- | --- |
+| S1, its one `claude` | 17.6m | 17.0m | 37s | 8s |
+| S2 create / refine / review | 1.0m / 2.7m / 10.8m | 46s / 2.5m / 10.5m | 13s / 11s / 25s | 3s / 1s / 4s |
+
+**Across the five passing runs:**
+- **Model calls run one at a time:** average concurrency 1.00 in every
+  run of both designs, peak 2 for an instant.
+- **Not a relay limit:** PR #83's Workflow parallelises across strategies
+  (`parallel()` for refine, `pipeline()` for score then review), but within
+  one strategy every step is sequential. The four reviewers run inside the
+  review skill one after another, in both designs. With one RFE there's
+  nothing to run in parallel.
+- **About 8 seconds per call in both:** S1 7.5–8.1s, S2 8.2–9.1s. Wall
+  time is roughly calls × 8s. S1 makes 126–181 calls against S2's 88–90,
+  which explains its extra 3–10 minutes.
+- **Tools and setup barely register:**
+  - tool processes total under a minute per run;
+  - S2's `run-claude.sh` sleeps 7s after each step (21s);
+  - MLflow's stop hook takes about 7s per `claude` session (S2 has three
+    sessions, S1 one);
+  - S2 also runs its own OTel collector for the whole job.
+
+**Conclusion so far:** on one RFE the Workflow design is slower and dearer
+for the same reason: its helpers and reviewers take more model turns (see
+"Why the Workflow arm used more tokens"). Its parallelism only helps with
+several RFEs, which tier 2's batches will test. They will also show
+whether Model Relay or the account serialises concurrent calls.

@@ -116,6 +116,7 @@ deploy/golang-reverse-proxy/    Host-facing *.local proxy
 docs/                           Maintained architecture and deployment docs
 .ledger/                        Project plans, tasks, bugs, decisions, notes
 var/markov-workflows/           Markov workflow definitions
+var/benchmarks/                 Benchmarks: one directory each, with its Markov workflow and data
 var/demos/                      Resettable scenarios and integration demos
 ```
 
@@ -199,7 +200,12 @@ treated as source documentation:
 Local skills live under `.claude/skills/`. External RFE and strategy skills are
 configured through `var/pipeline-skills.yaml`; the registry is staged in
 `var/skills-registry.yaml`. Markov workflow definitions live under
-`var/markov-workflows/`.
+`var/markov-workflows/`, except benchmarks: each benchmark has its own
+directory under `var/benchmarks/<name>/` holding its workflow together with
+its data and helpers. The workflow is either one `<name>-benchmark.yaml`
+file or, for larger benchmarks, the directory itself as a Markov directory
+workflow (`meta.yaml`, `vars.yaml`, `rules.yaml`, `step_types/`,
+`workflows/`).
 
 Bug phases run concurrently through `src/cli/phases.py`, and fix attempts can
 use Podman recipes from `odh-tests-context`. Validation feedback can be fed

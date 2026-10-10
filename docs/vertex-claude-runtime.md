@@ -174,7 +174,7 @@ MARKOVD_JOB_SECRETS=pipeline-secrets
 
 In Kubernetes-runner mode, markovd creates a `markov:latest` Job. The markovd runner adds `pipeline-secrets` as `envFrom`, so the markov pod receives the same Vertex variables.
 
-The workflow YAML files under `var/markov-workflows/` define an `agent_job` step type that extends Markov's `k8s_job` executor. That step type launches `pipeline-agent:latest` child Jobs with:
+The workflow YAML files under `var/markov-workflows/` and `var/benchmarks/` define an `agent_job` step type that extends Markov's `k8s_job` executor. That step type launches `pipeline-agent:latest` child Jobs with:
 
 ```yaml
 env:

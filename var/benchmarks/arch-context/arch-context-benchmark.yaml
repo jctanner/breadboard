@@ -37,7 +37,7 @@
 #   {results_dir}/judgments/{context_mode}/{question_id}.json
 #   {results_dir}/benchmark-summary.json
 #
-# Usage:
+# Usage (from var/benchmarks/arch-context/):
 #   # Full paired benchmark (both modes)
 #   markov run arch-context-benchmark.yaml
 #
@@ -49,8 +49,8 @@
 #   markov run arch-context-benchmark.yaml \
 #     --var model=sonnet --forks 3
 #
-#   # Dry run (validate YAML only)
-#   markov run arch-context-benchmark.yaml --dry-run
+#   # Validate YAML only
+#   markov validate arch-context-benchmark.yaml
 
 entrypoint: main
 

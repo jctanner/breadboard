@@ -182,7 +182,8 @@ There are three related ways work runs:
    `pipeline-agent` Kubernetes Job.
 2. The dashboard creates and monitors Kubernetes Jobs, selecting Claude Code
    or OpenCode and an SDK, shell, or `agentic-ci` runner.
-3. Markov executes declarative workflows from `var/markov-workflows/`; markovd
+3. Markov executes declarative workflows from `var/markov-workflows/` (and
+   benchmark workflows from `var/benchmarks/<name>/`); markovd
    supplies the API/UI, persistence, callbacks, gates, and Kubernetes runner.
 
 These paths share skills, Jira data, workspaces, artifacts, and telemetry, but
@@ -517,7 +518,8 @@ breadboard/
 ├── var/
 │   ├── pipeline-skills.yaml # Phase-to-skill mapping and invocation config
 │   ├── skills-registry.yaml # Staging registry for external skill plugins
-│   └── markov-workflows/    # Markov workflow definitions (batch RFE, strategy, etc.)
+│   ├── markov-workflows/    # Markov workflow definitions (batch RFE, strategy, etc.)
+│   └── benchmarks/          # One directory per benchmark: workflow, data, helpers
 ├── .env                     # Vertex AI and Jira credentials (gitignored)
 ├── CLAUDE.md                # Claude Code project context
 ├── src/
@@ -623,7 +625,15 @@ sidecar serves the UI. Workflow definitions live in `var/markov-workflows/`:
 | `batch-rfe-to-strategy.yaml` | Convert batch of RFEs to strategies |
 | `rfe-to-strategy.yaml` | Single RFE to strategy conversion |
 | `rfe-pipeline-with-gates.yaml` | RFE pipeline with approval gates |
-| `arch-context-benchmark.yaml` | Architecture context quality benchmarking |
+
+Benchmarks keep their workflow next to their data, one directory each under
+`var/benchmarks/<name>/`. The workflow is either one `<name>-benchmark.yaml`
+file or, for larger benchmarks, the directory itself as a Markov directory
+workflow (`meta.yaml`, `vars.yaml`, `rules.yaml`, `step_types/`, `workflows/`):
+
+| Benchmark | Purpose |
+|----------|---------|
+| `arch-context/arch-context-benchmark.yaml` | Architecture context quality benchmarking |
 
 ## Observatory
 

@@ -140,12 +140,32 @@ fixing a defect that blocks a test. Patches must never be invisible, so:
 
 Each arm runs **as its own design defines it**, and the harness adds
 nothing in between:
-- **Workflow arm (PR #83):** its prepare step, then
-  `claude --agent strat-single --plugin-dir … -p "Run the agent task"` with
-  the settings the design declares (model, `effort: high`), then its checker
-  and post step.
-- **Bash arm (PR #80):** its `strategy-entrypoint.sh`, unchanged, including
-  its own `claude` calls and its own output handling.
+- **Workflow arm (PR #83):** its prepare step (`pre-strategy.sh`), then the
+  Workflow started directly as its slash command, **once**:
+  `claude -p --plugin-dir .fullsend/plugins/strat-pipeline "/strat-pipeline:strat-pipeline"`,
+  with the settings the design declares (model, `effort: high`). Then its
+  checker and post step.
+  - Claude Code has no `--workflow` flag (checked against 2.1.296, the
+    latest release, and the Workflows docs). A workflow starts through the
+    Workflow tool or as a slash command, and plugin workflows are
+    `/<plugin>:<name>`.
+  - No agent prompt around it. fullsend's `strat-single` agent only told
+    Claude to call the Workflow, wait, and write a failure result.
+  - **No retry.** S1's first run passed only through fullsend-style
+    validation-loop feedback. PR #80's entrypoint has no retry, so neither
+    arm gets one. A retry variant can be tested separately.
+  - The prepare step stays separate because PR #83 keeps it outside the
+    Workflow by design; PR #80's entrypoint does the same work itself.
+- **Bash arm (PR #80):** `.fullsend/scripts/strategy-entrypoint.sh
+  RHAIRFE-N`, called directly by script mode from the strat-creator clone
+  (no wrapper script), unchanged, including its own `claude` calls and its
+  own output handling. It's the first thing executed after the
+  environment setup. What it expects from its environment:
+  - the `fullsend-claude` helper, installed in the pipeline-agent image;
+  - results-repository settings, from job settings;
+  - a non-opus model for haiku runs, as a recorded patch on `eval/pr-80`,
+    because `strategy-model.sh` hard-codes `claude-opus-4-6`.
+  Our checks run as a separate step afterwards.
 - **No processing of Claude's output in the harness.** Raw output goes to
   files (`stream.jsonl`, stderr); the job log shows only the arm script's
   own lines. Our checks read the files after the run.
@@ -188,7 +208,7 @@ different routes:
      clone.
    - Job pods can already clone from `github.local`: FQN skill jobs do it,
      with the internal CA trusted in the pod.
-2. **Our scripts (arm scripts, checks, the `fullsend-claude` stand-in), from
+2. **Our scripts (the Workflow arm script, seeding, reset and checks), from
    one of two sources.** The job API names the source:
    - **From the image,** a path under `/app/var/benchmarks/`. The
      pipeline-agent image already copies Breadboard's `var/`. Quick for
@@ -234,17 +254,20 @@ it):
 }
 ```
 
-**The two arm scripts:**
+**What each arm's job runs:**
 
-| Script | Runs | What it does |
+| Arm | Script mode runs | What happens |
 | --- | --- | --- |
-| `run-workflow.sh` | PR #83, Claude Workflow | Clone strat-creator at the pinned commit. Run `pre-strategy.sh`, which picks and locks the RFE; exit 78 means nothing to do. Run `claude --agent strat-single --plugin-dir .fullsend/plugins/strat-pipeline -p "Run the agent task"`. Run the PR's checker (`validate-output.sh`); on failure, run the Workflow once more with the feedback (two attempts, like fullsend). Then run our checks and release any locks. |
-| `run-bash.sh` | PR #80, bash entrypoint | Clone strat-creator at PR #80's commit. Put a small `fullsend-claude` stand-in on the PATH, because PR #80 calls the helper that fullsend normally installs. Run `strategy-entrypoint.sh RHAIRFE-N`. Then run our checks and release any locks. |
+| PR #83, Claude Workflow | `var/benchmarks/strat-workflow/scripts/run-workflow.sh RHAIRFE-N`, from a pinned Breadboard commit | Clone strat-creator at the pinned commit. Run `pre-strategy.sh` (picks and locks the RFE; exit 78 means nothing to do). Run `claude -p --plugin-dir .fullsend/plugins/strat-pipeline "/strat-pipeline:strat-pipeline"` once, with raw output to files. Run PR #83's checker (`validate-output.sh`), and its post step when the run validated. Release the locks, always. |
+| PR #80, bash entrypoint | `.fullsend/scripts/strategy-entrypoint.sh RHAIRFE-N`, from the strat-creator clone at PR #80's commit (or `eval/pr-80`) | The entrypoint itself, unchanged; no wrapper. Our checks run afterwards as a separate step. |
 
 **Things PR #80 needs adapted:**
 - **Model:** its `strategy-model.sh` hard-codes `claude-opus-4-6` for every
-  helper agent. The `fullsend-claude` stand-in has to apply the variant's
-  model, or haiku runs would silently use opus.
+  helper agent. Haiku runs need a recorded patch on `eval/pr-80`, or they
+  would silently use opus.
+- **`fullsend-claude`:** PR #80 calls the helper fullsend installs in its
+  sandbox. It's installed in the pipeline-agent image as environment, next
+  to `claude`.
 - **Results push:** it requires `RESULTS_PUSH_TOKEN` and pushes results to a
   data repository. Point it at a throwaway repository in the GitLab
   emulator.
@@ -436,8 +459,8 @@ skills.
 
 | Test | Design | Model | Runs | What it shows |
 | --- | --- | --- | --- | --- |
-| S1 | Claude Workflow (PR #83, `run-workflow.sh`) | haiku-5-5 | until it passes, then 3 | The script mode, the Workflow launch and all the wiring work; checks 1–6 pass on one RFE. |
-| S2 | bash entrypoint (PR #80, `run-bash.sh`) | haiku-5-5 | until it passes, then 3 | The same for the bash design, including the `fullsend-claude` stand-in and the model override. |
+| S1 | Claude Workflow (PR #83, `claude -p "/strat-pipeline:strat-pipeline"`) | haiku-5-5 | until it passes, then 3 | The script mode, the Workflow launch and all the wiring work; checks 1–6 pass on one RFE. |
+| S2 | bash entrypoint (PR #80, `strategy-entrypoint.sh`) | haiku-5-5 | until it passes, then 3 | The same for the bash design, including the `fullsend-claude` stand-in and the model override. |
 | S3 | Claude Workflow | opus-4-6 | 3 | The real thing on the production model. Cost per RFE compared with production's ~$8. |
 | S4 | bash entrypoint | opus-4-6 | 3 | The same for bash. S3 and S4 together are the first like-for-like cost and time comparison. |
 
@@ -729,6 +752,18 @@ itself. Each arm runs as its design defines it. The harness no longer
 pipes Claude's output through Breadboard's `stream-claude.py`; S1's first
 run did, which only affected the job log. Raw output goes to files. See
 "Running each design as it is".
+
+### 2026-10-10 — Decision: each arm starts at its own entry, once
+
+- **PR #80:** script mode calls `.fullsend/scripts/strategy-entrypoint.sh`
+  directly.
+- **PR #83:** its `pre-strategy.sh`, then
+  `claude -p --plugin-dir .fullsend/plugins/strat-pipeline "/strat-pipeline:strat-pipeline"`.
+  Claude Code has no `--workflow` flag; the slash command is the direct way
+  in.
+- Neither arm is retried. S1's first run used fullsend's `strat-single`
+  agent prompt and its validation-loop retry, so it isn't a pristine
+  result for PR #83.
 
 ### 2026-10-10 — Decision: patchable local copies of strat-creator
 

@@ -1444,3 +1444,61 @@ for in the API dumps: Read calls plus Bash commands naming the file.
 **Correction:** an earlier note in this log, based on one run of each
 design, said both asked for about the same files (123). Across all five
 runs S1 asks for about 50% more.
+
+### 2026-10-10 — Architecture docs re-requested, per agent (API dumps, smoke tier)
+
+**Script:** `var/benchmarks/strat-workflow/scripts/arch_requests.py`, run
+inside the dashboard pod with job names. It rebuilds each agent's
+conversation and collects its architecture-context requests:
+- Read calls;
+- Bash commands naming context files (bare names resolved against the
+  folder the command `cd`s into);
+- Grep and Glob calls over the context.
+
+**Requests per run, by agent:**
+
+| Agent | S1 (Workflow) | S2 (bash) |
+| --- | --- | --- |
+| refine | ~36 | ~36 |
+| architecture reviewer | **~95** | ~40 |
+| feasibility reviewer | **~68** | ~21 |
+| scorer | ~10 | ~12 |
+| testability + scope | ~5 | ~3 |
+
+**Most re-requested within a single agent (S1, max in one agent):**
+- architecture reviewer: `kserve.md` 22, `odh-model-controller.md` 16,
+  `odh-observability.md` 10;
+- feasibility reviewer: `odh-observability.md` 15, `kserve.md` 13,
+  overlay `0014-model-runtimes-team-architecture.md` 13.
+
+S2's highest is 8 (`kserve.md`, architecture reviewer).
+
+**How the requests were made** (all runs): mostly separate `grep` calls
+against the same few docs, one term per tool call.
+
+| Agent | S1 (3 runs) | S2 (2 runs) |
+| --- | --- | --- |
+| architecture reviewer | 147 grep, 124 Read | 30 grep, 48 Read |
+| feasibility reviewer | 145 grep, 26 sed/head, 22 cat, 12 Read | 28 grep, 8 cat, 4 sed/head, 2 Read |
+
+**The same docs fetched independently by several agents in one run**
+happens in both designs:
+- S1: `kserve.md` by 3–5 agents, `odh-model-controller.md` by 4,
+  `odh-observability.md` by 3–5, `PLATFORM.md` by 3, in every run;
+- S2: `LATEST_VERSION` by 4, overlay 0023 by 3–4, `PLATFORM.md` and
+  `odh-observability.md` by 3.
+
+Every agent starts cold and rediscovers the same platform facts.
+
+**Reading:** the extra cost of S1 found earlier is concentrated in two
+reviewers searching the same few architecture docs term by term. Refine
+behaves the same in both designs. The cause isn't settled:
+- the reviewers' prompts, model and settings are identical in both
+  designs (see the token analysis above);
+- S1's agents start outside the checkout and keep reaching for tools
+  they don't have;
+- three and two runs leave room for run-to-run variation.
+
+**A possible change for strat-creator, not for this eval:** give
+reviewers a shared digest of the relevant architecture facts, built once
+per strategy, rather than each agent searching the docs from scratch.

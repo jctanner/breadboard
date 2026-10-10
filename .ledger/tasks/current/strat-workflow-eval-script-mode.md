@@ -104,3 +104,24 @@ live. The clone path is unit-tested only. The two arm scripts
 - Write `run-workflow.sh` (PR #83) for smoke test S1, after pieces 1–3:
   PR commits in the GitHub emulator, the architecture snapshot and Jira
   seeding.
+
+## Environment reset (2026-10-10)
+
+`var/benchmarks/strat-workflow/scripts/reset_environment.py` runs the
+per-test reset through the dashboard admin API: artifacts volume (cleanup
+job), MLflow hard delete, Observatory hallucination data, then Jira reset
+and seed as a script job.
+
+First full run from the host (Breadboard `a88a777`, strat-creator
+`6b78355`) passed every step:
+- artifacts: `cleanup-volumes-1010-010729` completed;
+- MLflow: 1 experiment and 46 traces deleted, Default emptied;
+- Observatory: already empty;
+- seed: `script-seed-scenario-all-claude-haiku-5-5-1010-010735-c702b5`,
+  RHAIRFE-1 is the only discovered RFE.
+
+The architecture snapshot on the context volume is intact.
+
+Fixed on the way: `admin.js` polled `/api/jobs/<name>/status`, a route that
+doesn't exist, so the admin page's "Clear via Job" never reported finishing.
+It now polls `/api/jobs/<name>`.

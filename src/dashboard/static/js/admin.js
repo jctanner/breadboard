@@ -62,7 +62,7 @@ function executeClearVolumes() {
 
 function pollCleanupJob(jobName, btn) {
   const interval = setInterval(() => {
-    fetch('/api/jobs/' + jobName + '/status')
+    fetch('/api/jobs/' + jobName)
       .then(r => r.json())
       .then(data => {
         if (data.status === 'completed') {

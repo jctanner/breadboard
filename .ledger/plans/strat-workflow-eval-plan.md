@@ -301,8 +301,25 @@ The nginx upload limit in front of markovd (1 MiB by default, since
 applies to uploads through the UI or CLI. Git sync doesn't go through it,
 so it can stay as it is unless we start uploading benchmarks by hand.
 
+**Resetting between tests.** Every test starts from a clean environment.
+`scripts/reset_environment.py` does it through the dashboard's admin API,
+from outside the job pods:
+1. refuse to start while any pipeline job is pending or running;
+2. clear the **artifacts volume** (`/app/artifacts`: job logs, strace, API
+   dumps, script artifacts) with a cleanup job. The context volume is left
+   alone, because it holds the pinned architecture snapshot;
+3. **hard-delete all MLflow** experiments, runs and traces;
+4. clear **Observatory's** claims, verdicts and explanations. Observatory has
+   no API to clear OTel traces; those stay, tagged by job;
+5. **reset Jira and seed** the scenario: a script job runs
+   `seed_scenario.py` from a pinned Breadboard commit.
+
+It prints one JSON summary and exits 0 only if every step worked and the
+seed check passed. The Markov workflow runs the same steps as its own
+dashboard API calls.
+
 **What one test step does in Markov:**
-1. Reset and seed the Jira emulator for the scenario.
+1. Reset the environment and seed Jira for the scenario (above).
 2. Submit the "strat workflow" job with a `dashboard_api` step, which posts
    to `/api/jobs/submit`.
 3. Wait for it with `k8s_job_wait`, which watches the job and keeps its

@@ -1173,3 +1173,23 @@ markovd `897d7d6` and `4c1ddd4` (ADR-0006 in markovd's ledger):
   which no lane order can avoid.
 
 The feature-check graph's call and return are both straight lines.
+
+### 2026-10-10 — The submit step's targets shown and checked
+
+`submit` calls `submit-{{ test.arm }}`. markovd's graph showed it without
+targets, because the name is resolved at run time.
+
+- **Markov `2caa232`:** `workflow_names` lists the workflows a templated
+  name may resolve to. Each must exist when the definition loads, and a run
+  that resolves to another name fails.
+- **markovd `d61e80a`:** a templated call is drawn with its possible
+  targets as alternative groups (fainter edges, "one possible target"). The
+  targets come from `workflow_names`, or from workflow names that fit the
+  template.
+- **strat-workflow (`03dec23`):** `submit` has
+  `workflow_names: [submit-workflow, submit-bash]`. An arm in `vars/arms.yaml`
+  with no workflow now fails at the step, with a message naming the
+  expected set.
+
+Checked on the deployed page: both submit workflows are drawn next to
+`run-test`, and the step's details list them from `workflow_names`.

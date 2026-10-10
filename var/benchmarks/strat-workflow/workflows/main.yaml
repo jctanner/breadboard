@@ -30,12 +30,17 @@ steps:
       method: GET
     register: pending_jobs
 
+  - name: find_active_pipeline_jobs
+    description: "Only pipeline jobs (they have a phase); the namespace's other Jobs, such as this Markov run's own runner and Org Pulse's cron jobs, don't count"
+    type: set_fact
+    vars:
+      active_pipeline_jobs: "{% for j in running_jobs.body %}{% if j.phase %}{{ j.name }} {% endif %}{% endfor %}{% for j in pending_jobs.body %}{% if j.phase %}{{ j.name }} {% endif %}{% endfor %}"
+
   - name: check_no_active_jobs
     type: assert
     that:
-      - "running_jobs.body | length == 0"
-      - "pending_jobs.body | length == 0"
-    msg: "Dashboard jobs are still pending or running; wait for them or stop them first"
+      - "not active_pipeline_jobs"
+    msg: "Dashboard pipeline jobs are still pending or running; wait for them or stop them first"
 
   - name: wipe
     description: "Clear the artifacts volume, MLflow and Observatory once, before the first run"

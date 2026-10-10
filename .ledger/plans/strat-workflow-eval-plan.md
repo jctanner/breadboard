@@ -1009,3 +1009,6 @@ under "The Markov test driver"). `markov validate` passes.
 - **markovd `d923fe5`:** starting a run now passes the workflow's import
   commit as `workflow_source_commit`. The benchmark uses it as the Breadboard
   commit its jobs clone from.
+- **Imported into markovd:** project 1 synced; the workflow is
+  `var-benchmarks-strat-workflow` at Breadboard `921cce9`, with all 30
+  files. No run has been started from markovd yet.

@@ -20,8 +20,9 @@ results. Every model call happens in the job pods.
 1. Push the change to `main` on GitHub. Jobs clone their scripts from
    Breadboard at the commit markovd imported, so it must be pushed.
 2. In `markovd.local`, sync project 1 (Breadboard) and import
-   `var/benchmarks/strat-workflow`. markovd records the commit, and passes
-   it to every run as `workflow_source_commit`.
+   `var/benchmarks/strat-workflow`. It appears as
+   `var-benchmarks-strat-workflow`. markovd records the commit and passes it
+   to every run as `workflow_source_commit`.
 3. Start a run of the workflow. Useful settings:
 
    | Setting | Default | Example |

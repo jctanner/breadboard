@@ -1252,3 +1252,54 @@ That run is the smoke run of record (S1 and S2, three rounds).
   have them.
 - **Still open:** Markov drops a rejected callback rather than retrying or
   buffering it, so a markovd outage still loses events.
+
+### 2026-10-10 — Smoke tier on haiku: results (markov-run-9d30a751)
+
+Driven through markovd from Breadboard `c404cf6`, with three rounds of S1
+then S2, from 15:47 to 17:27 UTC. The summary and eval-results are in
+`/app/artifacts/benchmarks/strat-workflow/markov-run-9d30a751/`.
+
+| Run | Pass | Verdict | Minutes | Calls | Output | Cache read | Cache write |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| S1 r1 (Workflow) | yes | revise 4/8 | 25.5 | 181 | 315k | 8.40M | 1.31M |
+| S2 r1 (bash) | yes | revise 4/8 | 15.3 | 90 | 188k | 3.83M | 652k |
+| S1 r2 | yes | revise 4/8 | 17.9 | 126 | 201k | 5.52M | 842k |
+| S2 r2 | **no** | – | – | 41 | 52k | 1.91M | 169k |
+| S1 r3 | yes | revise 4/8 | 20.0 | 152 | 251k | 6.29M | 948k |
+| S2 r3 | yes | revise 4/8 | 13.6 | 88 | 161k | 3.98M | 609k |
+
+- **S1 (Workflow):** 3/3 passed, median 20.0 minutes. Per run it averaged
+  256k output, 6.74M cache read and 1.03M cache write.
+- **S2 (bash):** 2/3 passed, median 14.4 minutes over its two passes.
+  Its passes averaged about 175k output, 3.9M cache read and 0.63M cache
+  write.
+- **No 429s.** Every call was `claude-haiku-5-5`.
+- **The other S1 failure today** (cancelled run `d91e2f5b`, scorer refusing
+  to write its file) is recorded above; it isn't in this table.
+
+**Why S2 round 2 failed:** a strat-creator bug, triggered by the pinned
+snapshot.
+- **What happened:** the review step's agent ran the review skill's
+  `fetch-architecture-context.sh` with no argument. Finding
+  `.context/architecture-context` present, it ran
+  `git -C .context/architecture-context sparse-checkout set architecture/rhoai-3.6-ea.2 overlays`.
+- **Why it hit the checkout:** that directory was filled by the script's
+  own local-copy mode (`fetch-architecture-context.sh <path>`, used for
+  `STRAT_ARCHITECTURE_CONTEXT_PATH`), so it has no `.git`. Git used the
+  enclosing repository, the strat-creator checkout, and sparse-checked it
+  down to two paths.
+- **Evidence:** strace shows the exec at 16:51:45. After it, `scripts/`,
+  `config/`, `.fullsend/` and `.claude/skills/` were gone, while
+  `git status` showed nothing deleted.
+- **Outcome:** the review, the CI post step and the lock release
+  (`scripts/lock_issues.py`) all failed. RHAIRFE-1 kept its lock until the
+  next round's Jira reset.
+- **A second problem in the same path:** without an argument the script
+  also fetches the *latest* architecture context from GitHub, so a pinned
+  snapshot isn't pinned for a review that re-runs it.
+- **PR #83 has the same exposure:** its `pre-strategy.sh` supports
+  `STRAT_ARCHITECTURE_CONTEXT_PATH` natively through the same copy mode,
+  and its review skill re-runs the script without an argument. It didn't
+  trigger in S1's runs.
+- **Not specific to this eval:** production hits it whenever
+  `STRAT_ARCHITECTURE_CONTEXT_PATH` is set and a review re-runs the script.

@@ -381,7 +381,7 @@ if (K8S_AVAILABLE) {
         return `
           <tr onclick="openJobModal('${job.name}')" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50">
             <td class="px-4 py-3 font-mono text-xs">${job.name}</td>
-            <td class="px-4 py-3">${job.fqn || SKILL_MAP[job.phase] || job.phase}</td>
+            <td class="px-4 py-3">${scriptLabel(job.script) || job.fqn || SKILL_MAP[job.phase] || job.phase}</td>
             <td class="px-4 py-3">${job.issue.toUpperCase()}</td>
             <td class="px-4 py-3">${job.model}</td>
             <td class="px-4 py-3">${runner}</td>
@@ -427,7 +427,7 @@ if (K8S_AVAILABLE) {
       badge.textContent = job.status;
       badge.className = 'badge ' + (STATUS_BADGE_CLASS[job.status] || 'badge-default');
 
-      document.getElementById('modal-phase').textContent = job.fqn || SKILL_MAP[job.phase] || job.phase || '-';
+      document.getElementById('modal-phase').textContent = scriptLabel(job.script) || job.fqn || SKILL_MAP[job.phase] || job.phase || '-';
       document.getElementById('modal-issue').textContent = (job.issue || '-').toUpperCase();
       document.getElementById('modal-model').textContent = job.model || '-';
       document.getElementById('modal-runner').textContent = job.runner || 'cli';
@@ -529,12 +529,14 @@ if (K8S_AVAILABLE) {
         mlflow: job.mlflow !== false,
         otel: job.otel !== false,
         api_dump: job.api_dump !== false,
+        script: job.script || null,
+        mlflow_experiment: job.mlflow_experiment || '',
       };
 
       // Action buttons
       const actionsEl = document.getElementById('modal-actions');
       let btns = '';
-      btns += `<button class="btn-rerun" onclick="modalRerun(window._rerunOpts)" title="Load this job into the form to edit and submit">Edit &amp; re-run</button>`;
+      btns += rerunButton(window._rerunOpts);
       if (job.status === 'running' || job.status === 'pending') {
         btns += `<button class="btn-stop" onclick="modalStop('${jobName}')">Stop</button>`;
       }
@@ -590,7 +592,7 @@ if (K8S_AVAILABLE) {
           // Update actions (remove Stop button)
           const actionsEl = document.getElementById('modal-actions');
           let btns = '';
-          btns += `<button class="btn-rerun" onclick="modalRerun(window._rerunOpts)" title="Load this job into the form to edit and submit">Edit &amp; re-run</button>`;
+          btns += rerunButton(window._rerunOpts);
           btns += `<button class="btn-delete" onclick="modalDelete('${jobName}')">Delete</button>`;
           actionsEl.innerHTML = btns;
 
@@ -652,10 +654,58 @@ if (K8S_AVAILABLE) {
     }
   }
 
+  // Script jobs have no form tab: their button submits the same script and
+  // settings again. Other jobs load into the form to edit first.
+  function scriptLabel(script) {
+    if (!script) return '';
+    return script.ref ? `${script.path} @ ${script.ref.slice(0, 12)}` : script.path;
+  }
+
+  function rerunButton(opts) {
+    if (opts && opts.script) {
+      return '<button class="btn-rerun" onclick="modalRerun(window._rerunOpts)" title="Submit this script job again with the same settings">Re-run</button>';
+    }
+    return '<button class="btn-rerun" onclick="modalRerun(window._rerunOpts)" title="Load this job into the form to edit and submit">Edit &amp; re-run</button>';
+  }
+
+  async function rerunScript(opts) {
+    const script = { path: opts.script.path, args: opts.script.args || [] };
+    if (opts.script.repo) {
+      script.repo = opts.script.repo;
+      script.ref = opts.script.ref;
+    }
+    const args = { model: opts.model };
+    if (opts.issue && opts.issue !== 'all') args.issue = opts.issue.toUpperCase();
+    if (opts.extra_env && Object.keys(opts.extra_env).length) args.extra_env = opts.extra_env;
+    if (opts.mlflow_experiment) args.mlflow_experiment = opts.mlflow_experiment;
+    if (opts.strace) args.strace = true;
+    if (opts.mlflow === false) args.mlflow = false;
+    if (opts.otel === false) args.otel = false;
+    if (opts.api_dump === false) args.api_dump = false;
+    const res = await fetch('/api/jobs/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ script, args }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert('Error re-running job: ' + (data.error || 'Unknown error'));
+      return;
+    }
+    closeJobModal();
+    await refreshJobs();
+    openJobModal(data.job_name);
+  }
+
   function modalRerun(opts) {
+    opts = opts || {};
+    if (opts.script) {
+      rerunScript(opts);
+      return;
+    }
     const jobName = currentModalJob;
     closeJobModal();
-    fillForm(opts || {}, jobName);
+    fillForm(opts, jobName);
   }
 
   // Make functions global

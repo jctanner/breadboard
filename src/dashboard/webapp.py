@@ -959,6 +959,20 @@ def create_app() -> Flask:
           }
         }
 
+        POST body (script entrypoint: the usual job setup, then a script):
+        {
+          "script": {
+            "path": "var/benchmarks/strat-workflow/scripts/run-workflow.sh",
+            "args": ["RHAIRFE-1"],
+            "repo": "https://github.com/jctanner/breadboard",
+            "ref": "<40-character commit>"
+          },
+          "args": {"model": "claude-haiku-5-5", "mlflow_experiment": "..."}
+        }
+        Without repo and ref, the path must be under var/benchmarks/ in the
+        image. args.mlflow_experiment overrides the experiment name for any
+        job type.
+
         Returns:
         {
           "job_name": "bug-completeness-rhoaieng-37036-opus-1234",
@@ -1013,7 +1027,25 @@ def create_app() -> Flask:
             if args.get("skill_load_mode") not in (None, "auto", "plugin", "skill"):
                 return jsonify({"error": f"Invalid skill_load_mode: {args['skill_load_mode']}. Must be auto, plugin, or skill"}), 400
 
-            if fqn:
+            mlflow_experiment = args.get("mlflow_experiment")
+            if mlflow_experiment is not None:
+                if not isinstance(mlflow_experiment, str) or not mlflow_experiment.strip() or len(mlflow_experiment) > 250:
+                    return jsonify({"error": "mlflow_experiment must be a non-empty string of at most 250 characters"}), 400
+                args["mlflow_experiment"] = mlflow_experiment.strip()
+
+            script = data.get("script")
+            if script is not None:
+                from src.dashboard.job_scripts import normalize_script_spec, script_phase
+                if fqn or phase or prompt:
+                    return jsonify({"error": "script cannot be combined with command, fqn or prompt"}), 400
+                if execution != "kubernetes":
+                    return jsonify({"error": "script jobs run only on Kubernetes"}), 400
+                try:
+                    args["script"] = normalize_script_spec(script)
+                except ValueError as e:
+                    return jsonify({"error": str(e)}), 400
+                phase = script_phase(args["script"])
+            elif fqn:
                 parsed = parse_fqn(fqn)
                 if not parsed:
                     return jsonify({"error": f"Invalid FQN format: {fqn}. Expected: host/owner/repo@ref:skill-name"}), 400
@@ -1102,6 +1134,7 @@ def create_app() -> Flask:
                     "api_dump": job.metadata.labels.get("api-dump", "true") == "true",
                     "extra_kwargs": (job.metadata.annotations or {}).get("extra_kwargs", ""),
                     "fqn": (job.metadata.annotations or {}).get("fqn", ""),
+                    "script": json.loads((job.metadata.annotations or {}).get("script") or "null"),
                     "execution": "kubernetes",
                 })
 

@@ -9,6 +9,7 @@ import re
 from datetime import datetime
 
 from src.dashboard.job_names import build_job_name
+from src.dashboard.job_scripts import script_cmd_args
 
 
 class PipelineOrchestrator:
@@ -151,6 +152,8 @@ class PipelineOrchestrator:
             "prompt": (job.metadata.annotations or {}).get("prompt", ""),
             "registries": (job.metadata.annotations or {}).get("registries", "[]"),
             "plugins": (job.metadata.annotations or {}).get("plugins", "[]"),
+            "script": json.loads((job.metadata.annotations or {}).get("script") or "null"),
+            "mlflow_experiment": (job.metadata.annotations or {}).get("mlflow_experiment", ""),
         }
 
     def get_job_logs(self, job_name: str) -> str:
@@ -258,8 +261,12 @@ class PipelineOrchestrator:
 
         job_name = build_job_name(phase, issue_key, model_slug)
 
+        script_spec = args.get("script")
+
         # Resolve fully-qualified skill name for MLflow experiment
-        if fqn:
+        if script_spec:
+            skill_fqn = f"script/{script_spec['path']}"
+        elif fqn:
             skill_fqn = fqn
         else:
             try:
@@ -318,6 +325,12 @@ class PipelineOrchestrator:
         if args.get("swap_installed_order"):
             cmd_args.append("--swap-installed-order")
 
+        # A script job runs the shared setup and then the script, in place of
+        # the harness wrapper's single claude invocation.
+        if script_spec:
+            cmd_args = script_cmd_args(script_spec, model, issue_key)
+            runner = "script"
+
         job = client.V1Job(
             api_version="batch/v1",
             kind="Job",
@@ -333,6 +346,8 @@ class PipelineOrchestrator:
                     "prompt": (prompt or "")[:256],
                     "registries": json.dumps(args.get("registries") or []),
                     "plugins": json.dumps(args.get("plugins") or []),
+                    "script": json.dumps(script_spec) if script_spec else "",
+                    "mlflow_experiment": args.get("mlflow_experiment") or "",
                 },
                 labels={
                     "app": "pipeline-agent",
@@ -537,9 +552,11 @@ fi
                 name="MLFLOW_TRACKING_URI",
                 value="http://mlflow.ai-pipeline.svc.cluster.local:5000"
             ))
-            if skill_fqn:
+            experiment = args.get("mlflow_experiment")
+            if not experiment and skill_fqn:
                 model_short = model.split("/")[-1].split("@")[0] if model else "unknown"
                 experiment = f"{skill_fqn}/{harness}/{model_short}/{runner}"
+            if experiment:
                 env_vars.append(client.V1EnvVar(
                     name="MLFLOW_EXPERIMENT_NAME",
                     value=experiment

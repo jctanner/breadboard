@@ -1400,3 +1400,47 @@ for the same reason: its helpers and reviewers take more model turns (see
 "Why the Workflow arm used more tokens"). Its parallelism only helps with
 several RFEs, which tier 2's batches will test. They will also show
 whether Model Relay or the account serialises concurrent calls.
+
+### 2026-10-10 — What each run read (strace opens against model requests, smoke tier)
+
+**Script:** `var/benchmarks/strat-workflow/scripts/file_reads.py`, run
+inside the dashboard pod as `python3 - [--compact] <job>...`. For every
+successful read-only `openat` in a job's strace, it records the file and
+who opened it:
+- **"claude":** Claude Code's in-process Read/Grep/Glob tools;
+- **otherwise the command**, such as `cat`, `grep` or `python3 <script>`.
+
+Paths are normalised to `<repo>/…`. Directories, `.git` and system and
+library files are dropped. Next to the opens it counts what the model asked
+for in the API dumps: Read calls plus Bash commands naming the file.
+
+| Run | Model calls | File requests by the model | Opens by Claude Code | Architecture docs opens / requests | Artifacts opens / requests |
+| --- | --- | --- | --- | --- | --- |
+| S1 r1 | 181 | 209 | 3476 | 743 / 86 | 465 / 95 |
+| S1 r2 | 126 | 123 | 3099 | 483 / 35 | 319 / 65 |
+| S1 r3 | 152 | 139 | 2778 | 403 / 27 | 380 / 84 |
+| S2 r1 | 90 | 123 | 2568 | 312 / 43 | 260 / 67 |
+| S2 r3 | 88 | 82 | 2985 | 257 / 14 | 248 / 55 |
+
+**What it shows:**
+- **S1's model asks for more files:** about 157 requests per run against
+  about 103. Mostly architecture docs and the run's own artifacts.
+- **The strategy file is re-read heavily in both designs:** 25 requests
+  in one run of each, because every agent (create, refine, scorer, review
+  and four reviewers) reads it afresh.
+- **Raw opens are dominated by two things that don't depend on the
+  model:**
+  - Grep sweeps of the architecture context, about 1,800–2,000 files once
+    each, hidden `.discovery` and `.analyzer` folders included, in both
+    designs;
+  - Claude Code's own housekeeping: `.claude/settings.json` 43–55 opens
+    and the `.claude` folder about 130 per run.
+
+  So opens per request (16–36) isn't a useful measure.
+- **strace can't separate S1's agents.** They all run inside one `claude`
+  process, so attributing reads to an agent needs the API dumps
+  (`conv_breakdown.py`). In S2 each step is its own process.
+
+**Correction:** an earlier note in this log, based on one run of each
+design, said both asked for about the same files (123). Across all five
+runs S1 asks for about 50% more.

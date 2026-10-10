@@ -16,6 +16,19 @@ fi
 # Source the .env file
 source "${PROJECT_ROOT}/.env"
 
+# markovd's JWT signing secret and the token Markov runner pods send with their
+# callbacks. markovd generates random ones when they're unset, so a markovd
+# restart logged everyone out and made it reject (401) the callbacks of every
+# run already in flight. Keep them stable: the value already in the cluster,
+# else .env, else a new random one.
+existing_secret_value() {
+  kubectl get secret pipeline-secrets -n ai-pipeline -o jsonpath="{.data.$1}" 2>/dev/null | base64 -d 2>/dev/null || true
+}
+MARKOVD_JWT_SECRET="${MARKOVD_JWT_SECRET:-$(existing_secret_value MARKOVD_JWT_SECRET)}"
+MARKOVD_JWT_SECRET="${MARKOVD_JWT_SECRET:-$(openssl rand -hex 32)}"
+MARKOVD_CALLBACK_TOKEN="${MARKOVD_CALLBACK_TOKEN:-$(existing_secret_value MARKOVD_CALLBACK_TOKEN)}"
+MARKOVD_CALLBACK_TOKEN="${MARKOVD_CALLBACK_TOKEN:-$(openssl rand -hex 32)}"
+
 # Create the main pipeline secrets
 kubectl create secret generic pipeline-secrets \
   -n ai-pipeline \
@@ -26,6 +39,8 @@ kubectl create secret generic pipeline-secrets \
   --from-literal=JIRA_USER="${JIRA_USER:-}" \
   --from-literal=JIRA_TOKEN="${JIRA_TOKEN:-}" \
   --from-literal=ATLASSIAN_MCP_URL="${ATLASSIAN_MCP_URL:-}" \
+  --from-literal=MARKOVD_JWT_SECRET="${MARKOVD_JWT_SECRET}" \
+  --from-literal=MARKOVD_CALLBACK_TOKEN="${MARKOVD_CALLBACK_TOKEN}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo "✓ Created pipeline-secrets"

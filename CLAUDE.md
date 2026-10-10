@@ -56,7 +56,7 @@ make security
 The integrated stack uses the `ai-pipeline` Kubernetes namespace and exposes
 the local services through the host proxy. The main user interfaces are
 `https://dashboard.local`, `https://fullsend.local`, `https://github.local`,
-`https://gitlab.local`, `https://jira.local`, `https://markov.local`,
+`https://gitlab.local`, `https://jira.local`, `https://markovd.local`,
 `https://observatory.local`, `https://orgpulse.local`, and
 `https://relay.local` when the stack is running.
 

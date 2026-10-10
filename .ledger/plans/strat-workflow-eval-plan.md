@@ -1063,3 +1063,45 @@ the checks and the summary.
     Validation now rejects `for_each_when` without `for_each`.
   - **Re-imported:** project 1 synced and the benchmark re-imported at
     `769edde`, with 30 files.
+
+### 2026-10-10 — Markov and markovd gaps closed; checked without model calls
+
+**Markov:**
+- **`a2f189e`:**
+  - `failed_when`;
+  - the `flatten` and `pluck` filters;
+  - `script_exec` `stdin`, which avoids the 128 KB per-argument limit;
+  - chained subscripts, via a vendored pongo2 with a one-line fix;
+  - docs.
+- **`d52aee8`:** `for_each` no longer starts the next item after one
+  failed. With concurrency 1 it used to.
+- **`3520707`:** `resume` takes `run`'s execution flags.
+- **`88190a4`:** numbers stay ints after a resume.
+
+**markovd:**
+- **`0c668dd`:**
+  - a `markovd-data` volume holds the run files, the Markov state and the
+    project clones, with no ConfigMap cap;
+  - `POST /runs/{id}/resume`;
+  - paused and resumed run states;
+  - a Resume dialog and step descriptions in the UI.
+- **`78cf57b`:** resume Jobs pass `--namespace`.
+- **`3186ce0`:** steps that run again drop their old error.
+
+**Checked with `var/demos/markov-feature-check`** (Breadboard `45eec72`), run
+through markovd with no model calls. It went from failure to resume to the
+gate to completion. That covered:
+- the `workflow_source_commit` var (gap 4);
+- fan-out results kept across a resume (gap 11);
+- resume itself (gap 1);
+- run files on the volume (gap 2);
+- importing after a restart with no new sync (gap 3).
+
+**strat-workflow now uses the new features:**
+- `breadboard_ref | default:workflow_source_commit`;
+- `tiers[tier].tests` directly;
+- `job_name` through `default`;
+- a summary that reads its results from stdin, collected with
+  `pluck`/`flatten`.
+
+CLAUDE.md and the README now say `markovd.local`.

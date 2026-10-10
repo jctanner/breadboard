@@ -75,7 +75,7 @@ graph TB
         subgraph core["Platform Services"]
             dashboard["Breadboard Dashboard<br/>dashboard.local"]
             fullsend_dashboard["Fullsend Dashboard<br/>fullsend.local"]
-            markov["markovd + PostgreSQL<br/>markov.local<br/>Workflow Control Plane"]
+            markov["markovd + PostgreSQL<br/>markovd.local<br/>Workflow Control Plane"]
             mlflow["MLflow<br/>mlflow.local<br/>Experiment Tracking"]
             observatory["Observatory<br/>observatory.local<br/>Claim Verification"]
         end
@@ -457,7 +457,7 @@ The project includes a full K3s-based deployment stack for running the pipeline 
 | Jira Emulator | ai-pipeline | `https://jira.local` | Jira REST API emulation for ticket management |
 | GitLab Runner | gitlab-runner | — | In-cluster CI runner (Kubernetes executor) |
 | MLflow | ai-pipeline | `https://mlflow.local` | Experiment tracking and agent trace logging |
-| markovd | ai-pipeline | `https://markov.local` | Workflow API/UI, run persistence, callbacks, gates, and Kubernetes orchestration |
+| markovd | ai-pipeline | `https://markovd.local` | Workflow API/UI, run persistence, callbacks, gates, and Kubernetes orchestration |
 | Markov jobs | ai-pipeline | — | Ephemeral pods that execute declarative workflows |
 | Elasticsearch | ai-pipeline | — | Search index populated from MLflow trace sync |
 | Observatory | ai-pipeline | `https://observatory.local` | CI collection, artifact/trace analysis, claim extraction and verification |
@@ -614,7 +614,7 @@ source files are available in `docs/architecture/diagrams/`.
 ## Markov and markovd
 
 Markov is the workflow CLI/runner; markovd is the persistent API and React UI
-available at `https://markov.local`. In the deployed configuration, markovd
+available at `https://markovd.local`. In the deployed configuration, markovd
 creates Kubernetes jobs using the `markov:latest` image and receives lifecycle
 callbacks from them. PostgreSQL stores users and run state, while an nginx
 sidecar serves the UI. Workflow definitions live in `var/markov-workflows/`:

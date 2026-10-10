@@ -1105,3 +1105,44 @@ gate to completion. That covered:
   `pluck`/`flatten`.
 
 CLAUDE.md and the README now say `markovd.local`.
+
+### 2026-10-10 — Templated sub-workflow names and write_file
+
+**Markov:**
+- **`d9b2b8e`:**
+  - `workflow:` can be a template, resolved when the step runs (per item
+    under `for_each`);
+  - a `write_file` step type;
+  - a built-in `markov_run_id` var.
+- **`7723016`:** `write_file` honours the setgid, setuid and sticky bits in
+  its modes.
+
+A resume refuses a sub-run whose templated name now resolves to a different
+workflow than it ran. Step state is kept per workflow, so continuing would
+mix the two.
+
+**markovd:**
+- **`0b3ebc7`:** the diagram shows templated calls without expanding them.
+- **Runner pods** now mount `pipeline-artifacts` at `/app/artifacts` by
+  default (`MARKOVD_JOB_VOLUMES` in `deploy/k8s/15-markovd.yaml`).
+
+**strat-workflow** (Breadboard `506a7c2`):
+- `run-test` calls `submit-{{ test.arm }}`, so each arm's job request is
+  its own small workflow.
+- Each eval-result is saved as
+  `/app/artifacts/scripts/<job>/eval-result.json`, next to the job's
+  artifacts.
+- The summary and every eval-result are saved under
+  `/app/artifacts/benchmarks/strat-workflow/<markov run id>/`.
+- eval-results now carry `markov_run_id`.
+
+**Checked:**
+- **Locally against the stand-in dashboard:** both arms' submit workflows
+  ran, and the files were written with modes 0664 and setgid 2775.
+- **Through markovd** (`markov-feature-check`):
+  - the templated call ran;
+  - `write_file` saved `result.json` to the artifacts volume as root, with
+    group `dashboarduser`;
+  - the dashboard's user (uid 1000) read the file and deleted the
+    directory, so the dashboard's artifacts wipe can still clear what Markov
+    writes.

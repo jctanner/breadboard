@@ -11,7 +11,8 @@
 #   2. The Workflow, started directly as its slash command, once:
 #        claude -p --plugin-dir .fullsend/plugins/strat-pipeline "/strat-pipeline:strat-pipeline"
 #      No agent prompt around it and no retry: a failed step is a failure,
-#      as for PR #80's entrypoint. Raw output goes to files only.
+#      as for PR #80's entrypoint. Raw output goes, unprocessed, to files and
+#      to the job log (tee).
 #   3. PR #83's checker (validate-output.sh), as an observer, and its post
 #      step (post-strategy.sh: hand-off and report, nothing pushed) when the
 #      run validated.
@@ -134,11 +135,13 @@ echo "output: $RUN_OUT/stream.jsonl (stderr: $RUN_OUT/claude-stderr.log)"
   export FULLSEND_OUTPUT_DIR="$RUN_OUT/output"
   export RFE_SKIP_BOOTSTRAP=1
   export DISABLE_AUTOUPDATER=1
-  exec timeout "$((TIMEOUT_MINUTES * 60))" claude --print --verbose --output-format stream-json \
+  # Raw output, unprocessed, to files and to the job log at the same time.
+  timeout "$((TIMEOUT_MINUTES * 60))" claude --print --verbose --output-format stream-json \
     ${ANTHROPIC_MODEL:+--model "$ANTHROPIC_MODEL"} --effort "${STRAT_EFFORT:-high}" \
     --plugin-dir "$TARGET_REPO_DIR/.fullsend/plugins/strat-pipeline" \
     --dangerously-skip-permissions "$WORKFLOW_COMMAND" \
-    >"$RUN_OUT/stream.jsonl" 2>"$RUN_OUT/claude-stderr.log"
+    2> >(tee "$RUN_OUT/claude-stderr.log" >&2) | tee "$RUN_OUT/stream.jsonl"
+  exit "${PIPESTATUS[0]}"
 )
 CLAUDE_RC=$?
 echo "claude exit: $CLAUDE_RC"

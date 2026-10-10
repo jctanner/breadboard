@@ -166,9 +166,9 @@ nothing in between:
   - a non-opus model for haiku runs, as a recorded patch on `eval/pr-80`,
     because `strategy-model.sh` hard-codes `claude-opus-4-6`.
   Our checks run as a separate step afterwards.
-- **No processing of Claude's output in the harness.** Raw output goes to
-  files (`stream.jsonl`, stderr); the job log shows only the arm script's
-  own lines. Our checks read the files after the run.
+- **No processing of Claude's output in the harness.** Raw output is
+  `tee`d, unprocessed, to files (`stream.jsonl`, stderr) and to the job log,
+  so the log shows the run live. Our checks read the files after the run.
 - **Instrumentation is environment-level only, and identical for both
   arms:** relay routing, model pinning, MLflow hooks, OTel export, API
   dumps and strace. It observes the run and is never in the output path.

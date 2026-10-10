@@ -10,16 +10,10 @@ DASHBOARD_BASE, JIRA_BASE, JIRA_USER, JIRA_TOKEN.
 import base64
 import json
 import os
-from pathlib import Path
 import ssl
-import time
 import urllib.error
 import urllib.parse
 import urllib.request
-
-BENCH = Path(__file__).resolve().parents[1]
-DATA = BENCH / "data"
-SHA_LEN = 40
 
 # The Jira emulator's certificate is signed by the cluster's internal CA,
 # which the runner image doesn't carry (the jira_api step type uses
@@ -78,18 +72,6 @@ def read_file(path: str):
 def list_dir(path: str) -> list[dict]:
     status, body = dashboard("/api/files/list?" + urllib.parse.urlencode({"path": path}))
     return body.get("entries", []) if status == 200 else []
-
-
-def wait_for_job(name: str, timeout: int, poll: int = 15) -> dict:
-    """Poll a dashboard job until it completes or fails, or the timeout passes."""
-    deadline = time.monotonic() + timeout
-    while True:
-        status, body = dashboard(f"/api/jobs/{name}")
-        if status == 200 and body.get("status") in ("completed", "failed"):
-            return body
-        if time.monotonic() >= deadline:
-            return {**(body if status == 200 else {}), "status": "timeout"}
-        time.sleep(poll)
 
 
 def emit(obj) -> None:

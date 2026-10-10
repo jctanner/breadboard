@@ -305,32 +305,32 @@ var/benchmarks/strat-workflow/
   vars.yaml                run settings: tier, only_tests, variants,
                            repeats, Breadboard commit, wipe and review
                            switches, job timeout, service URLs
+  vars/
+    tiers.yaml             test lists per tier (smoke: S1–S4, 3 repeats)
+    arms.yaml              each design's pinned commit and settings
+    models.yaml            variant names to models
   rules.yaml               the review_stop gate rule
   step_types/
-    dashboard.yaml         dashboard_api: a dashboard API call
-    bench.yaml             bench_script: a runner-side script, with the
-                           dashboard and Jira settings in its environment
-  workflows/               one workflow per file, named by its name: field
-    main.yaml              plan the runs, wipe once, run each, summarize,
-                           review gate
-    wipe.yaml              clear artifacts, MLflow and Observatory
+    dashboard.yaml         dashboard_api (dashboard API call) and job_wait
+                           (k8s_job_wait on a dashboard job)
+    bench.yaml             bench_script: a runner-side script with the
+                           dashboard and Jira settings
+  workflows/
+    main.yaml              settings, active-job check, wipe, rounds,
+                           summarize, review gate
+    round.yaml             the tier's tests (for_each_when: only_tests)
+    test-variants.yaml     one test under each variant
     run-test.yaml          one run: seed, submit, wait, check
+    wipe.yaml              clear artifacts, MLflow and Observatory
   scripts/
-    (job side, run in dashboard job pods)
-    run-workflow.sh        the PR #83 arm
-    seed_scenario.py       reset Jira and create one scenario's issues
-    reset_environment.py   the same reset by hand, from the host
-    selfcheck.sh, snapshot-architecture-context.sh
-    (runner side, run by Markov with script_exec; standard library only)
-    benchlib.py            dashboard, Jira and file API helpers
-    plan_runs.py           tests × variants × repeats -> ordered runs
-    dashboard_job.py       preflight, submit, wait, seed report
-    check_run.py           the checks and usage -> eval-result
-    summarize.py           eval-results -> summary tables
+    run-workflow.sh        job side: the PR #83 arm
+    seed_scenario.py       job side: reset Jira, create a scenario's issues
+    check_run.py           runner side: the checks and usage -> eval-result
+    summarize.py           runner side: eval-results -> summary tables
+    benchlib.py            runner side: dashboard, Jira and file API helpers
+    reset_environment.py, selfcheck.sh, snapshot-architecture-context.sh
+                           host side
   data/
-    arms.yaml              each design's script source, commit and settings
-    variants.yaml          named variants (haiku, opus)
-    tests/smoke.yaml       tier 1: S1–S4, 3 repeats
     scenarios/             one seed definition per scenario
     rfe-templates/         RFE texts the scenarios use
 ```
@@ -403,18 +403,22 @@ It prints one JSON summary and exits 0 only if every step worked and the
 seed check passed. The Markov workflow runs the same steps as its own
 dashboard API calls.
 
-**What one test run does in Markov** (built 2026-10-10, `workflows/run-test.yaml`):
-1. Reset Jira and seed the scenario: a script job runs `seed_scenario.py`
-   from the Breadboard commit, and the seed check must pass.
-2. Submit the design's job (`dashboard_job.py submit-run`, a POST to
-   `/api/jobs/submit`).
-3. Wait for it by polling the dashboard. A failed or timed-out job is
-   recorded, not raised, so the tier goes on. `k8s_job_wait` isn't used
-   because it fails the step, and Markov has no "ignore errors", so one
-   failed test would stop the tier.
-4. Run the checks (`check_run.py`): job status, Jira, and usage summed from
-   the job's API dumps. Its output is the run's eval-result, stored in the
-   Markov run. The runner can't write to the artifacts volume.
+**What one test run does in Markov** (`workflows/run-test.yaml`, rebuilt
+2026-10-10 on Markov's own steps):
+1. `describe_run`: one `run` record (ID, test, arm, variant, model, commits,
+   MLflow experiment), kept with the result.
+2. Reset Jira and seed the scenario: a `dashboard_api` step submits
+   `seed_scenario.py` as a script job, and `job_wait` (`k8s_job_wait`) watches
+   it. The job's `seed.json` is read through the dashboard's file API, and an
+   `assert` checks it.
+3. Submit the design's job with a `dashboard_api` step. Each arm has its own
+   step with the full request in the YAML, chosen by `when`.
+4. Wait with `job_wait` and `ignore_errors`: a failed job is recorded as a
+   failed test, and the tier goes on. A job still running at the timeout is
+   stopped before the next run resets Jira.
+5. `check_run.py` checks Jira and the job and sums usage from the API dumps.
+   Its output is the run's eval-result, stored in the Markov run (the runner
+   can't write to the artifacts volume).
 
 **Resetting, as built:** the artifacts volume, MLflow and Observatory are
 cleared **once, before the first run** (`wipe_at_start`). Only Jira is reset
@@ -422,19 +426,22 @@ before every run. Wiping everything per run would delete the earlier
 repeats' strace, API dumps and MLflow traces, and an MLflow experiment could
 then never hold more than one run.
 
-**Loops:**
-- `plan_runs.py` expands tests × variants × repeats into one ordered list,
-  in rounds (S1, S2, … then again), so arms and variants alternate.
-- `for_each` runs the list with concurrency 1, because every run resets the
-  one shared Jira emulator.
+**Loops** are nested Markov `for_each` steps, all with concurrency 1,
+because every run resets the one shared Jira emulator:
+- rounds: `repeats | seq`;
+- tests: `for_each_when` applies `only_tests`;
+- variants: `variants | csv | default:test.variants`.
+
+Rounds come outermost, so arms and variants alternate (S1, S2, … then
+again).
 
 **Resume:** Markov saves progress after each step, and a resumed run skips
 the runs already finished. The CLI can resume (`markov resume`); markovd
 can't resume a run yet.
 
 **Review stops** are a Markov gate (`review_stop` rule) at the end. It's off
-by default (`review_stop: "no"`) because markovd can't resume a paused run.
-With the CLI, resume with `--var reviewed=yes`.
+by default (`review_stop: false`) because markovd can't resume a paused run.
+With the CLI, resume with `--var reviewed=true`.
 
 **Don't use Markov's own `agent_job` step for model runs.** It creates pods
 directly. The existing benchmark's version mounts `gcp-credentials` and goes
@@ -1012,3 +1019,34 @@ under "The Markov test driver"). `markov validate` passes.
 - **Imported into markovd:** project 1 synced; the workflow is
   `var-benchmarks-strat-workflow` at Breadboard `921cce9`, with all 30
   files. No run has been started from markovd yet.
+
+### 2026-10-10 — The driver rebuilt on Markov's own steps
+
+The first driver passed most of its control flow to Python scripts
+(planning, submitting, waiting). The cause was gaps in Markov. Markov
+`5783094` and `34fead7` fill them:
+
+- **`ignore_errors`:** a failed `k8s_job_wait` no longer stops the tier.
+- **`for_each_when`:** filters the loop items one at a time.
+- **Step `description`:** for long-form notes.
+- **Native exact expressions:** in params and `set_fact`, including
+  `tiers[tier]` and filter results.
+- **`for_each` over expressions:** for example `repeats | seq`.
+- **`csv` and `seq` filters.**
+- **The loop item inside sub-workflows.**
+- **No HTML escaping.**
+- **`script_exec` accepts numbers and booleans** as arguments.
+- **A `vars/` directory** for data files.
+
+The benchmark now has nested `for_each` workflows, `dashboard_api` submits,
+`job_wait` and an `assert` on the seed report. Scripts are left only for
+the checks and the summary.
+
+- **Tested under the CLI** against a stand-in dashboard. It handed back real
+  completed jobs, and `k8s_job_wait` watched them in the cluster.
+  - The full flow ran; `only_tests` skipped S3 and S4.
+  - The submitted requests carried their `extra_env` maps intact.
+  - In a second run the stand-in gave the S1 submit a real failed job. S1
+    was recorded as failed (`finished`), and the run went on to S2 and
+    completed.
+- **The Markov job image** was rebuilt with `34fead7`.

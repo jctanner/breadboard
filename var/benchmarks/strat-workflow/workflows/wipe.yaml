@@ -2,8 +2,8 @@ name: wipe
 description: "Clear the artifacts volume, MLflow and Observatory (not Jira, not the context volume)"
 
 steps:
-  # Job logs, strace, API dumps and script artifacts
   - name: clear_artifacts
+    description: "Job logs, strace, API dumps and script artifacts, with a cleanup job"
     type: dashboard_api
     params:
       path: /api/volumes/clear
@@ -14,21 +14,21 @@ steps:
     register: cleared
 
   - name: wait_for_clear
-    type: bench_script
+    type: job_wait
     params:
-      path: dashboard_job.py
-      args: ["wait", "{{ cleared.body.job_name }}", "--timeout=600", "--must-complete"]
+      job_name: "{{ cleared.body.job_name }}"
+      timeout: 600
 
-  # Hard-delete every MLflow experiment, run and trace
   - name: clear_mlflow
+    description: "Hard-delete every MLflow experiment, run and trace"
     type: dashboard_api
     params:
       path: /api/mlflow/hard-clear
       method: POST
       body: {}
 
-  # Claims, verdicts and explanations (OTel traces stay, tagged by job)
   - name: clear_observatory
+    description: "Claims, verdicts and explanations; Observatory can't clear OTel traces, which stay tagged by job"
     type: dashboard_api
     params:
       path: /api/observatory/clear

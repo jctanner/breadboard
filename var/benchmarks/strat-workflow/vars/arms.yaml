@@ -1,0 +1,20 @@
+# The two designs under test. The job each one submits is in
+# workflows/run-test.yaml (submit_workflow_arm, submit_bash_arm).
+#
+# Commits are in the local strat-creator copy in the GitHub emulator:
+# unchanged PR baselines on pr-83/pr-80/pr-81, eval patches on eval/* (see the
+# plan, "strat-creator lives in the GitHub emulator").
+arms:
+  workflow:
+    description: Claude Workflow (strat-creator PR #83), run by scripts/run-workflow.sh
+    strat_creator_ref: 6b78355ebc450ff4737fd10ba4857c26086ceac0  # pr-83, unchanged
+  bash:
+    description: bash entrypoint (strat-creator PR #80), .fullsend/scripts/strategy-entrypoint.sh
+    # eval/pr-80: PR #80 plus the STRAT_MODEL and STRAT_ARCHITECTURE_CONTEXT_PATH patches
+    strat_creator_ref: c6fc33138320f0c88cf927e2c95eb4f18f9eb3dd
+    repo: https://github.local/opendatahub-io/strat-creator
+    # Throwaway results repository PR #80 publishes to; the token is the
+    # emulator's development default from deploy/k8s/10-github-emulator.yaml.
+    results_repo_url: https://github.local/admin/strat-workflow-eval-results.git
+    results_git_user: admin
+    results_push_token: ghp_admin_default_token

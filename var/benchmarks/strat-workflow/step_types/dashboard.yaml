@@ -5,3 +5,12 @@ dashboard_api:
     base_url: "{{ dashboard_base }}"
     headers:
       Accept: "application/json"
+
+job_wait:
+  base: k8s_job_wait
+  description: "Wait for a dashboard job and keep its log"
+  params:
+    namespace: ai-pipeline
+    timeout: 900
+    tail_logs: true
+    log_bytes: 131072

@@ -1,8 +1,0 @@
-# A variant is a named set of job settings compared side by side. The model
-# is passed as the job's model, which pins the main session, helper agents
-# and every alias to it (run_script.sh).
-variants:
-  haiku:
-    model: claude-haiku-5-5
-  opus:
-    model: claude-opus-4-6

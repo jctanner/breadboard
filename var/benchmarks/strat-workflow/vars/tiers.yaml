@@ -1,0 +1,25 @@
+# Test lists per tier. Each test runs one design (an arm, vars/arms.yaml) on
+# one scenario (data/scenarios/<scenario>.yaml) under its variants
+# (vars/models.yaml). Repeats run in rounds, all tests once and then again,
+# so the designs alternate.
+tiers:
+  smoke:
+    # One eligible RFE, start to finish, through each design.
+    repeats: 3
+    tests:
+      - id: S1
+        arm: workflow
+        variants: [haiku]
+        scenario: smoke-one-rfe
+      - id: S2
+        arm: bash
+        variants: [haiku]
+        scenario: smoke-one-rfe
+      - id: S3
+        arm: workflow
+        variants: [opus]
+        scenario: smoke-one-rfe
+      - id: S4
+        arm: bash
+        variants: [opus]
+        scenario: smoke-one-rfe

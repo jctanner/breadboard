@@ -1,70 +1,67 @@
 name: main
-description: "strat-creator design benchmark: run a tier's tests and summarize them"
+description: "strat-creator design benchmark: run a tier's tests in rounds, check each run, summarize"
 
 steps:
-  - name: resolve_breadboard_ref
+  - name: resolve_settings
+    description: "The Breadboard commit the jobs clone from, and the tier's definition"
     type: set_fact
     vars:
       bench_ref: "{% if breadboard_ref %}{{ breadboard_ref }}{% else %}{{ workflow_source_commit }}{% endif %}"
+      tier_def: "{{ tiers[tier] }}"
 
-  - name: check_breadboard_ref
+  - name: check_settings
     type: assert
     that:
       - "bench_ref | length == 40"
-    msg: "Set breadboard_ref to a pushed 40-character Breadboard commit (markovd sets workflow_source_commit for git imports)"
+      - "tier_def.tests"
+    msg: "Needs a pushed 40-character Breadboard commit (breadboard_ref, or workflow_source_commit from markovd) and a tier defined in vars/tiers.yaml"
 
-  # Expand the tier's tests, variants and repeats into an ordered list of runs
-  - name: plan
-    type: bench_script
+  - name: list_running_jobs
+    description: "A reset or a new test would pull Jira and files out from under a job still going"
+    type: dashboard_api
     params:
-      path: plan_runs.py
-      args:
-        - "--tier={{ tier }}"
-        - "--breadboard-ref={{ bench_ref }}"
-        - "--breadboard-repo={{ breadboard_repo }}"
-        - "--only={{ only_tests }}"
-        - "--variants={{ variants }}"
-        - "--repeats={{ repeats }}"
-    register: planned
+      path: /api/jobs?status=running
+      method: GET
+    register: running_jobs
 
-  - name: load_plan
-    type: set_fact
-    vars:
-      plan: "{{ planned.stdout | from_json }}"
-
-  # Refuse to start while any pipeline job is pending or running
-  - name: preflight
-    type: bench_script
+  - name: list_pending_jobs
+    type: dashboard_api
     params:
-      path: dashboard_job.py
-      args: ["preflight"]
+      path: /api/jobs?status=pending
+      method: GET
+    register: pending_jobs
 
-  # Clear the artifacts volume, MLflow and Observatory
+  - name: check_no_active_jobs
+    type: assert
+    that:
+      - "running_jobs.body | length == 0"
+      - "pending_jobs.body | length == 0"
+    msg: "Dashboard jobs are still pending or running; wait for them or stop them first"
+
   - name: wipe
-    when: "wipe_at_start == 'yes'"
+    description: "Clear the artifacts volume, MLflow and Observatory once, before the first run"
+    when: "wipe_at_start"
     workflow: wipe
 
-  # Each run: seed Jira, run the design as a dashboard job, check the result
-  - name: runs
-    for_each: plan.runs
-    for_each_key: id
-    as: run_item
+  - name: rounds
+    description: "Every test once per round, so the designs alternate instead of running back to back"
+    for_each: "repeats | default:tier_def.repeats | seq"
+    as: round
     concurrency: 1
-    workflow: run-test
-    vars:
-      run: "{{ run_item }}"
-    register: finished_runs
+    workflow: round
+    register: rounds_done
 
   - name: summarize
+    description: "One table row per run and one per test, from every run's eval-result"
     type: bench_script
     params:
       path: summarize.py
       args:
-        - "{% for r in finished_runs %}{{ r.eval.stdout | trim | safe }}\n{% endfor %}"
+        - "{% for r in rounds_done %}{% for t in r.tests_done %}{% for v in t.variants_done %}{{ v.eval.stdout | trim }}\n{% endfor %}{% endfor %}{% endfor %}"
     register: summary
 
-  # Pause for review; resume with reviewed=yes
   - name: review
+    description: "Pause for review when review_stop is set; resume with reviewed=true"
     type: gate
     rules:
       - review_stop

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Check one finished test run and print its eval-result.
 
-    check_run.py '<run json>' <job name> <RFE key>
+    check_run.py '<run json>' <job name> <RFE key> <wait status>
+
+The run JSON is the run-test workflow's `run` fact; the wait status is what
+Markov's job_wait saw (completed, failed, or running at the timeout).
 
 Every check is a script, not a model's judgement (the plan, "What counts as
 a pass"). For one new eligible RFE, as in the smoke tier:
@@ -141,7 +144,7 @@ def seconds_between(start: str | None, end: str | None):
 
 
 def main(argv: list[str]) -> int:
-    run, job_name, rfe_key = json.loads(argv[0]), argv[1], argv[2]
+    run, job_name, rfe_key, waited = json.loads(argv[0]), argv[1], argv[2], argv[3]
     status, job = dashboard(f"/api/jobs/{job_name}")
     if status != 200:
         emit({"run": run["id"], "error": f"job lookup failed: HTTP {status}", "response": job})
@@ -151,13 +154,14 @@ def main(argv: list[str]) -> int:
         "run": run["id"], "tier": run["tier"], "test": run["test"], "arm": run["arm"],
         "variant": run["variant"], "model": run["model"], "repeat": run["repeat"],
         "scenario": run["scenario"], "rfe": rfe_key, "job": job_name,
-        "strat_creator_ref": run["strat_creator_ref"], "script": run["script"],
-        "mlflow_experiment": run["mlflow_experiment"],
-        "job_status": job.get("status"),
+        "strat_creator_ref": run["strat_creator_ref"], "breadboard_ref": run["breadboard_ref"],
+        "script": job.get("script"), "mlflow_experiment": run["mlflow_experiment"],
+        "job_status": job.get("status"), "wait_status": waited,
         "started": job.get("created"), "completed": job.get("completed"),
         "wall_seconds": seconds_between(job.get("created"), job.get("completed")),
     }
-    checks = {"finished": check(job.get("status") == "completed", {"job_status": job.get("status")})}
+    checks = {"finished": check(job.get("status") == "completed" and waited == "completed",
+                                {"job_status": job.get("status"), "wait_status": waited})}
     try:
         jira_result, facts = jira_checks(rfe_key)
         checks.update(jira_result)

@@ -1,77 +1,155 @@
 name: run-test
-description: "One run: reset and seed Jira, run the design as a dashboard job, check the result"
-vars:
-  run: null
+description: "One run of one test under one variant: seed Jira, run the design as a dashboard job, check the result"
 
 steps:
-  # Reset Jira and seed the scenario (seed_scenario.py at the Breadboard commit)
-  - name: submit_seed
-    type: bench_script
-    params:
-      path: dashboard_job.py
-      args:
-        - "submit-seed"
-        - "{{ run.scenario }}"
-        - "{{ run.strat_creator_ref }}"
-        - "{{ breadboard_repo }}"
-        - "{{ bench_ref }}"
-    register: seed_submitted
-
-  - name: load_seed_job
+  - name: select_arm
     type: set_fact
     vars:
-      seed_job: "{{ seed_submitted.stdout | from_json }}"
+      arm: "{{ arms[test.arm] }}"
+
+  - name: describe_run
+    description: "Everything that identifies this run, recorded with its result"
+    type: set_fact
+    vars:
+      run:
+        id: "r{{ round }}-{{ test.id }}-{{ variant }}"
+        tier: "{{ tier }}"
+        test: "{{ test.id }}"
+        arm: "{{ test.arm }}"
+        variant: "{{ variant }}"
+        model: "{{ models[variant] }}"
+        repeat: "{{ round }}"
+        scenario: "{{ test.scenario }}"
+        strat_creator_ref: "{{ arm.strat_creator_ref }}"
+        breadboard_ref: "{{ bench_ref }}"
+        mlflow_experiment: "strat-workflow-eval/{{ tier }}/{{ test.id }}/{{ variant }}"
+
+  # Seed: a script job resets Jira and creates the scenario's RFEs, using the
+  # eligibility rules of the strat-creator commit under test.
+  - name: submit_seed
+    type: dashboard_api
+    params:
+      path: /api/jobs/submit
+      method: POST
+      body:
+        script:
+          repo: "{{ breadboard_repo }}"
+          ref: "{{ bench_ref }}"
+          path: var/benchmarks/strat-workflow/scripts/seed_scenario.py
+          args: ["--scenario", "{{ run.scenario }}", "--strat-creator-ref", "{{ run.strat_creator_ref }}"]
+        args:
+          model: claude-haiku-5-5
+          mlflow: false
+          otel: false
+          api_dump: false
+    register: seed_job
 
   - name: wait_for_seed
-    type: bench_script
+    type: job_wait
     params:
-      path: dashboard_job.py
-      args: ["wait", "{{ seed_job.job_name }}", "--timeout=900", "--must-complete"]
+      job_name: "{{ seed_job.body.job_name }}"
 
-  # The seed check: Jira holds the scenario and discovery finds exactly the eligible RFEs
-  - name: seed_report
-    type: bench_script
+  - name: read_seed_report
+    type: dashboard_api
     params:
-      path: dashboard_job.py
-      args: ["seed-report", "{{ seed_job.job_name }}"]
-    register: seed_reported
+      path: "/api/files/read?path=/app/artifacts/scripts/{{ seed_job.body.job_name }}/seed.json"
+      method: GET
+    register: seed_file
 
-  - name: load_seed
+  - name: load_seed_report
     type: set_fact
     vars:
-      seed: "{{ seed_reported.stdout | from_json }}"
+      seed: "{{ seed_file.body.content | from_json }}"
 
-  # Run the design as a script job
-  - name: submit_run
-    type: bench_script
-    params:
-      path: dashboard_job.py
-      args:
-        - "submit-run"
-        - "{{ run | to_json | safe }}"
-        - "{{ seed.rfe_key }}"
-    register: run_submitted
+  - name: check_seed
+    description: "Jira holds the scenario, and the commit's own discovery finds exactly the eligible RFEs"
+    type: assert
+    that:
+      - "seed.ok"
+      - "seed.rfes.0.eligible"
+    msg: "Seeding {{ run.scenario }} failed its check; see the seed job's log"
 
-  - name: load_run_job
+  - name: set_rfe
     type: set_fact
     vars:
-      run_job: "{{ run_submitted.stdout | from_json }}"
+      rfe_key: "{{ seed.rfes.0.key }}"
 
-  # Wait for the job; a failed job is recorded by the checks, not raised
+  # The design itself, as it is: one script job, nothing between it and its output.
+  - name: submit_workflow_arm
+    description: "PR #83: run-workflow.sh runs pre-strategy.sh, the Workflow once, PR #83's checker and post step, and releases locks"
+    when: "test.arm == 'workflow'"
+    type: dashboard_api
+    params:
+      path: /api/jobs/submit
+      method: POST
+      body:
+        script:
+          repo: "{{ breadboard_repo }}"
+          ref: "{{ bench_ref }}"
+          path: var/benchmarks/strat-workflow/scripts/run-workflow.sh
+          args: ["{{ rfe_key }}"]
+        args:
+          model: "{{ run.model }}"
+          mlflow_experiment: "{{ run.mlflow_experiment }}"
+          strace: true
+          extra_env:
+            STRAT_CREATOR_REF: "{{ arm.strat_creator_ref }}"
+            STRAT_ARCHITECTURE_CONTEXT_PATH: "{{ architecture_context_path }}"
+    register: workflow_job
+
+  - name: submit_bash_arm
+    description: "PR #80: its strategy-entrypoint.sh, unchanged apart from the eval patches, from the strat-creator clone"
+    when: "test.arm == 'bash'"
+    type: dashboard_api
+    params:
+      path: /api/jobs/submit
+      method: POST
+      body:
+        script:
+          repo: "{{ arm.repo }}"
+          ref: "{{ arm.strat_creator_ref }}"
+          path: .fullsend/scripts/strategy-entrypoint.sh
+          args: ["{{ rfe_key }}"]
+        args:
+          model: "{{ run.model }}"
+          mlflow_experiment: "{{ run.mlflow_experiment }}"
+          strace: true
+          extra_env:
+            STRAT_MODEL: "{{ run.model }}"
+            STRAT_ARCHITECTURE_CONTEXT_PATH: "{{ architecture_context_path }}"
+            CLAUDE_CONFIG_DIR: /home/pipelineagent/.claude
+            RESULTS_REPO_URL: "{{ arm.results_repo_url }}"
+            RESULTS_GIT_USER: "{{ arm.results_git_user }}"
+            RESULTS_PUSH_TOKEN: "{{ arm.results_push_token }}"
+    register: bash_job
+
+  - name: set_job
+    type: set_fact
+    vars:
+      job_name: "{% if test.arm == 'workflow' %}{{ workflow_job.body.job_name }}{% else %}{{ bash_job.body.job_name }}{% endif %}"
+
   - name: wait_for_run
-    type: bench_script
+    description: "A failed job is a failed test: record it and go on to the checks"
+    type: job_wait
+    ignore_errors: true
     params:
-      path: dashboard_job.py
-      args: ["wait", "{{ run_job.job_name }}", "--timeout={{ job_timeout }}"]
-    register: run_waited
+      job_name: "{{ job_name }}"
+      timeout: "{{ job_timeout }}"
+    register: run_job
 
-  # Script checks and usage: the run's eval-result
+  - name: stop_unfinished_run
+    description: "Stop a job still going at the timeout, before the next run resets Jira under it"
+    when: "run_job.failed and run_job.status != 'failed'"
+    type: dashboard_api
+    params:
+      path: "/api/jobs/{{ job_name }}/stop"
+      method: POST
+      body: {}
+
   - name: check
+    description: "Script checks on Jira and the job, plus usage from the API dumps: the run's eval-result"
     type: bench_script
     params:
       path: check_run.py
-      args:
-        - "{{ run | to_json | safe }}"
-        - "{{ run_job.job_name }}"
-        - "{{ seed.rfe_key }}"
+      args: ["{{ run | to_json }}", "{{ job_name }}", "{{ rfe_key }}", "{{ run_job.status }}"]
     register: eval

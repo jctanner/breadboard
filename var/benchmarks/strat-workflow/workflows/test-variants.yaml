@@ -1,0 +1,10 @@
+name: test-variants
+description: "One test under each of its variants (or the variants the run names)"
+
+steps:
+  - name: variants
+    for_each: "variants | csv | default:test.variants"
+    as: variant
+    concurrency: 1
+    workflow: run-test
+    register: variants_done

@@ -1,4 +1,4 @@
 - name: review_stop
-  description: "Pause for review with the summary; resume with reviewed=yes"
-  when: "review_stop == 'yes' and reviewed != 'yes'"
+  description: "Pause for review with the summary; resume with reviewed=true"
+  when: "review_stop and not reviewed"
   action: pause

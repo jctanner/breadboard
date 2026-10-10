@@ -25,6 +25,9 @@
 #   STRAT_DRY_RUN       1 for no Jira writes (default: real writes)
 #   STRAT_EFFORT        claude --effort (default high, as PR #83 declares)
 #   STRAT_TIMEOUT_MINUTES  default 90, as PR #83's strat-single declares
+#   STRAT_BG_WAIT_CEILING_MS  how long claude -p waits for the background
+#                       Workflow after its last turn (default 30 minutes;
+#                       Claude Code's own default is 10)
 #   JIRA_SERVER, JIRA_USER, JIRA_TOKEN, ANTHROPIC_MODEL: set by the job
 #
 # Outputs in $JOB_ARTIFACT_DIR, with run-summary.json. Exit status: claude's
@@ -90,6 +93,7 @@ summary = {
     "launch": "claude -p --plugin-dir .fullsend/plugins/strat-pipeline $WORKFLOW_COMMAND",
     "model": "${ANTHROPIC_MODEL:-}",
     "effort": "${STRAT_EFFORT:-high}",
+    "bg_wait_ceiling_ms": int("${STRAT_BG_WAIT_CEILING_MS:-1800000}"),
     "dry_run": "$STRAT_DRY_RUN" in ("1", "true"),
     "job": "${PIPELINE_JOB_NAME:-}",
     "mlflow_experiment": "${MLFLOW_EXPERIMENT_NAME:-}",
@@ -135,6 +139,9 @@ echo "output: $RUN_OUT/stream.jsonl (stderr: $RUN_OUT/claude-stderr.log)"
   export FULLSEND_OUTPUT_DIR="$RUN_OUT/output"
   export RFE_SKIP_BOOTSTRAP=1
   export DISABLE_AUTOUPDATER=1
+  # claude -p waits for background tasks (the Workflow) only up to a ceiling,
+  # 10 minutes by default; a strategy run takes 10-20 minutes.
+  export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS="${STRAT_BG_WAIT_CEILING_MS:-1800000}"
   # Raw output, unprocessed, to files and to the job log at the same time.
   timeout "$((TIMEOUT_MINUTES * 60))" claude --print --verbose --output-format stream-json \
     ${ANTHROPIC_MODEL:+--model "$ANTHROPIC_MODEL"} --effort "${STRAT_EFFORT:-high}" \

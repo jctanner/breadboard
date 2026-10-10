@@ -806,3 +806,35 @@ emulator". S1's first run used `pr-83` unchanged.
   `pipeline-data.json`; both iterations' streams and validation output are
   kept too.
 - **Not checked yet:** whether Observatory received the run's OTel.
+
+### 2026-10-10 — S1, first pristine run (direct slash command, no retry)
+
+Job `script-run-workflow-rhairfe-1-claude-haiku-5-1010-023258-0da910`,
+Breadboard `1899e87`, haiku-5-5, after a full reset. **Failed after 10
+minutes: the Workflow was killed before it finished.**
+
+- `claude -p "/strat-pipeline:strat-pipeline"` started the Workflow and the
+  session **ended its turn after 10 s** ("I'll wait for the completion
+  notification"; 2 turns).
+- `claude -p` then waited for the background Workflow **only up to 10
+  minutes**. stderr: `Background tasks still running 10m after the last turn
+  (workflow …); stopping them. Set CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0 to
+  wait indefinitely.`
+- By then the Workflow had completed create (02:33:51), **refine (02:36:53,
+  which worked this time)**, push (02:36:58), score, and three of four
+  reviewers. It was killed during the architecture review (`task_updated:
+  killed`). There was no `agent-result.json`, so PR #83's checker failed it;
+  `claude` itself exited 0. The locks were released.
+- **Why the earlier run didn't hit this:** fullsend's `strat-single` prompt
+  told the agent not to end its turn while the Workflow ran, and the agent
+  kept polling. A direct launch relies on the CLI's background wait, which
+  has a 10-minute ceiling by default. PR #83's note that "`-p` waits for the
+  workflow" holds only within that ceiling.
+- **Needed for headless Workflow runs:** a longer background-wait ceiling.
+  Decision: `run-workflow.sh` sets `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS` to
+  **30 minutes** (overridable per job with `STRAT_BG_WAIT_CEILING_MS`), not
+  unlimited. A strategy run takes 10–20 minutes. This is a CLI setting;
+  PR #83 is unchanged.
+- **Noise:** the dashboard sets `ANTHROPIC_LOG` to a directory path for API
+  dumps. Claude Code expects a log level there and warns on stderr. The API
+  dumps come from `OTEL_LOG_RAW_API_BODIES` and are unaffected.

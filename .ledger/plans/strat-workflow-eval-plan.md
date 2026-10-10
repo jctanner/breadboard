@@ -896,3 +896,61 @@ attempt in 12 minutes; exit 0.**
   - 213 API-body dumps.
   - Unlike the relay, this source isn't lossy.
 - **Live output:** the job log showed the raw stream throughout (`tee`).
+
+### 2026-10-10 — S2 passes, pristine (PR #80 entrypoint, haiku-5-5)
+
+Job `script-strategy-entrypoint-rhairfe-1-claude-1010-030700-7c3093`:
+strat-creator `eval/pr-80` (`c6fc331`), Breadboard `f17059b`, after a full
+reset. **Passed in 14 minutes; exit 0.**
+
+- **Launch:** script mode ran `.fullsend/scripts/strategy-entrypoint.sh
+  RHAIRFE-1` directly. The entrypoint did everything itself:
+  - cloned the results repository;
+  - loaded the pinned snapshot (the `STRAT_ARCHITECTURE_CONTEXT_PATH`
+    patch worked: "Architecture context copied from local path");
+  - locked RHAIRFE-1;
+  - ran create, refine, push and review as separate `fullsend-claude`
+    calls;
+  - published the results ("Pushed to remote") and released the lock.
+
+  Review used the Agent tool (`[strat-scorer]` and the reviewer
+  sub-agents), which is available here because nothing runs inside a
+  Workflow.
+- **Result:** RHAISTRAT-1 got **revise, 4/8**, the same verdict as S1. All
+  four reviewer verdicts were revise; the central concern was that the
+  strategy assumes Knative revisions where the architecture context points
+  elsewhere.
+- **Jira:**
+  - one RHAISTRAT issue (description 19,481 characters);
+  - **one** review comment ("REVISE (Score: 4/8)");
+  - labels auto-created, auto-refined and needs-attention;
+  - no lock left on RHAIRFE-1.
+- **Results repository:** `admin/strat-workflow-eval-results` moved to
+  `50b89e9`.
+- **Usage, from the job's API dumps:**
+  - 88 model calls, **all `claude-haiku-5-5`** (the `STRAT_MODEL` patch
+    worked);
+  - 173,203 output tokens;
+  - 4,155,436 cache read and 577,651 cache write.
+  - PR #80's `run-claude.sh` renders the stream through its own parser and
+    keeps no raw stream, so there's no `modelUsage` figure from Claude for
+    this arm.
+- **PR #80's own OTel summary was empty:** "No OTEL data collected (log
+  file not found)". Its local collector didn't produce `claude-otel.jsonl`.
+  The cause isn't investigated yet; it may interact with the job's own OTel
+  environment.
+
+**First like-for-like comparison** (one run each, haiku-5-5, RHAIRFE-1, the
+same snapshot and the same reset):
+
+| | S1: Claude Workflow (PR #83) | S2: bash entrypoint (PR #80) |
+| --- | --- | --- |
+| Outcome | passed, single attempt | passed |
+| Wall time | 12 min | 14 min |
+| Verdict | revise 4/8 | revise 4/8 |
+| Jira writes | 1 STRAT, 1 review comment | 1 STRAT, 1 review comment |
+| Output tokens | 147,499 (93,146 thinking) | 173,203 |
+| Cache read / write | 3.67M / 0.60M | 4.16M / 0.58M |
+| Usage source | Claude `modelUsage` ($0.31 list) | API dumps (88 calls) |
+
+These are single runs. The repeats (3 each) are what count.

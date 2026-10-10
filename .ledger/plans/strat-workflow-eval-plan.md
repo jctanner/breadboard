@@ -1233,3 +1233,22 @@ until it was, as intended.
 Checked on **`markov-run-9d30a751`**: while `wait_for_run` is still
 running, markovd has the job name and streams the dashboard job's log.
 That run is the smoke run of record (S1 and S2, three rounds).
+
+**markovd stopped receiving the run's events** (15:50 to 16:22):
+- **Cause:** restarting markovd to deploy the cancel fix gave it a new
+  random callback token. `MARKOVD_CALLBACK_TOKEN` and `MARKOVD_JWT_SECRET`
+  weren't in `pipeline-secrets`. `markov-run-9d30a751`'s runner kept sending
+  the old token, and markovd rejected every event with 401 (Markov doesn't
+  retry them). The page froze at S1's `wait_for_run`, while the run itself
+  finished S1 at 16:13 and moved on to S2.
+- **Fix:**
+  - both values are now in `pipeline-secrets`, the callback token set to
+    the one the runner sends;
+  - `06-create-secrets.sh` keeps them stable: the cluster's value, else
+    `.env`, else a new random one (`8357df0`).
+- **Check:** after S2 round 1 finished at 16:28, the runner's events had no
+  401s and markovd's page followed round 2. Events from 15:50 to 16:22 are
+  missing from markovd's view only; Markov's state and the run's results
+  have them.
+- **Still open:** Markov drops a rejected callback rather than retrying or
+  buffering it, so a markovd outage still loses events.

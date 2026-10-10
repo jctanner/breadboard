@@ -838,3 +838,55 @@ minutes: the Workflow was killed before it finished.**
 - **Noise:** the dashboard sets `ANTHROPIC_LOG` to a directory path for API
   dumps. Claude Code expects a log level there and warns on stderr. The API
   dumps come from `OTEL_LOG_RAW_API_BODIES` and are unaffected.
+
+### 2026-10-10 — Model Relay telemetry is lossy under load
+
+During the S1 runs the relay's `/health` reported `dropped_records: 3901`
+against 449 stored records. Its telemetry queue (1,024 entries, one SQLite
+commit per write) discards writes when full. Inference is unaffected, but
+relay call and token totals so far are **lower bounds**, including the 173
+calls recorded for S1's first run. Recorded as a bug:
+[model-relay-telemetry-drops-under-load](../bugs/open/model-relay-telemetry-drops-under-load.md).
+Until it's fixed, take per-run cost from the API dumps or Claude's `result`
+events.
+
+### 2026-10-10 — S1 passes, pristine (direct slash command, no retry, 30-minute wait ceiling)
+
+Job `script-run-workflow-rhairfe-1-claude-haiku-5-1010-024656-0d35f7`,
+Breadboard `5e57401`, haiku-5-5, after a full reset. **Passed on its single
+attempt in 12 minutes; exit 0.**
+
+- **Launch:** `claude -p --plugin-dir .fullsend/plugins/strat-pipeline "/strat-pipeline:strat-pipeline"`.
+  The session ran 2 turns (13 s), and `-p` waited for the background
+  Workflow within the 30-minute ceiling.
+- **Workflow steps** (cumulative tokens / tool uses / elapsed):
+  - read input;
+  - create: 14k / 2 / 4 s;
+  - refine: 43k / 13 / 27 s;
+  - push: 58k / 16 / 235 s;
+  - score: 72k / 19 / 240 s;
+  - review: 129k / 32 / 299 s;
+  - result: 164k / 51 / 685 s.
+
+  Refine worked first time; it was the step that failed on the very first
+  run.
+- **Result:** `completed`, 1 of 1 strategies reviewed. RHAISTRAT-1 got
+  **revise** (4/8, needs attention), the same verdict as the first run.
+  PR #83's checker: `PASS: result matches the run record, progress,
+  artifacts and scores`. The post step completed, and the locks were
+  released.
+- **Jira:**
+  - exactly one RHAISTRAT issue;
+  - one review comment ("REVISE (Score: 4/8)");
+  - labels auto-created, auto-refined and needs-attention;
+  - no lock left on RHAIRFE-1.
+- **Cost and usage from Claude's own `result` event** (`modelUsage`, which
+  includes the Workflow's agents; list prices):
+  - **$0.31**;
+  - all `claude-haiku-5-5`;
+  - 147,499 output tokens, of which 93,146 were thinking;
+  - 3,666,550 cache read and 596,700 cache write.
+  - API time was 674 s.
+  - 213 API-body dumps.
+  - Unlike the relay, this source isn't lossy.
+- **Live output:** the job log showed the raw stream throughout (`tee`).

@@ -61,7 +61,8 @@ main
    through the dashboard's file API and asserts the seed check passed.
 3. Submit the design's job: the `submit` step calls the workflow
    `submit-{{ test.arm }}` (`submit-workflow.yaml` or `submit-bash.yaml`), each
-   with its full request in the YAML.
+   with its full request in the YAML. `workflow_names` lists both, so Markov
+   rejects an arm without a workflow and markovd draws both as alternatives.
 4. `wait_for_run` is a `job_wait` with `ignore_errors`: a failed job is a
    failed test, recorded rather than raised. A job still running at the
    timeout is stopped before the next run resets Jira.
@@ -126,7 +127,7 @@ Markov run.
 
 Saving results needs markovd's default `pipeline-artifacts` mount
 (`MARKOVD_JOB_VOLUMES` in `deploy/k8s/15-markovd.yaml`). This layout needs
-Markov `7723016` or later, for templated workflow names, `write_file` and
+Markov `2caa232` or later, for `workflow_names`; `7723016` for, for templated workflow names, `write_file` and
 `markov_run_id`, plus: `ignore_errors`,
 `for_each_when`, `vars/`, step descriptions, native expressions in
 `set_fact`, and the `csv` and `seq` filters.

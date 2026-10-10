@@ -80,6 +80,8 @@ steps:
   - name: submit
     description: "Submit the arm's dashboard job: submit-workflow (PR #83) or submit-bash (PR #80)"
     workflow: "submit-{{ test.arm }}"
+    # The arms this step can run; an arm in vars/arms.yaml without its workflow fails here.
+    workflow_names: [submit-workflow, submit-bash]
     register: submitted
 
   - name: set_job

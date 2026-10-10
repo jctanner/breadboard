@@ -1502,3 +1502,31 @@ behaves the same in both designs. The cause isn't settled:
 **A possible change for strat-creator, not for this eval:** give
 reviewers a shared digest of the relevant architecture facts, built once
 per strategy, rather than each agent searching the docs from scratch.
+
+### 2026-10-10 — The architecture-context fix, applied to both designs
+
+**What changed:** one commit, identical on both designs, in the github.local
+strat-creator copy (author `strat-workflow-eval`). It changes
+`scripts/fetch-architecture-context.sh`, the one file behind the
+entrypoint, `pre-strategy.sh` and the review skill (which reaches it
+through `.claude/skills/strategy-common/scripts`).
+- **`eval/pr-80`:** `c6fc331` → **`0287b83`**.
+- **`eval/pr-83`** (new): PR #83 `6b78355` plus the fix → **`1bd7f17`**.
+  Until now S1 ran PR #83 unchanged.
+
+**What the fix does:**
+- `STRAT_ARCHITECTURE_CONTEXT_PATH`, when set, is used on every call,
+  including the review skill's call with no argument.
+- The update path only runs git in a directory that is a clone of its
+  own; a copied snapshot is replaced with a fresh clone.
+
+**Tested** in a throwaway repo:
+- **The old script:** run with no argument after a copy, it deleted
+  `config/` and set `core.sparseCheckout` on the enclosing repo.
+- **The patched script (both branches):** re-copied the pinned snapshot
+  when the variable was set, cloned properly when it wasn't, and left the
+  enclosing repo intact.
+
+`vars/arms.yaml` now pins both designs to the new commits. The haiku smoke
+tier is re-run on them before the opus tier, so the comparison stays like
+for like.

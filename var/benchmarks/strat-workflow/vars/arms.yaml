@@ -8,11 +8,13 @@
 arms:
   workflow:
     description: Claude Workflow (strat-creator PR #83), run by scripts/run-workflow.sh
-    strat_creator_ref: 6b78355ebc450ff4737fd10ba4857c26086ceac0  # pr-83, unchanged
+    # eval/pr-83: PR #83 (6b78355) plus the fetch-architecture-context.sh fix
+    strat_creator_ref: 1bd7f1718c7ed10f2900691c0e9eaea2b8e48e43
   bash:
     description: bash entrypoint (strat-creator PR #80), .fullsend/scripts/strategy-entrypoint.sh
-    # eval/pr-80: PR #80 plus the STRAT_MODEL and STRAT_ARCHITECTURE_CONTEXT_PATH patches
-    strat_creator_ref: c6fc33138320f0c88cf927e2c95eb4f18f9eb3dd
+    # eval/pr-80: PR #80 plus the STRAT_MODEL, STRAT_ARCHITECTURE_CONTEXT_PATH and
+    # fetch-architecture-context.sh patches
+    strat_creator_ref: 0287b838d2bc59a2569cf2dd971aad7ad2d76dad
     repo: https://github.local/opendatahub-io/strat-creator
     # Throwaway results repository PR #80 publishes to; the token is the
     # emulator's development default from deploy/k8s/10-github-emulator.yaml.

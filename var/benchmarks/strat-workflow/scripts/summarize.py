@@ -3,8 +3,8 @@
 
     summarize.py < eval-results.json
 
-Reads a JSON list of eval-results on stdin, each the JSON text check_run.py
-printed (the workflow sends them with script_exec stdin, which has no size
+Reads a JSON list of eval-results on stdin (objects, or the JSON text
+check_run.py printed) (the workflow sends them with script_exec stdin, which has no size
 limit, unlike an argument). Prints a Markdown
 summary: one row per run, then one per test and variant with the pass count,
 median wall time and mean tokens. Ends with one JSON line of totals.
@@ -25,7 +25,7 @@ def thousands(value) -> str:
 
 
 def main(argv: list[str]) -> int:
-    results = [json.loads(text) for text in json.load(sys.stdin) if text and text.strip()]
+    results = [r if isinstance(r, dict) else json.loads(r) for r in json.load(sys.stdin) if r]
     results.sort(key=lambda r: (r["repeat"], r["test"], r["variant"]))
 
     print("## Runs\n")

@@ -55,6 +55,29 @@ steps:
       - "'\"items\": 3' in collected.stdout"
     msg: "expected results for a, b and c"
 
+  - name: templated_call
+    description: "A workflow name chosen at run time: calls workflow 'echo-small'"
+    workflow: "echo-{{ group_name }}"
+    register: templated
+
+  - name: check_templated
+    type: assert
+    that:
+      - "'small' in templated.said.stdout"
+
+  - name: save_result
+    description: "write_file onto the pipeline-artifacts volume, group-writable so the dashboard (uid 1000) can clean it"
+    type: write_file
+    params:
+      path: "{{ artifacts_dir }}/markov-feature-check/{{ markov_run_id }}/result.json"
+      content:
+        run: "{{ markov_run_id }}"
+        collected: "{{ collected.stdout | from_json }}"
+        limit: "{{ limit }}"
+      mode: "0664"
+      dir_mode: "2775"
+    register: saved
+
   - name: approval
     description: "Gate: pauses until resumed with approved=true"
     type: gate

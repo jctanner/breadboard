@@ -39,3 +39,7 @@ dashboard_base: http://pipeline-dashboard.ai-pipeline.svc.cluster.local:5000
 jira_base: https://jira-emulator.ai-pipeline.svc.cluster.local
 jira_user: admin
 jira_token: admin
+
+# Where write_file steps save results: the pipeline-artifacts volume, which
+# markovd mounts into runner pods at the same path as the dashboard.
+artifacts_dir: /app/artifacts

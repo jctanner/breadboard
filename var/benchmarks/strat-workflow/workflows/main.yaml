@@ -55,8 +55,25 @@ steps:
     type: bench_script
     params:
       path: summarize.py
-      stdin: "{{ rounds_done | pluck:'tests_done' | flatten | pluck:'variants_done' | flatten | pluck:'eval.stdout' }}"
+      stdin: "{{ rounds_done | pluck:'tests_done' | flatten | pluck:'variants_done' | flatten | pluck:'eval_result' }}"
     register: summary
+
+  - name: save_summary
+    description: "Keep the summary with the run's results on the artifacts volume"
+    type: write_file
+    params:
+      path: "{{ artifacts_dir }}/benchmarks/strat-workflow/{{ markov_run_id }}/summary.md"
+      content: "{{ summary.stdout }}"
+      mode: "0664"
+      dir_mode: "2775"
+
+  - name: save_results
+    type: write_file
+    params:
+      path: "{{ artifacts_dir }}/benchmarks/strat-workflow/{{ markov_run_id }}/eval-results.json"
+      content: "{{ rounds_done | pluck:'tests_done' | flatten | pluck:'variants_done' | flatten | pluck:'eval_result' }}"
+      mode: "0664"
+      dir_mode: "2775"
 
   - name: review
     description: "Pause for review when review_stop is set; resume with reviewed=true"

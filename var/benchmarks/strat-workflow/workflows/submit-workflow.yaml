@@ -1,0 +1,23 @@
+name: submit-workflow
+description: "PR #83, the Claude Workflow: run-workflow.sh runs pre-strategy.sh, the Workflow once, PR #83's checker and post step, and releases locks"
+
+steps:
+  - name: submit_job
+    type: dashboard_api
+    params:
+      path: /api/jobs/submit
+      method: POST
+      body:
+        script:
+          repo: "{{ breadboard_repo }}"
+          ref: "{{ bench_ref }}"
+          path: var/benchmarks/strat-workflow/scripts/run-workflow.sh
+          args: ["{{ rfe_key }}"]
+        args:
+          model: "{{ run.model }}"
+          mlflow_experiment: "{{ run.mlflow_experiment }}"
+          strace: true
+          extra_env:
+            STRAT_CREATOR_REF: "{{ arm.strat_creator_ref }}"
+            STRAT_ARCHITECTURE_CONTEXT_PATH: "{{ architecture_context_path }}"
+    register: job

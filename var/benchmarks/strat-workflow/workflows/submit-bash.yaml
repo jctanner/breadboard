@@ -1,0 +1,27 @@
+name: submit-bash
+description: "PR #80, the bash entrypoint: its strategy-entrypoint.sh, unchanged apart from the eval patches, from the strat-creator clone"
+
+steps:
+  - name: submit_job
+    type: dashboard_api
+    params:
+      path: /api/jobs/submit
+      method: POST
+      body:
+        script:
+          repo: "{{ arm.repo }}"
+          ref: "{{ arm.strat_creator_ref }}"
+          path: .fullsend/scripts/strategy-entrypoint.sh
+          args: ["{{ rfe_key }}"]
+        args:
+          model: "{{ run.model }}"
+          mlflow_experiment: "{{ run.mlflow_experiment }}"
+          strace: true
+          extra_env:
+            STRAT_MODEL: "{{ run.model }}"
+            STRAT_ARCHITECTURE_CONTEXT_PATH: "{{ architecture_context_path }}"
+            CLAUDE_CONFIG_DIR: /home/pipelineagent/.claude
+            RESULTS_REPO_URL: "{{ arm.results_repo_url }}"
+            RESULTS_GIT_USER: "{{ arm.results_git_user }}"
+            RESULTS_PUSH_TOKEN: "{{ arm.results_push_token }}"
+    register: job

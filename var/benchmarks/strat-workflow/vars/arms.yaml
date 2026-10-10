@@ -1,5 +1,6 @@
-# The two designs under test. The job each one submits is in
-# workflows/run-test.yaml (submit_workflow_arm, submit_bash_arm).
+# The two designs under test. The job each one submits is the workflow
+# submit-<arm> (workflows/submit-workflow.yaml, workflows/submit-bash.yaml),
+# called from run-test with a templated workflow name.
 #
 # Commits are in the local strat-creator copy in the GitHub emulator:
 # unchanged PR baselines on pr-83/pr-80/pr-81, eval patches on eval/* (see the

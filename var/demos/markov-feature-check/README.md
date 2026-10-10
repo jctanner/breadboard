@@ -17,5 +17,8 @@ It also checks:
 - a chained subscript (`groups[group_name].limit`);
 - `failed_when` together with `ignore_errors`;
 - `pluck` and `script_exec` `stdin`;
+- a templated workflow name (`echo-{{ group_name }}`);
+- `write_file` to `/app/artifacts/markov-feature-check/<run>/result.json`
+  (needs markovd's default `pipeline-artifacts` mount), and `markov_run_id`;
 - `vars/*.yaml`;
 - step descriptions.

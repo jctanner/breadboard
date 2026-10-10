@@ -1,0 +1,9 @@
+name: echo-small
+description: "Called through a templated workflow name"
+
+steps:
+  - name: say
+    type: shell_exec
+    params:
+      command: "echo called echo-{{ group_name }}"
+    register: said

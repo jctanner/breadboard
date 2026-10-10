@@ -46,7 +46,9 @@ main
     round               for_each: the tier's tests, for_each_when: only_tests
       test-variants     for_each: variants | csv | default: the test's own
         run-test        seed Jira, submit the design's job, wait, check
-  summarize             summarize.py over every run's eval-result
+  summarize             summarize.py over every run's eval-result; summary.md and
+                        eval-results.json saved to
+                        /app/artifacts/benchmarks/strat-workflow/<markov run id>/
   review                gate (off by default: markovd can't resume a pause yet)
 ```
 
@@ -57,12 +59,15 @@ main
 2. Seed: a dashboard script job runs `seed_scenario.py` at the Breadboard
    commit, and `job_wait` watches it. The run reads the job's `seed.json`
    through the dashboard's file API and asserts the seed check passed.
-3. Submit the design's job (`submit_workflow_arm` or `submit_bash_arm`, chosen
-   by `when`), with its full request in the YAML.
+3. Submit the design's job: the `submit` step calls the workflow
+   `submit-{{ test.arm }}` (`submit-workflow.yaml` or `submit-bash.yaml`), each
+   with its full request in the YAML.
 4. `wait_for_run` is a `job_wait` with `ignore_errors`: a failed job is a
    failed test, recorded rather than raised. A job still running at the
    timeout is stopped before the next run resets Jira.
 5. `check` runs `check_run.py`, which prints the run's eval-result.
+   `write_file` saves it next to the job's artifacts as
+   `/app/artifacts/scripts/<job>/eval-result.json`.
 
 The Markov run fails only when the benchmark itself can't go on, for
 example when seeding fails.
@@ -119,6 +124,9 @@ Markov run.
 - `data/scenarios/` and `data/rfe-templates/`: what the seed job creates in
   Jira.
 
-This layout needs Markov `34fead7` or later, for `ignore_errors`,
+Saving results needs markovd's default `pipeline-artifacts` mount
+(`MARKOVD_JOB_VOLUMES` in `deploy/k8s/15-markovd.yaml`). This layout needs
+Markov `7723016` or later, for templated workflow names, `write_file` and
+`markov_run_id`, plus: `ignore_errors`,
 `for_each_when`, `vars/`, step descriptions, native expressions in
 `set_fact`, and the `csv` and `seq` filters.

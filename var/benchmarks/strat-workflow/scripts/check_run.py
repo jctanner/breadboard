@@ -155,6 +155,7 @@ def main(argv: list[str]) -> int:
         "variant": run["variant"], "model": run["model"], "repeat": run["repeat"],
         "scenario": run["scenario"], "rfe": rfe_key, "job": job_name,
         "strat_creator_ref": run["strat_creator_ref"], "breadboard_ref": run["breadboard_ref"],
+        "markov_run_id": run.get("markov_run_id"),
         "script": job.get("script"), "mlflow_experiment": run["mlflow_experiment"],
         "job_status": job.get("status"), "wait_status": waited,
         "started": job.get("created"), "completed": job.get("completed"),

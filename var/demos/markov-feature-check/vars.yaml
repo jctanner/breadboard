@@ -7,3 +7,7 @@ approved: false
 workflow_source_commit: ""
 # Looked up with a chained subscript: groups[group_name].limit.
 group_name: small
+
+# Where write_file steps save results: the pipeline-artifacts volume, which
+# markovd mounts into runner pods at the same path as the dashboard.
+artifacts_dir: /app/artifacts

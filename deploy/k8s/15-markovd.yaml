@@ -280,6 +280,11 @@ spec:
           value: "/data"
         - name: MARKOVD_PROJECTS_DIR
           value: "/data/projects"
+        # Runner pods mount the pipeline artifacts volume at the same path as the
+        # dashboard and its jobs, so workflows can save results next to job
+        # artifacts (Markov's write_file).
+        - name: MARKOVD_JOB_VOLUMES
+          value: "pipeline-artifacts:/app/artifacts"
         volumeMounts:
         - name: markovd-data
           mountPath: /data

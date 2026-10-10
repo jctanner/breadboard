@@ -1050,3 +1050,16 @@ the checks and the summary.
     was recorded as failed (`finished`), and the run went on to S2 and
     completed.
 - **The Markov job image** was rebuilt with `34fead7`.
+- **markovd's own Markov was stale:**
+  - **The problem:** markovd validates every import and upload with a
+    bundled `markov` binary. Its Dockerfile copies that binary from
+    `checkouts/markovd/bin/markov`, an untracked build from 2026-07-09, so
+    rebuilding markovd never updated it.
+  - **The fix:** `deploy/scripts/05c-build-markovd.sh` now builds that
+    binary from `checkouts/markov` first, so markovd validates with the same
+    Markov the job image runs. markovd was rebuilt and redeployed with it.
+  - **Checked in the pod:** the binary matches the fresh build, and its
+    schema lists `description`, `for_each_when` and `ignore_errors`.
+    Validation now rejects `for_each_when` without `for_each`.
+  - **Re-imported:** project 1 synced and the benchmark re-imported at
+    `769edde`, with 30 files.

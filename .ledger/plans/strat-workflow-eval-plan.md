@@ -1530,3 +1530,27 @@ through `.claude/skills/strategy-common/scripts`).
 `vars/arms.yaml` now pins both designs to the new commits. The haiku smoke
 tier is re-run on them before the opus tier, so the comparison stays like
 for like.
+
+### 2026-10-10 — Re-run: why the first S1 run took 21+ minutes
+
+S1 round 1 of `markov-run-41e56ed5` did a normal amount of work: 125 calls,
+4.53M cache read and 191k output. Generation speed was normal too, about
+210–220 tokens/s while generating. The extra time:
+- **Two relay timeouts:** two calls failed at exactly 120 seconds in Model
+  Relay and were retried, about 4 minutes lost. Relay's upstream timeout
+  defaults to 120s (`SHIM_UPSTREAM_TIMEOUT_SECONDS`, not set in our
+  deployment). Recorded as a bug
+  (`.ledger/bugs/open/model-relay-120s-upstream-timeout.md`).
+- **A few heavy thinking turns:** one took 97s for 23k output tokens (17k
+  thinking), and others 30–50s.
+
+**Before the opus tier:** raise the relay timeout (opus turns run longer),
+and check every run for 120s failures. The first smoke run's times may
+include such stalls too; its relay records weren't checked.
+
+**Evidence loss:** each Markov run's `wipe_at_start` clears the artifacts
+volume, so this re-run deleted the first smoke run's API dumps, strace and
+summary files. The analyses of that run are recorded in this log, and its
+eval-results are still in markovd's run state, but its raw data is gone.
+**Before the next run:** set `wipe_at_start: false` and keep earlier runs'
+artifacts, or archive them first.

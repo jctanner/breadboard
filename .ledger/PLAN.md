@@ -101,6 +101,7 @@ Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 ## Open integration bugs
 
 - [Model Relay drops telemetry records under load](bugs/open/model-relay-telemetry-drops-under-load.md).
+- [Model Relay cuts off upstream calls at 120 seconds](bugs/open/model-relay-120s-upstream-timeout.md)
   Inference is unaffected; relay call and token totals are lower bounds until fixed.
 
 - [Jira component ID references silently ignored](bugs/open/jira-emulator-component-id-ref-ignored.md).

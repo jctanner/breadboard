@@ -3,17 +3,16 @@ description: "strat-creator design benchmark: run a tier's tests in rounds, chec
 
 steps:
   - name: resolve_settings
-    description: "The Breadboard commit the jobs clone from, and the tier's definition"
+    description: "The Breadboard commit the jobs clone from: breadboard_ref, or the commit markovd imported"
     type: set_fact
     vars:
-      bench_ref: "{% if breadboard_ref %}{{ breadboard_ref }}{% else %}{{ workflow_source_commit }}{% endif %}"
-      tier_def: "{{ tiers[tier] }}"
+      bench_ref: "{{ breadboard_ref | default:workflow_source_commit }}"
 
   - name: check_settings
     type: assert
     that:
       - "bench_ref | length == 40"
-      - "tier_def.tests"
+      - "tiers[tier].tests"
     msg: "Needs a pushed 40-character Breadboard commit (breadboard_ref, or workflow_source_commit from markovd) and a tier defined in vars/tiers.yaml"
 
   - name: list_running_jobs
@@ -45,7 +44,7 @@ steps:
 
   - name: rounds
     description: "Every test once per round, so the designs alternate instead of running back to back"
-    for_each: "repeats | default:tier_def.repeats | seq"
+    for_each: "repeats | default:tiers[tier].repeats | seq"
     as: round
     concurrency: 1
     workflow: round
@@ -56,8 +55,7 @@ steps:
     type: bench_script
     params:
       path: summarize.py
-      args:
-        - "{% for r in rounds_done %}{% for t in r.tests_done %}{% for v in t.variants_done %}{{ v.eval.stdout | trim }}\n{% endfor %}{% endfor %}{% endfor %}"
+      stdin: "{{ rounds_done | pluck:'tests_done' | flatten | pluck:'variants_done' | flatten | pluck:'eval.stdout' }}"
     register: summary
 
   - name: review

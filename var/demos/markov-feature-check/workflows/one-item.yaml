@@ -1,0 +1,15 @@
+name: one-item
+description: "One item: fail for b unless allow_b, then echo the item"
+
+steps:
+  - name: maybe_fail
+    type: assert
+    that:
+      - "item.id != 'b' or allow_b"
+    msg: "item b fails until a resume sets allow_b=true"
+
+  - name: emit
+    type: shell_exec
+    params:
+      command: "echo {{ item.id }}-{{ item.weight }}"
+    register: out

@@ -1,0 +1,4 @@
+- name: wait_for_approval
+  description: "Pause until a resume sets approved=true"
+  when: "not approved"
+  action: pause

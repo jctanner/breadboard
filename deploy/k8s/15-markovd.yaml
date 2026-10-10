@@ -95,6 +95,22 @@ spec:
       storage: 5Gi
   storageClassName: local-path
 ---
+# markovd data: project clones (projects/) and one directory per run (runs/<run-id>) with the
+# workflow files and Markov's state database. Runner pods mount their run's directory, so runs
+# have no ConfigMap size cap and can be resumed.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: markovd-data
+  namespace: ai-pipeline
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path
+---
 # PostgreSQL Deployment
 apiVersion: apps/v1
 kind: Deployment
@@ -258,6 +274,15 @@ spec:
           value: "Never"
         - name: MARKOVD_JOB_SECRETS
           value: "pipeline-secrets"
+        - name: MARKOVD_DATA_PVC
+          value: "markovd-data"
+        - name: MARKOVD_DATA_DIR
+          value: "/data"
+        - name: MARKOVD_PROJECTS_DIR
+          value: "/data/projects"
+        volumeMounts:
+        - name: markovd-data
+          mountPath: /data
         resources:
           requests:
             memory: "128Mi"
@@ -301,6 +326,9 @@ spec:
       volumes:
       - name: ui-static
         emptyDir: {}
+      - name: markovd-data
+        persistentVolumeClaim:
+          claimName: markovd-data
       - name: nginx-config
         configMap:
           name: markovd-nginx-config

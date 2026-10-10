@@ -126,7 +126,7 @@ steps:
   - name: set_job
     type: set_fact
     vars:
-      job_name: "{% if test.arm == 'workflow' %}{{ workflow_job.body.job_name }}{% else %}{{ bash_job.body.job_name }}{% endif %}"
+      job_name: "{{ workflow_job.body.job_name | default:bash_job.body.job_name }}"
 
   - name: wait_for_run
     description: "A failed job is a failed test: record it and go on to the checks"

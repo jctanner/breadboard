@@ -1,0 +1,62 @@
+name: main
+description: "No-model check of markovd and Markov features: source commit, fan-out resume, gates, filters"
+
+steps:
+  - name: check_source_commit
+    description: "markovd passes the commit a git-imported workflow came from"
+    type: assert
+    that:
+      - "workflow_source_commit | length == 40"
+    msg: "workflow_source_commit is missing or not a 40-character commit"
+
+  - name: chained_subscript
+    description: "pongo2 patch: a subscript followed by a field"
+    type: set_fact
+    vars:
+      limit: "{{ groups[group_name].limit }}"
+
+  - name: failed_when_and_ignore
+    description: "A succeeding command marked failed by failed_when, then ignored"
+    type: shell_exec
+    params:
+      command: "echo status=bad"
+    failed_when: "'bad' in result.stdout"
+    ignore_errors: true
+    register: marked
+
+  - name: check_marked
+    type: assert
+    that:
+      - "marked.failed"
+      - "limit == 2"
+
+  - name: fan_out
+    description: "Sub-workflow per item; item b fails until allow_b=true, so a resume reruns only b"
+    for_each: items
+    for_each_key: id
+    for_each_when: "item.weight > 0"
+    as: item
+    concurrency: 1
+    workflow: one-item
+    register: done
+
+  - name: collect
+    description: "pluck and flatten over the fan-out results (including items finished before a resume), sent through stdin"
+    type: script_exec
+    params:
+      interpreter: python3
+      path: count_lines.py
+      stdin: "{{ done | pluck:'out.stdout' }}"
+    register: collected
+
+  - name: check_collected
+    type: assert
+    that:
+      - "'\"items\": 3' in collected.stdout"
+    msg: "expected results for a, b and c"
+
+  - name: approval
+    description: "Gate: pauses until resumed with approved=true"
+    type: gate
+    rules:
+      - wait_for_approval

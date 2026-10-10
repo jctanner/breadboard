@@ -1,0 +1,3 @@
+entrypoint: main
+namespace: ai-pipeline
+forks: 2

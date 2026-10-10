@@ -1,0 +1,9 @@
+# Switches the check flips between attempts (overridden on resume).
+# allow_b: item "b" fails until a resume sets it to true.
+allow_b: false
+# approved: the final gate pauses until a resume sets it to true.
+approved: false
+# Set by markovd for git-imported workflows.
+workflow_source_commit: ""
+# Looked up with a chained subscript: groups[group_name].limit.
+group_name: small

@@ -3,7 +3,7 @@ description: "One round: each selected test of the tier, one at a time (every ru
 
 steps:
   - name: tests
-    for_each: tier_def.tests
+    for_each: "tiers[tier].tests"
     for_each_key: id
     for_each_when: "not only_tests or test.id in only_tests | csv"
     as: test

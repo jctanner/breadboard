@@ -1,0 +1,11 @@
+items:
+  - id: a
+    weight: 1
+  - id: b
+    weight: 2
+  - id: c
+    weight: 3
+  - id: skip-me
+    weight: 0
+groups:
+  small: {limit: 2}

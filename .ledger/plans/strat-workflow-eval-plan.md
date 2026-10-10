@@ -1193,3 +1193,43 @@ targets, because the name is resolved at run time.
 
 Checked on the deployed page: both submit workflows are drawn next to
 `run-test`, and the step's details list them from `workflow_names`.
+
+### 2026-10-10 — First smoke runs through markovd
+
+**`markov-run-731ce624`** stopped at the preflight check. The dashboard's job
+list includes markovd's own runner Job, which the check counted as active.
+Fixed in `c404cf6`: only jobs with a phase count.
+
+**`markov-run-d91e2f5b`** (Breadboard `c404cf6`, S1 and S2 on haiku) was
+cancelled to pick up live logging. Before that, it produced one real result.
+
+**S1, round 1 failed** (job `script-run-workflow-all-claude-haiku-5-5-1010-153054-5d8230`,
+6 minutes):
+- **Steps:** create, refine, push and score ran. The haiku scorer helper
+  scored REVISE 4/8 but refused to write its result file, claiming the
+  session forbids writing report `.md` files. Nothing says so.
+- **Knock-on:** without that file, the review helper wrote no review, and
+  `record-review` exited 1 ("review file not found").
+- **Design gap in PR #83:** the Workflow doesn't check `record-review`'s
+  exit code. It took the helper's structured "revise" as the verdict, then
+  `assemble()` reported "review: RHAISTRAT-1 not recorded", with
+  `action: failed`.
+- **Outcome:** PR #83's checker failed the run (`validate_rc 1`), and the
+  locks were released. Jira was left with a pushed strategy but no review
+  comment, which our checks would score as "steps_done" failing. The driver
+  was cancelled before its checks step, so this result is recorded here
+  only.
+
+This is the reliability question the plan asks of the Workflow design: a
+helper agent on a smaller model doesn't follow its instructions, and the
+Workflow doesn't catch the failed step itself.
+
+**Gap found:** cancelling a Markov run removes its runner but not the
+dashboard jobs it submitted. The S2 job submitted at 15:37 kept running and
+had to be stopped by hand. The next run's preflight check refused to start
+until it was, as intended.
+
+**Live logs:** Markov `ea133d5` makes `k8s_job_wait` emit `job_created`.
+Checked on **`markov-run-9d30a751`**: while `wait_for_run` is still
+running, markovd has the job name and streams the dashboard job's log.
+That run is the smoke run of record (S1 and S2, three rounds).

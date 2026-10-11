@@ -1554,3 +1554,169 @@ summary files. The analyses of that run are recorded in this log, and its
 eval-results are still in markovd's run state, but its raw data is gone.
 **Before the next run:** set `wipe_at_start: false` and keep earlier runs'
 artifacts, or archive them first.
+
+### 2026-10-10 — Smoke re-run on the architecture-context fix (markov-run-41e56ed5)
+
+Driven through markovd, 18:04–19:50 UTC, with both designs on the fixed
+commits (`eval/pr-83` `1bd7f17`, `eval/pr-80` `0287b83`), haiku-5-5. The
+summary is in `/app/artifacts/benchmarks/strat-workflow/markov-run-41e56ed5/`.
+
+| Run | Pass | Verdict | Minutes | Calls | Output | Cache read | Cache write |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| S1 r1 (Workflow) | yes | revise 4/8 | 22.8 | 138 | 197k | 4.86M | 745k |
+| S2 r1 (bash) | yes | revise 4/8 | 13.1 | 97 | 152k | 4.42M | 550k |
+| S1 r2 | yes | revise 4/8 | 25.4 | 159 | 320k | 6.94M | 1.26M |
+| S2 r2 | yes | revise 4/8 | 13.5 | 92 | 158k | 4.45M | 651k |
+| S1 r3 | yes | revise 4/8 | 17.1 | 123 | 215k | 4.82M | 777k |
+| S2 r3 | yes | revise 4/8 | 13.3 | 73 | 159k | 3.43M | 611k |
+
+**6/6 passed.** Every run gave the same verdict, revise 4/8. There were no 429s.
+
+**The fix worked** (strace of all six jobs):
+- In five of six runs the review skill ran `fetch-architecture-context.sh`
+  without an argument, and the script fell back to the pinned snapshot
+  (`/app/.context/snapshots/architecture-context/7d61f09…`).
+- No job ran `git sparse-checkout` or cloned the architecture context from
+  GitHub. The only `git clone` was S2's results repository.
+- So the S2 r2 failure mode of the first run is gone, and every run reviewed
+  against the same snapshot.
+
+**Against the first smoke run (`9d30a751`):**
+
+| | S1 before → after | S2 before → after |
+| --- | --- | --- |
+| Passed | 3/3 → 3/3 | 2/3 → 3/3 |
+| Median minutes | 20.0 → 22.8 | 14.4 → 13.3 |
+| Mean calls | 153 → 140 | 89 → 87 |
+| Mean output | 256k → 244k | ~175k → 156k |
+| Mean cache read | 6.74M → 5.54M | ~3.9M → 4.10M |
+
+The gap is the same within the noise of three runs. S1 makes about 1.6×
+the calls of S2 and takes 1.3–1.9× as long.
+
+**Relay timeouts:** two calls failed at exactly 120 s, both in S1 r1
+(18:14 and 18:22). strace shows them: S1 r1's `claude` spent 3.9 minutes
+with neither a model call nor a tool running, against 4–10 s in the other
+runs. Without them S1 r1 would have taken about 19 minutes. One more call
+took 104 s (S1 r2), close to the limit. Relay telemetry also had five
+records stuck at `in_progress`: their final record was dropped
+(see the telemetry drop bug).
+
+**Timing** (`strace_timing.py`, `concurrency.py`): unchanged. Model calls
+run one at a time (average concurrency 1.00–1.08, peak 2), at 7–10 s per
+call. Tools take under a minute per run.
+
+**Where S1's extra calls go** (`conv_breakdown.py`, mean per run, S1 vs S2):
+
+| Agent | S1 | S2 | Difference |
+| --- | --- | --- | --- |
+| Workflow orchestration (main, state read, record-refine, push, check) | ~17 | – | +17 |
+| feasibility reviewer | 27.0 | 9.7 | +17 |
+| architecture reviewer | 18.7 | 11.3 | +7 |
+| testability + scope reviewers | 17.7 | 11.0 | +7 |
+| refine | 22.0 | 19.0 | +3 |
+| scorer | 10.7 | 8.7 | +2 |
+| create | 11.3 | 10.3 | +1 |
+| review wrapper | 16.0 | 17.3 | −1 |
+
+- About a third of the gap is structural: the Workflow's own sessions that
+  read and record pipeline state, which the bash design does in shell.
+- Most of the rest is the reviewers again. The feasibility reviewer is the
+  largest: 31–42 Bash calls in S1 against 8–11 in S2.
+- One outlier: S1 r2's architecture reviewer made 114 Read calls, reached
+  193k context and wrote 508k cache. That alone explains most of r2's
+  25 minutes.
+
+**Architecture-doc requests** (`arch_requests.py`, per run): architecture
+reviewer 88 in S1 vs 42 in S2, feasibility 72 vs 26, refine 45 vs 32.
+- This is the same pattern as before the fix, so the architecture-context
+  bug didn't cause it.
+- The same docs top the list: `kserve.md`, `odh-model-controller.md`,
+  `odh-observability.md` and overlay 0014.
+- Every run in both designs had 3–6 agents fetching the same docs
+  independently.
+- How the requests were made:
+  - S1's feasibility reviewer: 154 `grep` calls over three runs, against
+    52 in S2;
+  - S1's architecture reviewer: 173 Reads, against 45.
+
+**Open question:** why the same reviewer prompts search two to three times
+more in the Workflow arm. Candidates:
+- the reviewers run as Workflow agents rather than as the review skill's
+  subagents;
+- they start in a different working directory;
+- they get a different tool set.
+
+Comparing the first few turns of one reviewer in each design would show
+which.
+
+### 2026-10-10 — Every tool call, from the API dumps; S1 loses reviewer output
+
+**MLflow can't count tool calls.** Each trace covers only a `claude`
+process's top-level conversation, not its sub-agents.
+- S1: two traces per run, with 4–5 tool calls in total (the `Workflow`
+  call plus a few Bash), out of 193–292.
+- S2: one trace per step (round 1 is missing one), 22–33 tool calls, out of
+  117–126. The reviewers are missing because they run as forked skills.
+
+**Script:** `var/benchmarks/strat-workflow/scripts/tool_calls.py`, run
+inside the dashboard pod; `--jsonl` gives one record per call. It records
+each call's agent, turn, time, tool, input, error flag and result head:
+- the `tool_use` blocks come from the assistant turns that later requests
+  carry;
+- `tool_result` comes from the next user turn;
+- a conversation's last response, which nothing carries, answers the
+  latest open request.
+
+Attributing that last response to whoever asked most recently, as
+`conv_breakdown.py` and `arch_requests.py` do, misplaced final calls when
+another agent started in between. Their per-agent numbers above are close,
+but not exact, for that reason.
+
+**Tool calls per run:**
+- S1: 208, 292, 193;
+- S2: 118, 123, 126;
+- errors: 6–10 per S1 run, 3–5 per S2 run, mostly `Glob` "not available"
+  in both, and `ls` on paths that don't exist.
+
+**Finding: S1's reviewers return no review, and get re-run.**
+- S1 runs the review skill inside a Workflow agent whose result has a
+  schema. Every request in that agent and its forked skills offers
+  `StructuredOutput`. Every S1 reviewer request lists 10 tools,
+  `StructuredOutput` among them.
+- A reviewer that finishes by calling `StructuredOutput` (with only
+  `{key, recommendation, needs_attention}`) instead of writing its review as
+  text returns nothing but "Skill execution completed" to the review agent.
+- **Counts:**
+  - S1: 15 empty reviewer results in 3 runs, matching 15 reviewer
+    `StructuredOutput` calls exactly (feasibility 7, testability 3, scope 3,
+    architecture 2);
+  - S2: none of either.
+- **The review agent re-launches the empty reviewers:** 22 reviewer
+  launches in S1 against the 12 needed (10 reruns). S2 launched exactly 12.
+  - Feasibility never returned text in any S1 run;
+  - in round 1, testability and scope didn't either.
+- **Then the review agent writes the missing sections itself.** In S1 r2
+  and r3 it appended `## Feasibility Review` to the review file with
+  `cat >>`. In r1 it used an Edit. The posted review then contains reviewer
+  sections that no reviewer returned, and the eval's checks (one comment,
+  verdict matches label) can't see that.
+- **This explains much of S1's extra cost:** the reruns, and the repeated
+  architecture-doc reads within one "agent". Identical reruns share a
+  conversation key, so S1 r2's "114 Reads" architecture reviewer was three
+  launches, re-reading the same docs (`kserve.md`, `PLATFORM.md` and
+  others 3×).
+  - Identical repeated calls per run: S1's architecture reviewer 22,
+    feasibility 3, and the review agent's skill relaunches 3.
+  - S2: none.
+
+**Consequences:**
+- **A PR #83 defect, independent of model.** Forked skills inside a schema
+  Workflow agent inherit `StructuredOutput`.
+- **Possible fixes on the strat-creator side:**
+  - run the review skill's reviewers with no schema;
+  - have reviewers write to files that the review step reads;
+  - or tell reviewers not to use `StructuredOutput`.
+- **For the eval:** add a check that every reviewer section in the posted
+  review came from a reviewer's own output (or a file it wrote), and count
+  reviewer reruns.

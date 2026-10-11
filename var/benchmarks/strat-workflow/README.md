@@ -122,6 +122,12 @@ Markov run.
   - runner side: `check_run.py`, `summarize.py` and `benchlib.py`;
   - host side: `reset_environment.py`, `selfcheck.sh` and
     `snapshot-architecture-context.sh`.
+  - analysis, run inside the dashboard pod as `python3 - <job>... < script`:
+    `conv_breakdown.py`, `strace_timing.py`, `concurrency.py`,
+    `file_reads.py`, `arch_requests.py` and `tool_calls.py` (every tool
+    call from the API dumps, sub-agents included; `--jsonl` for one record
+    per call). MLflow traces cover only each `claude` process's top-level
+    conversation, so they miss sub-agent tool calls.
 - `data/scenarios/` and `data/rfe-templates/`: what the seed job creates in
   Jira.
 

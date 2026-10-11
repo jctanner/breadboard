@@ -47,3 +47,39 @@ smoke runs ([plan](../../plans/strat-workflow-eval-plan.md)).
 Run a Workflow fan-out (strat-workflow S1 on haiku) and confirm
 `dropped_records` stays 0, or counts only events. The relay's request count
 for the job should then match the job's API dumps.
+
+## Fix (2026-10-10, deployed)
+
+Committed in `checkouts/model-relay` (`src/telemetry.rs`, `src/admin_ui/admin.js`):
+
+- The writer drains up to 512 queued writes and commits them in one
+  transaction. A request's record is rewritten at every streamed usage
+  snapshot, so only its latest copy in a batch is written; events are
+  coalesced by (request, sequence).
+- The queue is unbounded and is limited by count instead. Usage events are
+  dropped above 1,024 pending writes. Request records are dropped only above
+  65,536.
+- `/health` adds `dropped_requests`, `dropped_events`,
+  `last_dropped_at_unix_ms` and `last_storage_error_at_unix_ms`.
+  `dropped_records` remains, as their sum.
+- The console's "Storage needs attention" came from the lifetime
+  `dropped_records` counter, which never resets: 21,538 at 18:30 UTC, still
+  rising during the smoke re-run. The console now warns only about request
+  drops or storage errors in the last 15 minutes.
+
+The console's frozen numbers were a separate bug, also fixed:
+`/telemetry/requests` paged oldest first, so the console's first page, and
+every stat computed from it, was always the same 100 oldest requests. The
+list, summary and export endpoints now accept `order=desc`, and the console
+uses it.
+
+Deployed with `make host-rebuild-relay` at 2026-10-10 23:39 UTC, before the
+opus smoke run (`markov-run-f2f3b733`), together with
+`SHIM_UPSTREAM_TIMEOUT_SECONDS=600` in `deploy/k8s/29-model-relay.yaml`.
+Checked after the restart: the pod has the 600 s timeout; `/health` reports
+the new fields, all drops 0; `order=desc` returns the newest requests first.
+The `checkouts/model-relay` commit (`e80a2af`) is local and not pushed.
+
+Still to verify, as above, once the opus run finishes: drops stay 0 (or
+events only), and the relay's request count per job matches its API dumps.
+Close the bug then.

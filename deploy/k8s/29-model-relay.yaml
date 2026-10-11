@@ -130,6 +130,10 @@ spec:
               value: /run/secrets/model-relay/admin-api-key
             - name: SHIM_DB
               value: /data/telemetry.sqlite
+            # Whole-request upstream timeout, streaming included. The 120 s
+            # default cut off long agent turns; 600 is the maximum.
+            - name: SHIM_UPSTREAM_TIMEOUT_SECONDS
+              value: "600"
             # Opens the 8082 listener for /v1/token exchange of project
             # workload keys. The ID names no registry key on purpose, so the
             # keyless metadata token endpoint on the same port issues nothing.

@@ -37,6 +37,40 @@ and run the checks. Every model call happens in the job pods.
 
 The run refuses to start while any dashboard job is pending or running.
 
+## First tier 2 batch
+
+`tier2-smoke` uses three new eligible RFEs and no existing STRATs. The full
+templates cover workbench culling exemptions, pipeline artifact retention,
+and scheduled feature-store materialization. Their problem statements and
+acceptance criteria describe independent capabilities.
+
+The first run uses these settings:
+
+```yaml
+tier: tier2-smoke
+only_tests: S1
+variants: haiku
+repeats: 1
+wipe_at_start: false
+```
+
+Stop and analyze S1 before separately authorizing the matching S2 run with
+`only_tests: S2`. The tier refuses an empty or multiple-test selection,
+additional repeats, an Opus override, or an initial artifact wipe before
+making service calls. Both designs use their existing pinned commits and
+real skills. S1's wrapper selects native `STRAT_MODE=batch`; S2 receives
+native `batch-discover`. Both receive `BATCH_SIZE=3` and the seed's discovery
+keys in query order through `BATCH_EXPECTED_KEYS`.
+
+The seed job resets **Jira** before each selected test, validates discovery
+against the exact eligible set, and records summaries, description hashes,
+labels, and discovery order in `seed.json`. `wipe_at_start=false` preserves
+artifacts, MLflow, and Observatory; it does not suppress the scenario's Jira
+reset. A live run is a separate action from local implementation/validation.
+
+Tier 1 remains `tier: smoke`, with `smoke-one-rfe`, tests S1–S4, their original
+models and repeats, and the original single-RFE checks.
+
 ## What a run does
 
 ```text
@@ -87,6 +121,22 @@ example when seeding fails.
 | `no_half_done` | no review comment without a refined, pushed strategy |
 | `locks_released` | no `strat-creator-processing` label is left |
 
+For the new batch tier, those checks apply to **every** seeded eligible RFE.
+`batch_complete` also rejects missing items, shared strategies, and orphan
+strategies through the per-item project count checks. Each result contains
+an `items` list of per-RFE facts/checks, and the summary shows each verdict.
+`haiku_only` checks model names across request and response dumps,
+including helper calls, and requires at least one successful response.
+
+`reviewer_outputs_returned` matches reviewer Skill launches to parent
+tool results by tool-use ID across the API dumps, deduplicating repeated
+history. Each strategy needs returned text from feasibility, testability,
+scope, and architecture reviewers. Empty `Skill execution completed`
+acknowledgements fail, and reruns are counted per strategy/role. This
+exposes the known S1 defect while leaving the implementation unchanged.
+Verbatim preservation of those outputs in the published review still needs
+inspection during the post-run analysis.
+
 It also records the following, without pass or fail:
 
 - wall time;
@@ -104,6 +154,7 @@ Relay telemetry is lossy under load, so it isn't used.
 cd var/benchmarks/strat-workflow/scripts
 export DASHBOARD_BASE=https://dashboard.local JIRA_BASE=https://jira.local
 python3 check_run.py '<run json>' <job name> RHAIRFE-1 completed
+python3 check_run.py '<batch run json>' <job name> batch-discover completed '<seed json>'
 ```
 
 `reset_environment.py` does the full reset and seed from the host, with no
@@ -126,10 +177,14 @@ Markov run.
     `conv_breakdown.py`, `strace_timing.py`, `concurrency.py`,
     `file_reads.py`, `arch_requests.py` and `tool_calls.py` (every tool
     call from the API dumps, sub-agents included; `--jsonl` for one record
-    per call). MLflow traces cover only each `claude` process's top-level
+    per call). `context_growth.py` measures each conversation's input
+    context per request using exact `index.jsonl` pairs; `--json` emits
+    the time series, including a separate `primary` conversation for S1.
+    MLflow traces cover only each `claude` process's top-level
     conversation, so they miss sub-agent tool calls.
 - `data/scenarios/` and `data/rfe-templates/`: what the seed job creates in
   Jira.
+- `tests/test_batch.py`: offline fixture, result, and orchestration checks.
 
 Saving results needs markovd's default `pipeline-artifacts` mount
 (`MARKOVD_JOB_VOLUMES` in `deploy/k8s/15-markovd.yaml`). This layout needs
@@ -137,3 +192,18 @@ Markov `2caa232` or later, for `workflow_names`; `7723016` for, for templated wo
 `markov_run_id`, plus: `ignore_errors`,
 `for_each_when`, `vars/`, step descriptions, native expressions in
 `set_fact`, and the `csv` and `seq` filters.
+
+## Offline validation
+
+```bash
+markov validate var/benchmarks/strat-workflow
+MARKOV_BIN=/path/to/current/markov .venv/bin/python -m unittest discover -s var/benchmarks/strat-workflow/tests -v
+bash -n var/benchmarks/strat-workflow/scripts/run-workflow.sh
+git diff --check
+```
+
+The orchestration tests execute a temporary workflow copy with every service
+step replaced by local facts. They exercise both batch selections, guard
+failures, seed-size mismatches, and tier 1's original selection/defaults.
+They make no model calls and do not reset or write Jira. Without `MARKOV_BIN`,
+only the Python outcome/fixture tests run.

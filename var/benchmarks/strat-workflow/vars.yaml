@@ -1,14 +1,16 @@
 # Run settings. Override any of them when starting the run (markovd's run
 # form, or markov run --var key=value).
 
-# Which test list to run (vars/tiers.yaml).
+# Which test list to run (vars/tiers.yaml): smoke or tier2-smoke.
 tier: smoke
-# Only these tests, comma-separated (e.g. "S1,S2"); empty runs the whole tier.
+# Only these tests, comma-separated (e.g. "S1,S2"); empty runs the smoke tier.
+# tier2-smoke requires exactly S1, or separately authorized S2.
 only_tests: ""
 # Run every test under these variants, comma-separated (e.g. "haiku,opus");
 # empty uses each test's own (vars/tiers.yaml, models in vars/models.yaml).
 variants: ""
 # Repeat count; empty uses the tier's.
+# tier2-smoke permits exactly one run.
 repeats: ""
 
 # Breadboard commit the jobs clone their scripts from (run-workflow.sh,
@@ -22,6 +24,7 @@ breadboard_repo: https://github.com/jctanner/breadboard
 # Clear the artifacts volume, MLflow and Observatory once before the first
 # run. Between runs only Jira is reset and seeded, so every run's strace, API
 # dumps and MLflow traces are kept.
+# tier2-smoke requires false to retain previous evidence.
 wipe_at_start: true
 # Pause at the end for review. markovd can't resume a paused run yet; with
 # the CLI, resume with --var reviewed=true.

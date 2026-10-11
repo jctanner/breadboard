@@ -3,6 +3,23 @@
 # (vars/models.yaml). Repeats run in rounds, all tests once and then again,
 # so the designs alternate.
 tiers:
+  tier2-smoke:
+    # Select exactly one design explicitly. S1 first; S2 only after analysis.
+    single_test: true
+    repeats: 1
+    tests:
+      - id: S1
+        arm: workflow
+        variants: [haiku]
+        scenario: batch-three-new-rfes
+        mode: batch
+        batch_size: 3
+      - id: S2
+        arm: bash
+        variants: [haiku]
+        scenario: batch-three-new-rfes
+        mode: batch
+        batch_size: 3
   smoke:
     # One eligible RFE, start to finish, through each design.
     repeats: 3

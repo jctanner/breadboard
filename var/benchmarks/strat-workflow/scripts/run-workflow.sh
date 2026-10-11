@@ -1,7 +1,7 @@
 #!/bin/bash
-# Arm script for the Claude Workflow design (strat-creator PR #83), one RFE.
+# Arm script for the Claude Workflow design (strat-creator PR #83).
 #
-#   run-workflow.sh RHAIRFE-N
+#   run-workflow.sh RHAIRFE-N | batch-discover
 #
 # Runs the design as it is, with nothing between Claude and its output:
 #   1. PR #83's pre-strategy.sh: clone and verify the pinned commit, load the
@@ -37,13 +37,20 @@
 set -uo pipefail
 
 RFE_KEY="${1:-}"
-if [[ ! "$RFE_KEY" =~ ^RHAIRFE-[0-9]+$ ]]; then
-  echo "usage: run-workflow.sh RHAIRFE-N" >&2
+if [ "$#" != 1 ]; then
+  echo "usage: run-workflow.sh RHAIRFE-N | batch-discover" >&2
+  exit 2
+fi
+if [ "$RFE_KEY" = batch-discover ]; then
+  export STRAT_MODE=batch
+elif [[ "$RFE_KEY" =~ ^RHAIRFE-[0-9]+$ ]]; then
+  export STRAT_MODE=single
+else
+  echo "usage: run-workflow.sh RHAIRFE-N | batch-discover" >&2
   exit 2
 fi
 export RFE_KEY
 
-export STRAT_MODE=single
 export STRAT_CREATOR_REF="${STRAT_CREATOR_REF:-6b78355ebc450ff4737fd10ba4857c26086ceac0}"
 export STRAT_CREATOR_REPO="${STRAT_CREATOR_REPO:-https://github.local/opendatahub-io/strat-creator.git}"
 export STRAT_ARCHITECTURE_CONTEXT_PATH="${STRAT_ARCHITECTURE_CONTEXT_PATH:-/app/.context/snapshots/architecture-context/7d61f097a9220aeb1280837b66b532177ec558b6}"
@@ -90,6 +97,7 @@ result = pathlib.Path("$RUN_OUT/output/agent-result.json")
 summary = {
     "arm": "workflow",
     "rfe": "$RFE_KEY",
+    "mode": "$STRAT_MODE",
     "strat_creator_ref": "$STRAT_CREATOR_REF",
     "launch": "claude -p --plugin-dir .fullsend/plugins/strat-pipeline $WORKFLOW_COMMAND",
     "model": "${ANTHROPIC_MODEL:-}",

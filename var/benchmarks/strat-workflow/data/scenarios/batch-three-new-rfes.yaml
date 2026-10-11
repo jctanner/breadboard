@@ -1,0 +1,15 @@
+# F1: three independent capabilities, with no existing strategies.
+# Reuse the full architecture-grounded templates; do not clone one RFE's text.
+description: Three eligible new RFEs covering workbenches, pipeline retention, and feature-store scheduling.
+reset: true
+expected_batch_size: 3
+rfes:
+  - id: workbench-exemption
+    template: workbench-cull-exemption
+    eligible: true
+  - id: pipeline-retention
+    template: dsp-retention
+    eligible: true
+  - id: feature-materialization
+    template: feast-scheduled-materialization
+    eligible: true

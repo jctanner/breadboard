@@ -19,6 +19,8 @@ steps:
           strace: true
           extra_env:
             STRAT_MODEL: "{{ run.model }}"
+            BATCH_SIZE: "{{ run.batch_size }}"
+            BATCH_EXPECTED_KEYS: "{{ batch_expected_keys }}"
             STRAT_ARCHITECTURE_CONTEXT_PATH: "{{ architecture_context_path }}"
             CLAUDE_CONFIG_DIR: /home/pipelineagent/.claude
             RESULTS_REPO_URL: "{{ arm.results_repo_url }}"

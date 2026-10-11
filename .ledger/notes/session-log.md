@@ -297,3 +297,16 @@ RHAISTRAT-17, approve 6/8, published as run `20261008-164143`. The stale
 pre-reset Org Pulse key recovered automatically, and the native trigger
 rebuilt the dashboard (2091) after the results commit. No manual steps.
 Waiting for the B5.2 verdict; next is B5.3 (publish RHAISTRAT-11).
+
+## 2026-10-11 — First strat-workflow tier 2 harness prepared
+
+Implemented the agreed three-RFE F1 scenario and `tier2-smoke`, preserving
+tier 1 and both pinned designs. One selected Haiku design/run per invocation;
+batch completeness, per-item checks, reviewer return evidence, and model
+checks added. Twelve offline tests plus Markov validation, Python compile,
+shell syntax, and diff checks passed. Retained Haiku dump replay catches S1
+lost reviewer outputs and passes S2. No commit, push, sync, Jira write/reset,
+or new model run. Analysis is in the
+[evaluation plan](../plans/strat-workflow-eval-plan.md); the
+[implementation task](../tasks/done/strat-workflow-tier2-three-rfe-smoke.md)
+is complete. Next: separately authorize publication and the single S1 run.

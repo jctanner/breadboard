@@ -34,6 +34,9 @@ def main(argv: list[str]) -> int:
     for r in results:
         u = r.get("usage", {})
         verdict = f"{r['verdict']} {r['score']}" if r.get("verdict") else "–"
+        if r.get("items"):
+            verdict = "; ".join(f"{item['rfe']}: {item.get('verdict', 'missing')} {item.get('score', '')}".strip()
+                                for item in r["items"])
         print(f"| {r['run']} | {r['test']} | {r['arm']} | {r['variant']} | {'yes' if r['pass'] else 'NO'} "
               f"| {', '.join(r.get('failed_checks', [])) or '–'} | {verdict} | {minutes(r.get('wall_seconds'))} "
               f"| {u.get('calls', '–')} | {thousands(u.get('output'))} | {thousands(u.get('cache_read'))} "

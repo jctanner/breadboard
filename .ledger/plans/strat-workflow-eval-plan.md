@@ -73,13 +73,11 @@ Five adjustments:
    fix is to add a real Vertex upstream to Model Relay** and point the eval
    project at it. The jobs and their credentials stay the same; only the
    relay's upstream changes.
-4. **Smoke tests use the real skills; the full tier mostly uses stubs.** A
-   smoke test runs one real RFE with the real create, refine and review
-   skills. PR #83 also ships stand-in versions of those skills that do the
-   bookkeeping (write files, record progress) without real model reasoning.
-   The full tier is about step order and record-keeping across many states,
-   not writing quality, so most of it uses the stubs. They're much cheaper
-   and faster. Real skills come back for a few confirmation runs.
+4. **Smoke and tier 2 baseline tests use the real skills.** The
+   2026-10-11 decision to keep S1 and S2 as-is supersedes the original
+   proposal to use stubs for most of tier 2. PR #83's stand-in skills can
+   still help debug an isolated problem, but replacing skills is not part
+   of the baseline comparison. See the tier 2 baseline policy below.
 5. **Our own checks decide pass or fail, not just the exit code.** A run can
    "succeed" and still post something wrong to Jira. That's how the known
    rfe-autofixer incident happened. After every run, a script reads the run's
@@ -511,6 +509,63 @@ Goal: show the Workflow keeps its records straight across batch sizes and
 the states RFEs are really in. Run it on haiku first to get the scenarios
 and checks right, then on opus for the results that count.
 
+**Tier 2 requirements agreed 2026-10-11:**
+
+- **Distinct RFEs within each batch.** Items must differ substantially in
+  problem, requested capability and acceptance criteria, so agents have no
+  reason to treat them as duplicates. Changing keys or titles on copies of
+  the same RFE is insufficient. Review the seed content for this before
+  running either design; both designs receive the same distinct items.
+- **Smoke runs use haiku**, including helper conversations. Opus is for
+  the subsequent evaluation passes.
+- **One smoke run per scenario per design**, not three repeats. For the
+  S1/S2 comparison this means one run of S1 and one of S2 on each scenario.
+  The completed tier 1 evidence remains as recorded. Repeat counts for
+  subsequent opus passes are a separate decision.
+
+**Execution policy agreed 2026-10-11: one S1 test, then stop and analyze.**
+
+1. Run **one selected batch scenario on S1 only**, once, with real skills
+   on haiku for the smoke pass. Do not automatically run the remaining
+   scenarios, another variant, additional repeats or S2.
+2. Stop and inspect that run: per-item steps and Jira writes, concurrency,
+   failures and reviewer output, token use/cost, and primary/helper context
+   growth. Preserve its raw evidence with `wipe_at_start=false`.
+3. Run the matching S2 test **later, after the user explicitly authorizes
+   it**, once, using the same seed content, starting state, model and
+   architecture snapshot. Record any intervening harness change that
+   affects comparability instead of silently replacing the S1 result.
+4. Decide on the next scenario or larger batch only after reviewing the
+   completed results. The scenario catalog and proposed opus repeats below
+   describe possible coverage, not a queued sweep or blanket run approval.
+
+**Selected first case:** F1 with three new, substantially different RFEs.
+This exercises actual batch concurrency with simple starting states before
+adding resume or fault injection. The user authorized local implementation
+on 2026-10-11; implementation evidence is recorded below. No live run has
+been launched by this update.
+
+**Baseline policy agreed 2026-10-11: keep S1 and S2 as-is.**
+
+- Use the existing pinned eval commits (`1bd7f17` S1, `0287b83` S2),
+  including their already-recorded evaluation patches. Add no new changes
+  to either implementation or its skills for tier 2 unless absolutely
+  necessary to restore critical functionality that blocks the evaluation.
+- Use **real skills for both the haiku smoke and opus baseline passes**.
+  Substituting stub skills would be a separate diagnostic variant, not an
+  as-is comparison; this supersedes the original stub-based T2a/T2b design.
+- Extend the benchmark harness to seed distinct RFEs and starting states,
+  inject external Jira failures, capture evidence and check outcomes. Run
+  each design through its own reference entrypoint without replacing its
+  orchestration, output handling, retries or resume behavior.
+- Measure existing defects, including S1's reviewer-output loss. Stronger
+  checks expose a defect; they do not require fixing it before testing.
+  Distinguish design failures from failures of the benchmark itself.
+- If a critical repair becomes necessary, first document why the baseline
+  cannot be evaluated, preserve its evidence, and record the patch and
+  exact new commit. Results from the repaired variant must be identified
+  separately from the original baseline.
+
 **Scenarios** (each one is a Jira seed plus, where needed, a leftover
 progress file from a "previous run"):
 
@@ -535,17 +590,22 @@ progress file from a "previous run"):
   Ten is the size where small per-step failure rates start to add up: a
   batch of 10 makes about 34 agent calls, 24 of which must not fail.
 
-**Runs:**
+**Runs:** smoke repeats are agreed; each scenario/design is launched
+separately under the execution policy above. Opus repeats below remain
+proposed for review after the smoke results.
 
 | Pass | Skills | Model | Repeats | Purpose |
 | --- | --- | --- | --- | --- |
-| T2a | stub | haiku | 1 | Get the scenarios, seeds and checks right |
-| T2b | stub | opus | 3 | The main evidence: every scenario and batch passes every check, three times |
-| T2c | real | opus | 3 | Confirmation on the scenarios that matter most: F1, F3, F6 and one batch of 3 |
+| T2a | real | haiku | 1 | Get the scenarios, seeds and checks right, once per scenario per design |
+| T2b | real | opus | 3 proposed | Main baseline evidence across scenarios and batches |
+| T2c | real | opus | 3 proposed | Optional additional confirmation on F1, F3, F6 and one batch of 3, if T2b leaves a question open |
 
-**Tier 2 passes** when T2b and T2c pass every check on every repeat. Any
+**A design passes tier 2** when its main evaluation runs satisfy the
+applicable checks on every repeat. A failed check is a result to explain,
+not an instruction to patch the implementation until it passes. Any
 failure gets a written explanation from that run's files: transcript,
-strace, API dumps and progress file.
+strace, API dumps and progress file. T2c is needed only if additional
+confirmation is authorized after reviewing T2b.
 
 ## A/B comparisons
 
@@ -601,8 +661,9 @@ close, extend towards 45. Comparing three variants at once needs more
 (about 56), because there are more pairs to compare.
 
 **A first A/B to run,** after tier 1:
-- **Reliability:** T2b's scenarios on stub skills, `opus` vs `haiku`.
-  Cheap, and it answers "can haiku drive the Workflow?"
+- **Reliability:** T2b's scenarios with the real skills, `opus` vs `haiku`.
+  A separate stub-based diagnostic variant could isolate handoffs, but is
+  outside the as-is baseline comparison.
 - **Quality and cost:** 10 real RFEs × 3 repeats, `opus` vs `haiku`, scored
   by the fixed opus judge. About $300–400 for the opus side, a small
   fraction of that for haiku, plus about $2–4 per strategy for judging.
@@ -623,8 +684,11 @@ close, extend towards 45. Comparing three variants at once needs more
 
 ## Rough cost and time
 
-These are estimates. Heavy 429s from the account would make the runs take
-longer.
+These are the original estimates. The tier 2 rows below assumed stub
+passes and a separate real-skill confirmation pass; they are superseded
+by the 2026-10-11 as-is baseline policy. Re-estimate tier 2 after selecting
+the real-skill scenario set and opus repeats. Heavy 429s from the account
+would make the runs take longer.
 
 | Part | Runs | Model cost (list price) | Time (one at a time) |
 | --- | --- | --- | --- |
@@ -638,6 +702,11 @@ The PR measured its stub run at $3.39 for 2 strategies. Production pays
 about $8 per RFE with real skills on opus.
 
 ## Stops for review
+
+**Current tier 2 policy:** stop after each individual run. In particular,
+review the first S1 batch result before authorizing the matching S2 run;
+do not wait for a whole tier or A/B pair before analysis. The historical
+tier-level gates below do not override this requirement.
 
 Stops 2–5 are gates in the Markov workflow: the run pauses at
 `markovd.local` and resumes when you approve. Stop 1 comes before the
@@ -1878,3 +1947,486 @@ the other way round) would separate them.
 - **For conclusive timing and token comparisons,** run 4 or more per
   design (or more scenarios). 4 is the smallest n at which the
   Mann–Whitney test can reach p < 0.05 (minimum 0.029; 0.008 at n = 5).
+
+## Reviewer output contract: same in both designs; S1 breaks it
+
+Read from the pinned strat-creator commits (`1bd7f17` S1, `0287b83` S2).
+All five review skills are identical in both. The only differences are
+PR #83's `--scores-from` mode in `strategy-review` and the
+architecture-context fetch script.
+
+**The intended contract: reviewers return prose as text, and the
+orchestrator writes the file.**
+- **Each reviewer skill** (`strategy-{feasibility,testability,scope,architecture}-review`)
+  is `context: fork` with `allowed-tools: Read, Grep, Glob`: read-only, no
+  Write, Bash or `StructuredOutput`. Its `## Output` section is a markdown
+  block (`### STRAT-NNN: <title>`, one bold field per dimension,
+  `**Recommendation**: …`). Nothing asks it to write a file or return JSON.
+- **`strategy-review`:**
+  - Step 6 invokes the four reviewers with the Skill tool.
+  - Step 7, "Write Prose to Review Files", fills
+    `artifacts/strat-reviews/{id}-review.md` with "the prose from all four
+    reviewers", plus Agreements and Disagreements.
+  - It then sets `reviewers.*` from each reviewer's own verdict.
+  - The orchestrator is the only writer, and it works only from what each
+    fork returns.
+- **PR #83's own smoke fixtures** (`tests/fixtures/workflow-smoke/skills/strategy-*-review/SKILL.md`)
+  also return text: "Reply with exactly these two lines…".
+  `tests/test_strat_pipeline_workflow.py` checks only that the review file
+  exists, not its content. The stubs also say "Do not use any tool". So
+  PR #83's tests can't catch the defect.
+
+**Where S1 departs.**
+- **The schema:** `workflows/strat-pipeline.js` runs the review step as
+  `agent(…, { schema: VERDICT })`, with
+  `VERDICT = {key, recommendation, needs_attention}`. That is the review
+  step's own answer, the output of `record-review`.
+- **The leak:** Claude Code also offers the matching `StructuredOutput` tool
+  inside the forked reviewer skills, with "You MUST call this tool exactly
+  once at the end".
+- **The tool lists in the API dumps:**
+  - S1 reviewer requests (haiku and opus): Bash, Edit, ListAgents, Read,
+    ReportFindings, Skill, **StructuredOutput**, ToolSearch, Write.
+  - S2: the same set with **Agent** in place of `StructuredOutput`.
+- **The effect:** a reviewer that obeys ends its fork with JSON in place of
+  its Output block, and Step 7 has no prose to write. Haiku obeyed in 15 of
+  22 launches and opus in 12 of 12. Haiku then reran the reviewers, and
+  opus wrote the reviews itself.
+- **This is a leak from the Workflow into a skill with its own output
+  contract,** not intended behaviour in either design.
+
+**Skill settings that neither design honours:**
+- **`allowed-tools` doesn't restrict.** Reviewers were offered Bash, Write
+  and Edit, and used `ls` freely in both designs. In Claude Code it
+  pre-approves the listed tools; it doesn't remove the others.
+- **The reviewer skills' `model: opus` is ignored.** In the haiku runs,
+  every reviewer request in both designs went to `claude-haiku-5-5`. So the
+  haiku tier never had the opus reviewers the skills ask for. This affects
+  haiku-versus-opus comparisons, not S1 versus S2.
+
+**Fixes, for PR #83:**
+1. **Drop the schema from the review step** (keep it elsewhere). Parse
+   `record-review`'s JSON from the agent's plain-text reply.
+2. **Or tell reviewers explicitly** not to call `StructuredOutput` and to end
+   with their Output block as text. This is fragile: it relies on the model
+   obeying it over the tool's "MUST".
+3. **Or have reviewers write their blocks to files** that Step 7 reads. This
+   changes the skill contract for both designs.
+
+Whichever fix is chosen, PR #83's smoke test should assert that the posted
+review contains each stub reviewer's line (`feasibility review of KEY`, and
+so on).
+
+## Did the haiku runs predict the opus outcomes?
+
+Haiku was used to set the benchmark up. It was a good shakedown, but a poor
+proxy for the S1-versus-S2 comparison: its large S1 overhead turned out to
+be haiku-specific.
+
+| Question | Haiku (markov-run-41e56ed5) | Opus (markov-run-f2f3b733 + 5884ad2a) | Predicted? |
+| --- | --- | --- | --- |
+| Both designs complete and pass the checks | 6/6 | 6/6 | Yes |
+| S1 loses reviewer output | 15 of 22 reviewer launches empty | 12 of 12 | Yes: found the defect, but understated how severe it is |
+| What S1 does about it | Reruns the reviewers (10 reruns) | Review agent writes the reviews itself; no reruns | No |
+| Wall time, S1 vs S2 (mean) | 21.8 vs 13.3 min (S1 1.6× slower) | ~25 vs ~25 min less the relay cuts | No: the gap was haiku's reruns |
+| Model calls, S1 vs S2 | 140 vs 87 (+60%) | 106 vs 91 (+16%) | Direction right, size wrong |
+| Tool calls, S1 vs S2 | 231 vs 122 (1.9×) | 182 vs 159 (1.15×) | Direction right, size wrong |
+| Output tokens, S1 vs S2 | 244k vs 156k | 63k vs 62k | No |
+| Score / verdict | revise 4/8 in all 6 runs | 5–7/8 | No: zero variance, nothing to compare |
+| Concurrency | 1.0 | 1.0 | Yes |
+| Relay 120 s cuts | 2 cuts; bug filed predicting opus would exceed 120 s | 13 cuts | The risk, yes. But haiku rarely writes long enough to show the 600 s fix didn't reach managed accounts |
+| Account usage limit | No sign of it | 429s after ~610 opus calls | No |
+
+**What haiku was good for:**
+- **Validating the harness:** seeding, submission, the checks, evidence
+  capture (API dumps, strace, MLflow), and the analysis scripts.
+- **Finding problems cheaply,** at 13–25 minutes a run:
+  - the architecture-context fetch bug;
+  - the relay telemetry drops and the console that never moved past the
+    oldest requests;
+  - the 120 s timeout;
+  - the reviewer `StructuredOutput` defect.
+
+  All of them carried over to opus.
+- **Showing which way the effects go:** S1 makes more calls and loses
+  reviewer output. Both held on opus.
+
+**Where haiku misled:**
+- **What a model does after a failure is model-specific.** The defect is
+  the same, but the cost differs. Haiku's numbers said "S1 is 60% slower";
+  the real problem is that S1's posted reviews aren't the reviewers'. Opus
+  hides that better, which is worse.
+- **No quality signal.** Every haiku run scored 4/8, which separates
+  neither designs nor runs. The reviewer skills' `model: opus` was ignored,
+  so the haiku runs didn't use the reviewers the skills intend.
+- **Opus-only infrastructure limits:** long single turns that hit the 120 s
+  cut, and the account usage limit.
+
+**For future tiers:**
+- Use haiku to shake out the harness and find mechanisms. Don't use it to
+  measure time, cost or quality differences between designs.
+- When haiku surfaces a defect, check how each model behaves *after* the
+  failure, not only whether it happens.
+- Run one short round on the target model early. It would have caught the
+  timeout and usage-limit problems before a full tier, for about one
+  round of calls.
+
+## How much confidence do 3 runs buy? Control flow vs handoffs
+
+**Cost of the opus A/B test** (3 runs per design, failed attempt excluded):
+- Job time 2 h 56 min (S1 80.9 min, S2 95.3 min); about 26 min of it was
+  relay 120 s cuts.
+- Tokens: 591 calls, 3.48M cache write, 22.94M cache read, 374k output.
+- **$42.54 at Opus 4.6 list prices** (platform.claude.com pricing:
+  $5/M input, $6.25/M 5-minute cache write, $0.50/M cache read, $25/M
+  output):
+  - S1 $20.84, S2 $21.70, about $7 per run;
+  - all cache writes were 5-minute, and all calls ran `inference_geo:
+    global` on the standard tier, so no multipliers apply.
+- The haiku A/B test would have cost $2.77 at Haiku 5.5 rates.
+
+**Statistical power at n = 3 per design.** A two-sample test with 80% power
+at p < 0.05 detects only differences of about 3 sd. S2 is not
+deterministic: every step is an agent, and S2 varied more than S1 (wall
+time sd 7.0 vs 2.2 min, model calls sd 7.0 vs 1.7).
+
+| Question | Detectable with 3 per design | Runs per design needed |
+| --- | --- | --- |
+| S1 loses reviewer output | Settled: 12/12 vs 0/12 (P = 0.0002 even if the true rate were 50%) | 3 |
+| Cost per run (sd $0.43) | Only a gap of $1.33 or more (~19%) | ~8 for 10%; ~25 for 5% |
+| Wall time, relay fixed (sd 0.8 min) | Only a gap of 2.4 min or more | 3 for 2.5 min; ~8 for 1.25 min |
+| Wall time, with cuts (sd 5.2 min) | Only a gap of 16 min or more | ~18 for 5 min; ~69 for 2.5 min |
+| Model calls (sd 5.1) | Only a gap of 16 or more | ~6 for 10; ~18 for 5 |
+| Quality score (sd 0.8 of 8) | Only a gap of 2.5 points or more | ~12 for 1 point; ~43 for 0.5 |
+| Reliability | 3/3 passes bounds the pass rate at ≥ 37% | 10/10 → ≥ 74%, 30/30 → ≥ 90%, 60/60 → ≥ 95% |
+
+- Fixing the relay cuts does more for timing than extra runs: at the same
+  2.5-minute sensitivity it takes the runs needed from ~69 per design to 3.
+- The single scenario (one RFE) limits generalisation more than the
+  repeat count does. For cost and quality, use 4–5 RFEs × 2 designs × 2
+  repeats, analysed as pairs.
+
+**S1's control flow is deterministic too; its handoffs are not.**
+- **The control flow:** `workflows/strat-pipeline.js` is plain JavaScript
+  (branches, loops, `parallel`/`pipeline`, failure handling).
+- **The handoffs:** every value it branches on is first read and
+  transcribed by a model. S2 runs the same scripts directly and reads
+  their output and exit codes.
+
+| Handoff | S2 (bash) | S1 (Workflow) |
+| --- | --- | --- |
+| Read the run's input state | Runs `strat_pipeline_state.py read` | An agent is told to "run … `read` once and return the JSON it prints, field for field" (`schema: READ`, `effort: low`) |
+| Record create, refine, review | Script exit code and files | An agent runs `record-create` / `mark refine` / `record-review` and relays the output through `StructuredOutput` |
+| Push to Jira | Runs `push_refined_strategies.py` | An agent runs it once, checks the exit code, returns `{"recorded": "none"}` on failure |
+| Final result | Script | An agent runs `result --failed …` and `fullsend-check-output`, then reports the exit status |
+
+- **The extra surface:** both designs share the probabilistic work
+  (create, refine, scorer, reviewers). S1 adds about 7 model-mediated
+  handoffs per RFE for what is script execution in S2: the ~18 plumbing
+  calls per run.
+- **The reviewer defect comes from this mechanism.** The review handoff's
+  `StructuredOutput` tool leaked into the forked reviewers.
+- **What zero failures rules out:** S1's reliability is the product of its
+  handoff success rates. Zero failures in n handoffs bounds the
+  per-handoff failure rate at about 3/n (95%):
+
+| Evidence | Per-handoff failure, upper bound | Per run (7 handoffs), upper bound |
+| --- | --- | --- |
+| 3 opus S1 runs (21 handoffs, none failed) | 13% | 63% |
+| All 12 S1 runs, haiku and opus (84 handoffs) | 3.5% | 22% |
+| 100 clean runs (700 handoffs) | 0.4% | 3% |
+
+  A batch of 10 RFEs has ~33 handoffs per run, so the risk compounds.
+
+**Measure reliability with the right instrument, not more A/B runs:**
+1. **Test the handoffs on their own.** The read, push and result steps are
+   `effort: low` agents running one script. Hundreds of isolated trials per
+   model, at cents each, give transcription and schema failure rates
+   directly. So does record-review with the full review step, where the
+   defect was.
+2. **Fault-inject `strat-pipeline.js` with stubs,** as PR #83's smoke test
+   does: script failures, wrong keys, empty results. Assert the posted
+   review's content, not just that the file exists. That tests S1's
+   orchestration as deterministically as S2's bash.
+3. **Keep full A/B runs for end-to-end cost, time and quality:** 8 or more
+   per design, or a paired set across several RFEs.
+
+**A design question for PR #83:** if Workflow scripts can run a command
+directly, the read, push and result steps need no agent. That would remove
+most of S1's extra probabilistic surface. Whether the Workflow API offers
+this hasn't been checked.
+
+## 2026-10-11 — Context growth: S1's primary session stays around 30k tokens
+
+Reconstructed from existing evidence; no new benchmark runs. The primary
+Claude session is the one that invokes `Workflow`. The JavaScript Workflow
+coordinates its helper agents without a model conversation of its own.
+Each helper and forked skill has a separate model conversation.
+
+**Measurement:** each request's input context is
+`input_tokens + cache_read_input_tokens + cache_creation_input_tokens`
+from its response's usage. This includes system instructions, tool
+definitions, message history and cached input. It is a per-request size,
+not the sum of token usage across requests or the model's window capacity.
+See [Anthropic's token accounting](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#tracking-cache-performance).
+The final completion is reported separately because there is no subsequent
+request measuring the retained conversation after that completion.
+
+**Attribution:** `index.jsonl` pairs each request with its actual response;
+response IDs were validated. All conversations within each job share a
+session ID, so that ID alone cannot separate agents. The analyzer groups
+by system/task prompt and shared tool-use history, splitting identical
+reviewer prompts when a new fork starts with a fresh history. The primary
+is identified by its explicit Workflow invocation instructions. Requests
+without indexed responses are counted separately, without inventing token
+sizes. There are 738 indexed pairs across the six S1 smoke runs; the two
+unindexed requests belong to a refine fork and a scope reviewer. None
+belongs to a primary session.
+
+### Opus: three S1 smoke runs
+
+| Round (job suffix) | Primary calls | First input | Last/peak input | Net growth | First-to-last request span | Net tokens/minute |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 (`1010-234154-2647bf`) | 5 | 24,100 | 29,903 | 5,803 | 23.96 min | 242 |
+| 2 (`1011-003101-159e0e`) | 6 | 24,103 | 30,311 | 6,208 | 26.93 min | 231 |
+| 3 (`1011-013249-74e51a`) | 5 | 24,103 | 30,066 | 5,963 | 28.19 min | 212 |
+
+The final replies add 241, 192 and 202 output tokens respectively. Last
+input plus final output is therefore 30,144 / 30,503 / 30,268 tokens.
+No primary input drops or compaction markers were found, and the three
+job streams have **zero `compact_boundary` events**.
+
+**Growth happens in bursts, not continuously with the pipeline's work:**
+
+| Primary request | What has arrived | Input, round 1 | Input, round 2 | Input, round 3 |
+| --- | --- | --- | --- | --- |
+| 1 | Initial instructions and tool definitions | 24,100 | 24,103 | 24,103 |
+| 2 | Workflow launch acknowledgement | 24,758 | 24,774 | 24,766 |
+| 3 | Workflow completion notification | 25,621 | 25,589 | 25,586 |
+| 4 | Read of Workflow task output and initial result-file check | 29,612 | 29,604 | 29,630 |
+| 5 | Artifact/progress checks | 29,903 | 29,869 | 30,066 |
+| 6 | Further progress-file check, round 2 only | — | 30,311 | — |
+
+- Request 2 to request 3 spans **23.71 / 26.64 / 27.93 minutes** with
+  no primary-agent model calls. The helpers do the pipeline work there.
+- The completion notification is about 2,200 characters and carries
+  `{"action":"completed","check_exit":0,"failed":[]}` plus diagnostics
+  and paths. The primary does not receive the helpers' full conversations.
+- All three primary sessions then read the Workflow's task output file
+  (`tasks/<workflow-task-id>.output`). The Read result is about 9,970
+  characters of Workflow state/logs. This transition adds **3,991 / 4,015 /
+  4,044 tokens**, including the preceding assistant output and other tool
+  results; that is roughly two-thirds of total net context growth.
+- Net growth per request transition averages **1,451 / 1,242 / 1,491
+  tokens**. The elapsed-time rates above mostly measure waiting, so they
+  should not be extrapolated as a steady accumulation rate.
+
+### The other windows are independent and much larger
+
+Peak input tokens for opus S1:
+
+| Conversation | Round 1 | Round 2 | Round 3 |
+| --- | --- | --- | --- |
+| Primary | 29,903 | 30,311 | 30,066 |
+| Refine helper | 13,769 | 13,737 | 13,779 |
+| Forked refine skill | 103,874 | 110,542 | 106,377 |
+| Review helper | 81,173 | 47,357 | 57,958 |
+| Feasibility reviewer | 107,810 | 74,672 | 77,228 |
+| Architecture reviewer | 105,770 | 108,436 | 50,484 |
+| Scorer | 44,472 | 80,179 | 54,978 |
+
+This is evidence that S1's delegation keeps the **primary** context small
+for single-RFE jobs. It does not reduce the helpers' own context pressure,
+and it does not establish batch scaling. A larger batch can grow the
+Workflow's result/state file if the primary reads it; tier 2 should measure
+that file and these windows separately.
+
+**Haiku reference only:** the three primary sessions start at 21,147
+tokens and finish at 27,495 / 29,537 / 28,415 (6 / 7 / 6 calls). No input
+drops or primary compaction markers appear. A haiku architecture reviewer
+reaches 192,798 input tokens, while that run's primary stays below 30k.
+
+**Reproduction:** `scripts/context_growth.py` in the benchmark runs inside
+the dashboard pod like the other analysis scripts; `--json` emits each
+conversation's per-request timestamps, input sizes, growth and exact dump
+filenames. Its synthetic validation checks exact pairing despite shuffled
+index order, cache-inclusive sizing, independent windows with a shared
+session ID, repeated forks, missing responses and response-ID rejection.
+All six real S1 jobs were analyzed. A chart and primary-request CSV were
+generated at `/tmp/strat-primary-context.{png,svg,csv}` in this session;
+these scratch files can be regenerated from the durable API dumps.
+
+### Process boundary: no separate JavaScript exec at Workflow launch
+
+Checked every strace file in all three opus S1 jobs. Each job has one
+successful execution of `/usr/local/bin/claude`, with no execution of
+`node`, `nodejs`, `bun`, `deno`, `qjs`, `quickjs`, `jsc` or `d8`, and no
+`execveat` calls. The additional `claude.exe` executions are bundled
+search utilities (`argv[0]` is `rg`, `ugrep` or `bfs`), not helper-agent
+sessions or Workflow JavaScript workers.
+
+Concrete sequence for round 1 (`1010-234154-2647bf`), UTC:
+
+- **23:42:09.447234:** PID 148 successfully execs `/usr/local/bin/claude`.
+  This is that PID's only successful exec in the complete trace.
+- **23:42:09.539873 / .540892:** thread 148 creates thread 152, which
+  creates thread 153. Both `clone3` calls use `CLONE_THREAD|CLONE_VM`;
+  these are threads sharing the Claude process, not separate processes.
+- **23:42:09.994151:** thread 148 opens the plugin's
+  `workflows/strat-pipeline.js`.
+- **23:42:15.164125:** thread 153 creates the run-specific copy under
+  `workflows/scripts/strat-pipeline-wf_4bd49684-2da.js`, immediately after
+  the first model response calling `Workflow` (23:42:15.159).
+- The model gets the launch acknowledgement, then makes no primary calls
+  until the Workflow completes. The same launch/file-write pattern appears
+  in rounds 2 and 3.
+
+**Interpretation:** the primary model hands control to the Workflow tool;
+the JavaScript is executed by Claude Code's existing runtime. The trace
+does **not** show a shell-style `execve("node", ["node", "workflow.js"], …)`
+handoff. Strace establishes the process boundary, but cannot identify the
+particular internal evaluator, isolate or JavaScript engine. Logical
+conversation separation does not imply a separate OS process per agent.
+
+### The primary agent sees a background task, with completion pushed to it
+
+From the primary model's perspective, invoking `Workflow` resembles
+delegating to a background subagent: it receives a task ID, a status and,
+later, a result. The implementation behind that interface is JavaScript
+coordinating several helper conversations inside Claude Code's runtime.
+
+The three opus S1 runs show this sequence:
+
+1. The primary calls `Workflow({name: "strat-pipeline:strat-pipeline"})`.
+2. The tool returns **"Workflow launched in background"**, with a task ID
+   and transcript path. The primary ends its turn and waits.
+3. The runtime sends a **completion notification**, containing the task ID,
+   `status: completed`, the result and diagnostic paths.
+4. The primary reads the Workflow output and checks the artifacts.
+
+**The primary does not poll in these runs.** There are no primary model
+calls between the launch acknowledgement and completion notification.
+The evidence supports an asynchronous task in the existing runtime, rather
+than a model repeatedly checking status or a Workflow tool call that blocks
+until the whole pipeline finishes. The CLI stays alive awaiting background
+work even though the primary model has ended its turn.
+
+**There is no measured growth curve during polling, because no polling
+occurred.** Input context moves from about 24.8k after launch to 25.6k on
+completion: that transition adds only 815–863 tokens, including the
+preceding assistant reply. The noticeable jump comes after completion,
+when reading the Workflow output adds 3,991–4,044 tokens and takes the
+primary to about 29.6k. Final artifact checks bring it to 29.9–30.3k.
+The gap without primary model calls provides no intermediate context
+measurements; it should not be presented as continuous sampled growth.
+
+This explains the small primary context: it receives the launch response,
+completion notification and any output it chooses to read. The helpers'
+full conversations remain separate. These observations describe the three
+opus smoke runs; they do not establish that every Workflow invocation must
+use this waiting behavior.
+
+## 2026-10-11 — Relay timeout fix deployment verified
+
+The user rebuilt and redeployed Model Relay. Read-only checks confirm:
+
+- Pod `model-relay-55bcd9875f-n9tmb` started at **11:55:42 UTC**, is ready
+  and has zero restarts.
+- The running environment has `SHIM_UPSTREAM_TIMEOUT_SECONDS=600`.
+- The health endpoint's build ID,
+  `2a27f2b3251e389bb7bacefff579c4eb5a781957c48cb169e92bc3658f4c7550`,
+  matches the Dockerfile's source fingerprint recomputed from the clean
+  checkout at **`59d6f06`**. The managed-account timeout fix is deployed.
+- Private health reports zero dropped requests, dropped events and storage
+  errors, but `last_persisted_at_unix_ms: 0`: there is no new runtime
+  evidence since the restart.
+
+**No further rebuild is required.** On the next authorized run, verify
+successful managed-account streams beyond 120 seconds, absence of errors
+at the old cutoff, and telemetry completeness under load. Successful
+requests longer than 120 seconds are expected, so latency alone must not
+be treated as an error. Both open relay bugs await runtime verification;
+these deployment checks launched no model work.
+
+## 2026-10-11 — First tier 2 batch harness implemented locally
+
+The first F1 scenario is `batch-three-new-rfes`: three new eligible RFEs,
+no existing STRATs. It reuses the full existing `workbench-cull-exemption`,
+`dsp-retention`, and `feast-scheduled-materialization` templates. Their
+problems, requested capabilities, and acceptance criteria are independent:
+temporary notebook culling exemptions; object-storage retention with pinned
+and registered-model exceptions; incremental feature-store scheduling and
+freshness. No model generates the seed content.
+
+**Native batch support verified at the pinned commits.** S1 `1bd7f17`
+already supports `STRAT_MODE=batch` through `pre-strategy.sh` and
+`prepare_run.py`; S2 `0287b83` already accepts `batch-discover`. Both honor
+`BATCH_SIZE` and exact `BATCH_EXPECTED_KEYS`. The harness now supplies these
+using the seed's discovery query order, since both entrypoints compare the
+ordered candidates. Neither implementation nor its real skills changed.
+
+**Separate tier:** `tier2-smoke`, with S1 and S2 entries for this scenario,
+Haiku only, one repeat. Before any service calls, its guard requires exactly
+`only_tests=S1` or `only_tests=S2`, one run, no Opus override, and
+`wipe_at_start=false`. An invocation cannot automatically sweep both designs.
+The intended first run is S1; matching S2 requires a later explicit go-ahead
+after S1 analysis. Tier 1 remains `smoke`, with its existing scenario, S1–S4
+entries, variants, repeats, and single-RFE checks.
+
+**Seed and evaluation evidence:**
+
+- Fixture validation runs before any reset/write; all-new batch fixtures
+  require three eligible items with distinct summaries and descriptions.
+  The seed checks the exact discovery set, including unexpected candidates
+  and truncation. `seed.json` retains summaries, source description hashes,
+  labels, keys, and discovery order.
+- Each eligible RFE gets its own strategy/review/verdict/lock checks and
+  result record. Batch completeness rejects shared strategies and dropped
+  items; per-item project counts also catch orphan strategies. The summary
+  displays all three verdicts.
+- `reviewer_outputs_returned` joins actual reviewer Skill launches to parent
+  tool results by tool-use ID, deduplicating repeated history, and requires
+  returned review text for all four roles for every strategy. It counts
+  empty returns and reruns. It does **not** establish verbatim preservation
+  in the published comment; inspect that during post-run analysis.
+- `haiku_only` checks the models observed across request and response dumps,
+  including helper calls, and requires a successful response. Failed jobs
+  still emit per-item evaluation results when Jira is readable.
+
+**Local validation:** 12 Python unittest tests pass, including real Markov
+orchestration over a temporary copy whose service steps are replaced by
+local facts. They exercise each one-design batch selection, discovery order,
+guard rejection before seeding, seed-count mismatch, missing/shared
+strategies, later-item locks and review mismatches, duplicate reviews,
+empty reviewer returns, failed jobs, and a wrong helper model. Tier 1's
+S1/S2 selection and complete default 12-run matrix also execute in that
+isolated copy. No test invokes a model or writes Jira.
+
+The host's existing `checkouts/markov/bin/markov` is stale and rejects
+pre-existing step `description` fields. Built the current checkout into
+`/tmp/strat-tier2-markov` without changing component source, then validated
+the actual benchmark and used that binary for the orchestration tests.
+Python compile checks, `bash -n`, and `git diff --check` pass.
+
+**Retained evidence replay:** the new return check fails historical S1 Haiku
+job `script-run-workflow-all-claude-haiku-5-5-1010-180408-0d4a57`: feasibility,
+testability, and scope each launch twice and return only empty completion
+messages; architecture returns text once. It passes historical S2 Haiku
+job `script-strategy-entrypoint-all-claude-haiku-1010-182709-92cd57`, with
+four roles returning text once each. This replay only reads saved API dumps;
+it leaves historical eval-results untouched and launches no model work.
+
+**Prepared settings for the next separately authorized live run:**
+
+```yaml
+tier: tier2-smoke
+only_tests: S1
+variants: haiku
+repeats: 1
+wipe_at_start: false
+```
+
+Local implementation is complete. Commit/push, markovd sync, Jira reset and
+seeding, and the first S1 model run have not occurred. The broader mixed-state,
+resume, fault-injection, large-body, and ten-item scenarios remain future
+work; this implementation prepares only the agreed first three-item F1 case.

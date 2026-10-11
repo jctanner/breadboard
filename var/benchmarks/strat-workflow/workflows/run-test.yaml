@@ -20,6 +20,8 @@ steps:
         model: "{{ models[variant] }}"
         repeat: "{{ round }}"
         scenario: "{{ test.scenario }}"
+        mode: "{{ test.mode | default:'single' }}"
+        batch_size: "{{ test.batch_size | default:1 }}"
         strat_creator_ref: "{{ arm.strat_creator_ref }}"
         breadboard_ref: "{{ bench_ref }}"
         markov_run_id: "{{ markov_run_id }}"
@@ -68,12 +70,14 @@ steps:
     that:
       - "seed.ok"
       - "seed.rfes.0.eligible"
+      - "seed.discovered | length == run.batch_size"
     msg: "Seeding {{ run.scenario }} failed its check; see the seed job's log"
 
   - name: set_rfe
     type: set_fact
     vars:
-      rfe_key: "{{ seed.rfes.0.key }}"
+      rfe_key: "{% if run.mode == 'batch' %}batch-discover{% else %}{{ seed.rfes.0.key }}{% endif %}"
+      batch_expected_keys: "{{ seed.discovered_in_order | join:' ' }}"
 
   # The design itself, as it is: one script job, nothing between it and its output.
   # Each arm's job request is its own workflow, submit-<arm> (workflows/submit-*.yaml).
@@ -112,7 +116,7 @@ steps:
     type: bench_script
     params:
       path: check_run.py
-      args: ["{{ run | to_json }}", "{{ job_name }}", "{{ rfe_key }}", "{{ run_job.status }}"]
+      args: ["{{ run | to_json }}", "{{ job_name }}", "{{ rfe_key }}", "{{ run_job.status }}", "{{ seed | to_json }}"]
     register: eval
 
   - name: load_eval_result

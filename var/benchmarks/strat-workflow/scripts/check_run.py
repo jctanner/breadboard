@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check one finished test run and print its eval-result.
 
-    check_run.py '<run json>' <job name> <RFE key> <wait status>
+    check_run.py '<run json>' <job name> <RFE key|batch-discover> <wait status> ['<seed json>']
 
 The run JSON is the run-test workflow's `run` fact; the wait status is what
 Markov's job_wait saw (completed, failed, or running at the timeout).
@@ -17,6 +17,11 @@ a pass"). For one new eligible RFE, as in the smoke tier:
   records_agree    the review comment's verdict matches the verdict label
   no_half_done     no review comment without a refined, pushed strategy
   locks_released   no lock label left on the RFE or the strategy
+
+Batch runs additionally require one distinct strategy per seeded eligible
+RFE, all four reviewer roles to return text to their parent for each strategy,
+and only the requested Haiku model in the response dumps. Reviewer return
+checks do not prove verbatim preservation in the published review.
 
 Also recorded, without pass or fail: wall time, and model calls and tokens
 from the job's API dumps (relay telemetry drops records under load; see
@@ -54,13 +59,13 @@ def linked_strategies(issue: dict) -> list[str]:
     return keys
 
 
-def jira_checks(rfe_key: str) -> tuple[dict, dict]:
+def jira_checks(rfe_key: str, expected_count: int = 1) -> tuple[dict, dict]:
     rfe = jira(f"/rest/api/2/issue/{rfe_key}?fields=labels,issuelinks")
     strat_keys = linked_strategies(rfe)
     all_strats = [i["key"] for i in jira("/rest/api/2/search?jql=project%3DRHAISTRAT&fields=key&maxResults=100")["issues"]]
     strats = [jira(f"/rest/api/2/issue/{k}?fields=labels,description,comment") for k in strat_keys]
 
-    checks = {"one_strategy": check(len(strat_keys) == 1 and len(all_strats) == 1,
+    checks = {"one_strategy": check(len(strat_keys) == 1 and len(all_strats) == expected_count,
                                     {"linked": strat_keys, "in_project": all_strats})}
     facts = {"strategies": strat_keys}
     locked = [rfe_key] if LOCK_LABEL in rfe["fields"].get("labels", []) else []
@@ -97,6 +102,104 @@ def jira_checks(rfe_key: str) -> tuple[dict, dict]:
 
     checks["locks_released"] = check(not locked, {"locked": locked})
     return checks, facts
+
+
+def batch_jira_checks(seed: dict, expected_count: int) -> tuple[dict, dict]:
+    """Apply the single-item contract to every RFE and reject shared strategies."""
+    keys = [rfe["key"] for rfe in seed["rfes"] if rfe["eligible"]]
+    items = []
+    for key in keys:
+        checks, facts = jira_checks(key, expected_count)
+        items.append({"rfe": key, **facts, "checks": checks})
+    names = ("one_strategy", "steps_done", "one_review", "records_agree", "no_half_done", "locks_released")
+    checks = {name: check(bool(items) and all(item["checks"][name]["ok"] for item in items),
+                          {item["rfe"]: item["checks"][name] for item in items}) for name in names}
+    strategies = [key for item in items for key in item["strategies"]]
+    checks["batch_complete"] = check(
+        seed.get("ok") and len(keys) == expected_count and len(set(keys)) == expected_count
+        and set(keys) == set(seed.get("discovered", []))
+        and len(strategies) == expected_count and len(set(strategies)) == expected_count,
+        {"expected_count": expected_count, "rfes": keys, "strategies": strategies})
+    return checks, {"rfes": keys, "batch_size": expected_count, "strategies": sorted(set(strategies)), "items": items}
+
+
+REVIEWER_SKILLS = {f"strategy-{role}-review": role for role in
+                   ("feasibility", "testability", "scope", "architecture")}
+
+
+def text_of(content) -> str:
+    if isinstance(content, str):
+        return content
+    return "\n".join(block.get("text", "") for block in content or [] if block.get("type") == "text")
+
+
+def reviewer_returns(bodies, strategies: list[str]) -> dict:
+    """Join Skill launches and parent tool results by ID, deduplicating histories.
+
+    This tests whether the parent received review text. It does not establish
+    that every sentence of that text was preserved in the published comment.
+    """
+    launches, results, models = {}, {}, set()
+    for body in bodies:
+        if body.get("model"):
+            models.add(body["model"])
+        messages = body.get("messages", [])
+        if body.get("type") == "message":
+            messages = [*messages, {"role": "assistant", "content": body.get("content", [])}]
+        for message in messages:
+            content = message.get("content")
+            if not isinstance(content, list):
+                continue
+            for block in content:
+                if block.get("type") == "tool_use" and block.get("name") == "Skill":
+                    args = block.get("input") or {}
+                    skill = args.get("skill", "").split(":")[-1]
+                    if skill in REVIEWER_SKILLS:
+                        keys = re.findall(r"\bRHAISTRAT-\d+\b", args.get("args", ""))
+                        launches[block["id"]] = {"skill": skill, "role": REVIEWER_SKILLS[skill],
+                                                 "strategies": sorted(set(keys))}
+                elif block.get("type") == "tool_result":
+                    text = re.sub(r"<system-reminder>.*?</system-reminder>", "",
+                                  text_of(block.get("content")), flags=re.S).strip()
+                    results[block["tool_use_id"]] = {"text": text, "error": bool(block.get("is_error"))}
+    records = []
+    for tool_id, launch in launches.items():
+        result = results.get(tool_id)
+        text = result["text"] if result else ""
+        # Forked Skill results have an acknowledgement followed by Result:.
+        output = text.split("Result:", 1)[-1].strip()
+        returned = bool(result and not result["error"] and output
+                        and output != "Skill execution completed"
+                        and "completed (forked execution)" in text and "Result:" in text)
+        records.append({"tool_use_id": tool_id, **launch, "answered": result is not None,
+                        "returned": returned, "result_chars": len(output) if returned else 0,
+                        "result_head": output[:160]})
+    by_strategy = {}
+    for key in strategies:
+        roles = {}
+        for role in REVIEWER_SKILLS.values():
+            calls = [record for record in records if record["strategies"] == [key] and record["role"] == role]
+            roles[role] = {"launches": len(calls), "reruns": max(0, len(calls) - 1),
+                           "empty_returns": sum(call["answered"] and not call["returned"] for call in calls),
+                           "returned": any(call["returned"] for call in calls)}
+        by_strategy[key] = roles
+    return check(bool(strategies) and all(role["returned"] for roles in by_strategy.values() for role in roles.values()),
+                 {"by_strategy": by_strategy, "launches": records, "models": sorted(models)})
+
+
+def api_bodies(job: str):
+    base = f"/app/artifacts/apibodies/{job}"
+    for entry in list_dir(base):
+        name = entry["name"]
+        if not name.endswith((".request.json", ".response.json")):
+            continue
+        text = read_file(f"{base}/{name}")
+        try:
+            body = json.loads(text) if text else None
+        except json.JSONDecodeError:
+            body = None
+        if isinstance(body, dict):
+            yield body
 
 
 def api_usage(job: str) -> dict:
@@ -154,6 +257,7 @@ def main(argv: list[str]) -> int:
         "run": run["id"], "tier": run["tier"], "test": run["test"], "arm": run["arm"],
         "variant": run["variant"], "model": run["model"], "repeat": run["repeat"],
         "scenario": run["scenario"], "rfe": rfe_key, "job": job_name,
+        "mode": run.get("mode", "single"),
         "strat_creator_ref": run["strat_creator_ref"], "breadboard_ref": run["breadboard_ref"],
         "markov_run_id": run.get("markov_run_id"),
         "script": job.get("script"), "mlflow_experiment": run["mlflow_experiment"],
@@ -164,15 +268,31 @@ def main(argv: list[str]) -> int:
     checks = {"finished": check(job.get("status") == "completed" and waited == "completed",
                                 {"job_status": job.get("status"), "wait_status": waited})}
     try:
-        jira_result, facts = jira_checks(rfe_key)
+        if run.get("mode") == "batch":
+            seed = json.loads(argv[4])
+            jira_result, facts = batch_jira_checks(seed, int(run["batch_size"]))
+        else:
+            jira_result, facts = jira_checks(rfe_key)
         checks.update(jira_result)
         result.update(facts)
     except Exception as err:  # Jira unreachable: record, don't guess
         checks["jira"] = check(False, f"Jira checks failed: {err}")
+    if run.get("mode") == "batch":
+        try:
+            checks["reviewer_outputs_returned"] = reviewer_returns(api_bodies(job_name), result.get("strategies", []))
+        except Exception as err:
+            checks["reviewer_outputs_returned"] = check(False, f"API dump review checks failed: {err}")
+    result["usage"] = api_usage(job_name)
+    if run.get("mode") == "batch":
+        response_models = set(result["usage"]["by_model"])
+        models = response_models | set(checks["reviewer_outputs_returned"].get("detail", {}).get("models", [])
+                                       if isinstance(checks["reviewer_outputs_returned"].get("detail"), dict) else [])
+        checks["haiku_only"] = check(bool(response_models) and models == {run["model"]}
+                                     and run["variant"] == "haiku",
+                                     {"expected_model": run["model"], "observed_models": sorted(models)})
     result["checks"] = checks
     result["pass"] = all(c["ok"] for c in checks.values())
     result["failed_checks"] = [name for name, c in checks.items() if not c["ok"]]
-    result["usage"] = api_usage(job_name)
     emit(result)
     return 0
 

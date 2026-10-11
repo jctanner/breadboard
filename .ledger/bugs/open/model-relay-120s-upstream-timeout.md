@@ -69,3 +69,24 @@ re-run as `markov-run-5884ad2a`). Streams were still cut at exactly 120 s:
   `timeout_error`, so suggested fix 3 still stands.
 
 Close after the deploy, once a run shows no `latency_ms` at 120000.
+
+## Update (2026-10-11): user rebuilt and redeployed; deployment verified
+
+The user completed the rebuild and redeployment. The running pod
+`model-relay-55bcd9875f-n9tmb` started at 11:55:42 UTC, is ready and has
+zero restarts. Its actual environment has
+`SHIM_UPSTREAM_TIMEOUT_SECONDS=600`.
+
+The public health endpoint's build ID is
+`2a27f2b3251e389bb7bacefff579c4eb5a781957c48cb169e92bc3658f4c7550`.
+Recomputing the Dockerfile's source fingerprint from the clean checkout at
+`59d6f06` produces the same ID, confirming the fixed source is deployed.
+
+No further rebuild is needed. Runtime verification remains pending: the
+private health endpoint has no newly persisted requests since this restart
+(`last_persisted_at_unix_ms: 0`). At the next authorized run, confirm that
+managed-account streams can complete beyond 120 seconds and that errors
+no longer cluster at the old 120-second cutoff. A successful request with
+latency above 120 seconds is evidence for the fix, not a failure. Keep this
+bug open until runtime evidence is available; no new model run was launched
+for these read-only deployment checks.

@@ -6,6 +6,11 @@
   Smoke and full tiers for PR #83's Workflow, run as dashboard jobs through
   Model Relay (haiku-5-5 to wire up, opus-4-6 for results), with per-test
   Jira seeding and MLflow experiments.
+  [First tier 2 three-RFE smoke preparation complete](tasks/done/strat-workflow-tier2-three-rfe-smoke.md):
+  distinct fixtures, native batch entrypoints, one Haiku S1 run before
+  analysis and a separately authorized S2 run; preserve tier 1.
+  [First S1 tier 2 pass](tasks/current/strat-workflow-tier2-s1-first-pass.md):
+  publication and one S1 launch authorized 2026-10-11; analyze before S2.
 - **New, divergent POC:** [Native Fullsend strategy agents](plans/fullsend-agent-led-strategy-poc.md).
   Checkout `checkouts.fullsend_agent_led_poc/jctanner.strat-creator`, branch
   `feat/fullsend-agent-led-strategy`; strat-single/strat-batch prompts on

@@ -22,6 +22,7 @@ Writes seed.json (scenario, keys, labels, discovery result) to stdout and to
 $JOB_ARTIFACT_DIR when set.
 """
 import argparse
+import hashlib
 import importlib.util
 import json
 import os
@@ -59,6 +60,43 @@ def load_module(name: str, path: Path):
     return module
 
 
+def load_scenario(name: str) -> tuple[dict, dict]:
+    """Validate all fixture inputs before any reset or issue creation."""
+    scenario_file = BENCH / "data" / "scenarios" / f"{name}.yaml"
+    if not scenario_file.is_file():
+        raise SystemExit(f"unknown scenario: {name} ({scenario_file})")
+    scenario = yaml.safe_load(scenario_file.read_text())
+    rfes = scenario["rfes"]
+    templates = {rfe["template"]: yaml.safe_load(
+        (BENCH / "data" / "rfe-templates" / f"{rfe['template']}.yaml").read_text()) for rfe in rfes}
+    if not rfes or len({rfe["id"] for rfe in rfes}) != len(rfes):
+        raise SystemExit("scenario needs nonempty RFEs with unique IDs")
+    for template in templates.values():
+        if not template.get("summary") or not template.get("description"):
+            raise SystemExit("each RFE template needs a summary and full description")
+    if scenario.get("expected_batch_size"):
+        count = scenario["expected_batch_size"]
+        if len(rfes) != count or not all(rfe.get("eligible") for rfe in rfes):
+            raise SystemExit("all-new batch must contain exactly the expected number of eligible RFEs")
+        for field in ("summary", "description"):
+            if len({templates[rfe["template"]][field] for rfe in rfes}) != count:
+                raise SystemExit(f"batch RFEs must have distinct {field} values")
+    return scenario, templates
+
+
+def discovery_problems(created: list[dict], discovered: list[str]) -> list[str]:
+    expected = {rfe["key"] for rfe in created if rfe["eligible"]}
+    found = set(discovered)
+    problems = []
+    if expected - found:
+        problems.append(f"eligible but not discovered: {sorted(expected - found)}")
+    if found - expected:
+        problems.append(f"unexpected discovery candidates: {sorted(found - expected)}")
+    if len(discovered) != len(found):
+        problems.append("discovery returned duplicate keys")
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--scenario", required=True)
@@ -70,10 +108,7 @@ def main() -> int:
                         help="check connectivity and print the planned issues; no reset, no writes")
     args = parser.parse_args()
 
-    scenario_file = BENCH / "data" / "scenarios" / f"{args.scenario}.yaml"
-    if not scenario_file.is_file():
-        raise SystemExit(f"unknown scenario: {args.scenario} ({scenario_file})")
-    scenario = yaml.safe_load(scenario_file.read_text())
+    scenario, templates = load_scenario(args.scenario)
 
     server = os.environ["JIRA_SERVER"].rstrip("/")
     if urlparse(server).hostname not in EMULATOR_HOSTS:
@@ -98,6 +133,10 @@ def main() -> int:
     if RELEASE_LABEL not in gate.get("required_labels", []):
         raise SystemExit(f"{RELEASE_LABEL} is not a required label at strat-creator {ref}")
     eligible_labels = [RELEASE_LABEL, *gate.get("quality_labels", [])[:1], *EXTRA_ELIGIBLE_LABELS]
+    for rfe in scenario["rfes"]:
+        blocked = set([*rfe.get("labels", []), *eligible_labels]) & set(lock.BLOCKING_LABELS)
+        if rfe.get("eligible") and blocked:
+            raise SystemExit(f"{rfe['id']} is marked eligible but carries lock labels {sorted(blocked)}")
 
     client = httpx.Client(base_url=server, auth=auth, verify=verify, timeout=30)
 
@@ -113,7 +152,7 @@ def main() -> int:
             api("GET", f"/rest/api/2/project/{project}")
         planned = []
         for rfe in scenario["rfes"]:
-            template = yaml.safe_load((BENCH / "data" / "rfe-templates" / f"{rfe['template']}.yaml").read_text())
+            template = templates[rfe["template"]]
             labels = [BENCH_LABEL, f"swe-{args.scenario}", f"swe-id-{rfe['id']}", *rfe.get("labels", [])]
             if rfe.get("eligible"):
                 labels += eligible_labels
@@ -134,7 +173,7 @@ def main() -> int:
 
     created = []
     for rfe in scenario["rfes"]:
-        template = yaml.safe_load((BENCH / "data" / "rfe-templates" / f"{rfe['template']}.yaml").read_text())
+        template = templates[rfe["template"]]
         labels = [BENCH_LABEL, f"swe-{args.scenario}", f"swe-id-{rfe['id']}", *rfe.get("labels", [])]
         if rfe.get("eligible"):
             labels += eligible_labels
@@ -156,6 +195,8 @@ def main() -> int:
             "id": rfe["id"],
             "key": key,
             "template": rfe["template"],
+            "summary": fields["summary"],
+            "description_sha256": hashlib.sha256(template["description"].encode()).hexdigest(),
             "eligible": bool(rfe.get("eligible")),
             "labels": sorted(fields["labels"]),
             "status": fields["status"]["name"],
@@ -163,14 +204,10 @@ def main() -> int:
         })
 
     found = api("GET", "/rest/api/2/search", params={"jql": discovery_jql, "maxResults": 200, "fields": "labels"})
-    discovered = {issue["key"] for issue in found["issues"]}
-    expected = {rfe["key"] for rfe in created if rfe["eligible"]}
-    seeded = {rfe["key"] for rfe in created}
-    problems = []
-    if expected - discovered:
-        problems.append(f"eligible but not discovered: {sorted(expected - discovered)}")
-    if (seeded - expected) & discovered:
-        problems.append(f"discovered but not meant to be eligible: {sorted((seeded - expected) & discovered)}")
+    discovered = [issue["key"] for issue in found["issues"]]
+    problems = discovery_problems(created, discovered)
+    if found.get("total", len(discovered)) != len(discovered):
+        problems.append("discovery was truncated")
 
     report = {
         "scenario": args.scenario,
@@ -182,6 +219,7 @@ def main() -> int:
         "discovery_jql": discovery_jql,
         "rfes": created,
         "discovered": sorted(discovered),
+        "discovered_in_order": discovered,
         "ok": not problems,
         "problems": problems,
     }

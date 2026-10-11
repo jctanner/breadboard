@@ -1,16 +1,16 @@
 # Run settings. Override any of them when starting the run (markovd's run
 # form, or markov run --var key=value).
 
-# Which test list to run (vars/tiers.yaml): smoke or tier2-smoke.
+# Which test list to run (vars/tiers.yaml): smoke, tier2-smoke or tier2-opus.
 tier: smoke
 # Only these tests, comma-separated (e.g. "S1,S2"); empty runs the smoke tier.
-# tier2-smoke requires exactly S1, or separately authorized S2.
+# Each tier 2 pass requires exactly S1, or separately authorized S2.
 only_tests: ""
 # Run every test under these variants, comma-separated (e.g. "haiku,opus");
 # empty uses each test's own (vars/tiers.yaml, models in vars/models.yaml).
 variants: ""
 # Repeat count; empty uses the tier's.
-# tier2-smoke permits exactly one run.
+# Each tier 2 pass permits exactly one run.
 repeats: ""
 
 # Breadboard commit the jobs clone their scripts from (run-workflow.sh,
@@ -26,6 +26,9 @@ breadboard_repo: https://github.com/jctanner/breadboard
 # dumps and MLflow traces are kept.
 # tier2-smoke requires false to retain previous evidence.
 wipe_at_start: true
+# Final host archives are mandatory for benchmark jobs since the first tier 2
+# pass. Historical Jira states already reset are documented as unavailable.
+archive_required_since: "2026-10-11T13:47:49+00:00"
 # Pause at the end for review. markovd can't resume a paused run yet; with
 # the CLI, resume with --var reviewed=true.
 review_stop: false
@@ -33,6 +36,10 @@ reviewed: false
 
 # Seconds to wait for one test's job before stopping it.
 job_timeout: 7200
+
+# S1 headless background wait ceiling. Keep the existing smoke default;
+# override to 5400000 (90 minutes) for an authorized three-ticket Opus batch.
+workflow_bg_wait_ceiling_ms: 1800000
 
 # The pinned architecture-context snapshot on the context volume
 # (scripts/snapshot-architecture-context.sh), rhoai-3.6-ea.2.

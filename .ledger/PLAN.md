@@ -11,6 +11,12 @@
   analysis and a separately authorized S2 run; preserve tier 1.
   [First S1 tier 2 pass](tasks/current/strat-workflow-tier2-s1-first-pass.md):
   publication and one S1 launch authorized 2026-10-11; analyze before S2.
+  [Per-run evidence archives](tasks/current/strat-workflow-run-data-archives.md):
+  preserve complete system/run data in `var/run-data` before the next reset.
+  S1 failed: [completed refine rejected by return mismatch](bugs/open/strat-workflow-refine-return-mismatch.md);
+  [reviewer prose lost](bugs/open/strat-workflow-reviewer-output-loss.md).
+  [Single S1 Opus batch](tasks/current/strat-workflow-tier2-s1-opus-pass.md):
+  authorized 2026-10-11, three RFEs, one run, archive then analyze.
 - **New, divergent POC:** [Native Fullsend strategy agents](plans/fullsend-agent-led-strategy-poc.md).
   Checkout `checkouts.fullsend_agent_led_poc/jctanner.strat-creator`, branch
   `feat/fullsend-agent-led-strategy`; strat-single/strat-batch prompts on

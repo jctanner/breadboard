@@ -33,9 +33,93 @@ and run the checks. Every model call happens in the job pods.
    | `variants` | each test's own | `haiku,opus` (A/B) |
    | `wipe_at_start` | `true` | `false` keeps earlier artifacts and MLflow |
    | `job_timeout` | `7200` | seconds before a job is stopped |
+   | `workflow_bg_wait_ceiling_ms` | `1800000` | `5400000` for a 90-minute S1 background wait |
    | `breadboard_ref` | the imported commit | another pushed commit |
 
 The run refuses to start while any dashboard job is pending or running.
+
+## Mandatory run archives
+
+Before another benchmark reset or wipe, collect the preceding run on the
+host and verify its final archive:
+
+```bash
+.venv/bin/python var/benchmarks/strat-workflow/scripts/archive_run.py --run markov-run-02336f23
+.venv/bin/python var/benchmarks/strat-workflow/scripts/archive_run.py --verify var/run-data/strat-workflow/<run>/<capture>
+```
+
+The collector creates a new timestamped capture, never replacing earlier
+ones. `--allow-running` permits a provisional capture; it cannot satisfy the
+pre-reset requirement. Failed runs require final archives too. A successful
+final capture publishes a checksum-backed receipt under
+`/app/logs/strat-workflow-archive-receipts/`, which survives artifact wipes.
+Use `--verify <capture> --publish-receipts` to republish after re-verification.
+For an authorized run, a detached host collector can use `--run <id>
+--wait 8100`: it polls for terminal run/jobs before making a final capture,
+then verifies and publishes receipts. Waiting has a deadline; a failed run
+is also archived. The capture timestamps describe collection after the wait.
+
+The local `var/run-data` is a symlink to `/data/breadboard`. Both the symlink
+and generated evidence are gitignored; collector code and documentation are
+tracked. Capture directories/files are private to the collecting user.
+
+```text
+var/run-data/strat-workflow/<markov-run>/<UTC capture>/
+  manifest.json                 status, scope, source errors, sizes and SHA-256
+  markov/                       full run/steps, workflow, results, runner logs/state
+  jobs/<seed-or-design-job>/     metadata, raw files.tar.gz, Kubernetes logs/state/events
+    api-dumps/                  directly browsable API index and request/response bodies
+    strace/                     directly browsable per-process syscall traces
+    artifacts/                  directly browsable job output, progress, seed/eval files
+  jira/issues.json              paginated readable Jira export
+  system-state/                 dashboard volumes and Jira/MLflow/Observatory snapshots
+  context/                      pinned architecture and benchmark source
+  logs/                         service logs since run submission
+  relay/                        health, all paginated requests and usage events
+```
+
+Job evidence is available directly in these subdirectories; the original
+tarballs are also retained. To expose files in an older packed-only capture,
+use `--verify <capture> --unpack --publish-receipts`. This first verifies the
+original capture, adds checksums for the unpacked files, verifies again, and
+refreshes the receipt. It rejects unsafe archive paths and links, and refuses
+to replace edited evidence.
+
+Job tarballs preserve original paths, including API `index.jsonl`, exact
+request/response bodies, strace, Claude output/stderr, native progress,
+seed/eval artifacts, and publication files. Shared snapshots include all
+retained artifacts, logs, issue/workspace data, and stored service files.
+MLflow's database includes trace metadata and span payloads; file storage is
+also copied. Jira attachments are retained with its database. Observatory's
+database retains its ingested traces, OTel spans, claims and verdicts.
+SQLite snapshots use its online backup API, including committed WAL data,
+and are checked for consistency. Every tar stream is fully read to detect
+truncation; every saved capture file has a size and SHA-256 entry.
+
+`require_archive.py` runs before `wipe` and every `submit_seed`. The direct
+seed and host reset helpers also enforce this check. It fails before any
+deletion if an earlier benchmark job, starting with the first tier 2 pass,
+has no verified final host receipt. For multi-test/repeat invocations this
+creates an archival checkpoint between tests: the workflow stops before the
+next seed, the host archives the terminal run, and execution can resume
+after the receipt exists. Tier 1 remains available; a single selected test
+avoids these intermediate checkpoints. The cutoff is recorded in
+`archive_required_since`, including the first S1 tier 2 pass.
+
+Archive guards apply to deployed Markov invocations after this updated
+workflow is published and synced. The first S1 Haiku run used the earlier
+published harness; its evidence was collected and verified on the host
+after completion.
+
+Capture completeness describes the available system evidence, not whether
+the strategy passed. Snapshots are individually consistent over the
+manifest's time interval, rather than an atomic snapshot across services.
+Old Jira states already reset and expired Kubernetes logs/events cannot be
+recovered retroactively. Full retained-state snapshots preserve earlier
+evidence still present, but do not reconstruct those missing historical
+states. The collector does not request relay account credentials or
+Kubernetes Secrets. Raw evidence and full database snapshots remain private,
+ignored data.
 
 ## First tier 2 batch
 
@@ -70,6 +154,26 @@ reset. A live run is a separate action from local implementation/validation.
 
 Tier 1 remains `tier: smoke`, with `smoke-one-rfe`, tests S1–S4, their original
 models and repeats, and the original single-RFE checks.
+
+## Single Opus batch
+
+The separately authorized Opus pass uses `tier2-opus`, the same three-RFE
+scenario and unchanged design pins. It requires one explicitly selected
+design, one repeat, Opus only, and retained evidence:
+
+```yaml
+tier: tier2-opus
+only_tests: S1
+variants: opus
+repeats: 1
+wipe_at_start: false
+workflow_bg_wait_ceiling_ms: 5400000
+```
+
+The S1 wait budget is 90 minutes, compared with a 40–60 minute runtime
+estimate. The existing outer S1 timeout remains 90 minutes. The model gate
+checks all observed model calls against `claude-opus-4-6`; Haiku smoke keeps
+its `haiku_only` gate. A matching S2 pass requires separate authorization.
 
 ## What a run does
 
@@ -185,6 +289,9 @@ Markov run.
 - `data/scenarios/` and `data/rfe-templates/`: what the seed job creates in
   Jira.
 - `tests/test_batch.py`: offline fixture, result, and orchestration checks.
+- `scripts/archive_run.py`, `archive_remote.py`, `require_archive.py` and
+  `tests/test_archive.py`: host collection, streamed export, pre-reset guard,
+  and integrity/backup/guard tests.
 
 Saving results needs markovd's default `pipeline-artifacts` mount
 (`MARKOVD_JOB_VOLUMES` in `deploy/k8s/15-markovd.yaml`). This layout needs

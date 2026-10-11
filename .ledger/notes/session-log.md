@@ -310,3 +310,68 @@ or new model run. Analysis is in the
 [evaluation plan](../plans/strat-workflow-eval-plan.md); the
 [implementation task](../tasks/done/strat-workflow-tier2-three-rfe-smoke.md)
 is complete. Next: separately authorize publication and the single S1 run.
+
+## 2026-10-11 — Single S1 tier 2 pass launched
+
+User authorized launch. Committed/pushed `2cf4540`, synced/imported the exact
+benchmark source, and submitted `markov-run-02336f23` at 13:47:49 UTC: S1
+only, Haiku, three RFEs, one repeat, no artifact wipe. Seed passed for
+RHAIRFE-1/2/3; S1 job
+`script-run-workflow-all-claude-haiku-5-5-1011-134802-315418` is running in
+refinement after creating three distinct strategies. First 12 requests all
+Haiku; all three refine helpers also report Haiku. No S2 or repeat. Run/evidence details
+are in the evaluation plan; the current launch task now awaits completion
+analysis.
+
+## 2026-10-11 — S1 completed; run-data evidence capture
+
+User added mandatory preservation of all available evidence before resets.
+Implemented a host collector, SQLite online backups, paginated relay/Jira
+exports, SHA-256 verification, and local pre-wipe/per-seed receipt guards.
+S1 Markov run completed at 14:18:35.968 UTC; its job failed validation.
+Collected a verified final capture under
+`var/run-data/strat-workflow/markov-run-02336f23/20261011T143354300275Z/`:
+20 successful sources, including full retained shared artifacts, Jira,
+MLflow (33 traces/488 spans), Observatory, logs, and exact API/strace files.
+After user feedback on visibility, unpacked job evidence into browsable
+`api-dumps/`, `strace/`, and `artifacts/` directories, retaining tarballs.
+S1 has 605 API files and 3,698 strace files. Expanded capture: 4,694 files,
+1,601,583,672 bytes; checksums verified and receipt refreshed.
+Twenty offline tests, workflow validation, compile, and diff checks passed.
+No reset, S2, repeat, commit, push, or sync; guard publication remains pending.
+Analysis/evidence/limitations recorded in the evaluation plan; detailed S1
+failure and context analysis remain pending in the S1 task.
+
+## 2026-10-11 — First S1 batch failure cause confirmed
+
+Inspected archived raw API requests/responses, executed Workflow prompt,
+progress, final results and validation. RHAISTRAT-2 refinement succeeded but
+its helper returned nested JSON in `recorded`; S1 rejected the value and
+excluded that strategy from scoring/review. Independently, 14/16 reviewer
+Skill returns lacked prose, reproducing tier 1 output loss. No timeout-stop
+message; the Workflow completed within its 30-minute wait, Claude exited 0,
+and saved relay health has zero drops/storage errors. Recorded both open
+bugs and evidence in the evaluation plan. No design changes or new run.
+
+User follow-up: added the model-error versus Workflow-robustness distinction
+explicitly to the plan. Haiku's malformed return suggests a formatting or
+instruction-following error; one run does not establish weaker reasoning
+as the cause. S1's permissive schema and lack of persisted-state reconciliation
+are separate robustness findings. Reviewer output loss remains separate.
+
+Runtime estimate requested: re-read the three historical S1 Opus Workflow
+streams from the retained shared archive and compared phase durations with
+the current two-slot Haiku refine schedule. Recorded an estimated 50 minutes
+(planning range 40–60) for a complete three-ticket Opus S1 batch, with
+concurrency/retry assumptions and the need for a longer background-wait
+budget than 30 minutes. No configuration change or model run performed.
+
+## 2026-10-11 — Single S1 Opus batch authorized and prepared
+
+User authorized one S1 Opus 4.6 three-ticket run. Added separate `tier2-opus`
+selection/model checks, forwarded a 90-minute S1 wait override, and added a
+bounded terminal-run wait mode for detached archive collection. Designs and
+Haiku smoke defaults unchanged. No active jobs/runs; previous Haiku archive
+reverified and live receipt guard passes; relay health is clear. Twenty-three
+offline tests plus Markov, compile, shell syntax, and diff checks passed.
+Next: publish/sync this harness and submit the single authorized batch.

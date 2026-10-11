@@ -20,6 +20,7 @@ steps:
           extra_env:
             STRAT_CREATOR_REF: "{{ arm.strat_creator_ref }}"
             STRAT_ARCHITECTURE_CONTEXT_PATH: "{{ architecture_context_path }}"
+            STRAT_BG_WAIT_CEILING_MS: "{{ workflow_bg_wait_ceiling_ms }}"
             BATCH_SIZE: "{{ run.batch_size }}"
             BATCH_EXPECTED_KEYS: "{{ batch_expected_keys }}"
     register: job

@@ -16,16 +16,16 @@ steps:
     msg: "Needs a pushed 40-character Breadboard commit (breadboard_ref, or workflow_source_commit from markovd) and a tier defined in vars/tiers.yaml"
 
   - name: check_single_test_settings
-    description: "Tier 2 smoke requires one explicitly selected design, one Haiku run, and retained evidence"
+    description: "Each tier 2 pass requires one explicitly selected design, one matching-model run, and retained evidence"
     when: "tiers[tier].single_test"
     type: assert
     that:
       - "only_tests == 'S1' or only_tests == 'S2'"
       - "repeats == '' or repeats == 1 or repeats == '1'"
       - "repeats | default:tiers[tier].repeats | seq | length == 1"
-      - "not variants or variants == 'haiku'"
+      - "not variants or variants == tiers[tier].variant"
       - "not wipe_at_start"
-    msg: "Tier 2 smoke needs only_tests=S1 (or S2 after review), repeats=1, variants=haiku, and wipe_at_start=false; it never sweeps both designs"
+    msg: "Tier 2 needs only_tests=S1 (or S2 after review), repeats=1, variants={{ tiers[tier].variant }}, and wipe_at_start=false; it never sweeps both designs"
 
   - name: list_running_jobs
     description: "A reset or a new test would pull Jira and files out from under a job still going"
@@ -53,6 +53,13 @@ steps:
     that:
       - "not active_pipeline_jobs"
     msg: "Dashboard pipeline jobs are still pending or running; wait for them or stop them first"
+
+  - name: require_archives_before_wipe
+    description: "Verify prior runs were collected on the host before clearing evidence"
+    type: bench_script
+    params:
+      path: require_archive.py
+      args: ["{{ archive_required_since }}"]
 
   - name: wipe
     description: "Clear the artifacts volume, MLflow and Observatory once, before the first run"

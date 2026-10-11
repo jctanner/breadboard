@@ -26,6 +26,7 @@ seed check passed.
 """
 import argparse
 import json
+import os
 import sys
 import time
 
@@ -93,6 +94,15 @@ def main() -> int:
         print(json.dumps(summary, indent=2))
         return 1
     record("preflight", {"active_jobs": active}, True)
+
+    # --force overrides the active-job check, not the archive requirement.
+    from require_archive import DEFAULT_SINCE, check_archives
+    os.environ["DASHBOARD_BASE"] = args.dashboard
+    archival = check_archives(os.environ.get("STRAT_ARCHIVE_REQUIRED_SINCE", DEFAULT_SINCE))
+    record("archive", archival, archival["ok"])
+    if not archival["ok"]:
+        print(json.dumps(summary, indent=2))
+        return 1
 
     if not args.keep_artifacts:
         response = client.post("/api/volumes/clear", json={"volumes": ["artifacts"], "mode": "job"}).json()

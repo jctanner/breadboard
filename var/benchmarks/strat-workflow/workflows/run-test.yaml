@@ -29,6 +29,13 @@ steps:
 
   # Seed: a script job resets Jira and creates the scenario's RFEs, using the
   # eligibility rules of the strat-creator commit under test.
+  - name: require_archives_before_seed
+    description: "Stop before Jira reset if a previous benchmark job lacks a verified host archive"
+    type: bench_script
+    params:
+      path: require_archive.py
+      args: ["{{ archive_required_since }}"]
+
   - name: submit_seed
     type: dashboard_api
     params:
@@ -45,6 +52,8 @@ steps:
           mlflow: false
           otel: false
           api_dump: false
+          extra_env:
+            STRAT_ARCHIVE_REQUIRED_SINCE: "{{ archive_required_since }}"
     register: seed_job
 
   - name: wait_for_seed

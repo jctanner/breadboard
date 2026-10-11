@@ -55,6 +55,9 @@ logs/
 tmp/
 backups/
 var/strace/
+# Per-run evidence, including the local symlink to external archive storage.
+/var/run-data
+/var/run-data/
 
 # Log files in project root
 *.log

@@ -6,6 +6,7 @@ tiers:
   tier2-smoke:
     # Select exactly one design explicitly. S1 first; S2 only after analysis.
     single_test: true
+    variant: haiku
     repeats: 1
     tests:
       - id: S1
@@ -17,6 +18,24 @@ tiers:
       - id: S2
         arm: bash
         variants: [haiku]
+        scenario: batch-three-new-rfes
+        mode: batch
+        batch_size: 3
+  tier2-opus:
+    # A separately authorized Opus pass; the Haiku smoke tier stays unchanged.
+    single_test: true
+    variant: opus
+    repeats: 1
+    tests:
+      - id: S1
+        arm: workflow
+        variants: [opus]
+        scenario: batch-three-new-rfes
+        mode: batch
+        batch_size: 3
+      - id: S2
+        arm: bash
+        variants: [opus]
         scenario: batch-three-new-rfes
         mode: batch
         batch_size: 3

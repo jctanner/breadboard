@@ -164,6 +164,11 @@ def main() -> int:
                           "eligible_labels": eligible_labels, "discovery_jql": discovery_jql,
                           "currently_discovered": current.get("total"), "planned": planned}, indent=2))
         return 0
+    # This also protects direct seed-script use outside the Markov workflow.
+    from require_archive import DEFAULT_SINCE, check_archives
+    archival = check_archives(os.environ.get("STRAT_ARCHIVE_REQUIRED_SINCE", DEFAULT_SINCE))
+    if not archival["ok"]:
+        raise SystemExit("Earlier benchmark data has no verified final host archive: " + json.dumps(archival["pending"]))
     if reset:
         result = api("POST", "/api/admin/reset")
         if result.get("message") != "Database reset successfully":

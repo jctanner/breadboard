@@ -505,6 +505,16 @@ the relay to a Vertex upstream comes before tier 2.
 
 ## Tier 2: full tests (larger, mixed batches)
 
+**Mandatory evidence archival (user requirement, 2026-10-11):** each run,
+including failed runs, must have a verified final local archive under
+`var/run-data` before the next Jira reset or artifact/MLflow/Observatory
+wipe. Preserve strace, exact API dumps and index, full MLflow traces/span
+payloads, logs, Jira issues/comments/links/attachments, seeds, native state,
+outputs, eval/summary, Markov identity/steps, Kubernetes state/events, and
+related relay/Observatory evidence. Provisional captures do not count.
+Generated archives stay out of git. Archival completeness is distinct from
+strategy correctness. The implementation and coverage are recorded below.
+
 Goal: show the Workflow keeps its records straight across batch sizes and
 the states RFEs are really in. Run it on haiku first to get the scenarios
 and checks right, then on opus for the results that count.
@@ -2430,3 +2440,271 @@ Local implementation is complete. Commit/push, markovd sync, Jira reset and
 seeding, and the first S1 model run have not occurred. The broader mixed-state,
 resume, fault-injection, large-body, and ten-item scenarios remain future
 work; this implementation prepares only the agreed first three-item F1 case.
+
+## 2026-10-11 — Single tier 2 S1 Haiku pass launched
+
+User authorization: "lets proceed ... i want to kick off the single S1
+pass." Published the prepared harness and prior session findings in
+Breadboard commit **`2cf4540113a38fbbed7e3366e55ce84e942ea40e`**, then synced
+project 1 and imported `var-benchmarks-strat-workflow` in markovd. Verified
+the imported directory workflow's exact source commit, tier 2 entries, and
+selection guard. Twelve offline tests and workflow/diff checks passed
+before publication. No component source/pin changed.
+
+**Preflight:** no pending/running dashboard pipeline jobs or Markov runs;
+the pinned architecture snapshot is present (1,846 files). Relay health
+reports zero dropped requests/events, zero pending writes, and zero storage
+errors, with no persisted requests since its rebuild (`last_persisted_at_unix_ms=0`).
+
+Submitted **exactly one** benchmark run:
+
+| Field | Value |
+| --- | --- |
+| Markov run | `markov-run-02336f23` (database ID 562) |
+| Submitted | 2026-10-11 **13:47:49 UTC** / **09:47:49 EDT** |
+| Tier/scenario | `tier2-smoke` / `batch-three-new-rfes` |
+| Selection | S1 only, `variants=haiku`, `repeats=1` |
+| Evidence preservation | `wipe_at_start=false`; the wipe step was skipped |
+| S1 pin | `1bd7f1718c7ed10f2900691c0e9eaea2b8e48e43` |
+| Seed job | `script-seed-scenario-all-claude-haiku-5-5-1011-134751-1e1732` |
+| S1 job | `script-run-workflow-all-claude-haiku-5-5-1011-134802-315418` |
+| S1 job created | 13:48:02 UTC / 09:48:02 EDT |
+| MLflow experiment | `strat-workflow-eval/tier2-smoke/S1/haiku` |
+
+**Initial status: running, strategy creation.** The seed completed and its
+check passed with no problems: exactly RHAIRFE-1 (workbench exemption),
+RHAIRFE-2 (pipeline retention), and RHAIRFE-3 (feature materialization), all
+eligible, discovered in that order. The S1 job received `batch-discover`,
+`BATCH_SIZE=3`, and `BATCH_EXPECTED_KEYS=RHAIRFE-1 RHAIRFE-2 RHAIRFE-3`.
+The Workflow's read-input helper reports native `mode=batch`, all three
+acquired keys and pending-create keys. Claude's init reports Haiku; the
+first 12 API requests also all use `claude-haiku-5-5`.
+
+Evidence locations on the artifacts volume:
+
+- Seed: `/app/artifacts/scripts/script-seed-scenario-all-claude-haiku-5-5-1011-134751-1e1732/seed.json`.
+- S1 output: `/app/artifacts/scripts/script-run-workflow-all-claude-haiku-5-5-1011-134802-315418/`.
+- API dumps: `/app/artifacts/apibodies/script-run-workflow-all-claude-haiku-5-5-1011-134802-315418/`.
+- strace: `/app/artifacts/strace/script-run-workflow-all-claude-haiku-5-5-1011-134802-315418/`.
+- Summary after completion: `/app/artifacts/benchmarks/strat-workflow/markov-run-02336f23/`.
+
+No S2 or additional S1 repeat was submitted. Next: inspect the completed
+run's per-item results, actual refine/review overlap, reviewer return and
+published-comment provenance, usage/cost, primary/helper context growth,
+and relay timeout/drop behavior. This launch is not a passing result;
+analysis is pending. The first batch has no measured completion ETA yet.
+
+**Startup progress check:** by the next stream inspection, create is done
+and three separate strategies exist (RHAISTRAT-1/2/3). The Workflow has
+started separate refine helpers for all three; each reports Haiku. Full
+overlap measurements will come from the completed API/strace evidence.
+
+## 2026-10-11 — S1 completion and mandatory host evidence archives
+
+Markov `markov-run-02336f23` completed at **14:18:35.968 UTC**, while its
+S1 job **failed validation**. The benchmark deliberately records a failed
+test without failing the outer collection workflow. Saved evaluation:
+`pass=false`; checks `finished`, `steps_done`, `one_review`, `records_agree`,
+and `reviewer_outputs_returned` failed. Batch completeness, Haiku-only,
+released locks, no half-done publication, and one strategy per RFE passed.
+RHAISTRAT-1 and RHAISTRAT-3 have revise 4/8 reviews; RHAISTRAT-2 has no
+returned review. Native summary records Claude exit 0, validation exit 1,
+and final exit 1. Root cause, concurrency, usage, and context growth analysis
+remain pending; no S2 or repeat was launched.
+
+**New acceptance criterion:** before any subsequent reset/wipe, preserve
+all available run and shared system evidence in a verified final capture
+under `var/run-data`. Failed runs require the same evidence preservation.
+The host collector `scripts/archive_run.py`, streamed remote exporter
+`archive_remote.py`, and pre-reset guard `require_archive.py` implement
+collection, integrity verification, and receipts. The README documents usage
+and scope. The configured `var/run-data` symlink targets `/data/breadboard`;
+archives and the symlink are ignored by git and created with private modes.
+
+**Verified final S1 capture:**
+`var/run-data/strat-workflow/markov-run-02336f23/20261011T143354300275Z/`.
+Twenty sources succeeded without errors. It preserves exact job API bodies
+and indexes, per-process strace, job outputs and progress, seed/evaluation
+files, Markov run/steps and pinned benchmark source, architecture snapshot,
+Kubernetes job/pod state and logs/events, service logs, readable Jira data,
+full retained dashboard artifact/log/issue/workspace volumes, consistent
+Jira/MLflow/Observatory database backups and stored files, plus paginated
+relay requests and usage events. The MLflow backup contains **33 trace
+records and 488 spans**; relay capture contains **318 requests**. Shared
+dashboard capture also retains older artifacts still present (about 4 GB
+uncompressed), so a later wipe cannot silently discard them.
+
+Initially raw job files were packed in `jobs/<job>/files.tar.gz`. After the
+user reported strace/API dumps were not visible, expanded job evidence into
+directly browsable **`jobs/<job>/api-dumps/`, `strace/`, and `artifacts/`**.
+S1 has **605 API dump files, 3,698 strace files, and 26 job artifacts**;
+the seed has one artifact. Original tarballs remain. Future collections
+automatically expose these folders; `--verify <capture> --unpack
+--publish-receipts` upgrades packed-only captures, verifying first, refusing
+unsafe paths/links or edited evidence, then extending checksums and
+refreshing receipts. The final expanded manifest covers **4,694 files,
+1,601,583,672 bytes** (about 1.60 GB, including retained compressed copies).
+All sizes and SHA-256 hashes verified; the refreshed final receipt is stored
+on the dashboard logs volume and points at this host capture.
+
+**Reset enforcement:** new local guards precede both the initial workflow
+wipe and every per-test seed, and direct seed/reset helpers also check them.
+Missing, provisional, or unverified receipts block deletion. The cutoff
+includes this first tier 2 run. Multi-test invocations require archival
+checkpoints between tests; tier 1 remains available. **These guard changes
+are local and still require publication/sync before they affect deployed
+Markov runs**, whose current benchmark pin remains `2cf4540`. The collector
+and final receipt have already been exercised live; the guard recognized
+the verified S1 receipt. No reset or additional model run was performed.
+
+**Limits:** SQLite backups are individually consistent, with the overall
+capture spanning a recorded interval. Historic Jira states already reset
+and expired logs/events cannot be recovered retroactively. Stored symlinks
+are inventoried without following them. Full database snapshots and raw
+evidence are private ignored data. Archive completeness is independent of
+the strategy's pass/fail result.
+
+Validation: **20 offline tests passed**, including committed WAL retention,
+integrity/provisional rejection, safe repeatable unpacking, guard ordering,
+receipt validation, and credential redaction; directory workflow validation,
+Python compilation, and `git diff --check` passed.
+
+## 2026-10-11 — Why the first tier 2 S1 batch failed
+
+**Immediate job failure: refine return mismatch for RHAISTRAT-2.** Its
+refinement completed successfully: the raw Bash tool result confirms
+`status: Refined`, `refine_count: 1`, and the state command prints
+`{"recorded": "RHAISTRAT-2"}`. The helper then calls StructuredOutput at
+13:52:28.226 UTC with **`{"recorded": "{\"recorded\": \"RHAISTRAT-2\"}"}`**,
+encoding the entire JSON result as a string in `recorded`. This passes S1's
+RECORDED schema because it only requires a string. The JavaScript compares
+`r.recorded === toRefine[i].strat`, rejects this value, and adds
+`refine:RHAISTRAT-2` to its failed list.
+
+**Model error versus Workflow robustness:** the malformed StructuredOutput
+originates in the Haiku helper's response. This suggests a formatting or
+instruction-following error: it put the command's JSON into a string instead
+of returning the fields. A single run does not establish that weaker
+reasoning caused the mistake or that a stronger model would reliably avoid
+it. S1 also has a robustness gap: its permissive schema accepts this value,
+then its exact-key check rejects it without reconciling the successfully
+persisted refinement. A stronger model might avoid triggering that gap;
+the interface would remain fragile. Treat the observed model mistake and
+the Workflow's handling as separate findings. The reviewer prose loss
+below is a separate issue and cannot be attributed to Haiku's reasoning
+from this evidence.
+
+The Workflow's in-memory `refined` set consequently differs from the saved
+progress file. It computes `ready` from that set, so only RHAISTRAT-1 and
+RHAISTRAT-3 enter the scorer/reviewer pipeline. The push helper separately
+pushes all three refined files. Final assembly correctly reports
+`action: failed`, `refine: RHAISTRAT-2 returned no result`, and
+`review: RHAISTRAT-2 not recorded`. "Returned no result" is misleading:
+there was a returned object, but its value did not match the target key.
+The host checker exits 1, skips post-processing, and releases the locks.
+
+Evidence in the final capture's S1 job directory:
+`api-dumps/c77fdced-41d7-443f-911f-68e9fb368dab.request.json` (successful
+command output), `api-dumps/2b29c154-5388-4a29-a44e-83dae2e05515.response.json`
+(malformed StructuredOutput), `artifacts/workflow/stream.jsonl` line 49
+(refine helper result), `artifacts/repo-tmp/strat-progress.json` (saved
+completion), and `artifacts/workflow/validation.txt` (host failure).
+The exact executed Workflow source is included in its task_started prompt
+in stream line 5. No need to infer this cause from elapsed time or the
+primary agent's own diagnosis; the raw return and selection code establish it.
+
+**Separate benchmark failure: reviewer prose loss.** Of 16 reviewer Skill
+launches, 14 parent tool results are only `Skill execution completed`.
+Each reviewed strategy has three roles empty on both attempts; the fourth
+role has one empty attempt followed by a returned result. Only RHAISTRAT-1
+feasibility and RHAISTRAT-3 scope return prose. The final review files
+explicitly acknowledge missing reviewer text, and
+`reviewer_outputs_returned` fails. This reproduces the known tier 1 defect.
+The underlying fork return behavior still needs implementation-level
+diagnosis; the observed empty returns are confirmed. Returned feasibility
+and scope prose also discuss all three strategies despite their parent
+being one per-strategy review, which warrants a separate scope investigation.
+
+**The two revise 4/8 outcomes are valid test outcomes.** They do not cause
+execution failure. The missing third review causes finished/steps/review/
+agreement checks to fail; missing reviewer prose independently fails its
+gate. All three distinct strategies exist, so deduplication did not remove
+an RFE from the batch.
+
+**No background timeout observed.** The Workflow's completion notification
+records 1,771,080 ms (about 29 min 31 s), completed status, and all step
+agents done. Claude exits 0; stderr contains no background-ceiling stop
+message. The run stayed within its configured 30-minute background wait.
+Captured relay health reports zero dropped requests/events/records, zero
+pending writes, and zero storage errors. These observations do not identify
+relay loss or timeout as the cause of the missing third review.
+
+Recorded [refine return mismatch](../bugs/open/strat-workflow-refine-return-mismatch.md)
+and [reviewer output loss](../bugs/open/strat-workflow-reviewer-output-loss.md).
+S1/S2 remain unchanged. No repair, resume, reset, or new model run performed.
+
+## 2026-10-11 — Estimated runtime for one three-ticket Opus S1 batch
+
+**Planning estimate: about 50 minutes, with a 40–60 minute range**, for one
+complete three-ticket batch on Opus 4.6, assuming the observed two-helper
+concurrency continues through scoring/review and no account-limit stop or
+large retry overhead occurs. This is an extrapolation, not a measured Opus
+batch or a statistical confidence interval. Completion does not imply
+passing the reviewer-output gate, whose defect also occurred on Opus.
+
+Historical tier 1 S1 Opus jobs took 24.6, 27.5, and 28.8 minutes; removing
+the identified 120-second stream-cut overhead gives approximately 25 minutes
+per ticket. Re-read their original Workflow streams from the final capture's
+`system-state/dashboard-files.tar.gz`. Step-agent durations:
+
+| Step | Opus r1 | Opus r2 | Opus r3 |
+| --- | --- | --- | --- |
+| Create | 1.76 min | 1.76 min | 1.79 min |
+| Refine | 5.79 min | 7.17 min | 8.70 min |
+| Score | 2.93 min | 3.21 min | 3.98 min |
+| Review | 12.68 min | 13.94 min | 12.71 min |
+
+The current Haiku batch establishes two simultaneous refine step agents:
+RHAISTRAT-1/2 start at 13:49:05; RHAISTRAT-3 starts at 13:52:20 after the
+first slot frees. With two slots, three refinements require two waves;
+three scorer/reviewer chains also need more than one wave, with pipelining
+allowing some overlap. Rough critical-path budget: 3–6 minutes for batch
+create/setup, 12–18 for refinement, and 25–35 for pipelined score/review.
+These assumptions motivate the central estimate and range; different RFEs
+and reviewer behavior can move it outside that range.
+
+The observed 29 min 31 s Haiku Workflow duration is not a full three-item
+completion baseline: the malformed refine return excluded RHAISTRAT-2 from
+dedicated scoring/review, while the remaining reviewers spent time on
+repeated empty returns. Neither multiplying that duration by the Opus/Haiku
+per-call latency ratio nor multiplying the single-ticket Opus runtime by
+three models this pipeline well.
+
+The current 30-minute background-wait ceiling is below this estimate.
+Before an authorized Opus batch, use a longer runner wait budget (for
+example 90 minutes, matching the existing outer timeout), without changing
+the pinned S1/S2 designs. No configuration or run was changed for this
+estimate; the post-completion archive is additional time outside agent
+runtime.
+
+## 2026-10-11 — Authorization and preparation for one S1 Opus batch
+
+User authorized "okay lets do a single S1 batch run w/ claude-opus-4-6".
+Prepare/publish the harness, sync/import the exact source in markovd, and
+launch exactly one run: `tier=tier2-opus`, `only_tests=S1`, `variants=opus`,
+`repeats=1`, `wipe_at_start=false`, `workflow_bg_wait_ceiling_ms=5400000`.
+The same three distinct fixtures are used; S1 remains pinned to `1bd7f17`
+and S2 to `0287b83`. The Haiku smoke selection remains restricted to Haiku;
+the separate Opus tier enforces one matching-model run and retains evidence.
+The Opus batch's observed-model gate checks `claude-opus-4-6` for primary
+and helpers. No design fix is included, so known defects remain measurable.
+
+The final Haiku archive was reverified before any reset; the live archival
+guard recognizes its refreshed receipt. Preflight finds no active pipeline
+jobs or Markov runs. Relay health has zero drops, storage errors, or pending
+writes. All **23 offline tests**, Markov directory validation, Python
+compilation, shell syntax, and diff checks pass, including Opus selection,
+model mismatch rejection, wait-budget forwarding, and terminal-run archival
+waiting. A detached host collector will wait for this run to finish, then
+save the full verified archive and publish its receipt, including failure
+evidence if the run fails. No S2 or additional repeat is authorized.

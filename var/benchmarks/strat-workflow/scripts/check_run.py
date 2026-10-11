@@ -287,9 +287,9 @@ def main(argv: list[str]) -> int:
         response_models = set(result["usage"]["by_model"])
         models = response_models | set(checks["reviewer_outputs_returned"].get("detail", {}).get("models", [])
                                        if isinstance(checks["reviewer_outputs_returned"].get("detail"), dict) else [])
-        checks["haiku_only"] = check(bool(response_models) and models == {run["model"]}
-                                     and run["variant"] == "haiku",
-                                     {"expected_model": run["model"], "observed_models": sorted(models)})
+        gate = "haiku_only" if run["variant"] == "haiku" else "model_matches"
+        checks[gate] = check(bool(response_models) and models == {run["model"]},
+                             {"expected_model": run["model"], "observed_models": sorted(models)})
     result["checks"] = checks
     result["pass"] = all(c["ok"] for c in checks.values())
     result["failed_checks"] = [name for name, c in checks.items() if not c["ok"]]

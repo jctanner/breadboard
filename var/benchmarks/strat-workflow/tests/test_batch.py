@@ -145,6 +145,24 @@ class OutcomeTests(unittest.TestCase):
         self.assertTrue(seed_scenario.discovery_problems(seed()["rfes"], ["RHAIRFE-1", "RHAIRFE-2", "RHAIRFE-9"]))
         self.assertEqual(len(seed_scenario.load_scenario("smoke-one-rfe")[0]["rfes"]), 1)
 
+    def test_opus_batch_model_gate_accepts_opus_and_rejects_haiku_helpers(self):
+        run = {"id": "r1-S1-opus", "tier": "tier2-opus", "test": "S1", "arm": "workflow",
+               "variant": "opus", "model": "claude-opus-4-6", "repeat": 1,
+               "scenario": "batch-three-new-rfes", "strat_creator_ref": "a" * 40,
+               "breadboard_ref": "b" * 40, "mlflow_experiment": "test", "mode": "batch", "batch_size": 3}
+        for model, expected in (("claude-opus-4-6", True), ("claude-haiku-5-5", False)):
+            bodies = reviewer_bodies([f"RHAISTRAT-{i}" for i in range(1, 4)])
+            bodies.append({"model": model, "messages": []})
+            with self.subTest(model=model), patch.object(check_run, "jira", fake_jira(jira_fixture())), \
+                    patch.object(check_run, "dashboard", return_value=(200, {"status": "completed"})), \
+                    patch.object(check_run, "api_usage", return_value={"by_model": {"claude-opus-4-6": {}}}), \
+                    patch.object(check_run, "api_bodies", return_value=bodies), \
+                    patch("sys.stdout", new_callable=io.StringIO) as output:
+                check_run.main([json.dumps(run), "fake-job", "batch-discover", "completed", json.dumps(seed())])
+                result = json.loads(output.getvalue())
+            self.assertEqual(result["checks"]["model_matches"]["ok"], expected)
+            self.assertEqual(result["pass"], expected)
+
 
 @unittest.skipUnless(os.environ.get("MARKOV_BIN"), "set MARKOV_BIN for offline orchestration checks")
 class WorkflowTests(unittest.TestCase):
@@ -176,6 +194,8 @@ class WorkflowTests(unittest.TestCase):
                         facts = {step.get("register", "seed_wait"): {"status": "completed", "failed": False}}
                     elif name == "check":
                         facts = {"eval": {"stdout": "{{ run | to_json }}"}}
+                    elif name.startswith("require_archives_before_"):
+                        facts = {"offline_archive_gate": True}
                     elif name == "wipe":
                         facts = {"offline_wipe": True}
                     if facts is not None:
@@ -187,6 +207,8 @@ class WorkflowTests(unittest.TestCase):
                                 "captured_request.args.model == models[variant]",
                                 "captured_request.args.extra_env.BATCH_SIZE == run.batch_size",
                                 "captured_request.args.extra_env.BATCH_EXPECTED_KEYS == batch_expected_keys"]})
+                            if workflow["name"] == "submit-workflow":
+                                steps[-1]["that"].append("captured_request.args.extra_env.STRAT_BG_WAIT_CEILING_MS == workflow_bg_wait_ceiling_ms")
                     else:
                         steps.append(step)
                 # The fake eval used above needs summary fields, and checking
@@ -229,9 +251,21 @@ class WorkflowTests(unittest.TestCase):
             with self.subTest(overrides=overrides):
                 result, rows = self.simulate(overrides)
                 self.assertNotEqual(result.returncode, 0)
-                self.assertIn("Tier 2 smoke needs", result.stderr)
+                self.assertIn("Tier 2 needs", result.stderr)
                 self.assertNotIn('step "submit_seed"', result.stderr)
                 self.assertIsNone(rows)
+
+    def test_opus_batch_is_single_selected_run(self):
+        settings = {"tier": "tier2-opus", "variants": "opus", "repeats": 1,
+                    "workflow_bg_wait_ceiling_ms": 5400000}
+        result, rows = self.simulate(settings)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual((rows[0]["test"], rows[0]["variant"], rows[0]["batch_size"]), ("S1", "opus", 3))
+        for override in ({"only_tests": "S1,S2"}, {"variants": "haiku"}, {"repeats": 3}):
+            result, rows = self.simulate({**settings, **override})
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIsNone(rows)
 
     def test_seed_count_mismatch_stops_before_design(self):
         result, rows = self.simulate({}, count=1)

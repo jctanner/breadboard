@@ -3,6 +3,7 @@ description: "PR #80, the bash entrypoint: its strategy-entrypoint.sh, unchanged
 
 steps:
   - name: submit_job
+    when: "variant != 'glm'"
     type: dashboard_api
     params:
       path: /api/jobs/submit
@@ -26,4 +27,38 @@ steps:
             RESULTS_REPO_URL: "{{ arm.results_repo_url }}"
             RESULTS_GIT_USER: "{{ arm.results_git_user }}"
             RESULTS_PUSH_TOKEN: "{{ arm.results_push_token }}"
+    register: job
+
+  - name: submit_glm_job
+    when: "variant == 'glm'"
+    type: dashboard_api
+    params:
+      path: /api/jobs/submit
+      method: POST
+      body:
+        script:
+          repo: "{{ arm.repo }}"
+          ref: "{{ arm.strat_creator_ref }}"
+          path: .fullsend/scripts/strategy-entrypoint.sh
+          args: ["{{ rfe_key }}"]
+        args:
+          model: "{{ run.model }}"
+          mlflow_experiment: "{{ run.mlflow_experiment }}"
+          strace: true
+          extra_env:
+            STRAT_MODEL: "{{ run.model }}"
+            BATCH_SIZE: "{{ run.batch_size }}"
+            BATCH_EXPECTED_KEYS: "{{ batch_expected_keys }}"
+            STRAT_ARCHITECTURE_CONTEXT_PATH: "{{ architecture_context_path }}"
+            CLAUDE_CONFIG_DIR: /home/pipelineagent/.claude
+            RESULTS_REPO_URL: "{{ arm.results_repo_url }}"
+            RESULTS_GIT_USER: "{{ arm.results_git_user }}"
+            RESULTS_PUSH_TOKEN: "{{ arm.results_push_token }}"
+            CLAUDE_CODE_SUBAGENT_MODEL: "{{ run.model }}"
+            ANTHROPIC_DEFAULT_OPUS_MODEL: "{{ run.model }}"
+            ANTHROPIC_DEFAULT_SONNET_MODEL: "{{ run.model }}"
+            ANTHROPIC_DEFAULT_HAIKU_MODEL: "{{ run.model }}"
+            ANTHROPIC_DEFAULT_FABLE_MODEL: "{{ run.model }}"
+            CLAUDE_CODE_EFFORT_LEVEL: "medium"
+            STRAT_EFFORT: "medium"
     register: job

@@ -202,6 +202,23 @@ def api_bodies(job: str):
             yield body
 
 
+GLM_MODEL = "rits/zai-org/glm-5-3"
+# This is the verified EnMaaS response spelling, not a general fuzzy match.
+GLM_RESPONSE_IDS = {GLM_MODEL, "zai-org/GLM-5.3"}
+
+def model_identity_check(model, usage, additional_models=()):
+    responses = set(usage["by_model"])
+    observed = responses | set(additional_models)
+    requests = set(usage.get("request_models", []))
+    if model == GLM_MODEL:
+        allowed = GLM_RESPONSE_IDS
+        ok = bool(responses) and observed <= allowed and requests == {GLM_MODEL}
+    else:
+        ok = bool(responses) and observed == {model}
+    return check(ok, {"expected_model": model, "observed_models": sorted(observed),
+                      "request_models": sorted(requests)})
+
+
 def api_usage(job: str) -> dict:
     """Sum usage over the job's API dumps (one response file per model call)."""
     base = f"/app/artifacts/apibodies/{job}"
@@ -209,14 +226,19 @@ def api_usage(job: str) -> dict:
     requests = sum(1 for n in entries if n.endswith(".request.json"))
     totals = {"calls": 0, "input": 0, "output": 0, "thinking": 0, "cache_read": 0, "cache_write": 0}
     by_model, errors, unreadable = {}, {}, 0
+    request_models = set()
     for name in entries:
-        if not name.endswith(".response.json"):
+        if not name.endswith((".request.json", ".response.json")):
             continue
         text = read_file(f"{base}/{name}")
         try:
             body = json.loads(text) if text else None
         except json.JSONDecodeError:
             body = None
+        if name.endswith(".request.json"):
+            if isinstance(body, dict) and isinstance(body.get("model"), str):
+                request_models.add(body["model"])
+            continue
         if not isinstance(body, dict):
             unreadable += 1
             continue
@@ -237,7 +259,8 @@ def api_usage(job: str) -> dict:
             totals[key] += value
             per_model[key] += value
     return {**totals, "requests": requests, "by_model": by_model, "errors": errors,
-            "rate_limited": errors.get("rate_limit_error", 0), "unreadable": unreadable}
+            "rate_limited": errors.get("rate_limit_error", 0), "unreadable": unreadable,
+            "request_models": sorted(request_models)}
 
 
 def seconds_between(start: str | None, end: str | None):
@@ -283,13 +306,11 @@ def main(argv: list[str]) -> int:
         except Exception as err:
             checks["reviewer_outputs_returned"] = check(False, f"API dump review checks failed: {err}")
     result["usage"] = api_usage(job_name)
-    if run.get("mode") == "batch":
-        response_models = set(result["usage"]["by_model"])
-        models = response_models | set(checks["reviewer_outputs_returned"].get("detail", {}).get("models", [])
-                                       if isinstance(checks["reviewer_outputs_returned"].get("detail"), dict) else [])
+    if run.get("mode") == "batch" or run["variant"] == "glm":
+        additional = checks.get("reviewer_outputs_returned", {}).get("detail", {})
+        models = additional.get("models", []) if isinstance(additional, dict) else []
         gate = "haiku_only" if run["variant"] == "haiku" else "model_matches"
-        checks[gate] = check(bool(response_models) and models == {run["model"]},
-                             {"expected_model": run["model"], "observed_models": sorted(models)})
+        checks[gate] = model_identity_check(run["model"], result["usage"], models)
     result["checks"] = checks
     result["pass"] = all(c["ok"] for c in checks.values())
     result["failed_checks"] = [name for name, c in checks.items() if not c["ok"]]

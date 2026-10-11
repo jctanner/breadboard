@@ -136,6 +136,30 @@ class OutcomeTests(unittest.TestCase):
         self.assertIn("haiku_only", result["failed_checks"])
         self.assertEqual(len(result["items"]), 3)
 
+    def test_glm_response_spelling_requires_exact_request_and_rejects_other_helpers(self):
+        model = check_run.GLM_MODEL
+        good = {"request_models": [model], "by_model": {"zai-org/GLM-5.3": {}}}
+        self.assertTrue(check_run.model_identity_check(model, good)["ok"])
+        self.assertFalse(check_run.model_identity_check(model, good, ["claude-opus-4-6"])["ok"])
+        self.assertFalse(check_run.model_identity_check(model, {**good, "request_models": []})["ok"])
+        self.assertFalse(check_run.model_identity_check(model, {**good, "request_models": [model, "claude-haiku-5-5"]})["ok"])
+        self.assertFalse(check_run.model_identity_check(model, {**good, "by_model": {"unknown": {}}})["ok"])
+        self.assertFalse(check_run.model_identity_check(model, {**good, "by_model": {}})["ok"])
+
+    def test_glm_single_rfe_emits_model_gate(self):
+        run = {"id":"r1-S1-glm", "tier":"glm-smoke", "test":"S1", "arm":"workflow",
+               "variant":"glm", "model":check_run.GLM_MODEL, "repeat":1,
+               "scenario":"smoke-one-rfe", "strat_creator_ref":"a"*40,
+               "breadboard_ref":"b"*40, "mlflow_experiment":"test", "mode":"single"}
+        with patch.object(check_run,"jira",fake_jira(jira_fixture(1))), \
+                patch.object(check_run,"dashboard",return_value=(200,{"status":"completed"})), \
+                patch.object(check_run,"api_usage",return_value={"request_models":[check_run.GLM_MODEL],"by_model":{"zai-org/GLM-5.3":{}}}), \
+                patch("sys.stdout",new_callable=io.StringIO) as output:
+            check_run.main([json.dumps(run),"fake-job","RHAIRFE-1","completed"])
+        result=json.loads(output.getvalue())
+        self.assertTrue(result["checks"]["model_matches"]["ok"])
+        self.assertTrue(result["pass"])
+
     def test_fixtures_and_exact_discovery(self):
         scenario, templates = seed_scenario.load_scenario("batch-three-new-rfes")
         self.assertEqual(len(scenario["rfes"]), 3)
@@ -185,9 +209,11 @@ class WorkflowTests(unittest.TestCase):
                             facts = {"seed_job": {"body": {"job_name": "offline-seed"}}}
                         elif name == "read_seed_report":
                             facts = {"seed_file": {"body": {"content": json.dumps(seed(count))}}}
-                        elif name == "submit_job":
+                        elif name in ("submit_job", "submit_glm_job"):
                             facts = {"job": {"body": {"job_name": "offline-" + workflow["name"]}},
                                      "captured_request": step["params"]["body"]}
+                        elif name == "submit_wiring_check":
+                            facts = {"wiring_job": {"body": {"job_name": "offline-wiring"}}}
                         else:
                             facts = {"unused_service_step": name}
                     elif step.get("type") == "job_wait":
@@ -201,12 +227,19 @@ class WorkflowTests(unittest.TestCase):
                     if facts is not None:
                         steps.append({"name": name, "type": "set_fact", "vars": facts,
                                       **({"when": step["when"]} if "when" in step else {})})
-                        if name == "submit_job":
-                            steps.append({"name": "verify_request", "type": "assert", "that": [
+                        if name in ("submit_job", "submit_glm_job"):
+                            steps.append({"name": "verify_request_" + name, "type": "assert", "that": [
                                 "captured_request.script.args.0 == rfe_key",
                                 "captured_request.args.model == models[variant]",
                                 "captured_request.args.extra_env.BATCH_SIZE == run.batch_size",
-                                "captured_request.args.extra_env.BATCH_EXPECTED_KEYS == batch_expected_keys"]})
+                                "captured_request.args.extra_env.BATCH_EXPECTED_KEYS == batch_expected_keys"],
+                                **({"when": step["when"]} if "when" in step else {})})
+                            if name == "submit_glm_job":
+                                steps[-1]["that"] += [
+                                    "captured_request.args.extra_env.CLAUDE_CODE_SUBAGENT_MODEL == models.glm",
+                                    "captured_request.args.extra_env.ANTHROPIC_DEFAULT_HAIKU_MODEL == models.glm",
+                                    "captured_request.args.extra_env.CLAUDE_CODE_EFFORT_LEVEL == 'medium'",
+                                    "captured_request.args.extra_env.STRAT_EFFORT == 'medium'"]
                             if workflow["name"] == "submit-workflow":
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_BG_WAIT_CEILING_MS == workflow_bg_wait_ceiling_ms")
                     else:
@@ -251,7 +284,7 @@ class WorkflowTests(unittest.TestCase):
             with self.subTest(overrides=overrides):
                 result, rows = self.simulate(overrides)
                 self.assertNotEqual(result.returncode, 0)
-                self.assertIn("Tier 2 needs", result.stderr)
+                self.assertIn("Single-run tier needs", result.stderr)
                 self.assertNotIn('step "submit_seed"', result.stderr)
                 self.assertIsNone(rows)
 
@@ -266,6 +299,18 @@ class WorkflowTests(unittest.TestCase):
             result, rows = self.simulate({**settings, **override})
             self.assertNotEqual(result.returncode, 0)
             self.assertIsNone(rows)
+
+    def test_glm_one_rfe_one_iteration_each_arm_with_explicit_env(self):
+        for arm in ("S1", "S2"):
+            settings={"tier":"glm-smoke", "variants":"glm", "only_tests":arm, "repeats":1}
+            result,rows=self.simulate(settings,count=1)
+            self.assertEqual(result.returncode,0,result.stderr)
+            self.assertEqual(len(rows),1)
+            self.assertEqual((rows[0]["test"],rows[0]["variant"],rows[0]["batch_size"]),(arm,"glm",1))
+            for invalid in ({"only_tests":"S1,S2"},{"repeats":3},{"variants":"opus"},{"wipe_at_start":True}):
+                result,rows=self.simulate({**settings,**invalid},count=1)
+                self.assertNotEqual(result.returncode,0)
+                self.assertIsNone(rows)
 
     def test_seed_count_mismatch_stops_before_design(self):
         result, rows = self.simulate({}, count=1)

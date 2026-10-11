@@ -25,7 +25,7 @@ steps:
       - "repeats | default:tiers[tier].repeats | seq | length == 1"
       - "not variants or variants == tiers[tier].variant"
       - "not wipe_at_start"
-    msg: "Tier 2 needs only_tests=S1 (or S2 after review), repeats=1, variants={{ tiers[tier].variant }}, and wipe_at_start=false; it never sweeps both designs"
+    msg: "Single-run tier needs only_tests=S1 (or S2 after review), repeats=1, variants={{ tiers[tier].variant }}, and wipe_at_start=false; it never sweeps both designs"
 
   - name: list_running_jobs
     description: "A reset or a new test would pull Jira and files out from under a job still going"
@@ -65,6 +65,12 @@ steps:
     description: "Clear the artifacts volume, MLflow and Observatory once, before the first run"
     when: "wipe_at_start"
     workflow: wipe
+
+  - name: glm_wiring_check
+    description: "One tiny GLM call in the real job environment before S1; included in this run's archive"
+    when: "tier == 'glm-smoke' and only_tests == 'S1'"
+    workflow: glm-preflight
+    register: glm_wiring
 
   - name: rounds
     description: "Every test once per round, so the designs alternate instead of running back to back"

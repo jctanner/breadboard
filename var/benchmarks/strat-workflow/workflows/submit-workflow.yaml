@@ -3,6 +3,7 @@ description: "PR #83, the Claude Workflow: run-workflow.sh runs pre-strategy.sh,
 
 steps:
   - name: submit_job
+    when: "variant != 'glm'"
     type: dashboard_api
     params:
       path: /api/jobs/submit
@@ -23,4 +24,35 @@ steps:
             STRAT_BG_WAIT_CEILING_MS: "{{ workflow_bg_wait_ceiling_ms }}"
             BATCH_SIZE: "{{ run.batch_size }}"
             BATCH_EXPECTED_KEYS: "{{ batch_expected_keys }}"
+    register: job
+
+  - name: submit_glm_job
+    when: "variant == 'glm'"
+    type: dashboard_api
+    params:
+      path: /api/jobs/submit
+      method: POST
+      body:
+        script:
+          repo: "{{ breadboard_repo }}"
+          ref: "{{ bench_ref }}"
+          path: var/benchmarks/strat-workflow/scripts/run-workflow.sh
+          args: ["{{ rfe_key }}"]
+        args:
+          model: "{{ run.model }}"
+          mlflow_experiment: "{{ run.mlflow_experiment }}"
+          strace: true
+          extra_env:
+            STRAT_CREATOR_REF: "{{ arm.strat_creator_ref }}"
+            STRAT_ARCHITECTURE_CONTEXT_PATH: "{{ architecture_context_path }}"
+            STRAT_BG_WAIT_CEILING_MS: "{{ workflow_bg_wait_ceiling_ms }}"
+            BATCH_SIZE: "{{ run.batch_size }}"
+            BATCH_EXPECTED_KEYS: "{{ batch_expected_keys }}"
+            CLAUDE_CODE_SUBAGENT_MODEL: "{{ run.model }}"
+            ANTHROPIC_DEFAULT_OPUS_MODEL: "{{ run.model }}"
+            ANTHROPIC_DEFAULT_SONNET_MODEL: "{{ run.model }}"
+            ANTHROPIC_DEFAULT_HAIKU_MODEL: "{{ run.model }}"
+            ANTHROPIC_DEFAULT_FABLE_MODEL: "{{ run.model }}"
+            CLAUDE_CODE_EFFORT_LEVEL: "medium"
+            STRAT_EFFORT: "medium"
     register: job

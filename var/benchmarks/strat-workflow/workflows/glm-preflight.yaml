@@ -1,0 +1,35 @@
+name: glm-preflight
+description: Verify GLM model/helper pinning and one relay call before the S1 RFE
+  run; no Jira changes
+steps:
+- name: submit_wiring_check
+  type: dashboard_api
+  params:
+    path: /api/jobs/submit
+    method: POST
+    body:
+      script:
+        repo: '{{ breadboard_repo }}'
+        ref: '{{ bench_ref }}'
+        path: var/benchmarks/strat-workflow/scripts/selfcheck.sh
+        args:
+        - --call-model
+      args:
+        model: '{{ models.glm }}'
+        mlflow_experiment: strat-workflow-eval/glm-smoke/wiring
+        strace: true
+        extra_env:
+          CLAUDE_CODE_SUBAGENT_MODEL: '{{ models.glm }}'
+          ANTHROPIC_DEFAULT_OPUS_MODEL: '{{ models.glm }}'
+          ANTHROPIC_DEFAULT_SONNET_MODEL: '{{ models.glm }}'
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: '{{ models.glm }}'
+          ANTHROPIC_DEFAULT_FABLE_MODEL: '{{ models.glm }}'
+          CLAUDE_CODE_EFFORT_LEVEL: medium
+          STRAT_EFFORT: medium
+  register: wiring_job
+- name: wait_for_wiring_check
+  type: job_wait
+  params:
+    job_name: '{{ wiring_job.body.job_name }}'
+    timeout: 300
+  register: wiring_result

@@ -121,6 +121,39 @@ states. The collector does not request relay account credentials or
 Kubernetes Secrets. Raw evidence and full database snapshots remain private,
 ignored data.
 
+## GLM compatibility validation
+
+`glm-smoke` runs one real single-RFE strategy on the selected design. Invoke
+S1 and S2 separately, archiving/analyzing S1 before submitting S2:
+
+```yaml
+tier: glm-smoke
+only_tests: S1
+variants: glm
+repeats: 1
+wipe_at_start: false
+```
+
+Use `only_tests: S2` for the separately authorized second pass. This tier
+rejects multiple designs, more than one repeat, another model or artifact wipes.
+It preserves the original design pins and single-RFE scenario. Before S1, a
+small `selfcheck.sh --call-model` job validates real job wiring without changing
+Jira; its traces/logs are archived in the same Markov run.
+
+The model is `rits/zai-org/glm-5-3` through the existing Vertex relay project
+`vertex-shim-local`. GLM-specific submissions explicitly pin subagents and all
+default model aliases, and set medium effort. The personal upstream key stays
+on the relay. Existing Haiku/Opus submission environments are unchanged.
+The GLM outcome gate requires exact hosted request IDs and permits only the
+verified `zai-org/GLM-5.3` response spelling as an alternative. Unknown response
+models and Claude helper requests fail the model check. Provider/account routing
+is reconciled separately against archived relay telemetry.
+
+This is compatibility validation; a single run per design does not establish
+quality, runtime or cost equivalence. GLM prices/context limits are not inferred
+from Claude's fallback metadata. All evidence must be archived before S2's Jira
+reset, using the existing collector and receipt guard.
+
 ## First tier 2 batch
 
 `tier2-smoke` uses three new eligible RFEs and no existing STRATs. The full

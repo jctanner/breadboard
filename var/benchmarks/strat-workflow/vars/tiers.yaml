@@ -3,6 +3,20 @@
 # (vars/models.yaml). Repeats run in rounds, all tests once and then again,
 # so the designs alternate.
 tiers:
+  glm-smoke:
+    # Exactly one RFE/run per selected arm. Archive/analyze S1 before S2.
+    single_test: true
+    variant: glm
+    repeats: 1
+    tests:
+      - id: S1
+        arm: workflow
+        variants: [glm]
+        scenario: smoke-one-rfe
+      - id: S2
+        arm: bash
+        variants: [glm]
+        scenario: smoke-one-rfe
   tier2-smoke:
     # Select exactly one design explicitly. S1 first; S2 only after analysis.
     single_test: true

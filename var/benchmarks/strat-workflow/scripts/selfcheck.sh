@@ -29,7 +29,7 @@ check "relay inference port answers" \
   bash -c 'curl -fsS --max-time 5 "${ANTHROPIC_VERTEX_BASE_URL%/v1}/health"'
 
 check "ANTHROPIC_MODEL set (${ANTHROPIC_MODEL:-unset})" bash -c '[ -n "${ANTHROPIC_MODEL:-}" ]'
-if [[ "${ANTHROPIC_MODEL:-}" == claude-* ]]; then
+if [[ "${ANTHROPIC_MODEL:-}" == claude-* || "${ANTHROPIC_MODEL:-}" == */* ]]; then
   check "subagent model and aliases pinned to $ANTHROPIC_MODEL" bash -c '
     m="$ANTHROPIC_MODEL"
     for v in CLAUDE_CODE_SUBAGENT_MODEL ANTHROPIC_DEFAULT_OPUS_MODEL ANTHROPIC_DEFAULT_SONNET_MODEL ANTHROPIC_DEFAULT_HAIKU_MODEL; do

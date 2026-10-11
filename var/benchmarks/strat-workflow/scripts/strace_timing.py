@@ -4,9 +4,11 @@
 # For each process: start/end (first/last traced line), command (its last execve), parent
 # (from clone/fork/vfork return values in the parent's file). Prints the process tree's long-
 # running branches, and for each claude process: wall time, time with at least one model call
-# in flight (API dumps: +1 per request file, -1 per response file, by mtime), and time with at
-# least one tool process alive (its child processes).
-import glob, os, re, sys, datetime
+# in flight (API dumps: +1 per request file, -1 per response file, by mtime, counting only the
+# requests index.jsonl pairs with a response), and time with at least one tool process alive
+# (its child processes). strace times carry no date; a job that runs past midnight UTC has
+# times after it moved forward a day.
+import glob, os, re, sys, datetime, json
 from collections import defaultdict
 
 T = re.compile(r"^(\d\d):(\d\d):(\d\d)\.(\d+) ")
@@ -28,6 +30,14 @@ def union(intervals):
 def fmt(s): return f"{s/60:5.1f}m" if s >= 90 else f"{s:5.1f}s"
 
 for job in sys.argv[1:]:
+    dumps = glob.glob(f"/app/artifacts/apibodies/{job}/*.json")
+    try: ok = {json.loads(l).get("request_file") for l in open(f"/app/artifacts/apibodies/{job}/index.jsonl") if l.strip()}
+    except OSError: ok = None
+    dumps = [f for f in dumps if ok is None or not f.endswith(".request.json") or os.path.basename(f) in ok]
+    # Time of day of the job's first model request; anything 12 h or more before it is the next day.
+    first = datetime.datetime.utcfromtimestamp(min(map(os.path.getmtime, dumps))) if dumps else None
+    ref = first.hour * 3600 + first.minute * 60 + first.second if first else None
+    def unwrap(t): return t + 86400 if ref is not None and t < ref - 43200 else t
     procs, children = {}, defaultdict(list)
     for f in glob.glob(f"/app/artifacts/strace/{job}/*"):
         pid = int(f.rsplit(".", 1)[1]); start = end = None; cmd = None; exe = None
@@ -35,7 +45,7 @@ for job in sys.argv[1:]:
             for line in fh:
                 m = T.match(line)
                 if not m: continue
-                t = secs(m)
+                t = unwrap(secs(m))
                 if start is None: start = t
                 end = t
                 e = EXEC.search(line)
@@ -80,13 +90,14 @@ for job in sys.argv[1:]:
 
     # API in-flight intervals from the dumps.
     events = []
-    for f in glob.glob(f"/app/artifacts/apibodies/{job}/*.json"):
+    for f in dumps:
         events.append((os.path.getmtime(f), 1 if f.endswith(".request.json") else -1))
     events.sort()
     api_iv, inflight, since = [], 0, None
     tz = datetime.datetime.fromtimestamp(0).astimezone().utcoffset()
     for ts, d in events:
         dt = datetime.datetime.utcfromtimestamp(ts); t = dt.hour * 3600 + dt.minute * 60 + dt.second + dt.microsecond / 1e6
+        t = unwrap(t)
         if inflight == 0 and d > 0: since = t
         inflight = max(0, inflight + d)
         if inflight == 0 and since is not None: api_iv.append((since, t)); since = None

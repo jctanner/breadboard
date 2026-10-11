@@ -1720,3 +1720,161 @@ but not exact, for that reason.
 - **For the eval:** add a check that every reviewer section in the posted
   review came from a reviewer's own output (or a file it wrote), and count
   reviewer reruns.
+
+## Smoke on opus 4.6 (markov-run-f2f3b733, S2 r3 re-run as markov-run-5884ad2a)
+
+Both designs on `claude-opus-4-6`, 3 rounds, at the same commit as the
+haiku re-run (`4648532`), `wipe_at_start=false`, so the haiku evidence was
+kept. The relay had the telemetry fix and `SHIM_UPSTREAM_TIMEOUT_SECONDS=600`
+deployed first.
+
+**S2 round 3 was re-run.** The first attempt
+(`…opus-4-1011-020151-d0246c`) hit the Claude account's usage limit after
+about 610 opus calls: two 429s, "This request would exceed your account's
+rate limit", at 02:11:36. Claude Code doesn't retry that error, so the job
+failed after 10 minutes. It was re-run alone after the limit reset
+(`…opus-4-1011-042540-5f963f`), same commit and seed, and replaces the
+failed attempt below. `markov-run-f2f3b733`'s own `summary.md` still lists
+it as failed.
+
+**Results:** 6/6 passed.
+
+| | Haiku S1 | Haiku S2 | Opus S1 | Opus S2 |
+| --- | --- | --- | --- | --- |
+| Minutes, r1/r2/r3 | 22.8 / 25.4 / 17.1 | 13.1 / 13.5 / 13.3 | 24.6 / 27.5 / 28.8 | 24.0 / 33.8 / 37.6 |
+| Same, less 120 s cuts (approx.) | 18.8 / 25.4 / 17.1 | same | 24.6 / 25.5 / 24.8 | 24.0 / 25.8 / 25.6 |
+| Model calls | 138 / 159 / 123 | 97 / 92 / 73 | 108 / 105 / 105 | 86 / 88 / 99 |
+| Tool calls | 208 / 292 / 193 | 118 / 123 / 126 | 179 / 191 / 177 | 144 / 165 / 167 |
+| Output tokens | 197k / 320k / 215k | 152k / 158k / 159k | 61k / 65k / 62k | 60k / 64k / 62k |
+| Verdict | revise 4/8 ×3 | revise 4/8 ×3 | approve 6, 6, 7 | revise 5, approve 7, approve 6 |
+| Empty reviewer results | 15 of 22 launches | 0 | 12 of 12 | 0 |
+| Reviewer reruns | 10 | 0 | 0 | 0 |
+
+**Timing:**
+- **Concurrency is still 1.0** in every job, opus and haiku.
+- **Opus calls are about twice as slow.** The median is 6–8 s against 3 s on
+  haiku, and up to 120 s for long writes. Opus writes 3–5× fewer output
+  tokens.
+- **Without the 120 s cuts, both designs take about 25 minutes on opus.**
+  Haiku's S1 overhead came from the reviewer reruns; opus does none.
+
+**The relay still cut streams at 120 s.**
+- The 600 s setting only reaches the environment-configured upstream.
+- Managed accounts are hard-coded to 120 s. See
+  `.ledger/bugs/open/model-relay-120s-upstream-timeout.md`; fixed in relay
+  `59d6f06`, not deployed.
+- 13 calls were cut, each costing 2 minutes and a full retry:
+  - S1: 0, 1, 2 per round;
+  - S2: 0, 4, 6 per round.
+- **The cuts hit whichever agent writes about 5k output tokens in one
+  turn:** the scorer, the reviewers, or refine. Both designs have those
+  agents, so S2's larger share is chance, not design. S2 r3's architecture
+  reviewer was cut four times on the same request.
+- The haiku re-run's two cuts (S1 r1) had the same cause.
+
+**S1 reviewers on opus: every one ends on `StructuredOutput`.**
+- All 12 reviewer launches (4 per run) called `StructuredOutput` with
+  `{key, recommendation, needs_attention}` and returned no text. S1's
+  forked refine skill did the same in all 3 runs. Refine writes its result
+  to the strategy file, so that one is harmless.
+- **Haiku did this 15 times in 22 launches; opus every time.** Opus follows
+  the inherited tool's "MUST call this tool exactly once" more consistently,
+  as expected.
+- **Opus never reruns the empty reviewers.** After the four empty results,
+  the S1 review agent:
+  - reads 3–4 architecture docs itself (`kserve.md`,
+    `odh-model-controller.md`, `odh-observability.md`, and `PLATFORM.md` in
+    r3);
+  - then writes all four reviewer sections, plus agreements and
+    disagreements, in one Edit (1.5 min).
+- **So every posted S1 opus review is the review agent's work, not the
+  reviewers'.** Section sizes are similar to S2's (2–5k characters each),
+  so nothing in the output shows it.
+- **Reviewer conclusions are lost.** In S1 r2 the feasibility and
+  testability reviewers concluded `revise, needs_attention: true` in their
+  `StructuredOutput`. The posted review says approve, with no mention of
+  their concerns.
+- **The verdict is unaffected:** it comes from the scorer
+  (`apply_scores.py`), which runs before the reviewers in both designs.
+- **S2** reviewers returned their reviews as text in all three runs.
+
+**Verdicts:** opus scored 5–7/8 where haiku scored 4/8 in all six runs. The
+scorer and the strategy writer both changed model, so this doesn't say
+which got better. Cross-scoring (the haiku scorer on opus strategies, and
+the other way round) would separate them.
+
+**Analysis fixes made for this run:**
+- `tool_calls.py` strips `<system-reminder>` blocks before checking for an
+  empty skill result. Before, it missed empty results that had a reminder
+  appended. The haiku counts didn't change.
+- `concurrency.py` and `strace_timing.py` count only requests that
+  `index.jsonl` pairs with a response. A cut stream leaves a request with no
+  response, which made the counter stay above zero, showing false 2–3×
+  concurrency and "model 0 s, neither 27 min".
+- `strace_timing.py` handles jobs that cross midnight UTC. strace times
+  have no date, so S1 r1 had a negative wall time.
+- `index.jsonl` in each API dump directory pairs every request file with
+  its response file. `conv_breakdown.py` and `arch_requests.py` could use it
+  in place of their time-order heuristics.
+
+**Opus S1 vs S2: tool calls, file reads, tokens (mean per run)**
+
+| | S1 (Workflow) | S2 (bash) |
+| --- | --- | --- |
+| Model calls | 106 | 91 |
+| Tool calls | 182 | 159 |
+| Output tokens | 62.7k | 62.3k |
+| Cache read | 3.63M | 4.02M |
+| Cache write | 569k | 588k |
+| Architecture docs the model asked for | 37 | 38 |
+| Strategy/review artifacts asked for | 31 | 32 |
+
+- **Tokens are a wash.** S1's extra calls are its orchestration: about
+  18 calls of workflow plumbing, which `conv_breakdown.py` lumps in with
+  S1's forked refine at 36 calls and 1.45M cache read. That roughly
+  balances S2's three separate `claude` processes, each re-reading its own
+  context: S2's refine alone is 1.34M cache read.
+- **The S1 reviewers' tokens buy nothing.** They spend 25 calls, 23k output
+  and 0.76M cache read per run, and none of it reaches the posted review.
+  The review agent then spends 10 more calls rewriting the reviews: 37
+  calls against S2's 27, including 11 architecture-doc reads.
+- **File opens are noise.** Totals range from 1.4k to 9.4k per job. The
+  architecture-context Grep sweeps dominate them: about 1,844 opens per
+  sweep, 0–4 sweeps per run, set by how the scorer searches, not by
+  design. The files the model asked for are the same in both designs.
+
+**Opus S1 vs S2: statistics (n = 3 per design, S2 r3 = the re-run)**
+
+| Metric | S1 mean ± sd (range) | S2 mean ± sd (range) | S2 − S1 | Cohen's d | Welch p | 95% CI of the difference | Mann–Whitney p |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Wall minutes | 27.0 ± 2.2 (24.6–28.8) | 31.8 ± 7.0 (24.0–37.6) | +4.8 | 0.93 | 0.36 | −10.9 … +20.6 | 0.70 |
+| Wall minutes, less 120 s cuts | 25.0 ± 0.5 (24.6–25.5) | 25.1 ± 1.0 (24.0–25.8) | +0.2 | 0.22 | 0.81 | −1.9 … +2.2 | 0.70 |
+| Model calls | 106.0 ± 1.7 (105–108) | 91.0 ± 7.0 (86–99) | −15.0 | −2.94 | 0.058 | −31.2 … +1.2 | 0.10 |
+| Tool calls | 182.3 ± 7.6 (177–191) | 158.7 ± 12.7 (144–167) | −23.7 | −2.26 | 0.064 | −49.7 … +2.4 | 0.10 |
+| Tool errors | 6.0 ± 2.6 (3–8) | 6.0 ± 2.6 (3–8) | 0 | 0 | 1.00 | −6 … +6 | 1.00 |
+| Output tokens (k) | 62.8 ± 2.1 | 61.8 ± 1.9 | −0.9 | −0.46 | 0.60 | −5.5 … +3.7 | 1.00 |
+| Cache read (M tokens) | 3.63 ± 0.20 | 4.02 ± 0.36 | +0.39 | 1.36 | 0.19 | −0.34 … +1.11 | 0.20 |
+| Cache write (k tokens) | 570 ± 55 | 589 ± 41 | +18 | 0.38 | 0.67 | −95 … +132 | 1.00 |
+| Score out of 8 | 6.3 ± 0.6 (6, 6, 7) | 6.0 ± 1.0 (5, 7, 6) | −0.3 | −0.41 | 0.65 | −2.4 … +1.7 | 1.00 |
+| Median call latency (s) | 6.7 ± 0.7 | 7.9 ± 0.4 | +1.3 | 2.42 | 0.057 | −0.1 … +2.6 | 0.10 |
+| 120 s stream cuts | 1.0 ± 1.0 (0–2) | 3.3 ± 3.1 (0–6) | +2.3 | 1.03 | 0.32 | −4.5 … +9.1 | 0.50 |
+| Architecture docs the model asked for | 37.3 ± 7.0 | 38.0 ± 6.2 | +0.7 | 0.10 | 0.91 | −14.5 … +15.8 | 1.00 |
+| Reviewer outputs lost, of 4 | 4.0 ± 0 | 0.0 ± 0 | −4 | ∞ | – | – | 0.10 |
+
+- **The tests:** Welch's t-test and its CI (scipy); the exact two-sided
+  Mann–Whitney test, by enumeration. With n = 3 the Mann–Whitney p can't
+  go below 0.10, so these flag differences worth watching, never confirm
+  them.
+- **The one clear result is the lost reviewer output.** Per launch it is
+  12/12 against 0/12, Fisher exact p ≈ 7 × 10⁻⁷. It is a mechanism, not
+  noise.
+- **Model and tool calls lean towards S1 doing more** (p ≈ 0.06): its
+  Workflow plumbing and the review agent's rewrite. That costs no time
+  or tokens.
+- **The latency lean is probably time of day:** S2's slowest run is the
+  solo re-run at 04:25.
+- **Raw wall time** differs only by the relay's 120 s cuts.
+- **Tokens, file reads, errors and scores** show no difference.
+- **For conclusive timing and token comparisons,** run 4 or more per
+  design (or more scenarios). 4 is the smallest n at which the
+  Mann–Whitney test can reach p < 0.05 (minimum 0.029; 0.008 at n = 5).

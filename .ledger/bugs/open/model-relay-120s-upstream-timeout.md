@@ -42,3 +42,30 @@ Component: `checkouts/model-relay`, deployed as `model-relay` in
 
 Not applied yet: the change would affect a run in progress, and the user
 asked to pause after the re-run.
+
+## Update (2026-10-11): the setting didn't reach managed accounts
+
+`SHIM_UPSTREAM_TIMEOUT_SECONDS=600` was deployed at 23:39 UTC on
+2026-10-10, before the opus smoke run (`markov-run-f2f3b733`, S2 round 3
+re-run as `markov-run-5884ad2a`). Streams were still cut at exactly 120 s:
+13 relay records with `upstream_stream_error`, `latency_ms` 120000–120002,
+8–14 output tokens each. Claude Code retried each from the start.
+
+- **Cause:** the setting only applies to the environment-configured
+  upstream (`src/main.rs`). Managed upstream profiles, which the deployment
+  uses (`tanner-jc-personal`, Claude OAuth), build their client in
+  `UpstreamProfile::backend` (`src/projects.rs`) with a hard-coded 120 s.
+- **What gets cut:** opus writes about 40–45 tokens/s, so any turn longer
+  than about 5k output tokens. These were the scorer writing its result,
+  reviewers writing their reviews, and refine. One S2 architecture reviewer
+  was cut four times running on the same request.
+- **Cost in the opus run:** S1 0, 1, 2 cuts and S2 0, 4, 6 cuts per round,
+  2 minutes each, so up to 12 minutes of a 37.6-minute run.
+- **Fix:** `checkouts/model-relay` `59d6f06` adds
+  `backend::upstream_timeout()`, used by both paths. Tests pass (28),
+  clippy clean. Not pushed or deployed yet; it needs
+  `make host-rebuild-relay` while no run is in progress.
+- **Telemetry:** these cuts are recorded as `upstream_stream_error`, not
+  `timeout_error`, so suggested fix 3 still stands.
+
+Close after the deploy, once a run shows no `latency_ms` at 120000.

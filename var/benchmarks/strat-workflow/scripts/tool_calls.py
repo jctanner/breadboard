@@ -122,7 +122,8 @@ def job_calls(job):
         if "documented completion marker" in c["first"][-600:]: completions += 1
         for n, i in enumerate(c["order"], 1):
             b, res = c["uses"][i], c["results"].get(i)
-            text = text_of(res.get("content")) if res else ""
+            # Claude Code appends <system-reminder> blocks to some results; they aren't the tool's.
+            text = re.sub(r"<system-reminder>.*?</system-reminder>", "", text_of(res.get("content")) if res else "", flags=re.S)
             out.append({"job": job, "design": design, "agent": role, "conversation": k, "n": n,
                         "time": iso(resp_time.get(i)), "tool": b["name"], "kind": verb(b["name"], b.get("input") or {}),
                         "input": norm(brief(b["name"], b.get("input") or {})),

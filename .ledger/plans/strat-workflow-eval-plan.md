@@ -7,6 +7,18 @@ Reader's report: [Claude Workflows and scripted pipelines](../notes/claude-workf
 It summarizes the execution layers, evidence limits, proposed testing budgets,
 and production recommendation. Proposed study levels do not authorize new runs.
 
+Production coverage update, 2026-10-12: the user confirms a ten-RFE batch limit,
+roughly three RFEs on average, and a six-hour schedule. The
+[narrative report](../notes/claude-workflows-vs-scripted-pipelines-human.md)
+now proposes ten-RFE batches for level 3 and full-size level 4 trials. Existing
+three-RFE measurements remain baselines. The production batch limit is not being
+reduced; ten-RFE cases have not run. Their budgets are provisional projections.
+They cover pipeline work only. Proposed level 5,
+[independent strategy-content evaluation](../notes/strat-workflow-content-eval-harness-assessment.md),
+adds a separate judge-model budget and can reuse frozen outputs from earlier
+levels without waiting for the level 4 reliability campaign. The framework
+inspection is complete; an artifact adapter and paid judging remain unrun.
+
 2026-10-12 hardening: [fresh reproduction and reusable delivery checks](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-benchmark-hardening.md)
 are complete and privately archived. The installed binary is still 2.1.296;
 no newer-version conclusion is implied. Full normalized selected assessments
@@ -3813,6 +3825,12 @@ resolved a mechanism or exposed a confound. Original measurements remain intact.
    model calls during the long background wait; completion/artifact reads add
    bursts of context. Helpers have separate windows, sometimes100k–193k. The
    finding establishes primary isolation, not reduced aggregate helper cost.
+   Exact API-pair inspection attributes the repaired S1 batch's 167579-token
+   sample to the architecture reviewer (request 498a2999-abbf-4b4c-b745-0fefeae475ea,
+   response d3f42734-07f7-479e-9297-882e4e503a4d). Its history contains 13 distinct
+   architecture-context Read targets: LATEST_VERSION, PLATFORM.md and 11 component
+   documents. This verifies the role and those reads; it does not establish that
+   every architecture overlay was read.
 9. **Infrastructure confounded early timing.** Managed relay accounts still
    had120s deadlines after the first configured600s change. Full repair allows
    successful streams beyond120s, including276.8s in S2. Earlier timings remain
@@ -3851,6 +3869,43 @@ resolved a mechanism or exposed a confound. Original measurements remain intact.
     without model decisions, but both designs still need live checks when agent
     prompts or inputs change. Maintenance/evaluation savings are an architectural
     implication, not a measured result. No additional paid run is authorized.
+
+14. **Qualify the configured maximum, not just the average.** Production accepts
+    ten RFEs every six hours, with roughly three on average. That average gives
+    neither the most common batch size nor the frequency of full batches. Keep
+    the ten-RFE limit: reducing it to three would lower nominal daily capacity
+    from 40 to 12 RFEs before failures/delays. Preserve small-batch regression cases,
+    but require distinct ten-RFE fixtures and 40 correctly attributed reviewer
+    reports per design for full-size qualification. Level 3 now proposes ten
+    paired ten-RFE batches, with larger confidence studies conditional on that
+    workload; estimating ordinary production failure frequency also needs its
+    actual batch-size mix. Linear scaling of the measured three-RFE pair gives
+    roughly 84M tokens / $153 per ten-RFE pair, or 840M / $1530 for ten pairs, using
+    rounded estimates. These are unmeasured Opus 4.6 API-equivalent projections;
+    replace them with a full-size measurement before funding repeats. The
+    registered R1 three-RFE retest remains a narrow scheduling comparison, not
+    ten-RFE qualification. No new fixture, pipeline change or paid run is made
+    by this documentation update.
+
+15. **Level 5 separately evaluates strategy content.** Pipeline review
+    calls are already included in producer usage. Post-run content evaluation
+    adds a new budget, varied by judge model, rubric, context, samples and retries.
+    The proposed 20 full-size jobs yield 200 final strategies if all artifacts
+    exist. Two judge models and two samples give 800 combined-rubric assessments,
+    or 400 per model; four separate criterion judges multiply that by four.
+    Rejudge frozen outputs to compare judges without rerunning the producer.
+    Keep a fixed primary judge across design/model variants and calibrate judge
+    choices against human assessments, retaining errors, coverage and disagreement. Same-model
+    judging is a baseline, not independent proof of technical correctness.
+    agent-eval-harness at 21808e6 supports deterministic and LLM/agent judges,
+    repeated scoring, pairwise comparison, opaque external CLI execution and
+    Kubernetes/Harbor. It is broader than output-only model A/B testing, but our
+    artifact mapping/execution integration is not implemented. Judge usage is
+    separate from producer cost; SDK prices may be null and Anthropic summary
+    input merges cache categories. Retain raw usage for priced API equivalents.
+    Detailed [assessment](../notes/strat-workflow-content-eval-harness-assessment.md)
+    contains source pins, limitations and a proposed integration. No paid judge
+    call, producer rerun or integration deployment is authorized by this note.
 
 The tested working baseline remains S2; S1 demonstrates useful concurrency and
 lower observed batch cost. However, the confirmed return-contract defect is

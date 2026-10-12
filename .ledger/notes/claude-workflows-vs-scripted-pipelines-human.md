@@ -207,9 +207,10 @@ start with a rough assumption that usage grows with the number of tickets:
 **$45.83 × 10 ÷ 3 ≈ $153 per ten-RFE pair**
 
 Using those rounded estimates, ten pairs means roughly **840 million tokens and
-$1,530**, plus independent grading. These are projections, not measured ten-RFE
-costs. Caching, longer contexts, repeated reads and retries can change the rate
-of growth. Measure a full-size pair before committing to the repeats.
+$1,530 for pipeline work**, plus independent grading. These are projections,
+not measured ten-RFE costs. Caching, longer contexts, repeated reads and retries
+can change the rate of growth. Measure a full-size pair before committing to the
+repeats.
 
 Totals include input, cache writes, cache reads and output at different prices.
 The measured three-RFE pair's roughly 481,000 output tokens already include
@@ -238,7 +239,8 @@ the true failure rate.
 | 300 | 1% | 25.2 billion | $45,900 |
 
 These total budgets use the rounded ten-RFE projections above. Sixty runs per
-design means 120 jobs; testing only one design uses its own per-run cost.
+design means 120 jobs; testing only one design uses its own per-run cost. Add
+content-judging spend separately to every row.
 
 The calculation needs independent, representative runs of a stable version.
 Forty reviewers in one batch are not forty independent pipeline trials.
@@ -256,7 +258,36 @@ expert checks. This formula cannot tell us which strategy document is better.
 
 These larger studies are proposals. The evidence we have today is much narrower.
 
-### 9. Every change adds some validation work
+### 9. Level 5: Judge the strategy content
+
+Level 5 is a separate evaluation of the resulting strategy content. It can use
+saved outputs from earlier levels; we do not need to finish the level 4 reliability
+study first. The pipeline already pays for its four review agents. Independent
+judging adds new token spend and should use the original RFE, architecture
+references and a fixed rubric, without seeing the pipeline's own score as an
+answer key.
+
+Using the proposed level 3 pilot as an example, **20 batches × 10 strategies =
+200 documents**. Two judge models with two passes per document means
+**200 × 2 × 2 = 800 assessments**, using one combined rubric per pass. Each model
+grades 400 times; multiply that by its measured average cost, then add the two
+totals. Four separate criterion judges would multiply the assessment count by
+four. Retries add spend.
+
+I'd keep our same-model judge as a baseline and test other judges against a small
+set of human assessments. Higher price alone does not establish a better judge.
+Each chosen judge should grade both pipeline designs and all compared producer
+models. Hide their labels and check agreement and consistency. We can change
+judges on saved strategies without paying to regenerate them.
+
+I inspected agent-eval-harness. It supports code and LLM judges, pairwise
+comparisons and an external-command execution contract. I'd use it to score
+our exported artifacts while Markov and Breadboard keep running the jobs. That
+still needs an artifact adapter. Judge tokens and costs belong in a separate
+budget; missing prices must remain unknown. The [framework assessment](strat-workflow-content-eval-harness-assessment.md)
+records the inspected version, accounting limits and proposed integration.
+
+### 10. Every change adds some validation work
 
 Suppose we insert another script between two skills. We must check the script
 and the agent's behavior around it: the right command ran, failures were handled,
@@ -278,7 +309,7 @@ not measured maintenance savings.
 
 ## C. What the completed runs tell us
 
-### 10. The Workflow finished sooner
+### 11. The Workflow finished sooner
 
 Our strongest completed comparison used the same three distinct RFE problem
 statements, one run per design, with Opus 4.6.
@@ -314,7 +345,7 @@ and changes to test infrastructure also limit comparison. Earlier timings had
 unequal 120-second transport failures; subtracting those seconds cannot recreate a
 clean run.
 
-### 11. Delivered reports still need to be right
+### 12. Delivered reports still need to be right
 
 The delivery difference is more concrete. Our checker compares the expected
 report text against what the receiving agent actually got. It confirms 2 of 12
@@ -332,7 +363,7 @@ establish it. Both designs used separate review conversations per strategy, so
 this pair cannot measure the savings or contamination from shared review sessions.
 Mixed-state and ten-RFE batches remain untested.
 
-### 12. I'd keep scripts in charge of production coordination
+### 13. I'd keep scripts in charge of production coordination
 
 I'd use bash to launch work and a small amount of Python to parse results,
 validate ticket identities, save checkpoints and check publication. Agents would
@@ -365,4 +396,5 @@ compact technical presentation. These records contain the underlying evidence:
 - [Reviewer handoff diagnosis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-specialist-handoff.md), [review provenance](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-review-provenance.md), and [fresh reproduction and delivery checks](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-benchmark-hardening.md).
 - [Restart, cancellation, retry and limit controls](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-operations.md) and [permission-classifier analysis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-auto-mode-analysis.md).
 - [Matched-concurrency retest plan](../plans/strat-workflow-matched-concurrency-retest.md), registered but not run.
+- [Content-evaluation framework assessment](strat-workflow-content-eval-harness-assessment.md), including separate judge budgets and source references.
 - [NIST confidence-interval guidance](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm) and [the zero-event risk calculation](https://qualitysafety.bmj.com/content/early/2013/08/19/bmjqs-2013-002246?versioned=true).

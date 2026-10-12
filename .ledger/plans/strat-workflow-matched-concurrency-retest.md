@@ -9,6 +9,11 @@ How do wall time, token categories, equivalent cost and specialist delivery
 compare when both designs run one top-level strategy task at a time?
 The existing 51.2/88.7-minute pair used different schedules and cannot answer it.
 
+Scope clarification, 2026-10-12: this retest keeps the three-RFE fixture for the
+scheduling question. It does not qualify production's ten-RFE batch limit or
+six-hour schedule. Full-size coverage and budgets are separate proposals in the
+[narrative report](../notes/claude-workflows-vs-scripted-pipelines-human.md).
+
 ## Design
 
 Prefer a sequential Native Workflow variant over adding a new parallel bash

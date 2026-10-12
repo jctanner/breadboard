@@ -4,11 +4,18 @@
 
 - [Claude Workflows and scripted pipelines](notes/claude-workflows-vs-scripted-pipelines.md):
   reader's report covering execution layers, test budgets/confidence, and S1/S2 recommendation.
+  [Narrative version](notes/claude-workflows-vs-scripted-pipelines-human.md)
+  follows the same evidence in a more conversational style
+  ([rewrite task](tasks/done/claude-workflow-human-report.md)).
   [Hardening evidence](../scripts/claude_binary_analysis/docs/claude-code-2.1.296-benchmark-hardening.md)
   verifies the installed-version reproduction and complete selected-report delivery;
   [hardening task](tasks/done/claude-workflow-report-hardening.md) records its checks.
   [matched-concurrency retest](plans/strat-workflow-matched-concurrency-retest.md)
   is pre-registered, awaiting paid-run authorization.
+- [Independent strategy-content evaluation](notes/strat-workflow-content-eval-harness-assessment.md):
+  inspected agent-eval-harness; separate judge models/budgets and artifact adapter
+  proposed. No paid judging or benchmark integration has run
+  ([assessment task](tasks/done/strat-workflow-content-eval-framework.md)).
 - [Fix invalid ANTHROPIC_LOG job setting](tasks/done/fix-anthropic-log-directory-warning.md):
   deployed; both launchers corrected, 18 tests and mock capture check pass.
 - [Claude Workflow production-gap investigation](notes/claude-workflow-production-gaps-handoff.md):

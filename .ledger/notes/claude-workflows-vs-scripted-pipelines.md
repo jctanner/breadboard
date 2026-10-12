@@ -2,18 +2,24 @@
 
 ## What the evidence says
 
+We compared two ways to turn enhancement requests into strategy documents:
+
+- **Native Workflow:** JavaScript running inside Claude Code coordinates the agents.
+- **Scripted Pipeline:** external bash and Python scripts coordinate Claude calls.
+
 Claude Workflows offer useful scheduling, separate agent conversations, and saved
 results. They do not make the whole pipeline deterministic. In the tested design,
 even routine script execution and result transfer pass through model decisions.
 
-Our three-ticket comparison found S1 faster and slightly cheaper, but S2 delivered
-all specialist assessments through the expected return path. Prefer an external runner:
-bash for launching commands, Python for data handling and validation. Keep agents
-responsible for the work that needs judgment.
+Our three-ticket comparison found the Native Workflow faster and slightly cheaper,
+but the Scripted Pipeline delivered all specialist assessments through the
+expected return path. Prefer an external runner: bash for launching commands,
+Python for data handling and validation. Keep agents responsible for the work
+that needs judgment.
 
 Evidence date: 12 October 2026. Workflow behavior refers to Claude Code 2.1.296.
-S1 means the native Workflow design; S2 means the bash entrypoint. An RFE is a
-request for enhancement. Sources are listed at the end.
+The benchmark records label these designs S1 (Native Workflow) and S2 (Scripted
+Pipeline). An RFE is a request for enhancement. Sources are listed at the end.
 
 ## A. What a Workflow actually does
 
@@ -34,28 +40,29 @@ also blocked. [1]
 
 Deterministic means the same inputs lead to the same program decisions.
 
-| Layer | S1: native Workflow | S2: external runner |
+| Layer | Native Workflow | Scripted Pipeline |
 | --- | --- | --- |
 | Scheduling | JavaScript chooses order and concurrency | Bash chooses order and invocation |
 | Routine operations | An agent runs commands and reports results | Scripts run commands and parse results directly |
 | Strategy and review content | Model judgment | Model judgment |
 
-S1 makes the first layer deterministic while moving uncertainty below `agent()`.
-The model chooses commands, interprets output, and decides what to return. The
-harness then packages that return for the next layer.
+The Native Workflow makes the first layer deterministic while moving uncertainty
+below `agent()`. The model chooses commands, interprets output, and decides what
+to return. The harness then packages that return for the next layer.
 
-For example, S2 reads state directly from a Python command. S1 asks an agent to
-run that command and repeat the JSON. The command may succeed while the reported
-value is wrong. In the Haiku batch, a completed refinement was returned as JSON
-inside a string; the pipeline then left that strategy out of review. [2]
+For example, the Scripted Pipeline reads state directly from a Python command.
+The Native Workflow asks an agent to run that command and repeat the JSON. The
+command may succeed while the reported value is wrong. In the Haiku batch, a
+completed refinement was returned as JSON inside a string; the pipeline then
+left that strategy out of review. [2]
 
 Extra transfers create extra places to fail. A deterministic loop can skip an
 item an agent omitted; replay can reuse an incorrect result. Predictable
 scheduling can therefore preserve mistakes and hide incomplete work.
 
-S2's agents still make uncertain decisions internally. The external runner can
-keep discovery, validation, checkpointing, and publication outside those
-conversations. Model judgment remains uncertain.
+The Scripted Pipeline's agents still make uncertain decisions internally. Its
+runner can keep discovery, validation, checkpointing, and publication outside
+those conversations. Model judgment remains uncertain.
 
 ### 3. The useful parts
 
@@ -91,9 +98,9 @@ budget was unset in the tested local launch path. External limits still matter.
 
 ### 5. Small primary context does not mean small total usage
 
-In the repaired S1 batch, the primary agent's measured input grew from 24,103 to
-26,887 tokens: an increase of 2,784. There were no primary model calls during
-the roughly 50-minute background wait. Waiting happened in the harness.
+In the repaired Native Workflow batch, the primary agent's measured input grew
+from 24,103 to 26,887 tokens: an increase of 2,784. There were no primary model
+calls during the roughly 50-minute background wait. Waiting happened in the harness.
 
 One helper reached about 168,000 input tokens. Total job usage was 12.95 million
 tokens across repeated requests and separate conversations, not one context
@@ -121,16 +128,17 @@ After smoke, prioritize missing results, wrong targets, empty batches, duplicate
 failed writes, broken streams, quota limits, crashes, cancellation, and stale
 resume. Mocks test harness behavior; a smaller live subset tests model behavior.
 
-Keep original S1/S2 versions as controls; name repairs as new variants. Repeating
-a known failure adds little. Confidence campaigns should follow repairs and
-stronger checks, including the scope checks both designs currently fail.
+Keep the original versions of both designs as controls; name repairs as new
+variants. Repeating a known failure adds little. Confidence campaigns should
+follow repairs and stronger checks, including the scope checks both designs
+currently fail.
 
 ### 7. The budget arithmetic
 
 One measured three-RFE pair used:
 
-- S1: 12.95 million tokens and $21.55 API list-price equivalent.
-- S2: 12.21 million tokens and $24.28 API list-price equivalent.
+- Native Workflow: 12.95 million tokens and $21.55 API list-price equivalent.
+- Scripted Pipeline: 12.21 million tokens and $24.28 API list-price equivalent.
 - Together: 25.16 million tokens and $45.83.
 
 Ten pairs therefore cost roughly **10 × 25.16 = 252 million tokens** and
@@ -177,16 +185,16 @@ ordinary failure frequency.
 run is guaranteed to succeed. The rule applies only when there are zero failures;
 otherwise use a failure-rate confidence interval. [7]
 
-Ten pairs are a speed/cost pilot. Subtract S1's time from S2's for each pair;
-report the average and spread. More runs depend on that spread and the difference
-we care about. Quality needs a fixed rubric and independent, blind grading.
-The failure-rate rule does not measure accuracy.
+Ten pairs are a speed/cost pilot. For each pair, subtract the Native Workflow's
+time from the Scripted Pipeline's; report the average and spread. More runs
+depend on that spread and the difference we care about. Quality needs a fixed
+rubric and independent, blind grading. The failure-rate rule does not measure accuracy.
 
 Our historical three-repeat Opus campaign could not complete within the available
 Anthropic five-hour usage allowance. Quota consumption is separate from wall
 time. Large studies need planned quota windows and must record aborted runs. [2]
 
-## C. What S1 and S2 tell us
+## C. What the two designs tell us
 
 ### 9. The strongest completed comparison
 
@@ -194,7 +202,7 @@ Both designs received the same three distinct RFE problem statements on the
 repaired relay, once each, using Opus 4.6.
 Mixed-state and ten-RFE strategy batches remain untested.
 
-| Measure | S1: Workflow | S2: bash |
+| Measure | Native Workflow | Scripted Pipeline |
 | --- | --- | --- |
 | Job duration | 51.2 minutes | 88.7 minutes |
 | Completed strategy/refine/review sets | 3 | 3 |
@@ -205,10 +213,11 @@ Mixed-state and ten-RFE strategy batches remain untested.
 | Output tokens, including thinking | 216,778 | 264,161 |
 | API list-price equivalent | $21.55 | $24.28 |
 
-S2 took **88.7 − 51.2 = 37.5 extra minutes** and cost **$2.73 more**, about
-13%. S1 overlapped two top-level strategy tasks; S2 ran the stages sequentially.
+The Scripted Pipeline took **88.7 − 51.2 = 37.5 extra minutes** and cost
+**$2.73 more**, about 13%. The Native Workflow overlapped two top-level strategy
+tasks; the Scripted Pipeline ran the stages sequentially.
 Scheduling explains much of the timing pattern, but content and latency also
-differed. Bash can support concurrency; the measured S2 implementation did not
+differed. Bash can support concurrency; the measured Scripted Pipeline did not
 use that same schedule. [2]
 
 One pair, retained files, and differing harness/relay revisions limit general
@@ -217,9 +226,10 @@ subtracting timeout seconds does not reconstruct an error-free measurement.
 
 ### 10. Delivery is not accuracy
 
-The structured-output/text mismatch explains S1's ten missing returns. Some final
-sections used earlier scorer reports. In the GLM test, transcript reads recovered
-specialist prose. Missing returns do not prove fabricated reviews. [3]
+The structured-output/text mismatch explains the Native Workflow's ten missing
+returns. Some final sections used earlier scorer reports. In the GLM test,
+transcript reads recovered specialist prose. Missing returns do not prove
+fabricated reviews. [3]
 
 Both Opus designs showed scope drift: every substantive specialist report
 assessed the whole batch despite a per-strategy target. Both also published
@@ -232,10 +242,10 @@ score of 7 out of 8 does not settle it.
 
 ### 11. Production recommendation
 
-Use S2's external-runner approach as the foundation, with explicit result
-contracts. Bash launches commands; Python parses data, checks identities and
-required fields, persists checkpoints, and validates publication. Agents create,
-refine, and assess strategy content.
+Use the Scripted Pipeline's external-runner approach as the foundation, with
+explicit result contracts. Bash launches commands; Python parses data, checks
+identities and required fields, persists checkpoints, and validates publication.
+Agents create, refine, and assess strategy content.
 
 Before production, require a complete input manifest, one persisted assessment
 per strategy and role, preserved dissent, explicit error handling, safe retries,

@@ -1,0 +1,297 @@
+{
+  "binary_sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de",
+  "controls": [
+    {
+      "api_request_count": 5,
+      "case": "explore-read",
+      "child_receives_body": false,
+      "child_tools_used": [
+        "Read"
+      ],
+      "first_primary_metadata_request": 5,
+      "fixture_git_commit": "cf8224a16f766ff0dc8bbebbdb6678f3ddeef37e",
+      "fixture_tree_sha256": "bd26c26ad208ba7742b7137fa6a9c994ed75bf63c83b96b3cefb11eca27b707c",
+      "metadata_excerpts": [
+        {
+          "lines": [
+            "- isolation-fixture: SKILL_ISOLATION_METADATA_MARKER (from architecture-context/.claude/skills \u2014 applies when working on files under architecture-context/)"
+          ],
+          "markers": [
+            "isolation-fixture",
+            "SKILL_ISOLATION_METADATA_MARKER"
+          ],
+          "path": ".messages[7].content[0].text"
+        }
+      ],
+      "passed": true,
+      "primary_initial_markers": [],
+      "primary_receives_body": false,
+      "primary_receives_metadata": true,
+      "primary_tools_used": [
+        "Agent"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-explore-read-v1",
+      "runner_sha256": "78d6b5b6a60a735e4152c2ad7ec0918846ceeec98ba61369c8cbbc8556b91222"
+    },
+    {
+      "api_request_count": 5,
+      "case": "general-read",
+      "child_receives_body": false,
+      "child_tools_used": [
+        "Read"
+      ],
+      "first_primary_metadata_request": 5,
+      "fixture_git_commit": "cf8224a16f766ff0dc8bbebbdb6678f3ddeef37e",
+      "fixture_tree_sha256": "bd26c26ad208ba7742b7137fa6a9c994ed75bf63c83b96b3cefb11eca27b707c",
+      "metadata_excerpts": [
+        {
+          "lines": [
+            "- isolation-fixture: SKILL_ISOLATION_METADATA_MARKER (from architecture-context/.claude/skills \u2014 applies when working on files under architecture-context/)"
+          ],
+          "markers": [
+            "isolation-fixture",
+            "SKILL_ISOLATION_METADATA_MARKER"
+          ],
+          "path": ".messages[7].content[0].text"
+        }
+      ],
+      "passed": true,
+      "primary_initial_markers": [],
+      "primary_receives_body": false,
+      "primary_receives_metadata": true,
+      "primary_tools_used": [
+        "Agent"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-general-read-v1",
+      "runner_sha256": "ccbfad2409833f27358c3173463012691cba9a7e5e6f09488e56aefeed3a6644"
+    },
+    {
+      "api_request_count": 5,
+      "case": "workflow-read",
+      "child_receives_body": false,
+      "child_tools_used": [
+        "Read"
+      ],
+      "first_primary_metadata_request": 5,
+      "fixture_git_commit": "cf8224a16f766ff0dc8bbebbdb6678f3ddeef37e",
+      "fixture_tree_sha256": "bd26c26ad208ba7742b7137fa6a9c994ed75bf63c83b96b3cefb11eca27b707c",
+      "metadata_excerpts": [
+        {
+          "lines": [
+            "- isolation-fixture: SKILL_ISOLATION_METADATA_MARKER (from architecture-context/.claude/skills \u2014 applies when working on files under architecture-context/)"
+          ],
+          "markers": [
+            "isolation-fixture",
+            "SKILL_ISOLATION_METADATA_MARKER"
+          ],
+          "path": ".messages[7].content[0].text"
+        }
+      ],
+      "passed": true,
+      "primary_initial_markers": [],
+      "primary_receives_body": false,
+      "primary_receives_metadata": true,
+      "primary_tools_used": [
+        "Workflow"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-workflow-read-v1",
+      "runner_sha256": "ac8a68008f582590e3032777d9a4ae5424410e5dbd1cb6058d6d8a2d4dde817f"
+    },
+    {
+      "api_request_count": 5,
+      "case": "explore-bash",
+      "child_receives_body": false,
+      "child_tools_used": [
+        "Bash"
+      ],
+      "first_primary_metadata_request": null,
+      "fixture_git_commit": "cf8224a16f766ff0dc8bbebbdb6678f3ddeef37e",
+      "fixture_tree_sha256": "bd26c26ad208ba7742b7137fa6a9c994ed75bf63c83b96b3cefb11eca27b707c",
+      "metadata_excerpts": [],
+      "passed": true,
+      "primary_initial_markers": [],
+      "primary_receives_body": false,
+      "primary_receives_metadata": false,
+      "primary_tools_used": [
+        "Agent"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-explore-bash-v1",
+      "runner_sha256": "ccbfad2409833f27358c3173463012691cba9a7e5e6f09488e56aefeed3a6644"
+    },
+    {
+      "api_request_count": 4,
+      "case": "no-read",
+      "child_receives_body": false,
+      "child_tools_used": [],
+      "first_primary_metadata_request": null,
+      "fixture_git_commit": "cf8224a16f766ff0dc8bbebbdb6678f3ddeef37e",
+      "fixture_tree_sha256": "bd26c26ad208ba7742b7137fa6a9c994ed75bf63c83b96b3cefb11eca27b707c",
+      "metadata_excerpts": [],
+      "passed": true,
+      "primary_initial_markers": [],
+      "primary_receives_body": false,
+      "primary_receives_metadata": false,
+      "primary_tools_used": [
+        "Agent"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-no-read-v1",
+      "runner_sha256": "ccbfad2409833f27358c3173463012691cba9a7e5e6f09488e56aefeed3a6644"
+    },
+    {
+      "api_request_count": 5,
+      "case": "ignored-read",
+      "child_receives_body": false,
+      "child_tools_used": [
+        "Read"
+      ],
+      "first_primary_metadata_request": null,
+      "fixture_git_commit": "d9df854127c103aed1a79699b57d3abcbf826898",
+      "fixture_tree_sha256": "ea61cefb72f5ae1eb866a0fd5a4a66617557dc090c4220bce337915c329de82e",
+      "metadata_excerpts": [],
+      "passed": true,
+      "primary_initial_markers": [],
+      "primary_receives_body": false,
+      "primary_receives_metadata": false,
+      "primary_tools_used": [
+        "Agent"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-ignored-read-v1",
+      "runner_sha256": "ccbfad2409833f27358c3173463012691cba9a7e5e6f09488e56aefeed3a6644"
+    },
+    {
+      "api_request_count": 5,
+      "case": "settings-disabled",
+      "child_receives_body": false,
+      "child_tools_used": [
+        "Read"
+      ],
+      "first_primary_metadata_request": null,
+      "fixture_git_commit": "cf8224a16f766ff0dc8bbebbdb6678f3ddeef37e",
+      "fixture_tree_sha256": "bd26c26ad208ba7742b7137fa6a9c994ed75bf63c83b96b3cefb11eca27b707c",
+      "metadata_excerpts": [],
+      "passed": true,
+      "primary_initial_markers": [],
+      "primary_receives_body": false,
+      "primary_receives_metadata": false,
+      "primary_tools_used": [
+        "Agent"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-settings-disabled-v1",
+      "runner_sha256": "cae2112d72338e49708854992f0b57d1ad85b857d0486cba486330b6c5aee90b"
+    },
+    {
+      "api_request_count": 6,
+      "case": "primary-skill",
+      "child_receives_body": false,
+      "child_tools_used": [
+        "Read"
+      ],
+      "first_primary_metadata_request": 5,
+      "fixture_git_commit": "cf8224a16f766ff0dc8bbebbdb6678f3ddeef37e",
+      "fixture_tree_sha256": "bd26c26ad208ba7742b7137fa6a9c994ed75bf63c83b96b3cefb11eca27b707c",
+      "metadata_excerpts": [
+        {
+          "lines": [
+            "- isolation-fixture: SKILL_ISOLATION_METADATA_MARKER (from architecture-context/.claude/skills \u2014 applies when working on files under architecture-context/)"
+          ],
+          "markers": [
+            "isolation-fixture",
+            "SKILL_ISOLATION_METADATA_MARKER"
+          ],
+          "path": ".messages[7].content[0].text"
+        },
+        {
+          "lines": [
+            "- isolation-fixture: SKILL_ISOLATION_METADATA_MARKER (from architecture-context/.claude/skills \u2014 applies when working on files under architecture-context/)"
+          ],
+          "markers": [
+            "isolation-fixture",
+            "SKILL_ISOLATION_METADATA_MARKER"
+          ],
+          "path": ".messages[7].content"
+        }
+      ],
+      "passed": true,
+      "primary_initial_markers": [],
+      "primary_receives_body": true,
+      "primary_receives_metadata": true,
+      "primary_tools_used": [
+        "Agent",
+        "Skill"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-primary-skill-v1",
+      "runner_sha256": "ccbfad2409833f27358c3173463012691cba9a7e5e6f09488e56aefeed3a6644"
+    },
+    {
+      "api_request_count": 6,
+      "case": "child-skill",
+      "child_receives_body": true,
+      "child_tools_used": [
+        "Read",
+        "Skill"
+      ],
+      "first_primary_metadata_request": 6,
+      "fixture_git_commit": "cf8224a16f766ff0dc8bbebbdb6678f3ddeef37e",
+      "fixture_tree_sha256": "bd26c26ad208ba7742b7137fa6a9c994ed75bf63c83b96b3cefb11eca27b707c",
+      "metadata_excerpts": [
+        {
+          "lines": [
+            "- isolation-fixture: SKILL_ISOLATION_METADATA_MARKER (from architecture-context/.claude/skills \u2014 applies when working on files under architecture-context/)"
+          ],
+          "markers": [
+            "isolation-fixture",
+            "SKILL_ISOLATION_METADATA_MARKER"
+          ],
+          "path": ".messages[7].content[0].text"
+        }
+      ],
+      "passed": true,
+      "primary_initial_markers": [],
+      "primary_receives_body": false,
+      "primary_receives_metadata": true,
+      "primary_tools_used": [
+        "Agent"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-child-skill-v1",
+      "runner_sha256": "71e1597bd78e7e617450f54c16c43c58e7ecf941ab359dcb3000c8d8cc17f45d"
+    },
+    {
+      "api_request_count": 5,
+      "case": "child-read-skill",
+      "child_receives_body": true,
+      "child_tools_used": [
+        "Read"
+      ],
+      "first_primary_metadata_request": 5,
+      "fixture_git_commit": "cf8224a16f766ff0dc8bbebbdb6678f3ddeef37e",
+      "fixture_tree_sha256": "bd26c26ad208ba7742b7137fa6a9c994ed75bf63c83b96b3cefb11eca27b707c",
+      "metadata_excerpts": [
+        {
+          "lines": [
+            "- isolation-fixture: SKILL_ISOLATION_METADATA_MARKER (from architecture-context/.claude/skills \u2014 applies when working on files under architecture-context/)"
+          ],
+          "markers": [
+            "isolation-fixture",
+            "SKILL_ISOLATION_METADATA_MARKER"
+          ],
+          "path": ".messages[7].content[0].text"
+        }
+      ],
+      "passed": true,
+      "primary_initial_markers": [],
+      "primary_receives_body": false,
+      "primary_receives_metadata": true,
+      "primary_tools_used": [
+        "Agent"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-child-read-skill-v1",
+      "runner_sha256": "71e1597bd78e7e617450f54c16c43c58e7ecf941ab359dcb3000c8d8cc17f45d"
+    }
+  ],
+  "markers": {
+    "body": "SKILL_ISOLATION_BODY_MARKER",
+    "description": "SKILL_ISOLATION_METADATA_MARKER",
+    "name": "isolation-fixture"
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,1082 @@
+{
+  "schema_version": 1,
+  "evidence_precedence": [
+    "runtime",
+    "exact-bundle",
+    "old-source"
+  ],
+  "claims": [
+    {
+      "id": "availability",
+      "claim": "enableWorkflows:false removes the Workflow tool; managed disable, organization policy and launch availability also gate it.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            122039383,
+            122039449
+          ],
+          [
+            122039637,
+            122039673
+          ],
+          [
+            122039673,
+            122040095
+          ],
+          [
+            122040566,
+            122040862
+          ]
+        ],
+        "anchors": [
+          "enableWorkflows",
+          "disableWorkflows",
+          "allow_workflows"
+        ],
+        "catalog_topic": "availability"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-disabled-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Only user enable/disable was varied at runtime."
+      ]
+    },
+    {
+      "id": "metadata",
+      "claim": "The first statement must export a pure-literal meta object with nonempty name and description; scripts are plain JavaScript.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139123811,
+            139124644
+          ],
+          [
+            139126780,
+            139127104
+          ],
+          [
+            139127363,
+            139127792
+          ],
+          [
+            139127792,
+            139128069
+          ]
+        ],
+        "anchors": [
+          "Kb",
+          "j",
+          "M",
+          "K"
+        ],
+        "catalog_topic": "metadata"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-metadata-error-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": []
+    },
+    {
+      "id": "named-discovery",
+      "claim": "Named filesystem workflows use meta.name and .js; valid project definitions override user definitions, while an invalid project override preserves a valid user copy.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139137946,
+            139137996
+          ],
+          [
+            139138926,
+            139140244
+          ],
+          [
+            139140272,
+            139140473
+          ],
+          [
+            139140841,
+            139141713
+          ],
+          [
+            139143208,
+            139144401
+          ],
+          [
+            139144488,
+            139144850
+          ],
+          [
+            139144907,
+            139144978
+          ]
+        ],
+        "anchors": [
+          "LQe",
+          "P",
+          "W",
+          "D",
+          "b",
+          "M",
+          "j1t"
+        ],
+        "catalog_topic": "discovery"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-named-valid-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-named-invalid-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-extension-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": []
+    },
+    {
+      "id": "discovery-precedence",
+      "claim": "Combined definitions merge bundled then plugin then user/project sources by name, preserving valid earlier definitions when an override cannot parse.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139137946,
+            139137996
+          ],
+          [
+            139138926,
+            139140244
+          ],
+          [
+            139140272,
+            139140473
+          ],
+          [
+            139140841,
+            139141713
+          ],
+          [
+            139143208,
+            139144401
+          ],
+          [
+            139144488,
+            139144850
+          ],
+          [
+            139144907,
+            139144978
+          ]
+        ],
+        "anchors": [
+          "LQe",
+          "P",
+          "W",
+          "D",
+          "b",
+          "M",
+          "j1t"
+        ],
+        "catalog_topic": "discovery"
+      },
+      "runtime": {
+        "runs": []
+      },
+      "verdict": "bundle-confirmed",
+      "limitations": [
+        "Bundled/plugin collision precedence read statically; no plugin runtime matrix in this investigation."
+      ]
+    },
+    {
+      "id": "background-launch",
+      "claim": "Workflow validates input, asks permission by default, persists a script, registers local_workflow and returns before completion.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            153092096,
+            153092117
+          ],
+          [
+            153092420,
+            153094390
+          ],
+          [
+            153094391,
+            153095848
+          ],
+          [
+            153095928,
+            153096659
+          ],
+          [
+            153097403,
+            153107594
+          ],
+          [
+            153098615,
+            153101073
+          ],
+          [
+            153101074,
+            153102443
+          ],
+          [
+            153102444,
+            153105555
+          ],
+          [
+            153107820,
+            153108728
+          ]
+        ],
+        "anchors": [
+          "we",
+          "Gt",
+          "Xt",
+          "Rr",
+          "si",
+          "validateInput",
+          "checkPermissions",
+          "call",
+          "Ir"
+        ],
+        "catalog_topic": "invocation"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-plain-return-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Approval dialog inspected statically; runtime fixtures use bypassPermissions."
+      ]
+    },
+    {
+      "id": "vm-boundary",
+      "claim": "Workflow scripts run in a restricted node:vm context; process/require are absent, dynamic imports are rejected, and current time/randomness are blocked for deterministic replay.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139159442,
+            139159928
+          ],
+          [
+            139160222,
+            139161786
+          ],
+          [
+            139161786,
+            139163523
+          ],
+          [
+            139182341,
+            139182392
+          ],
+          [
+            139182396,
+            139182407
+          ],
+          [
+            139182408,
+            139182413
+          ],
+          [
+            139182414,
+            139182421
+          ],
+          [
+            139185335,
+            139185339
+          ],
+          [
+            139185349,
+            139226151
+          ],
+          [
+            139226525,
+            139228364
+          ],
+          [
+            139228376,
+            139230042
+          ],
+          [
+            139231083,
+            139238642
+          ]
+        ],
+        "anchors": [
+          "N9n",
+          "Lr",
+          "$ie",
+          "ms",
+          "gs",
+          "ws",
+          "or",
+          "tr",
+          "ir",
+          "F9n",
+          "lr",
+          "F1t"
+        ],
+        "catalog_topic": "engine"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-plain-return-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-dynamic-import-error-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-determinism-error-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "This is a recovered implementation description, not proof against VM escape."
+      ]
+    },
+    {
+      "id": "parallel-pipeline",
+      "claim": "parallel keeps positional results and converts thrown branches to null; pipeline advances each item without an inter-stage barrier, dropping failing/null items from later stages.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139159442,
+            139159928
+          ],
+          [
+            139160222,
+            139161786
+          ],
+          [
+            139161786,
+            139163523
+          ],
+          [
+            139182341,
+            139182392
+          ],
+          [
+            139182396,
+            139182407
+          ],
+          [
+            139182408,
+            139182413
+          ],
+          [
+            139182414,
+            139182421
+          ],
+          [
+            139185335,
+            139185339
+          ],
+          [
+            139185349,
+            139226151
+          ],
+          [
+            139226525,
+            139228364
+          ],
+          [
+            139228376,
+            139230042
+          ],
+          [
+            139231083,
+            139238642
+          ]
+        ],
+        "anchors": [
+          "N9n",
+          "Lr",
+          "$ie",
+          "ms",
+          "gs",
+          "ws",
+          "or",
+          "tr",
+          "ir",
+          "F9n",
+          "lr",
+          "F1t"
+        ],
+        "catalog_topic": "engine"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-parallel-errors-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-pipeline-errors-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": []
+    },
+    {
+      "id": "agent-text",
+      "claim": "Unstructured agent results come from the last assistant response text, with normalization, warnings and file-record decoration possible; there is no semantic result validator.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139159442,
+            139159928
+          ],
+          [
+            139160222,
+            139161786
+          ],
+          [
+            139161786,
+            139163523
+          ],
+          [
+            139182341,
+            139182392
+          ],
+          [
+            139182396,
+            139182407
+          ],
+          [
+            139182408,
+            139182413
+          ],
+          [
+            139182414,
+            139182421
+          ],
+          [
+            139185335,
+            139185339
+          ],
+          [
+            139185349,
+            139226151
+          ],
+          [
+            139226525,
+            139228364
+          ],
+          [
+            139228376,
+            139230042
+          ],
+          [
+            139231083,
+            139238642
+          ]
+        ],
+        "anchors": [
+          "N9n",
+          "Lr",
+          "$ie",
+          "ms",
+          "gs",
+          "ws",
+          "or",
+          "tr",
+          "ir",
+          "F9n",
+          "lr",
+          "F1t"
+        ],
+        "catalog_topic": "engine"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-agent-text-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "The mock confirms simple final text; fallback/warning branches are static."
+      ]
+    },
+    {
+      "id": "structured-agent",
+      "claim": "schema makes agent return validated StructuredOutput data; prose without that tool fails after an in-conversation nudge.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139159442,
+            139159928
+          ],
+          [
+            139160222,
+            139161786
+          ],
+          [
+            139161786,
+            139163523
+          ],
+          [
+            139182341,
+            139182392
+          ],
+          [
+            139182396,
+            139182407
+          ],
+          [
+            139182408,
+            139182413
+          ],
+          [
+            139182414,
+            139182421
+          ],
+          [
+            139185335,
+            139185339
+          ],
+          [
+            139185349,
+            139226151
+          ],
+          [
+            139226525,
+            139228364
+          ],
+          [
+            139228376,
+            139230042
+          ],
+          [
+            139231083,
+            139238642
+          ]
+        ],
+        "anchors": [
+          "N9n",
+          "Lr",
+          "$ie",
+          "ms",
+          "gs",
+          "ws",
+          "or",
+          "tr",
+          "ir",
+          "F9n",
+          "lr",
+          "F1t"
+        ],
+        "catalog_topic": "engine"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-agent-schema-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-missing-structured-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": []
+    },
+    {
+      "id": "resume-cache",
+      "claim": "The journal uses chained v2 SHA256 keys of previous key, prompt and canonical result-relevant options. Identical replay and relabel reuse cache; changed second prompt reruns only that call.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139165729,
+            139165989
+          ],
+          [
+            139165989,
+            139166505
+          ],
+          [
+            139166505,
+            139166640
+          ],
+          [
+            139166770,
+            139168886
+          ],
+          [
+            139169709,
+            139169873
+          ]
+        ],
+        "anchors": [
+          "v2",
+          "schema",
+          "bashCommandClamp"
+        ],
+        "catalog_topic": "journal"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-resume-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Resume was tested within one session; restoration after process restart was read statically."
+      ]
+    },
+    {
+      "id": "budget-concurrency",
+      "claim": "Default agent concurrency is min(16,max(2,availableParallelism-2)), the lifetime call cap is 1000, and this local launch path passes tokenBudget.total=null.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139159442,
+            139159928
+          ],
+          [
+            139160222,
+            139161786
+          ],
+          [
+            139161786,
+            139163523
+          ],
+          [
+            139182341,
+            139182392
+          ],
+          [
+            139182396,
+            139182407
+          ],
+          [
+            139182408,
+            139182413
+          ],
+          [
+            139182414,
+            139182421
+          ],
+          [
+            139185335,
+            139185339
+          ],
+          [
+            139185349,
+            139226151
+          ],
+          [
+            139226525,
+            139228364
+          ],
+          [
+            139228376,
+            139230042
+          ],
+          [
+            139231083,
+            139238642
+          ]
+        ],
+        "anchors": [
+          "N9n",
+          "Lr",
+          "$ie",
+          "ms",
+          "gs",
+          "ws",
+          "or",
+          "tr",
+          "ir",
+          "F9n",
+          "lr",
+          "F1t"
+        ],
+        "catalog_topic": "engine"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-plain-return-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Runtime confirms null budget only. Concurrency ceilings, call caps and retry limits were read statically, not stress tested."
+      ]
+    },
+    {
+      "id": "child-composition",
+      "claim": "workflow(name,args) runs a child context sharing parent hooks and limits; nesting inside a child is rejected.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139173939,
+            139175001
+          ],
+          [
+            139175001,
+            139176074
+          ],
+          [
+            139176074,
+            139176271
+          ],
+          [
+            139176384,
+            139177580
+          ]
+        ],
+        "anchors": [
+          "W1r",
+          "z1r",
+          "G1r",
+          "Go"
+        ],
+        "catalog_topic": "child-workflow"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-child-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "The successful child composition is runtime-confirmed; the nesting rejection is static."
+      ]
+    },
+    {
+      "id": "completion-not-proof",
+      "claim": "Caught branch failures can yield null entries while the outer workflow is completed; direct uncaught schema failure marks the workflow failed.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139159442,
+            139159928
+          ],
+          [
+            139160222,
+            139161786
+          ],
+          [
+            139161786,
+            139163523
+          ],
+          [
+            139182341,
+            139182392
+          ],
+          [
+            139182396,
+            139182407
+          ],
+          [
+            139182408,
+            139182413
+          ],
+          [
+            139182414,
+            139182421
+          ],
+          [
+            139185335,
+            139185339
+          ],
+          [
+            139185349,
+            139226151
+          ],
+          [
+            139226525,
+            139228364
+          ],
+          [
+            139228376,
+            139230042
+          ],
+          [
+            139231083,
+            139238642
+          ]
+        ],
+        "anchors": [
+          "N9n",
+          "Lr",
+          "$ie",
+          "ms",
+          "gs",
+          "ws",
+          "or",
+          "tr",
+          "ir",
+          "F9n",
+          "lr",
+          "F1t"
+        ],
+        "catalog_topic": "engine"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-parallel-errors-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-missing-structured-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-missing-structured-parallel-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Workflow status does not establish that returned prose satisfies the task."
+      ]
+    },
+    {
+      "id": "task-lifecycle",
+      "claim": "Tasks retain progress by type/index, output totals and controllers; skip and retry use separate abort reasons, while stopping a run marks it killed and stops associated work.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            136485246,
+            136485980
+          ],
+          [
+            136486423,
+            136487336
+          ],
+          [
+            136487588,
+            136488165
+          ],
+          [
+            136489167,
+            136489471
+          ],
+          [
+            136489765,
+            136489813
+          ],
+          [
+            136489813,
+            136489862
+          ],
+          [
+            136489930,
+            136492990
+          ]
+        ],
+        "anchors": [
+          "rjr",
+          "sjr",
+          "b",
+          "cX",
+          "HQe",
+          "DQe",
+          "q9n"
+        ],
+        "catalog_topic": "task-lifecycle"
+      },
+      "runtime": {
+        "runs": []
+      },
+      "verdict": "bundle-confirmed",
+      "limitations": [
+        "Interactive pause/skip/retry/stop were not driven at runtime."
+      ]
+    },
+    {
+      "id": "persistence",
+      "claim": "Final workflow snapshots and per-agent transcripts/journal are separate session artifacts; resume only caches non-null successful results.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            136494038,
+            136494078
+          ],
+          [
+            136494078,
+            136494130
+          ],
+          [
+            136494130,
+            136494198
+          ],
+          [
+            136494322,
+            136494804
+          ]
+        ],
+        "anchors": [
+          "P",
+          "m",
+          "Q0",
+          "hGo"
+        ],
+        "catalog_topic": "persistence"
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-agent-text-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-agent-schema-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-resume-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": []
+    },
+    {
+      "id": "slash-dispatch",
+      "claim": "Workflow slash commands generate a prompt instructing the model to call Workflow(name,args); slash arguments become a trimmed string.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            141188390,
+            141189500
+          ],
+          [
+            141189009,
+            141189498
+          ],
+          [
+            141189500,
+            141189570
+          ]
+        ],
+        "anchors": [
+          "m",
+          "getPromptForCommand",
+          "d"
+        ],
+        "catalog_topic": "slash-commands"
+      },
+      "runtime": {
+        "runs": []
+      },
+      "verdict": "bundle-confirmed",
+      "limitations": [
+        "Code inspected; slash dispatch itself was not driven."
+      ]
+    },
+    {
+      "id": "inactive-options",
+      "claim": "This WorkflowTool module compiles its run-operation extension to an empty function; local agent isolation remote explicitly throws unavailable.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            153092096,
+            153092117
+          ],
+          [
+            153092420,
+            153094390
+          ],
+          [
+            153094391,
+            153095848
+          ],
+          [
+            153095928,
+            153096659
+          ],
+          [
+            153097403,
+            153107594
+          ],
+          [
+            153098615,
+            153101073
+          ],
+          [
+            153101074,
+            153102443
+          ],
+          [
+            153102444,
+            153105555
+          ],
+          [
+            153107820,
+            153108728
+          ]
+        ],
+        "anchors": [
+          "we",
+          "Gt",
+          "Xt",
+          "Rr",
+          "si",
+          "validateInput",
+          "checkPermissions",
+          "call",
+          "Ir"
+        ],
+        "catalog_topic": "invocation"
+      },
+      "runtime": {
+        "runs": []
+      },
+      "verdict": "bundle-confirmed",
+      "limitations": [
+        "Remote-looking schema output fields are not evidence that this invocation path can launch remote work."
+      ]
+    }
+  ]
+}

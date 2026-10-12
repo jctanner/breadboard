@@ -9,7 +9,7 @@ from pathlib import Path
 import sys
 
 
-VERDICTS = {"runtime-confirmed", "bundle-confirmed", "source-correlated", "hypothesis", "incomplete"}
+VERDICTS = {"runtime-confirmed", "bundle-confirmed", "archive-observed", "source-correlated", "hypothesis", "incomplete"}
 
 
 def load_ledger(path: Path) -> object:
@@ -71,9 +71,16 @@ def main() -> int:
             errors.append(f"{label}: {verdict} requires bundle offsets and anchors")
         if verdict == "runtime-confirmed" and not nonempty_list(claim, "runtime", "runs"):
             errors.append(f"{label}: runtime-confirmed requires runtime runs")
+        if verdict == "archive-observed" and not nonempty_list(claim, "archives", "paths"):
+            errors.append(f"{label}: archive-observed requires archive paths")
         if verdict == "source-correlated" and not nonempty_list(claim, "old_source", "files"):
             errors.append(f"{label}: source-correlated requires old-source files")
         if args.check_paths:
+            archives = claim.get("archives")
+            if isinstance(archives, dict):
+                for path in archives.get("paths", []):
+                    if isinstance(path, str) and not Path(path).exists():
+                        errors.append(f"{label}: missing referenced archive path {path}")
             runtime = claim.get("runtime")
             if isinstance(runtime, dict):
                 for key in ("runs", "strace_artifacts"):

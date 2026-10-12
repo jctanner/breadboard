@@ -1,0 +1,260 @@
+{
+  "binary_sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de",
+  "controls": [
+    {
+      "api_request_count": 6,
+      "case": "memory-read",
+      "child_receives_memory": true,
+      "child_tools_used": [
+        "Read"
+      ],
+      "completion_status": "completed",
+      "completion_usage": {
+        "duration_ms": 157,
+        "tool_uses": 1,
+        "total_tokens": 20
+      },
+      "coordinator_flags": {},
+      "fixture_git_commit": "07d7d779caffb8f614d18c676c727d6db4d01ab7",
+      "fixture_tree_sha256": "66d0c491b826f72e5b0211a53005b671cf003ddea4a8282bcc29d84b24aef9ac",
+      "launch_notices": [
+        {
+          "output_file": "/tmp/claude-1000/-home-jtanner-workspace-github-jctanner-redhat-breadboard-tmp-claude-code-binary-analysis-2-1-296-traces-subagent-skill-memory-read-v2-fixtures/67755185-8a19-4bbf-8f78-8615c651b850/tasks/afb5897db3d004577.output",
+          "path": "[0].content[0].text",
+          "provides_full_transcript_path": true,
+          "request_index": 3
+        }
+      ],
+      "passed": true,
+      "primary_excerpts": [],
+      "primary_receives_bash_output": false,
+      "primary_receives_edit": false,
+      "primary_receives_memory": false,
+      "primary_tools_used": [
+        "Agent",
+        "Skill"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-memory-read-v2",
+      "runner_sha256": "46a56872279539047aeaf259959b0ff62be08875b86320189742a9d5beaf87f9",
+      "sdk_child_message_count": 3,
+      "sdk_child_messages_contain_bash_marker": false
+    },
+    {
+      "api_request_count": 6,
+      "case": "memory-propagate",
+      "child_receives_memory": true,
+      "child_tools_used": [
+        "Read"
+      ],
+      "completion_status": "completed",
+      "completion_usage": {
+        "duration_ms": 160,
+        "tool_uses": 1,
+        "total_tokens": 20
+      },
+      "coordinator_flags": {
+        "CLAUDE_CODE_COORDINATOR_MODE": "1",
+        "CLAUDE_CODE_COORDINATOR_PROPAGATE_NESTED_MEMORY": "1"
+      },
+      "fixture_git_commit": "07d7d779caffb8f614d18c676c727d6db4d01ab7",
+      "fixture_tree_sha256": "66d0c491b826f72e5b0211a53005b671cf003ddea4a8282bcc29d84b24aef9ac",
+      "launch_notices": [
+        {
+          "output_file": null,
+          "path": "[0].content[0].text",
+          "provides_full_transcript_path": false,
+          "request_index": 3
+        }
+      ],
+      "passed": true,
+      "primary_excerpts": [],
+      "primary_receives_bash_output": false,
+      "primary_receives_edit": false,
+      "primary_receives_memory": false,
+      "primary_tools_used": [
+        "Agent",
+        "Skill"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-memory-propagate-v3",
+      "runner_sha256": "46a56872279539047aeaf259959b0ff62be08875b86320189742a9d5beaf87f9",
+      "sdk_child_message_count": 3,
+      "sdk_child_messages_contain_bash_marker": false
+    },
+    {
+      "api_request_count": 8,
+      "case": "file-edit",
+      "child_receives_memory": false,
+      "child_tools_used": [
+        "Read",
+        "Write"
+      ],
+      "completion_status": "completed",
+      "completion_usage": {
+        "duration_ms": 157,
+        "tool_uses": 2,
+        "total_tokens": 20
+      },
+      "coordinator_flags": {},
+      "fixture_git_commit": "1edbef09fd76acc180c5b0bdcc929978ac2089cc",
+      "fixture_tree_sha256": "e505cd1ddb3ca88659562fef6a891aad44c2fc57be2b39eda23359c90c7f96a6",
+      "launch_notices": [
+        {
+          "output_file": "/tmp/claude-1000/-home-jtanner-workspace-github-jctanner-redhat-breadboard-tmp-claude-code-binary-analysis-2-1-296-traces-subagent-skill-file-edit-v2-fixtures/0e43d732-6e5f-4d34-842c-dda698e70300/tasks/a7ca22ae15d02d362.output",
+          "path": "[1].content[0].text",
+          "provides_full_transcript_path": true,
+          "request_index": 4
+        }
+      ],
+      "passed": true,
+      "primary_excerpts": [],
+      "primary_receives_bash_output": false,
+      "primary_receives_edit": false,
+      "primary_receives_memory": false,
+      "primary_tools_used": [
+        "Read",
+        "Agent",
+        "Read"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-file-edit-v2",
+      "runner_sha256": "6793d672874f6d0d8eb57e04f68fdc444b2bd23c482d33c10e21ab11c79b2121",
+      "sdk_child_message_count": 5,
+      "sdk_child_messages_contain_bash_marker": false
+    },
+    {
+      "api_request_count": 6,
+      "case": "file-edit-unread",
+      "child_receives_memory": false,
+      "child_tools_used": [
+        "Read",
+        "Write"
+      ],
+      "completion_status": "completed",
+      "completion_usage": {
+        "duration_ms": 201,
+        "tool_uses": 2,
+        "total_tokens": 20
+      },
+      "coordinator_flags": {},
+      "fixture_git_commit": "cf8224a16f766ff0dc8bbebbdb6678f3ddeef37e",
+      "fixture_tree_sha256": "bd26c26ad208ba7742b7137fa6a9c994ed75bf63c83b96b3cefb11eca27b707c",
+      "launch_notices": [
+        {
+          "output_file": "/tmp/claude-1000/-home-jtanner-workspace-github-jctanner-redhat-breadboard-tmp-claude-code-binary-analysis-2-1-296-traces-subagent-skill-file-edit-unread-v1-fixtures/d62cd5cd-1c60-4dc3-a22d-143f285a0d00/tasks/ae6af79dc0f43f947.output",
+          "path": "[0].content[0].text",
+          "provides_full_transcript_path": true,
+          "request_index": 3
+        }
+      ],
+      "passed": true,
+      "primary_excerpts": [],
+      "primary_receives_bash_output": false,
+      "primary_receives_edit": false,
+      "primary_receives_memory": false,
+      "primary_tools_used": [
+        "Agent"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-file-edit-unread-v1",
+      "runner_sha256": "612c180e4363e94783a5df3a4f508d9bf77c36bc05b3347fc2e1e44e5e8d4a20",
+      "sdk_child_message_count": 5,
+      "sdk_child_messages_contain_bash_marker": false
+    },
+    {
+      "api_request_count": 9,
+      "case": "file-edit-parent-write",
+      "child_receives_memory": false,
+      "child_tools_used": [
+        "Read",
+        "Write"
+      ],
+      "completion_status": "completed",
+      "completion_usage": {
+        "duration_ms": 151,
+        "tool_uses": 2,
+        "total_tokens": 20
+      },
+      "coordinator_flags": {},
+      "fixture_git_commit": "1edbef09fd76acc180c5b0bdcc929978ac2089cc",
+      "fixture_tree_sha256": "e505cd1ddb3ca88659562fef6a891aad44c2fc57be2b39eda23359c90c7f96a6",
+      "launch_notices": [
+        {
+          "output_file": "/tmp/claude-1000/-home-jtanner-workspace-github-jctanner-redhat-breadboard-tmp-claude-code-binary-analysis-2-1-296-traces-subagent-skill-file-edit-parent-write-v1-fixtures/b739a1cd-fb00-4be4-af1f-9652bb34707a/tasks/afedc4d332477f069.output",
+          "path": "[2].content[0].text",
+          "provides_full_transcript_path": true,
+          "request_index": 5
+        }
+      ],
+      "passed": true,
+      "primary_excerpts": [
+        {
+          "lines": [
+            "1\tSUBAGENT_FILE_EDIT_MARKER"
+          ],
+          "markers": [
+            "SUBAGENT_FILE_EDIT_MARKER"
+          ],
+          "path": ".messages[13].content[0].text"
+        },
+        {
+          "lines": [
+            "1\tSUBAGENT_FILE_EDIT_MARKER"
+          ],
+          "markers": [
+            "SUBAGENT_FILE_EDIT_MARKER"
+          ],
+          "path": ".messages[13].content"
+        }
+      ],
+      "primary_receives_bash_output": false,
+      "primary_receives_edit": true,
+      "primary_receives_memory": false,
+      "primary_tools_used": [
+        "Read",
+        "Write",
+        "Agent",
+        "Read"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-file-edit-parent-write-v1",
+      "runner_sha256": "2a199b8c64fe10233b2e310d934bd9c5f7e1d3b2a25ddb0d3f342a549e5dc571",
+      "sdk_child_message_count": 5,
+      "sdk_child_messages_contain_bash_marker": false
+    },
+    {
+      "api_request_count": 5,
+      "case": "bash-output",
+      "child_receives_memory": false,
+      "child_tools_used": [
+        "Bash"
+      ],
+      "completion_status": "completed",
+      "completion_usage": {
+        "duration_ms": 787,
+        "tool_uses": 1,
+        "total_tokens": 20
+      },
+      "coordinator_flags": {},
+      "fixture_git_commit": "cf8224a16f766ff0dc8bbebbdb6678f3ddeef37e",
+      "fixture_tree_sha256": "bd26c26ad208ba7742b7137fa6a9c994ed75bf63c83b96b3cefb11eca27b707c",
+      "launch_notices": [
+        {
+          "output_file": "/tmp/claude-1000/-home-jtanner-workspace-github-jctanner-redhat-breadboard-tmp-claude-code-binary-analysis-2-1-296-traces-subagent-skill-bash-output-v1-fixtures/a604d666-5114-48b6-bc0d-c94e448e3930/tasks/a9de24d4606cd0c96.output",
+          "path": "[0].content[0].text",
+          "provides_full_transcript_path": true,
+          "request_index": 3
+        }
+      ],
+      "passed": true,
+      "primary_excerpts": [],
+      "primary_receives_bash_output": false,
+      "primary_receives_edit": false,
+      "primary_receives_memory": false,
+      "primary_tools_used": [
+        "Agent"
+      ],
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-bash-output-v1",
+      "runner_sha256": "612c180e4363e94783a5df3a4f508d9bf77c36bc05b3347fc2e1e44e5e8d4a20",
+      "sdk_child_message_count": 3,
+      "sdk_child_messages_contain_bash_marker": true
+    }
+  ],
+  "schema_version": 1
+}

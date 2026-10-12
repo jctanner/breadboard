@@ -1,0 +1,396 @@
+{
+  "binary_sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de",
+  "controls": [
+    {
+      "agent_max_concurrency": [
+        1,
+        0
+      ],
+      "api_requests": [
+        5,
+        3
+      ],
+      "case": "replay-fresh",
+      "outcome": {
+        "cached_result_reused": true,
+        "replayed_agent_requests": 0
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-replay-fresh-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1,
+        0
+      ],
+      "api_requests": [
+        5,
+        3
+      ],
+      "case": "replay-shared",
+      "outcome": {
+        "changed_shared_state_detected": false,
+        "replayed_agent_requests": 0,
+        "stale_context_returned": "CONTEXT_v1"
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-replay-shared-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        2,
+        0
+      ],
+      "api_requests": [
+        6,
+        3
+      ],
+      "case": "replay-reverse",
+      "outcome": {
+        "concurrent_completions_replayed": true,
+        "journal_order_diverges_from_response_order": true,
+        "replayed_agent_requests": 0
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-replay-reverse-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1,
+        1
+      ],
+      "api_requests": [
+        3,
+        5
+      ],
+      "case": "crash-during-agent",
+      "outcome": {
+        "crash_boundary": "during first agent request",
+        "resumed": true,
+        "side_effect_executions": 1
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-crash-during-agent-resume-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1,
+        1
+      ],
+      "api_requests": [
+        4,
+        5
+      ],
+      "case": "crash-before-result",
+      "outcome": {
+        "crash_boundary": "after side effect, before result journaling",
+        "resumed": true,
+        "side_effect_duplicated": true,
+        "side_effect_executions": 2
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-crash-before-result-resume-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1,
+        1
+      ],
+      "api_requests": [
+        5,
+        5
+      ],
+      "case": "crash-after-result",
+      "outcome": {
+        "crash_boundary": "after first result journaling, second agent started",
+        "first_agent_side_effect_executions": 1,
+        "journaled_result_reused": true,
+        "resumed": true
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-crash-after-result-resume-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1,
+        1
+      ],
+      "api_requests": [
+        7,
+        5
+      ],
+      "case": "journal-truncate",
+      "outcome": {
+        "final_status": "completed",
+        "side_effect_duplicated": true,
+        "truncated_entry_reexecuted": "B"
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-journal-truncate-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1,
+        0,
+        0
+      ],
+      "api_requests": [
+        7,
+        3,
+        3
+      ],
+      "case": "resume-competing",
+      "outcome": {
+        "concurrent_resumptions": 2,
+        "journal_corrupted": false,
+        "reexecuted_agents": 0
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-resume-competing-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        4
+      ],
+      "case": "cancel-task",
+      "outcome": {
+        "late_write_after_cancel": false,
+        "status": "killed",
+        "task_stop_acknowledged": true
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-cancel-task-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        3
+      ],
+      "case": "signal-term",
+      "outcome": {
+        "exit_code": 143,
+        "late_write_after_term": false,
+        "workflow_state_persisted": false
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-signal-term-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        3
+      ],
+      "case": "print-ceiling",
+      "outcome": {
+        "ceiling_exceeded": true,
+        "cli_exit": 0,
+        "late_write_after_kill": false,
+        "workflow_killed": true
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-print-ceiling-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        6
+      ],
+      "case": "concurrency-1",
+      "outcome": {
+        "max_concurrent_agent_requests": 1,
+        "serialized": true
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-concurrency-1-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        2
+      ],
+      "api_requests": [
+        6
+      ],
+      "case": "concurrency-2",
+      "outcome": {
+        "cap_shared_with_nested_workflow": false,
+        "max_concurrent_agent_requests": 2
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-concurrency-2-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        6
+      ],
+      "case": "nested-concurrency-1",
+      "outcome": {
+        "max_concurrent_agent_requests": 1,
+        "serialized": true
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-nested-concurrency-1-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        2
+      ],
+      "api_requests": [
+        6
+      ],
+      "case": "nested-concurrency-2",
+      "outcome": {
+        "cap_shared_with_nested_workflow": true,
+        "max_concurrent_agent_requests": 2
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-nested-concurrency-2-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        3
+      ],
+      "case": "budget",
+      "outcome": {
+        "cli_exit": 1,
+        "gate_fired_at": "next agent launch",
+        "status": "killed",
+        "terminal": "error_max_budget_usd"
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-budget-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        5
+      ],
+      "case": "budget-nested",
+      "outcome": {
+        "cli_exit": 1,
+        "nested_skill_usage_counted": true,
+        "terminal_subtypes": [
+          "success",
+          "error_max_budget_usd"
+        ],
+        "workflow_status": "completed"
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-budget-nested-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        6
+      ],
+      "case": "retry-429",
+      "outcome": {
+        "injected_fault": "retry-429",
+        "retried": true,
+        "side_effect_executions": 1
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-retry-429-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        6
+      ],
+      "case": "retry-500",
+      "outcome": {
+        "injected_fault": "retry-500",
+        "retried": true,
+        "side_effect_executions": 1
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-retry-500-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        6
+      ],
+      "case": "retry-broken",
+      "outcome": {
+        "injected_fault": "retry-broken",
+        "retried": true,
+        "side_effect_executions": 1
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-retry-broken-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        8
+      ],
+      "case": "retry-exhaust",
+      "outcome": {
+        "agent_retry_exhausted": true,
+        "cli_exit": 1,
+        "side_effect_executions": 2,
+        "workflow_result": null
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-retry-exhaust-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        2
+      ],
+      "api_requests": [
+        7
+      ],
+      "case": "stall-retry",
+      "outcome": {
+        "recovery": "fresh agent conversation",
+        "side_effect_executions": 2,
+        "stall_detected": true
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-stall-retry-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        5
+      ],
+      "api_requests": [
+        15
+      ],
+      "case": "stall-exhaust",
+      "outcome": {
+        "side_effect_executions": 6,
+        "stall_recovery_iterations": 5,
+        "status": "failed"
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-stall-exhaust-v1"
+    }
+  ],
+  "schema_version": 1
+}

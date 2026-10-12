@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "claims": [
+    {
+      "id": "inherited-schema-tool",
+      "claim": "A forked Skill inherits the receiving schema agent StructuredOutput tool and the same schema; this is reproduced in Workflow and CLI --json-schema.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            129014187,
+            129017174
+          ],
+          [
+            134621902,
+            134626110
+          ],
+          [
+            134421289,
+            134445556
+          ],
+          [
+            139195996,
+            139220157
+          ]
+        ],
+        "anchors": [
+          "YKt",
+          "Re",
+          "SA",
+          "kr"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-fork-structured-v2",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-schema-fork-structured-v2"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Availability/description inheritance is established; SA does not inherit a requiresStructuredOutput flag by default."
+      ]
+    },
+    {
+      "id": "fork-last-text-projection",
+      "claim": "Forked Skill result selection uses the last assistant record text, with a completion fallback; StructuredOutput-ending specialists lose assessment/dissent/target from the receiving Skill result.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            134621902,
+            134626110
+          ],
+          [
+            129017501,
+            129017604
+          ],
+          [
+            134627392,
+            134630887
+          ]
+        ],
+        "anchors": [
+          "Re",
+          "XKt",
+          "Fe"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-fork-structured-v2",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-fork-mixed-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-fork-earlier-prose-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Streaming API controls; no blanket claim about every serialization mode or other builds."
+      ]
+    },
+    {
+      "id": "prose-positive",
+      "claim": "A prose-ending specialist delivers its assessment/dissent/target even when the parent schema tool is available.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            134621902,
+            134626110
+          ],
+          [
+            129017501,
+            129017604
+          ]
+        ],
+        "anchors": [
+          "Re",
+          "XKt"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-fork-prose-v2",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-schema-fork-prose-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": []
+    },
+    {
+      "id": "direct-schema-positive",
+      "claim": "Direct schema completion returns validated structured assessment data, avoiding the nested Skill text projection.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139195996,
+            139220157
+          ],
+          [
+            139206137,
+            139213881
+          ]
+        ],
+        "anchors": [
+          "kr",
+          "vr"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-direct-structured-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": []
+    },
+    {
+      "id": "narrowed-agent-remedy",
+      "claim": "A custom specialist agent with an explicit Read-only tools whitelist excludes StructuredOutput from its fork; prose returns successfully while the outer Workflow schema remains usable.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            129014187,
+            129017174
+          ],
+          [
+            134621902,
+            134626110
+          ],
+          [
+            134421289,
+            134445556
+          ]
+        ],
+        "anchors": [
+          "YKt",
+          "Re",
+          "SA"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-fork-reader-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Authored fixture only; production specialists require their own sufficient explicit tools and independent output/target validation."
+      ]
+    },
+    {
+      "id": "cli-schema-completion-not-proof",
+      "claim": "In the prose-only negative fixture, CLI --json-schema reports success without a structured_output field; Workflow agent({schema}) fails after its missing-output nudge.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            139195996,
+            139220157
+          ],
+          [
+            139206137,
+            139213881
+          ]
+        ],
+        "anchors": [
+          "kr",
+          "vr"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-schema-direct-prose-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-direct-prose-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "One pinned mock fixture; callers must inspect actual outputs rather than extrapolate all CLI formatting behavior."
+      ]
+    },
+    {
+      "id": "opus-real-return-pattern",
+      "claim": "S1 Opus has ten tool-ending acknowledgement-only specialist returns and two text-ending substantive returns; S2 Opus has twelve substantive returns with no StructuredOutput tool in the inspected specialist requests.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "verdict": "archive-observed",
+      "archives": {
+        "paths": [
+          "scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-s1-opus-provenance.json",
+          "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/index.jsonl",
+          "scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-s2-opus-provenance.json",
+          "var/run-data/strat-workflow/markov-run-79d3241a/20261012T021947729737Z/jobs/script-strategy-entrypoint-all-claude-opus-4-1012-005035-b81781/api-dumps/index.jsonl"
+        ]
+      },
+      "limitations": [
+        "API/file provenance is not independent factual validation or exhaustive semantic fidelity; no exact GLM relay join is claimed."
+      ]
+    },
+    {
+      "id": "glm-explicit-recovery",
+      "claim": "S1 GLM has four acknowledgement-only expected returns, followed by explicit native transcript extraction/read delivery of three full selected bodies and substantial architecture text; S2 GLM has four direct prose returns.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "verdict": "archive-observed",
+      "archives": {
+        "paths": [
+          "scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-s1-glm-provenance.json",
+          "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/index.jsonl",
+          "scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-s2-glm-provenance.json",
+          "var/run-data/strat-workflow/markov-run-428f237a/20261012T002415035434Z/jobs/script-strategy-entrypoint-all-glm-5-3-1011-233753-27ed46/api-dumps/index.jsonl"
+        ]
+      },
+      "limitations": [
+        "API/file provenance is not independent factual validation or exhaustive semantic fidelity; no exact GLM relay join is claimed."
+      ]
+    },
+    {
+      "id": "score-backfill-provenance",
+      "claim": "Three strategy-1 S1 Opus published sections strongly overlap scorer input read before specialist launches; missing Skill results do not establish fabricated sections.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "verdict": "archive-observed",
+      "archives": {
+        "paths": [
+          "scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-s1-opus-provenance.json",
+          "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/index.jsonl"
+        ]
+      },
+      "limitations": [
+        "API/file provenance is not independent factual validation or exhaustive semantic fidelity; no exact GLM relay join is claimed."
+      ]
+    },
+    {
+      "id": "target-arguments-arrive",
+      "claim": "Expanded specialist prompts in the inspected archives contain the provided strategy keys; whole-batch scope drift is not explained by absent argument substitution.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "verdict": "archive-observed",
+      "archives": {
+        "paths": [
+          "scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-s1-opus-provenance.json",
+          "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/index.jsonl",
+          "scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-s2-opus-provenance.json",
+          "var/run-data/strat-workflow/markov-run-79d3241a/20261012T021947729737Z/jobs/script-strategy-entrypoint-all-claude-opus-4-1012-005035-b81781/api-dumps/index.jsonl"
+        ]
+      },
+      "limitations": [
+        "API/file provenance is not independent factual validation or exhaustive semantic fidelity; no exact GLM relay join is claimed."
+      ]
+    }
+  ]
+}

@@ -35,8 +35,10 @@ make host-logs-relay
 ```
 
 The Deployment runs one replica with the `Recreate` strategy: SQLite and the
-managed OAuth credentials under `/data` (PVC `model-relay-data`) have a single
+managed provider credentials under `/data` (PVC `model-relay-data`) have a single
 owner, and the relay refuses to start if another process holds the volume.
+
+Run `make host-rebuild-relay` from the Breadboard root for relay changes.
 
 ## Dashboard jobs
 
@@ -69,7 +71,8 @@ nothing; only workload-key exchange works.
 - `SHIM_BACKEND=mock`: the bootstrap `default` profile is a simulator. Connect
   an upstream account under **Upstream accounts** in the console and assign
   projects to it; the account login runs inside the pod and needs only a
-  pasted authorization code.
+  pasted authorization code for Anthropic OAuth. EnMaaS accounts instead use
+  **Set token** to store a personal API token privately on the relay.
 - `/config/keys.json` is `{ "keys": [] }` and `/config/models.json` is `{}`;
   projects, client keys and model grants are managed in the console and
   persist in SQLite.
@@ -78,4 +81,25 @@ nothing; only workload-key exchange works.
   `MODEL_RELAY_ADMIN_KEY` before the first deploy to use another value, or
   delete the Secret and redeploy to change it.
 - The relay needs egress to Anthropic's login, token and inference endpoints
-  for real upstream accounts.
+  for Anthropic accounts, or `https://api.enmaas.devshift.net` for EnMaaS.
+
+The console's **Models** controls manage each upstream's enabled inventory.
+The Projects **Routing** column and editor select a default account plus exact
+model overrides, or explicit routes only with no default. The built-in
+`vertex-shim-local` project sends `rits/zai-org/glm-5-3` to `enmaas-personal`
+and defaults other models to `tanner-jc-personal`. Clients retain their existing
+credentials and select the desired model; the relay chooses its account.
+Unavailable destinations fail without falling back to another account.
+Projects can inherit that inventory or set an explicit allowlist and blocks;
+tokens can narrow access further. Blocks win, including through aliases, and
+changes apply to subsequent requests without rotating client credentials.
+Existing upstreams retain their prior access until explicit inventory policy
+is saved; a saved empty enabled set denies all models.
+
+EnMaaS currently permits only `rits/zai-org/glm-5-3` with medium effort. Its
+live catalog omits GLM, so the relay registers it manually and keeps other
+discovered models disabled. The `enmaas-glm` project provides a separate
+GLM-only option alongside the built-in project's mixed routing.
+Clients use relay-issued Messages/MaaS keys or Vertex workload credentials and
+select the exact GLM ID; no new edits to user settings files are required.
+Input/output limits remain unknown until verified with the provider.

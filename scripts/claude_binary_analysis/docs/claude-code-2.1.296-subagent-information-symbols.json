@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+  },
+  "payload_sha256": "32a4df7685c914cf66238ffa9b1ea3ae1b164688039364d660c4506f68fb8e2f",
+  "offset_unit": "Bytes in extracted .bun section, exclusive ends",
+  "symbols": [
+    {
+      "name": "wur",
+      "kind": "VariableDeclarator",
+      "start": 129017608,
+      "end_exclusive": 129017687,
+      "length": 79,
+      "sha256": "9ae029faba7cb8ab1ef47e117d9dfac6ca8a5e84c50bb96a0c450db182e3ad69",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "air",
+      "kind": "FunctionDeclaration",
+      "start": 129017688,
+      "end_exclusive": 129021998,
+      "length": 4310,
+      "sha256": "265bc6190f22609b06c95aa95df8d3c892fd01575b649bc7b99b881a820fd6f2",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "BDr",
+      "kind": "FunctionDeclaration",
+      "start": 130119637,
+      "end_exclusive": 130126400,
+      "length": 6763,
+      "sha256": "2872d71d7697891d8227b48309a9f2b5987ef9efb7adafeb8104b96afec96a6c",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "ear",
+      "kind": "FunctionDeclaration",
+      "start": 130157997,
+      "end_exclusive": 130160507,
+      "length": 2510,
+      "sha256": "6671b1df825373c2b325e8f0a0208e310333a8c5b8691f82b85870ddffa3af38",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "Nyn",
+      "kind": "FunctionDeclaration",
+      "start": 130160507,
+      "end_exclusive": 130160973,
+      "length": 466,
+      "sha256": "675fadae0d8cad72d2666478c955115675b435c52177be1c2e735a938a75a19d",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "Dyn",
+      "kind": "FunctionDeclaration",
+      "start": 130148461,
+      "end_exclusive": 130149532,
+      "length": 1071,
+      "sha256": "49887ecd7ac65cbe81f6e1d5cfcd1088c41e2972131f69dda55d88d683fe0343",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "t_n",
+      "kind": "FunctionDeclaration",
+      "start": 130150552,
+      "end_exclusive": 130151502,
+      "length": 950,
+      "sha256": "453b3e45c152f8677c24cf3384e0dcad6738ca793f42d2965a37b98044e04ca7",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "nvt",
+      "kind": "FunctionDeclaration",
+      "start": 130702722,
+      "end_exclusive": 130705002,
+      "length": 2280,
+      "sha256": "a77c070c4c93717e35a3b91c155278766d262e12ceb0ababdf8fad3911693ae5",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "XJo",
+      "kind": "FunctionDeclaration",
+      "start": 129781488,
+      "end_exclusive": 129782432,
+      "length": 944,
+      "sha256": "aa5ecf34d8f46dc4d14c79956bc81d6f9fed38961d995d7b9e18ffe3732cfdf9",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "SA",
+      "kind": "FunctionDeclaration",
+      "start": 134421289,
+      "end_exclusive": 134445556,
+      "length": 24267,
+      "sha256": "9c534bac536087c0b730ff4e235a0a984f8ebdcb6e95f6ed0f5c3d9446982517",
+      "module_start": 134300128,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-134300128-symbols.json"
+    },
+    {
+      "name": "VJn",
+      "kind": "FunctionDeclaration",
+      "start": 134393635,
+      "end_exclusive": 134396652,
+      "length": 3017,
+      "sha256": "8568ad330c46ec980925d41f710ee35baf3081d201619932cb544e947186b4ae",
+      "module_start": 134300128,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-134300128-symbols.json"
+    },
+    {
+      "name": "Nl",
+      "kind": "FunctionDeclaration",
+      "start": 134396880,
+      "end_exclusive": 134397542,
+      "length": 662,
+      "sha256": "68cd94a81d8ea6fb344ed151ad7d0d9c4bdb63e6262563281022b82ba4bf766b",
+      "module_start": 134300128,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-134300128-symbols.json"
+    },
+    {
+      "name": "ld",
+      "kind": "FunctionDeclaration",
+      "start": 134420878,
+      "end_exclusive": 134421165,
+      "length": 287,
+      "sha256": "6087486706dd0328716c7c03a502338e9f68eed973a1f17a566533f1db1de96c",
+      "module_start": 134300128,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-134300128-symbols.json"
+    },
+    {
+      "name": "ZOe",
+      "kind": "FunctionDeclaration",
+      "start": 134415483,
+      "end_exclusive": 134415786,
+      "length": 303,
+      "sha256": "6bc1c91549a94081a8ab94569fa2ab29f84dd6625d8690a5c0d23c1a31a4e48a",
+      "module_start": 134300128,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-134300128-symbols.json"
+    },
+    {
+      "name": "Pre",
+      "kind": "FunctionDeclaration",
+      "start": 122785003,
+      "end_exclusive": 122785203,
+      "length": 200,
+      "sha256": "9244b92f0cbab56ceeb55cb295afbe9144cacf61d9dbf873091e8c36e9667d60",
+      "module_start": 122781134,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122781134-symbols.json"
+    },
+    {
+      "name": "Zst",
+      "kind": "FunctionDeclaration",
+      "start": 122784959,
+      "end_exclusive": 122785003,
+      "length": 44,
+      "sha256": "faf6cb032be8f4c6872f0304147e0818b733cccac15350d0961e4def41553e6c",
+      "module_start": 122781134,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122781134-symbols.json"
+    },
+    {
+      "name": "Mfs",
+      "kind": "FunctionDeclaration",
+      "start": 122785330,
+      "end_exclusive": 122785455,
+      "length": 125,
+      "sha256": "0049ef5603e4934a5e9fbb1932a0caf2264b4bb62c377f80eb81a170f927e301",
+      "module_start": 122781134,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122781134-symbols.json"
+    },
+    {
+      "name": "SPe",
+      "kind": "FunctionDeclaration",
+      "start": 118462350,
+      "end_exclusive": 118462684,
+      "length": 334,
+      "sha256": "a930ce45212c257a2b989fab8101d2b75d82b2c89025e3be63199434667767e1",
+      "module_start": 118393264,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-118393264-symbols.json"
+    },
+    {
+      "name": "kx",
+      "kind": "VariableDeclarator",
+      "start": 118462700,
+      "end_exclusive": 118462705,
+      "length": 5,
+      "sha256": "eefe1100a6099047fefb104a16bce5eebaf00b67a9d9de6a20a07f1cabbe31d9",
+      "module_start": 118393264,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-118393264-symbols.json"
+    },
+    {
+      "name": "Yn",
+      "kind": "VariableDeclarator",
+      "start": 118462706,
+      "end_exclusive": 118462721,
+      "length": 15,
+      "sha256": "b26cc921907c238d523627611fff82783ba3496d7005343f70ff5a9eb66f9068",
+      "module_start": 118393264,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-118393264-symbols.json"
+    },
+    {
+      "name": "edited_text_file",
+      "kind": "SerializerProperty",
+      "start": 130935100,
+      "end_exclusive": 130935599,
+      "length": 499,
+      "sha256": "a991141ae93c3055d41b4c3557196acb52fe8eead36b936d0cd61561122a77ee",
+      "module_start": 126478178
+    },
+    {
+      "name": "nested_memory",
+      "kind": "SerializerProperty",
+      "start": 130939734,
+      "end_exclusive": 130939838,
+      "length": 104,
+      "sha256": "5fec26bda2cced50fb20707a5f8ced1f958a8180f80f06dee4a71c4a891c8681",
+      "module_start": 126478178
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "binary_sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de",
+  "controls": [
+    {
+      "api_request_count": 2,
+      "arguments": "alpha \"two words\" third",
+      "case": "local-args",
+      "expanded_fixture": "VARIABLE_FIXTURE_BEGIN\nskill=/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-args-v1/fixtures/.claude/skills/variables\nproject=/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-args-v1/fixtures\nsession=d138f0fc-8ebb-4a2d-9d2d-37c03d4498a6\neffort=low\nplugin=${CLAUDE_PLUGIN_ROOT}\ndata=${CLAUDE_PLUGIN_DATA}\nall=alpha \"two words\" third\nzero=alpha\none=two words\nindex=two words\nmissing=$ARGUMENTS[9]|$9\nnamed=alpha|two words\nunsupported=${SKILL_DIR}|$SKILL_DIR|$CLAUDE_SKILL_DIR|${ARGUMENTS}|${HOME}|${VARIABLE_FIXTURE_ENV}\nVARIABLE_FIXTURE_END",
+      "fixture_git_commit": "73a10843cb455a84cf90d27f84cf830eaf603995",
+      "fixture_tree_sha256": "6211a4727ddd662efccea344c7f379265591795bc75d4de3ac9d3d4ebd5ffe74",
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-args-v1",
+      "runner_sha256": "899240c85006b455a59f131efb80ec9bb2e1519d701433dc645b6290055c6071"
+    },
+    {
+      "api_request_count": 2,
+      "arguments": "",
+      "case": "local-empty",
+      "expanded_fixture": "VARIABLE_FIXTURE_BEGIN\nskill=/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-empty-v1/fixtures/.claude/skills/variables\nproject=/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-empty-v1/fixtures\nsession=27cbfc02-36af-4768-ae18-6d94f88a0a04\neffort=low\nplugin=${CLAUDE_PLUGIN_ROOT}\ndata=${CLAUDE_PLUGIN_DATA}\nall=\nzero=$0\none=$1\nindex=$ARGUMENTS[1]\nmissing=$ARGUMENTS[9]|$9\nnamed=|\nunsupported=${SKILL_DIR}|$SKILL_DIR|$CLAUDE_SKILL_DIR|${ARGUMENTS}|${HOME}|${VARIABLE_FIXTURE_ENV}\nVARIABLE_FIXTURE_END",
+      "fixture_git_commit": "73a10843cb455a84cf90d27f84cf830eaf603995",
+      "fixture_tree_sha256": "6211a4727ddd662efccea344c7f379265591795bc75d4de3ac9d3d4ebd5ffe74",
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-empty-v1",
+      "runner_sha256": "899240c85006b455a59f131efb80ec9bb2e1519d701433dc645b6290055c6071"
+    },
+    {
+      "api_request_count": 2,
+      "arguments": "alpha \"two words\" third",
+      "case": "local-fallback",
+      "expanded_fixture": "VARIABLE_FIXTURE_BEGIN\nskill=/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-fallback-v2/fixtures/.claude/skills/variables\nno argument placeholders\nVARIABLE_FIXTURE_END\n\nARGUMENTS: alpha \"two words\" third",
+      "fixture_git_commit": "9a10670761b8ed51a022702f53ae3e01873a23d5",
+      "fixture_tree_sha256": "670399f60007ca47ddcfdf27e246588649fdf66a883dd96b122001badf1558af",
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-fallback-v2",
+      "runner_sha256": "3e53168a5b21e581a1c44099d926bde9ec75cd8568ddae80db3a0933755176c5"
+    },
+    {
+      "api_request_count": 2,
+      "arguments": "alpha",
+      "case": "local-escapes",
+      "expanded_fixture": "VARIABLE_FIXTURE_BEGIN\nescaped=$ARGUMENTS|$0|$target\nmissing=$ARGUMENTS[9]|$9\nnamed=\nVARIABLE_FIXTURE_END",
+      "fixture_git_commit": "11e07d559e3911e844005dfa1521a2655aa77404",
+      "fixture_tree_sha256": "6dcd00c26f1acfaddeccbe4b832ae35d2280fb44ab04ed38c433f74209c2e54a",
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-escapes-v1",
+      "runner_sha256": "899240c85006b455a59f131efb80ec9bb2e1519d701433dc645b6290055c6071"
+    },
+    {
+      "api_request_count": 2,
+      "arguments": "${CLAUDE_SESSION_ID}",
+      "case": "local-argument-variables",
+      "expanded_fixture": "VARIABLE_FIXTURE_BEGIN\nskill=/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-argument-variables-v1/fixtures/.claude/skills/variables\nproject=/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-argument-variables-v1/fixtures\nsession=f9a3ae0d-b1fc-4226-8b99-0256fc9564b5\neffort=low\nplugin=${CLAUDE_PLUGIN_ROOT}\ndata=${CLAUDE_PLUGIN_DATA}\nall=f9a3ae0d-b1fc-4226-8b99-0256fc9564b5\nzero=f9a3ae0d-b1fc-4226-8b99-0256fc9564b5\none=$1\nindex=$ARGUMENTS[1]\nmissing=$ARGUMENTS[9]|$9\nnamed=f9a3ae0d-b1fc-4226-8b99-0256fc9564b5|\nunsupported=${SKILL_DIR}|$SKILL_DIR|$CLAUDE_SKILL_DIR|${ARGUMENTS}|${HOME}|${VARIABLE_FIXTURE_ENV}\nVARIABLE_FIXTURE_END",
+      "fixture_git_commit": "73a10843cb455a84cf90d27f84cf830eaf603995",
+      "fixture_tree_sha256": "6211a4727ddd662efccea344c7f379265591795bc75d4de3ac9d3d4ebd5ffe74",
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-argument-variables-v1",
+      "runner_sha256": "3e53168a5b21e581a1c44099d926bde9ec75cd8568ddae80db3a0933755176c5"
+    },
+    {
+      "api_request_count": 2,
+      "arguments": "",
+      "case": "local-shell",
+      "expanded_fixture": "VARIABLE_FIXTURE_BEGIN\ninline:\nVARIABLE_FIXTURE_SHELL_OUTPUT=${CLAUDE_SKILL_DIR}\n/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-shell-v2/fixtures\nVARIABLE_FIXTURE_END",
+      "fixture_git_commit": "19b9c0d231fe5561233afbc80d016ced25a19f45",
+      "fixture_tree_sha256": "4a364302253051ff96918afb86d0d07d0b3e3aa84a768e5a7fc4504afd130c13",
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-shell-v2",
+      "runner_sha256": "3e53168a5b21e581a1c44099d926bde9ec75cd8568ddae80db3a0933755176c5"
+    },
+    {
+      "api_request_count": 2,
+      "arguments": "alpha \"two words\" third",
+      "case": "plugin-args",
+      "expanded_fixture": "VARIABLE_FIXTURE_BEGIN\nskill=/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-plugin-args-v1/fixtures/plugin/skills/variables\nproject=/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-plugin-args-v1/fixtures\nsession=369dfba3-0cf0-49ae-84a0-bfeb638ebc06\neffort=low\nplugin=/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-plugin-args-v1/fixtures/plugin\ndata=/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-plugin-args-v1/config/plugins/data/variable-fixture-inline\nall=alpha \"two words\" third\nzero=alpha\none=two words\nindex=two words\nmissing=$ARGUMENTS[9]|$9\nnamed=alpha|two words\nunsupported=${SKILL_DIR}|$SKILL_DIR|$CLAUDE_SKILL_DIR|${ARGUMENTS}|${HOME}|${VARIABLE_FIXTURE_ENV}\nVARIABLE_FIXTURE_END",
+      "fixture_git_commit": "95368be35370df93bd276eb988721050ba8bec57",
+      "fixture_tree_sha256": "bce3e27fc671b18d99c404ec4b37070a978b6096dee1d6ac0a039a4db14eb86b",
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-plugin-args-v1",
+      "runner_sha256": "899240c85006b455a59f131efb80ec9bb2e1519d701433dc645b6290055c6071"
+    },
+    {
+      "api_request_count": 2,
+      "arguments": "",
+      "case": "plugin-config",
+      "expanded_fixture": "VARIABLE_FIXTURE_BEGIN\noption=CONFIGURED_COLOR_MARKER\nsensitive=[sensitive option 'secret' not available in skill content]\nunset=${user_config.unset}\nundeclared=${user_config.unknown}\ndefaultonly=${user_config.onlydefault}\nVARIABLE_FIXTURE_END",
+      "fixture_git_commit": "f79341ce9112ff4a4acc5fa793182a5ba77894d4",
+      "fixture_tree_sha256": "976279e0596dd1c8b76309bf84c17a05950d1679f42e8781db4efd077b955279",
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-plugin-config-v2",
+      "runner_sha256": "3e53168a5b21e581a1c44099d926bde9ec75cd8568ddae80db3a0933755176c5"
+    },
+    {
+      "api_request_count": 2,
+      "arguments": "",
+      "case": "plugin-shell",
+      "expanded_fixture": "VARIABLE_FIXTURE_BEGIN\ninline:\nVARIABLE_FIXTURE_SHELL_OUTPUT=${CLAUDE_SKILL_DIR}\n/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-plugin-shell-v2/fixtures\nVARIABLE_FIXTURE_END",
+      "fixture_git_commit": "681adb5ea09dc9f0bf7a5f9e7778e6ffe55e39db",
+      "fixture_tree_sha256": "db04080ec0918892f8d2596e8d9f569fbe6db7b26105f457f78c31ee334a34ea",
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-plugin-shell-v2",
+      "runner_sha256": "3e53168a5b21e581a1c44099d926bde9ec75cd8568ddae80db3a0933755176c5"
+    }
+  ],
+  "schema_version": 1
+}

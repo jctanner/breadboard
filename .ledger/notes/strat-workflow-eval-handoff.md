@@ -104,7 +104,7 @@ Ask the user before each run. Never start a run on your own initiative.
      the restart breaks in-flight calls.
    - **Verify:** after the next run, no relay record has `latency_ms` of
      120000 or more. Then close
-     `.ledger/bugs/open/model-relay-120s-upstream-timeout.md`.
+     `.ledger/bugs/fixed/model-relay-120s-upstream-timeout.md`.
    - **Push** the relay repo (`git push origin main` in
      `checkouts/model-relay`) when the user approves.
    - **Also close** `model-relay-telemetry-drops-under-load.md` if drops

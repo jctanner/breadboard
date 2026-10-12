@@ -1,0 +1,2684 @@
+{
+  "api_pair_count": 283,
+  "calls": [
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 1,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "86580902-45d1-4c89-b6b1-f3fe1787e1e5.request.json",
+          "review_paths": [],
+          "sample_fragments": [
+            "notebooks bff in odh-dashboard currently manages workspace/workspacekind crs so legacy notebook cr"
+          ],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/tmp/strat-assess/RHAISTRAT-1/RHAISTRAT-1.result.md",
+          "tool_use_id": "toolu_01KFAXhXCfoYYAJ2S8uC118c"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 1,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "e7903f74-c072-4afe-a3ca-51df131ba62b.request.json",
+          "review_paths": [],
+          "sample_fragments": [
+            "notebooks bff in odh-dashboard currently manages workspace/workspacekind crs so legacy notebook cr"
+          ],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md",
+          "tool_use_id": "toolu_015PnpzQG3dwq6CGV15EweZb"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "a933e76e-c644-4460-95ad-1ea1a12b2ae6.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md",
+          "tool_use_id": "toolu_01NxoM4tPHEPLvgdRFFpxEVr"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "a256f4b2-1b94-476d-bd85-566585442968.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-1-review.md",
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_018ek3QMaQnErFYQRiLrHajr"
+        }
+      ],
+      "assessment_chars": 14299,
+      "assessment_sha256": "2256b1d3ad9fd6d25cf84fcdf1225a8394cc52f5fec2e353d0f7c248b81d4ae9",
+      "assessment_source_index": {
+        "message_id": "msg_011CfvqhkpHEo9CxYrnUYNdb",
+        "message_uuid": "6f74d624-f089-4f1a-867a-2e5afa6ed1d7",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "5ea98ba6-1c27-4d21-bce6-cf31d34a8e49.request.json",
+        "response_file": "47eb26f0-dd91-408b-832c-a1ef13174af2.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:27:06.657Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 9,
+      "child_structured_calls": 1,
+      "delivery_status": "not observed",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-1` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 100,
+      "expected_return_preview": "Skill \"strategy-feasibility-review\" completed (forked execution).\n\nResult:\nSkill execution completed",
+      "first_child_index": {
+        "message_id": "msg_011CfvqdEzYdziHUNU2gpb6R",
+        "message_uuid": "944e52d1-f622-467a-a5c6-dc5854fb663c",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "c1ca0119-2f05-48b8-b31e-dec770b768fd.request.json",
+        "response_file": "ee701f4c-71a5-4a7d-91b9-dcfe6887db42.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:24:41.895Z"
+      },
+      "first_receiving_index": {
+        "message_id": "msg_011CfvrYEdwHWpUKR2WeoP5J",
+        "message_uuid": "78951d52-817d-4c40-a64f-fe0cd55e3205",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "86580902-45d1-4c89-b6b1-f3fe1787e1e5.request.json",
+        "response_file": "e823e947-96b0-4a3b-809f-62cfc6c73dfb.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:36:43.948Z"
+      },
+      "fork_agent_id": "a6012a4f8594738a9",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "msg_011CfvqhkpHEo9CxYrnUYNdb",
+        "message_uuid": "6f74d624-f089-4f1a-867a-2e5afa6ed1d7",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "5ea98ba6-1c27-4d21-bce6-cf31d34a8e49.request.json",
+        "response_file": "47eb26f0-dd91-408b-832c-a1ef13174af2.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:27:06.657Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "msg_011Cfvqcxen2pHK2oLncWrtD",
+        "message_uuid": "ba5a07ac-e09d-4062-92e9-2f2120281a59",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "6fb64036-6ad9-44e9-acf8-e085567d2824.request.json",
+        "response_file": "3033ede4-68cc-433b-94fb-9eaac0572dff.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:24:34.888Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-1",
+        "skill": "strategy-feasibility-review"
+      },
+      "parent_matching_fragments": 1,
+      "published_matching_fragments": 1,
+      "published_overlap_samples": [
+        "notebooks bff in odh-dashboard currently manages workspace/workspacekind crs so legacy notebook cr"
+      ],
+      "published_review": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-1-review.md",
+      "published_review_sha256": "0c85e8f462558cc51f97b8423202e87be7f8aeac6928360c866919369c74f03e",
+      "published_role_section_sources": [
+        {
+          "fraction": 0.96875,
+          "matching_section_fragments": 31,
+          "receiving_request_file": "86580902-45d1-4c89-b6b1-f3fe1787e1e5.request.json",
+          "sample_fragments": [
+            "the strategy is feasible with a credible granular effort estimate. the m",
+            "credible granular effort estimate. the m 3-5 sprints sizing breaks down into",
+            "3-5 sprints sizing breaks down into specific per-team allocations: 1 sprint for"
+          ],
+          "source_input_sha256": "7977fc4b48f16bd0c2e688c96b39ed9bd0322a9ae8ad7dd5bd8b50107ab6e6e9",
+          "source_path": "/tmp/strat-assess/RHAISTRAT-1/RHAISTRAT-1.result.md",
+          "source_precedes_specialist_launch": true,
+          "source_tool_index": {
+            "message_id": "msg_011CfvqaXTQb2Qy7fVtVKhwn",
+            "message_uuid": "f0d4e344-b5e5-4827-a383-184fae36127d",
+            "model": "claude-opus-4-6",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "7713e4bd-9f18-49f0-8e0c-5fb6c0bc1a65.request.json",
+            "response_file": "6ccce7ac-b98b-4154-94c2-2221c9743f27.response.json",
+            "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+            "timestamp": "2026-10-11T17:24:00.786Z"
+          },
+          "source_tool_name": "Read",
+          "tool_use_id": "toolu_01KFAXhXCfoYYAJ2S8uC118c",
+          "total_section_fragments": 32
+        }
+      ],
+      "published_section_present": true,
+      "role": "feasibility",
+      "target": "RHAISTRAT-1",
+      "tool_use_id": "toolu_01YGFVw3JpzqHHTMDFVDMooe"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 1,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "86580902-45d1-4c89-b6b1-f3fe1787e1e5.request.json",
+          "review_paths": [],
+          "sample_fragments": [
+            "the workbench card in the dashboard displays the remaining exemption time and"
+          ],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-tasks/RHAISTRAT-1.md",
+          "tool_use_id": "toolu_01DE6AX2ycEyeyAP8h68fbpp"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "a933e76e-c644-4460-95ad-1ea1a12b2ae6.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md",
+          "tool_use_id": "toolu_01NxoM4tPHEPLvgdRFFpxEVr"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "a256f4b2-1b94-476d-bd85-566585442968.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-1-review.md",
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_018ek3QMaQnErFYQRiLrHajr"
+        }
+      ],
+      "assessment_chars": 15036,
+      "assessment_sha256": "9b0d19c941b4413450c836d730595fb4f0b3d829f49f9c85f7a3bee9dfee1a85",
+      "assessment_source_index": {
+        "message_id": "msg_011Cfvqs8sLZ9ZWT6n3vJcjb",
+        "message_uuid": "3c62f5c6-1364-4078-84e6-1bb55a663ef6",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "5f90a050-0fef-4f8e-bcd7-805edaedc627.request.json",
+        "response_file": "138af0cc-4e95-4295-85ff-6bef45ab9cbe.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:29:46.444Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 5,
+      "child_structured_calls": 0,
+      "delivery_status": "delivered",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-1` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 15111,
+      "expected_return_preview": "Skill \"strategy-testability-review\" completed (forked execution).\n\nResult:\nNow I have all the data needed for the testability review. Let me compose the assessment.\n\n---\n\n## Testability Review\n\n### RHAISTRAT-1: Per-workbench exemptions from",
+      "first_child_index": {
+        "message_id": "msg_011Cfvqpa7J3scxMQAMiwpt9",
+        "message_uuid": "bbc27897-8969-4ee2-8f6e-792043b7ece7",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "da137df4-aa0d-4db0-9dcf-cfb37f195369.request.json",
+        "response_file": "4aa925bf-23d7-4b77-a461-0ec62d37ebb9.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:27:14.673Z"
+      },
+      "first_receiving_index": {
+        "message_id": "msg_011CfvrYEdwHWpUKR2WeoP5J",
+        "message_uuid": "78951d52-817d-4c40-a64f-fe0cd55e3205",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "86580902-45d1-4c89-b6b1-f3fe1787e1e5.request.json",
+        "response_file": "e823e947-96b0-4a3b-809f-62cfc6c73dfb.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:36:43.948Z"
+      },
+      "fork_agent_id": "af33691d58b78c268",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "msg_011Cfvqs8sLZ9ZWT6n3vJcjb",
+        "message_uuid": "3c62f5c6-1364-4078-84e6-1bb55a663ef6",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "5f90a050-0fef-4f8e-bcd7-805edaedc627.request.json",
+        "response_file": "138af0cc-4e95-4295-85ff-6bef45ab9cbe.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:29:46.444Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text"
+      ],
+      "launch_index": {
+        "message_id": "msg_011Cfvqcxen2pHK2oLncWrtD",
+        "message_uuid": "ba5a07ac-e09d-4062-92e9-2f2120281a59",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "6fb64036-6ad9-44e9-acf8-e085567d2824.request.json",
+        "response_file": "3033ede4-68cc-433b-94fb-9eaac0572dff.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:24:34.888Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-1",
+        "skill": "strategy-testability-review"
+      },
+      "parent_matching_fragments": 360,
+      "published_matching_fragments": 91,
+      "published_overlap_samples": [
+        "of six acceptance criteria use given/when/then with concrete measured by clauses statefulset",
+        "with concrete measured by clauses statefulset replica counts admission responses . two",
+        "replica counts admission responses . two criteria fall short. untestable criteria :",
+        "criteria fall short. untestable criteria : - ac5 the exemption indicator on",
+        "- ac5 the exemption indicator on the workbench card in the dashboard",
+        "the workbench card in the dashboard displays the remaining exemption time and"
+      ],
+      "published_review": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-1-review.md",
+      "published_review_sha256": "0c85e8f462558cc51f97b8423202e87be7f8aeac6928360c866919369c74f03e",
+      "published_role_section_sources": [
+        {
+          "fraction": 0.9578947368421052,
+          "matching_section_fragments": 91,
+          "receiving_request_file": "86580902-45d1-4c89-b6b1-f3fe1787e1e5.request.json",
+          "sample_fragments": [
+            "testability : partially testable. four of six acceptance criteria use given/when/then with",
+            "six acceptance criteria use given/when/then with concrete measured by clauses statefulset replica",
+            "concrete measured by clauses statefulset replica counts admission responses . two criteria"
+          ],
+          "source_input_sha256": "e92155a3403d7b208770f8f1c50de609cf68248d7e3a54c0bfa13a1f0054e79f",
+          "source_path": null,
+          "source_precedes_specialist_launch": false,
+          "source_tool_index": {
+            "message_id": "msg_011Cfvqcxen2pHK2oLncWrtD",
+            "message_uuid": "ba5a07ac-e09d-4062-92e9-2f2120281a59",
+            "model": "claude-opus-4-6",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "6fb64036-6ad9-44e9-acf8-e085567d2824.request.json",
+            "response_file": "3033ede4-68cc-433b-94fb-9eaac0572dff.response.json",
+            "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+            "timestamp": "2026-10-11T17:24:34.888Z"
+          },
+          "source_tool_name": "Skill",
+          "tool_use_id": "toolu_01ABTudEnL5Nxiw6PXc5mC7z",
+          "total_section_fragments": 95
+        }
+      ],
+      "published_section_present": true,
+      "role": "testability",
+      "target": "RHAISTRAT-1",
+      "tool_use_id": "toolu_01ABTudEnL5Nxiw6PXc5mC7z"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "a933e76e-c644-4460-95ad-1ea1a12b2ae6.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md",
+          "tool_use_id": "toolu_01NxoM4tPHEPLvgdRFFpxEVr"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "a256f4b2-1b94-476d-bd85-566585442968.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-1-review.md",
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_018ek3QMaQnErFYQRiLrHajr"
+        }
+      ],
+      "assessment_chars": 7919,
+      "assessment_sha256": "5980febff2d8e1c8e26af57c07ed644ee7480f2aee5a8fe020ed137c4714f170",
+      "assessment_source_index": {
+        "message_id": "msg_011Cfvr94DUYf2kLQNPB14du",
+        "message_uuid": "5a57a127-752e-44e9-9b0d-b6a404942ad4",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "df8bbf52-bd9f-4d2b-b5f4-f719ab8c480d.request.json",
+        "response_file": "966cdf9d-51d5-4da3-8179-2e854203eec9.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:32:14.850Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 4,
+      "child_structured_calls": 1,
+      "delivery_status": "not observed",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-1` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 94,
+      "expected_return_preview": "Skill \"strategy-scope-review\" completed (forked execution).\n\nResult:\nSkill execution completed",
+      "first_child_index": {
+        "message_id": "msg_011Cfvr2KwbMiq56XgDVBhjq",
+        "message_uuid": "84edeea7-86cb-4545-9221-6b5455f7050e",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "177d50c9-257d-4dc1-8add-604da725ab7a.request.json",
+        "response_file": "374a2c1d-266e-4e9e-a1df-9cafece3e940.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:29:53.900Z"
+      },
+      "first_receiving_index": {
+        "message_id": "msg_011CfvrYEdwHWpUKR2WeoP5J",
+        "message_uuid": "78951d52-817d-4c40-a64f-fe0cd55e3205",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "86580902-45d1-4c89-b6b1-f3fe1787e1e5.request.json",
+        "response_file": "e823e947-96b0-4a3b-809f-62cfc6c73dfb.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:36:43.948Z"
+      },
+      "fork_agent_id": "a3881af4466e5d424",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "msg_011Cfvr94DUYf2kLQNPB14du",
+        "message_uuid": "5a57a127-752e-44e9-9b0d-b6a404942ad4",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "df8bbf52-bd9f-4d2b-b5f4-f719ab8c480d.request.json",
+        "response_file": "966cdf9d-51d5-4da3-8179-2e854203eec9.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:32:14.850Z"
+      },
+      "last_child_response_types": [
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "msg_011Cfvqcxen2pHK2oLncWrtD",
+        "message_uuid": "ba5a07ac-e09d-4062-92e9-2f2120281a59",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "6fb64036-6ad9-44e9-acf8-e085567d2824.request.json",
+        "response_file": "3033ede4-68cc-433b-94fb-9eaac0572dff.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:24:34.888Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-1",
+        "skill": "strategy-scope-review"
+      },
+      "parent_matching_fragments": 0,
+      "published_matching_fragments": 0,
+      "published_overlap_samples": [],
+      "published_review": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-1-review.md",
+      "published_review_sha256": "0c85e8f462558cc51f97b8423202e87be7f8aeac6928360c866919369c74f03e",
+      "published_role_section_sources": [
+        {
+          "fraction": 0.8928571428571429,
+          "matching_section_fragments": 25,
+          "receiving_request_file": "86580902-45d1-4c89-b6b1-f3fe1787e1e5.request.json",
+          "sample_fragments": [
+            "this is a single coherent capability: per-workbench idle culling exemptions. the split",
+            "per-workbench idle culling exemptions. the split test confirms it: the annotation mechanism",
+            "test confirms it: the annotation mechanism webhook enforcement and dashboard ui are"
+          ],
+          "source_input_sha256": "7977fc4b48f16bd0c2e688c96b39ed9bd0322a9ae8ad7dd5bd8b50107ab6e6e9",
+          "source_path": "/tmp/strat-assess/RHAISTRAT-1/RHAISTRAT-1.result.md",
+          "source_precedes_specialist_launch": true,
+          "source_tool_index": {
+            "message_id": "msg_011CfvqaXTQb2Qy7fVtVKhwn",
+            "message_uuid": "f0d4e344-b5e5-4827-a383-184fae36127d",
+            "model": "claude-opus-4-6",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "7713e4bd-9f18-49f0-8e0c-5fb6c0bc1a65.request.json",
+            "response_file": "6ccce7ac-b98b-4154-94c2-2221c9743f27.response.json",
+            "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+            "timestamp": "2026-10-11T17:24:00.786Z"
+          },
+          "source_tool_name": "Read",
+          "tool_use_id": "toolu_01KFAXhXCfoYYAJ2S8uC118c",
+          "total_section_fragments": 28
+        }
+      ],
+      "published_section_present": true,
+      "role": "scope",
+      "target": "RHAISTRAT-1",
+      "tool_use_id": "toolu_0132HWzzXrMTMuoLc4g6U73A"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "a933e76e-c644-4460-95ad-1ea1a12b2ae6.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md",
+          "tool_use_id": "toolu_01NxoM4tPHEPLvgdRFFpxEVr"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "a256f4b2-1b94-476d-bd85-566585442968.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-1-review.md",
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_018ek3QMaQnErFYQRiLrHajr"
+        }
+      ],
+      "assessment_chars": 7811,
+      "assessment_sha256": "e3f9179557604ccb0a660cf27d3162d2dc2bfd2e38368adcf725961a6b3aa13b",
+      "assessment_source_index": {
+        "message_id": "msg_011CfvrKgJfdvLUJPyJqy461",
+        "message_uuid": "0fc6411a-0183-4902-be8c-620e5aac0cca",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "43ef4f85-6495-490b-a37b-d20ce850ce19.request.json",
+        "response_file": "7c23b18c-96fc-4989-90cc-aa37e18121a3.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:36:32.610Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 7,
+      "child_structured_calls": 1,
+      "delivery_status": "not observed",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-1` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 649,
+      "expected_return_preview": "Skill \"strategy-architecture-review\" completed (forked execution).\n\nResult:\nSkill execution completed\n\n<system-reminder>\nThe task tools haven't been used recently. If you're working on tasks that would benefit from tracking progress, consid",
+      "first_child_index": {
+        "message_id": "msg_011CfvrDFzGsV7YHYju99C3G",
+        "message_uuid": "d27e2abf-6eb3-4c38-bbd4-3a3d27cab064",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "1f0f21ef-2945-4251-abf2-4260929a478d.request.json",
+        "response_file": "6474f5e3-267d-4eca-aa66-0b24a9eebd5c.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:32:23.827Z"
+      },
+      "first_receiving_index": {
+        "message_id": "msg_011CfvrYEdwHWpUKR2WeoP5J",
+        "message_uuid": "78951d52-817d-4c40-a64f-fe0cd55e3205",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "86580902-45d1-4c89-b6b1-f3fe1787e1e5.request.json",
+        "response_file": "e823e947-96b0-4a3b-809f-62cfc6c73dfb.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:36:43.948Z"
+      },
+      "fork_agent_id": "adea4835fa52132a5",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "msg_011CfvrKgJfdvLUJPyJqy461",
+        "message_uuid": "0fc6411a-0183-4902-be8c-620e5aac0cca",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "43ef4f85-6495-490b-a37b-d20ce850ce19.request.json",
+        "response_file": "7c23b18c-96fc-4989-90cc-aa37e18121a3.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:36:32.610Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "msg_011Cfvqcxen2pHK2oLncWrtD",
+        "message_uuid": "ba5a07ac-e09d-4062-92e9-2f2120281a59",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "6fb64036-6ad9-44e9-acf8-e085567d2824.request.json",
+        "response_file": "3033ede4-68cc-433b-94fb-9eaac0572dff.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:24:34.888Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-1",
+        "skill": "strategy-architecture-review"
+      },
+      "parent_matching_fragments": 0,
+      "published_matching_fragments": 0,
+      "published_overlap_samples": [],
+      "published_review": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-1-review.md",
+      "published_review_sha256": "0c85e8f462558cc51f97b8423202e87be7f8aeac6928360c866919369c74f03e",
+      "published_role_section_sources": [
+        {
+          "fraction": 0.9038461538461539,
+          "matching_section_fragments": 47,
+          "receiving_request_file": "86580902-45d1-4c89-b6b1-f3fe1787e1e5.request.json",
+          "sample_fragments": [
+            "validated against architecture context: component identification: correct. the strategy names kubeflow notebook-controller",
+            "correct. the strategy names kubeflow notebook-controller odh-notebook-controller workbenches workspaces-controller and odh-dashboard frontend",
+            "odh-notebook-controller workbenches workspaces-controller and odh-dashboard frontend notebooks bff . architecture context confirms"
+          ],
+          "source_input_sha256": "7977fc4b48f16bd0c2e688c96b39ed9bd0322a9ae8ad7dd5bd8b50107ab6e6e9",
+          "source_path": "/tmp/strat-assess/RHAISTRAT-1/RHAISTRAT-1.result.md",
+          "source_precedes_specialist_launch": true,
+          "source_tool_index": {
+            "message_id": "msg_011CfvqaXTQb2Qy7fVtVKhwn",
+            "message_uuid": "f0d4e344-b5e5-4827-a383-184fae36127d",
+            "model": "claude-opus-4-6",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "7713e4bd-9f18-49f0-8e0c-5fb6c0bc1a65.request.json",
+            "response_file": "6ccce7ac-b98b-4154-94c2-2221c9743f27.response.json",
+            "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+            "timestamp": "2026-10-11T17:24:00.786Z"
+          },
+          "source_tool_name": "Read",
+          "tool_use_id": "toolu_01KFAXhXCfoYYAJ2S8uC118c",
+          "total_section_fragments": 52
+        }
+      ],
+      "published_section_present": true,
+      "role": "architecture",
+      "target": "RHAISTRAT-1",
+      "tool_use_id": "toolu_01UnA5iLQG3DF5GM6bsuu3uy"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 1,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "695c6693-2648-4750-8883-31f0ab45ff84.request.json",
+          "review_paths": [],
+          "sample_fragments": [
+            "agent s existing leader election via coordination/v1 leases prevents concurrent retention evaluations"
+          ],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-tasks/RHAISTRAT-2.md",
+          "tool_use_id": "toolu_01BFtfVtReFsxgJYoCBUVLnB"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 1,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "695c6693-2648-4750-8883-31f0ab45ff84.request.json",
+          "review_paths": [],
+          "sample_fragments": [
+            "agent s existing leader election via coordination/v1 leases prevents concurrent retention evaluations"
+          ],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/tmp/strat-assess/RHAISTRAT-2/RHAISTRAT-2.result.md",
+          "tool_use_id": "toolu_01NrZMPv5yH65Czw4xYboYMR"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "bd2f7102-7108-4eac-a446-648187813084.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-2-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-2-review.md",
+          "tool_use_id": "toolu_01GGpDgyufG8tH6NVmCYPa1u"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "2d200012-7073-4665-9606-a4c3c70bf631.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-2-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_01BoDb9k15QnCXnDKwZFr4ov"
+        }
+      ],
+      "assessment_chars": 10621,
+      "assessment_sha256": "792fec8688f6bc375d8d2a4b4bccdc64c058f1134d0dc02c01063d207a928c2e",
+      "assessment_source_index": {
+        "message_id": "msg_011Cfvquz36cJRcL1tBq43rs",
+        "message_uuid": "02cd4eda-5d86-4b88-aeb4-8e6f80a39f0a",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "0519c14b-2539-49bc-aef4-4f065a62353b.request.json",
+        "response_file": "7582dada-fbe5-4a7b-92f5-a74e806fabb0.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:30:46.873Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 8,
+      "child_structured_calls": 1,
+      "delivery_status": "not observed",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-2` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 100,
+      "expected_return_preview": "Skill \"strategy-feasibility-review\" completed (forked execution).\n\nResult:\nSkill execution completed",
+      "first_child_index": {
+        "message_id": "msg_011CfvqqDDDYsCYVQUWheLAm",
+        "message_uuid": "b0322ee9-57bd-4544-a8bd-c2ad264ca2d3",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "1285efec-f424-4d99-b5e7-409af7373ba4.request.json",
+        "response_file": "dd410868-64cc-4133-8f2f-f637315bfbdf.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:27:24.470Z"
+      },
+      "first_receiving_index": {
+        "message_id": "msg_011Cfvrzm21tZUhxsoMbSHsg",
+        "message_uuid": "c5e7e234-34f3-42ec-a664-10941a4c18e2",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "695c6693-2648-4750-8883-31f0ab45ff84.request.json",
+        "response_file": "9676a9b9-eae1-4d32-9e9d-1e3570f707f7.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:42:42.204Z"
+      },
+      "fork_agent_id": "aa806414949e0eb7d",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "msg_011Cfvquz36cJRcL1tBq43rs",
+        "message_uuid": "02cd4eda-5d86-4b88-aeb4-8e6f80a39f0a",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "0519c14b-2539-49bc-aef4-4f065a62353b.request.json",
+        "response_file": "7582dada-fbe5-4a7b-92f5-a74e806fabb0.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:30:46.873Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "msg_011Cfvqpxi652cTGgvmqVmaJ",
+        "message_uuid": "2054a986-5e2e-4ce4-bc3d-3becdfa7f036",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "aa1da6e5-4ad2-4fee-9a0c-866a38c7f7e5.request.json",
+        "response_file": "2bb4f87b-5b0c-43bb-95bd-dab3dc81feb7.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:27:17.190Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-2",
+        "skill": "strategy-feasibility-review"
+      },
+      "parent_matching_fragments": 1,
+      "published_matching_fragments": 1,
+      "published_overlap_samples": [
+        "agent s existing leader election via coordination/v1 leases prevents concurrent retention evaluations"
+      ],
+      "published_review": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-2-review.md",
+      "published_review_sha256": "6a942dcf40ec51a9909642117713b048d25284f112ee9519331c5fde9d214b8e",
+      "published_role_section_sources": [
+        {
+          "fraction": 0.05,
+          "matching_section_fragments": 3,
+          "receiving_request_file": "695c6693-2648-4750-8883-31f0ab45ff84.request.json",
+          "sample_fragments": [
+            "sprint for dspa cr schema extension and dspo template rendering 0.5 sprint",
+            "and dspo template rendering 0.5 sprint for model registry artifact uri lookup",
+            "sprint and the dashboard team adds ui controls 1 sprint . the"
+          ],
+          "source_input_sha256": "e4b3ef4173093c2b2a2f620f305fa976617e3eb5cb29bc80ccdddbaa9b29afe6",
+          "source_path": "/tmp/strat-assess/RHAISTRAT-2/RHAISTRAT-2.result.md",
+          "source_precedes_specialist_launch": true,
+          "source_tool_index": {
+            "message_id": "msg_011CfvqnqukavMaqTPRRoaj1",
+            "message_uuid": "d4b2d0b4-1c7d-4a1e-8bd5-75faad03025d",
+            "model": "claude-opus-4-6",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "eee0e846-f7bc-430f-8fab-46645fe9c6e6.request.json",
+            "response_file": "556a03b3-9fec-4315-925a-55c468670fd8.response.json",
+            "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+            "timestamp": "2026-10-11T17:26:49.250Z"
+          },
+          "source_tool_name": "Read",
+          "tool_use_id": "toolu_01NrZMPv5yH65Czw4xYboYMR",
+          "total_section_fragments": 60
+        }
+      ],
+      "published_section_present": true,
+      "role": "feasibility",
+      "target": "RHAISTRAT-2",
+      "tool_use_id": "toolu_01AMgcJVQMsAEJQ9hZJvp9QU"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "bd2f7102-7108-4eac-a446-648187813084.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-2-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-2-review.md",
+          "tool_use_id": "toolu_01GGpDgyufG8tH6NVmCYPa1u"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "2d200012-7073-4665-9606-a4c3c70bf631.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-2-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_01BoDb9k15QnCXnDKwZFr4ov"
+        }
+      ],
+      "assessment_chars": 11317,
+      "assessment_sha256": "3a44346bf6e4cfe0acc6f94a39276ec4a9d288a856c87a05c3ba8c4ba55ca0f0",
+      "assessment_source_index": {
+        "message_id": "msg_011Cfvr85Wat8hpnjQmRrn2y",
+        "message_uuid": "74d90e53-d03b-4b6b-a0c1-ba490c629e6a",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "8ba654ad-ba35-4e3c-9058-1c541032fe32.request.json",
+        "response_file": "45c7aa49-3dd0-49e9-ae88-95dd6412513f.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:32:44.126Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 4,
+      "child_structured_calls": 0,
+      "delivery_status": "delivered",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-2` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 11392,
+      "expected_return_preview": "Skill \"strategy-testability-review\" completed (forked execution).\n\nResult:\nNow I have all three strategies, all three source RFEs, and the two prior reviews. Let me complete the testability analysis.\n\n---\n\n## Testability Review\n\n### RHAISTR",
+      "first_child_index": {
+        "message_id": "msg_011Cfvr6mowy7iHwu3fpHL2L",
+        "message_uuid": "129e4f2f-5f54-432f-bf02-245a0d8799b3",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "2a274a01-7ae6-46ce-91b3-f906a9631792.request.json",
+        "response_file": "33bbe0e9-6dcd-48e5-b742-8698e2909e35.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:30:52.706Z"
+      },
+      "first_receiving_index": {
+        "message_id": "msg_011Cfvrzm21tZUhxsoMbSHsg",
+        "message_uuid": "c5e7e234-34f3-42ec-a664-10941a4c18e2",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "695c6693-2648-4750-8883-31f0ab45ff84.request.json",
+        "response_file": "9676a9b9-eae1-4d32-9e9d-1e3570f707f7.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:42:42.204Z"
+      },
+      "fork_agent_id": "a13dfccf8de726cf1",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "msg_011Cfvr85Wat8hpnjQmRrn2y",
+        "message_uuid": "74d90e53-d03b-4b6b-a0c1-ba490c629e6a",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "8ba654ad-ba35-4e3c-9058-1c541032fe32.request.json",
+        "response_file": "45c7aa49-3dd0-49e9-ae88-95dd6412513f.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:32:44.126Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text"
+      ],
+      "launch_index": {
+        "message_id": "msg_011Cfvqpxi652cTGgvmqVmaJ",
+        "message_uuid": "2054a986-5e2e-4ce4-bc3d-3becdfa7f036",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "aa1da6e5-4ad2-4fee-9a0c-866a38c7f7e5.request.json",
+        "response_file": "2bb4f87b-5b0c-43bb-95bd-dab3dc81feb7.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:27:17.190Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-2",
+        "skill": "strategy-testability-review"
+      },
+      "parent_matching_fragments": 270,
+      "published_matching_fragments": 0,
+      "published_overlap_samples": [],
+      "published_review": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-2-review.md",
+      "published_review_sha256": "6a942dcf40ec51a9909642117713b048d25284f112ee9519331c5fde9d214b8e",
+      "published_role_section_sources": [],
+      "published_section_present": true,
+      "role": "testability",
+      "target": "RHAISTRAT-2",
+      "tool_use_id": "toolu_01AZUwcraruBrM2chyJ5UcPw"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "bd2f7102-7108-4eac-a446-648187813084.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-2-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-2-review.md",
+          "tool_use_id": "toolu_01GGpDgyufG8tH6NVmCYPa1u"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "2d200012-7073-4665-9606-a4c3c70bf631.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-2-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_01BoDb9k15QnCXnDKwZFr4ov"
+        }
+      ],
+      "assessment_chars": 6902,
+      "assessment_sha256": "bcc6b172ffb3f1378de2dad9db1a6761d94486565d94c9e57302fcefecc5dcbb",
+      "assessment_source_index": {
+        "message_id": "msg_011CfvrNxwsZVaKZPqH72YJe",
+        "message_uuid": "461bd56c-7833-483f-8259-96570de0e3ee",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "af6e4213-ca51-4777-80dd-0553eb078a93.request.json",
+        "response_file": "18a8e237-0a9a-4f5a-be20-04cd33c32028.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:35:16.462Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 5,
+      "child_structured_calls": 1,
+      "delivery_status": "not observed",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-2` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 94,
+      "expected_return_preview": "Skill \"strategy-scope-review\" completed (forked execution).\n\nResult:\nSkill execution completed",
+      "first_child_index": {
+        "message_id": "msg_011CfvrFQHQ7iXnW3zxELjk1",
+        "message_uuid": "0e2606a9-9619-46b2-b99b-5679f096128b",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "de182fb4-7fdd-4fc5-9683-7418296c79cb.request.json",
+        "response_file": "863ea9e3-3f83-4a8b-8a6e-0b2035300b07.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:32:52.044Z"
+      },
+      "first_receiving_index": {
+        "message_id": "msg_011Cfvrzm21tZUhxsoMbSHsg",
+        "message_uuid": "c5e7e234-34f3-42ec-a664-10941a4c18e2",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "695c6693-2648-4750-8883-31f0ab45ff84.request.json",
+        "response_file": "9676a9b9-eae1-4d32-9e9d-1e3570f707f7.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:42:42.204Z"
+      },
+      "fork_agent_id": "acb9018289a70a174",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "msg_011CfvrNxwsZVaKZPqH72YJe",
+        "message_uuid": "461bd56c-7833-483f-8259-96570de0e3ee",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "af6e4213-ca51-4777-80dd-0553eb078a93.request.json",
+        "response_file": "18a8e237-0a9a-4f5a-be20-04cd33c32028.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:35:16.462Z"
+      },
+      "last_child_response_types": [
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "msg_011Cfvqpxi652cTGgvmqVmaJ",
+        "message_uuid": "2054a986-5e2e-4ce4-bc3d-3becdfa7f036",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "aa1da6e5-4ad2-4fee-9a0c-866a38c7f7e5.request.json",
+        "response_file": "2bb4f87b-5b0c-43bb-95bd-dab3dc81feb7.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:27:17.190Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-2",
+        "skill": "strategy-scope-review"
+      },
+      "parent_matching_fragments": 0,
+      "published_matching_fragments": 0,
+      "published_overlap_samples": [],
+      "published_review": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-2-review.md",
+      "published_review_sha256": "6a942dcf40ec51a9909642117713b048d25284f112ee9519331c5fde9d214b8e",
+      "published_role_section_sources": [
+        {
+          "fraction": 0.06818181818181818,
+          "matching_section_fragments": 3,
+          "receiving_request_file": "695c6693-2648-4750-8883-31f0ab45ff84.request.json",
+          "sample_fragments": [
+            "the model registry exemption check without retention has nothing to exempt from.",
+            "the dashboard team adds ui controls 1 sprint . the core work",
+            "1 sprint . the core work is concentrated in the dsp team."
+          ],
+          "source_input_sha256": "e4b3ef4173093c2b2a2f620f305fa976617e3eb5cb29bc80ccdddbaa9b29afe6",
+          "source_path": "/tmp/strat-assess/RHAISTRAT-2/RHAISTRAT-2.result.md",
+          "source_precedes_specialist_launch": true,
+          "source_tool_index": {
+            "message_id": "msg_011CfvqnqukavMaqTPRRoaj1",
+            "message_uuid": "d4b2d0b4-1c7d-4a1e-8bd5-75faad03025d",
+            "model": "claude-opus-4-6",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "eee0e846-f7bc-430f-8fab-46645fe9c6e6.request.json",
+            "response_file": "556a03b3-9fec-4315-925a-55c468670fd8.response.json",
+            "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+            "timestamp": "2026-10-11T17:26:49.250Z"
+          },
+          "source_tool_name": "Read",
+          "tool_use_id": "toolu_01NrZMPv5yH65Czw4xYboYMR",
+          "total_section_fragments": 44
+        }
+      ],
+      "published_section_present": true,
+      "role": "scope",
+      "target": "RHAISTRAT-2",
+      "tool_use_id": "toolu_013yeNcq331MxyhKidj8P4sj"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 1,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "695c6693-2648-4750-8883-31f0ab45ff84.request.json",
+          "review_paths": [],
+          "sample_fragments": [
+            "agent s existing leader election via coordination/v1 leases prevents concurrent retention evaluations"
+          ],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-tasks/RHAISTRAT-2.md",
+          "tool_use_id": "toolu_01BFtfVtReFsxgJYoCBUVLnB"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 1,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "695c6693-2648-4750-8883-31f0ab45ff84.request.json",
+          "review_paths": [],
+          "sample_fragments": [
+            "agent s existing leader election via coordination/v1 leases prevents concurrent retention evaluations"
+          ],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/tmp/strat-assess/RHAISTRAT-2/RHAISTRAT-2.result.md",
+          "tool_use_id": "toolu_01NrZMPv5yH65Czw4xYboYMR"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "bd2f7102-7108-4eac-a446-648187813084.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-2-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-2-review.md",
+          "tool_use_id": "toolu_01GGpDgyufG8tH6NVmCYPa1u"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "2d200012-7073-4665-9606-a4c3c70bf631.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-2-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_01BoDb9k15QnCXnDKwZFr4ov"
+        }
+      ],
+      "assessment_chars": 12392,
+      "assessment_sha256": "ebf0a9c7e593429147c03bde477572678f59a82419a62102345d483f2af67f73",
+      "assessment_source_index": {
+        "message_id": "msg_011CfvrnEvCBcHpMNTEz7bco",
+        "message_uuid": "7d67179b-1af5-494e-bd8b-ac5511109f7a",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "82d92412-7026-4954-b281-ac897a78b019.request.json",
+        "response_file": "e223deef-e96e-45ad-ad0a-e6c7a8b067d4.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:42:32.415Z"
+      },
+      "child_continuation_joins": [
+        {
+          "method": "unique tool result ID",
+          "request_file": "4b5e2afc-c66d-4e51-b09a-339f38881db5.request.json"
+        },
+        {
+          "method": "unique tool result ID",
+          "request_file": "5c287635-2e88-43ff-9d5c-a1495d856973.request.json"
+        },
+        {
+          "method": "unique tool result ID",
+          "request_file": "3736350e-af4c-4020-b10a-ce338eb681fa.request.json"
+        },
+        {
+          "method": "unique tool result ID",
+          "request_file": "d61bb002-50c0-46b3-b9d5-77a66a00f32c.request.json"
+        },
+        {
+          "method": "unique tool result ID",
+          "request_file": "e952da11-fede-4c64-8b18-5bfb6dce6a10.request.json"
+        },
+        {
+          "method": "unique tool result ID",
+          "request_file": "0d4bd97b-9df9-4da4-858a-f9b991741001.request.json"
+        },
+        {
+          "method": "unique tool result ID",
+          "request_file": "ed6129ee-3e5d-407e-8282-179efb32f315.request.json"
+        },
+        {
+          "method": "unique tool result ID",
+          "request_file": "ff9a4d3c-8704-4318-8d41-6df9dec3c41b.request.json"
+        },
+        {
+          "method": "unique tool result ID",
+          "request_file": "6693a8a0-b2a5-424a-a4c5-ed78347d9014.request.json"
+        },
+        {
+          "method": "unique tool result ID",
+          "request_file": "82d92412-7026-4954-b281-ac897a78b019.request.json"
+        }
+      ],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 17,
+      "child_structured_calls": 1,
+      "delivery_status": "not observed",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-2` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 189,
+      "expected_return_preview": "Skill \"strategy-architecture-review\" completed (forked execution).\n\nResult:\nSkill execution completed\n\n<system-reminder>\n<total_tokens>14972015 tokens left</total_tokens>\n</system-reminder>",
+      "first_child_index": {
+        "message_id": "msg_011CfvrSdkKYx3Kn5q12cZQY",
+        "message_uuid": "4b6c6426-1844-4333-b8c1-41f3716a3c85",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "11eb41a4-47d4-4b2f-8307-e8cfe1e34028.request.json",
+        "response_file": "40889023-fad0-4aeb-810f-c2008784ade6.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:35:25.579Z"
+      },
+      "first_receiving_index": {
+        "message_id": "msg_011Cfvrzm21tZUhxsoMbSHsg",
+        "message_uuid": "c5e7e234-34f3-42ec-a664-10941a4c18e2",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "695c6693-2648-4750-8883-31f0ab45ff84.request.json",
+        "response_file": "9676a9b9-eae1-4d32-9e9d-1e3570f707f7.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:42:42.204Z"
+      },
+      "fork_agent_id": "a6d0ee87c02bfcd40",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "msg_011CfvrnEvCBcHpMNTEz7bco",
+        "message_uuid": "7d67179b-1af5-494e-bd8b-ac5511109f7a",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "82d92412-7026-4954-b281-ac897a78b019.request.json",
+        "response_file": "e223deef-e96e-45ad-ad0a-e6c7a8b067d4.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:42:32.415Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "msg_011Cfvqpxi652cTGgvmqVmaJ",
+        "message_uuid": "2054a986-5e2e-4ce4-bc3d-3becdfa7f036",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "aa1da6e5-4ad2-4fee-9a0c-866a38c7f7e5.request.json",
+        "response_file": "2bb4f87b-5b0c-43bb-95bd-dab3dc81feb7.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:27:17.190Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-2",
+        "skill": "strategy-architecture-review"
+      },
+      "parent_matching_fragments": 1,
+      "published_matching_fragments": 1,
+      "published_overlap_samples": [
+        "agent s existing leader election via coordination/v1 leases prevents concurrent retention evaluations"
+      ],
+      "published_review": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-2-review.md",
+      "published_review_sha256": "6a942dcf40ec51a9909642117713b048d25284f112ee9519331c5fde9d214b8e",
+      "published_role_section_sources": [
+        {
+          "fraction": 0.12048192771084337,
+          "matching_section_fragments": 10,
+          "receiving_request_file": "695c6693-2648-4750-8883-31f0ab45ff84.request.json",
+          "sample_fragments": [
+            "the persistence agent watches argo workflow status and synchronizes run/job state back",
+            "status and synchronizes run/job state back to the api server database runs",
+            "to the api server database runs per-namespace and already has the api"
+          ],
+          "source_input_sha256": "e4b3ef4173093c2b2a2f620f305fa976617e3eb5cb29bc80ccdddbaa9b29afe6",
+          "source_path": "/tmp/strat-assess/RHAISTRAT-2/RHAISTRAT-2.result.md",
+          "source_precedes_specialist_launch": true,
+          "source_tool_index": {
+            "message_id": "msg_011CfvqnqukavMaqTPRRoaj1",
+            "message_uuid": "d4b2d0b4-1c7d-4a1e-8bd5-75faad03025d",
+            "model": "claude-opus-4-6",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "eee0e846-f7bc-430f-8fab-46645fe9c6e6.request.json",
+            "response_file": "556a03b3-9fec-4315-925a-55c468670fd8.response.json",
+            "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+            "timestamp": "2026-10-11T17:26:49.250Z"
+          },
+          "source_tool_name": "Read",
+          "tool_use_id": "toolu_01NrZMPv5yH65Czw4xYboYMR",
+          "total_section_fragments": 83
+        }
+      ],
+      "published_section_present": true,
+      "role": "architecture",
+      "target": "RHAISTRAT-2",
+      "tool_use_id": "toolu_01Xgum13daJtGTkvBV9iB2mE"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 3,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "527e136e-6817-493a-8e9f-ec0abc32967a.request.json",
+          "review_paths": [],
+          "sample_fragments": [
+            "and operator cronjob reconciliation 2 sprints for crd change reconciler logic and",
+            "for crd change reconciler logic and unit tests . sprint 2-3: feature",
+            "unit tests . sprint 2-3: feature server status tracking endpoint and integration"
+          ],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-tasks/RHAISTRAT-3.md",
+          "tool_use_id": "toolu_01SDc8BK5Y3FYTKSUn4Nk68P"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 1,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "2a9935e0-9b40-4d4e-b5b1-1b0f2d0ab369.request.json",
+          "review_paths": [],
+          "sample_fragments": [
+            "dashboard watches feast crs directly. creating a new feast bff module following"
+          ],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md",
+          "tool_use_id": "toolu_01NGGGMCqLderccLLUyGqAuQ"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 2,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "e0588bae-8a1b-4f33-b769-adf1897e2bfc.request.json",
+          "review_paths": [],
+          "sample_fragments": [
+            "dashboard watches feast crs directly. creating a new feast bff module following",
+            "and operator cronjob reconciliation 2 sprints for crd change reconciler logic and"
+          ],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/tmp/strat-assess/RHAISTRAT-3/RHAISTRAT-3.result.md",
+          "tool_use_id": "toolu_017aLNbmeQocS5XHjPCQRwCc"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "503a17e0-b29c-498a-b88c-137a098fc42e.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md",
+          "tool_use_id": "toolu_01C16vCBDtUMy8CpwQTMi5MM"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "7f49478e-b9ed-477f-a4ea-954989f48f36.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md:"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_01Fc14nEBDjZZhR82gwn4KA5"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "44b9551e-efc7-423e-a24c-6991721c0a96.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_01BwgwpA9JjLsvR7C663BKxF"
+        }
+      ],
+      "assessment_chars": 12374,
+      "assessment_sha256": "6164d5fccee6e9f8f4248b2f9fd859f4a38a110e9eaa18573a28bb11513ed8d5",
+      "assessment_source_index": {
+        "message_id": "msg_011Cfvrw86RyTRhJYGNQsn2F",
+        "message_uuid": "4fe8709c-11fa-4b0a-bb2f-afbd63095e8a",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "d1597531-abab-4e39-98a6-ff61953a5744.request.json",
+        "response_file": "d0f617e0-2689-4924-a9a5-623afb6005d3.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:43:08.292Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 7,
+      "child_structured_calls": 1,
+      "delivery_status": "not observed",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-3` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 100,
+      "expected_return_preview": "Skill \"strategy-feasibility-review\" completed (forked execution).\n\nResult:\nSkill execution completed",
+      "first_child_index": {
+        "message_id": "msg_011Cfvrmq6yU6a9YEs4gXTuw",
+        "message_uuid": "bacdfbbb-2b77-4a07-a30f-5a4c9df3c08c",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "bf3b27e7-a924-4978-bbf3-2bba428e5e62.request.json",
+        "response_file": "38c79689-b35c-4f3d-b65b-d53b9f0cee50.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:39:42.602Z"
+      },
+      "first_receiving_index": {
+        "message_id": "msg_011CfvsiNf2rVQEiqSHz9bBb",
+        "message_uuid": "09b61a70-bb1b-4fee-b11d-d53642054abf",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "527e136e-6817-493a-8e9f-ec0abc32967a.request.json",
+        "response_file": "2219f5c6-30f0-490d-92e0-4d8dcc903433.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:52:02.798Z"
+      },
+      "fork_agent_id": "a6021546cd701e6f6",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "msg_011Cfvrw86RyTRhJYGNQsn2F",
+        "message_uuid": "4fe8709c-11fa-4b0a-bb2f-afbd63095e8a",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "d1597531-abab-4e39-98a6-ff61953a5744.request.json",
+        "response_file": "d0f617e0-2689-4924-a9a5-623afb6005d3.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:43:08.292Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "msg_011CfvrmUM45Axnx1zQnzFU8",
+        "message_uuid": "fdcbd4cc-cb36-4825-a3cb-790141719c73",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "ad9e0f0a-c4ed-49ec-9f32-6345d4b955ec.request.json",
+        "response_file": "3e65f96e-f53c-44e1-a8d3-5a2da12f560e.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:39:38.290Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-3",
+        "skill": "strategy-feasibility-review"
+      },
+      "parent_matching_fragments": 4,
+      "published_matching_fragments": 2,
+      "published_overlap_samples": [
+        "dashboard watches feast crs directly. creating a new feast bff module following",
+        "and operator cronjob reconciliation 2 sprints for crd change reconciler logic and"
+      ],
+      "published_review": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-3-review.md",
+      "published_review_sha256": "0cb05d6cdb9e4c8302cdbadbae4c81d239a16a7477dbe68ba7050a9060ac8ee2",
+      "published_role_section_sources": [],
+      "published_section_present": true,
+      "role": "feasibility",
+      "target": "RHAISTRAT-3",
+      "tool_use_id": "toolu_018xnSY7eY8eyVfw3G1MZNsx"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "503a17e0-b29c-498a-b88c-137a098fc42e.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md",
+          "tool_use_id": "toolu_01C16vCBDtUMy8CpwQTMi5MM"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "7f49478e-b9ed-477f-a4ea-954989f48f36.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md:"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_01Fc14nEBDjZZhR82gwn4KA5"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "44b9551e-efc7-423e-a24c-6991721c0a96.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_01BwgwpA9JjLsvR7C663BKxF"
+        }
+      ],
+      "assessment_chars": 17827,
+      "assessment_sha256": "23c22a647756c4b1231e60a329d856703ad57eb9b36f293f8235d56732ff0ca7",
+      "assessment_source_index": {
+        "message_id": "msg_011Cfvs6h35EmYBrz4y9dbJv",
+        "message_uuid": "e2fde33e-9e3f-4a2f-a18a-ddabaa433470",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "4c13297c-41af-4eea-bc25-10a4353959a5.request.json",
+        "response_file": "6cd14422-2f54-4d5e-b4ae-154d2c76734c.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:45:38.983Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 8,
+      "child_structured_calls": 1,
+      "delivery_status": "not observed",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-3` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 100,
+      "expected_return_preview": "Skill \"strategy-testability-review\" completed (forked execution).\n\nResult:\nSkill execution completed",
+      "first_child_index": {
+        "message_id": "msg_011Cfvs3Qw7aHKQM3qi7LbmD",
+        "message_uuid": "af4ceda9-22d4-42dd-809e-be28dfd974fb",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "54272254-cb88-4dda-82af-3062881e5bf9.request.json",
+        "response_file": "0d133444-266a-43cd-a179-cf93d608e752.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:43:15.677Z"
+      },
+      "first_receiving_index": {
+        "message_id": "msg_011CfvsiNf2rVQEiqSHz9bBb",
+        "message_uuid": "09b61a70-bb1b-4fee-b11d-d53642054abf",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "527e136e-6817-493a-8e9f-ec0abc32967a.request.json",
+        "response_file": "2219f5c6-30f0-490d-92e0-4d8dcc903433.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:52:02.798Z"
+      },
+      "fork_agent_id": "aa8bd7c6e2551a8a4",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "msg_011Cfvs6h35EmYBrz4y9dbJv",
+        "message_uuid": "e2fde33e-9e3f-4a2f-a18a-ddabaa433470",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "4c13297c-41af-4eea-bc25-10a4353959a5.request.json",
+        "response_file": "6cd14422-2f54-4d5e-b4ae-154d2c76734c.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:45:38.983Z"
+      },
+      "last_child_response_types": [
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "msg_011CfvrmUM45Axnx1zQnzFU8",
+        "message_uuid": "fdcbd4cc-cb36-4825-a3cb-790141719c73",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "ad9e0f0a-c4ed-49ec-9f32-6345d4b955ec.request.json",
+        "response_file": "3e65f96e-f53c-44e1-a8d3-5a2da12f560e.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:39:38.290Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-3",
+        "skill": "strategy-testability-review"
+      },
+      "parent_matching_fragments": 0,
+      "published_matching_fragments": 0,
+      "published_overlap_samples": [],
+      "published_review": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-3-review.md",
+      "published_review_sha256": "0cb05d6cdb9e4c8302cdbadbae4c81d239a16a7477dbe68ba7050a9060ac8ee2",
+      "published_role_section_sources": [],
+      "published_section_present": true,
+      "role": "testability",
+      "target": "RHAISTRAT-3",
+      "tool_use_id": "toolu_01JV43n5Nykuk76sy4ySnYYb"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "503a17e0-b29c-498a-b88c-137a098fc42e.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md",
+          "tool_use_id": "toolu_01C16vCBDtUMy8CpwQTMi5MM"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "7f49478e-b9ed-477f-a4ea-954989f48f36.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md:"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_01Fc14nEBDjZZhR82gwn4KA5"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "44b9551e-efc7-423e-a24c-6991721c0a96.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_01BwgwpA9JjLsvR7C663BKxF"
+        }
+      ],
+      "assessment_chars": 5947,
+      "assessment_sha256": "d80f155568ead080a91a761791e2050256986e36fd00983e3872c9a98801edd0",
+      "assessment_source_index": {
+        "message_id": "msg_011CfvsHS9Bn17o6aCL6jx2S",
+        "message_uuid": "270d2fa4-179d-4e9a-ace1-9344192de54c",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "0ba6562b-3829-4f84-b835-c5233dba98d2.request.json",
+        "response_file": "2971e967-99e4-4da7-a9d6-424ca0bbfaf1.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:47:34.934Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 8,
+      "child_structured_calls": 1,
+      "delivery_status": "not observed",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-3` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 94,
+      "expected_return_preview": "Skill \"strategy-scope-review\" completed (forked execution).\n\nResult:\nSkill execution completed",
+      "first_child_index": {
+        "message_id": "msg_011CfvsEXssrUHGpbxNJBJ1y",
+        "message_uuid": "b02f70a5-2229-4265-b4ad-d015b6ac3c6d",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "02903cda-64cb-43ea-a519-b9f151554e03.request.json",
+        "response_file": "1d33e065-aff9-4f02-8543-bedaec9dbedf.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:45:44.709Z"
+      },
+      "first_receiving_index": {
+        "message_id": "msg_011CfvsiNf2rVQEiqSHz9bBb",
+        "message_uuid": "09b61a70-bb1b-4fee-b11d-d53642054abf",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "527e136e-6817-493a-8e9f-ec0abc32967a.request.json",
+        "response_file": "2219f5c6-30f0-490d-92e0-4d8dcc903433.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:52:02.798Z"
+      },
+      "fork_agent_id": "a36f9d71a3e044e92",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "msg_011CfvsHS9Bn17o6aCL6jx2S",
+        "message_uuid": "270d2fa4-179d-4e9a-ace1-9344192de54c",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "0ba6562b-3829-4f84-b835-c5233dba98d2.request.json",
+        "response_file": "2971e967-99e4-4da7-a9d6-424ca0bbfaf1.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:47:34.934Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "msg_011CfvrmUM45Axnx1zQnzFU8",
+        "message_uuid": "fdcbd4cc-cb36-4825-a3cb-790141719c73",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "ad9e0f0a-c4ed-49ec-9f32-6345d4b955ec.request.json",
+        "response_file": "3e65f96e-f53c-44e1-a8d3-5a2da12f560e.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:39:38.290Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-3",
+        "skill": "strategy-scope-review"
+      },
+      "parent_matching_fragments": 0,
+      "published_matching_fragments": 0,
+      "published_overlap_samples": [],
+      "published_review": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-3-review.md",
+      "published_review_sha256": "0cb05d6cdb9e4c8302cdbadbae4c81d239a16a7477dbe68ba7050a9060ac8ee2",
+      "published_role_section_sources": [],
+      "published_section_present": true,
+      "role": "scope",
+      "target": "RHAISTRAT-3",
+      "tool_use_id": "toolu_01EQD3e7WrXBRbrXSHAEW5zV"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "503a17e0-b29c-498a-b88c-137a098fc42e.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md",
+          "tool_use_id": "toolu_01C16vCBDtUMy8CpwQTMi5MM"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "7f49478e-b9ed-477f-a4ea-954989f48f36.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md:"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_01Fc14nEBDjZZhR82gwn4KA5"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "44b9551e-efc7-423e-a24c-6991721c0a96.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/repo/artifacts/strat-reviews/RHAISTRAT-3-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "toolu_01BwgwpA9JjLsvR7C663BKxF"
+        }
+      ],
+      "assessment_chars": 8562,
+      "assessment_sha256": "bd7cf7c28bad26f12fe28929f05cfc7cd6fcd7f13b1b08750689410a6351aec2",
+      "assessment_source_index": {
+        "message_id": "msg_011CfvsdNpKb6Ye1dMpKQne5",
+        "message_uuid": "0d5b92d9-4104-4c12-92b7-261afe8f46f4",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "bf821549-fc68-44ae-b208-3b097a8970a2.request.json",
+        "response_file": "1ed8ebb8-a80b-4599-b159-c60d8ac529cd.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:51:56.833Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 10,
+      "child_structured_calls": 1,
+      "delivery_status": "not observed",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-3` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 189,
+      "expected_return_preview": "Skill \"strategy-architecture-review\" completed (forked execution).\n\nResult:\nSkill execution completed\n\n<system-reminder>\n<total_tokens>14975129 tokens left</total_tokens>\n</system-reminder>",
+      "first_child_index": {
+        "message_id": "msg_011CfvsP5kWU5QpxV1iDzUBL",
+        "message_uuid": "d59a7bb7-b3ca-431e-8dc6-6d3522156826",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "b3fc397c-946f-483d-b574-e4227359933e.request.json",
+        "response_file": "4cd10bb8-bf15-488e-903a-3e8fb7f45f86.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:47:43.592Z"
+      },
+      "first_receiving_index": {
+        "message_id": "msg_011CfvsiNf2rVQEiqSHz9bBb",
+        "message_uuid": "09b61a70-bb1b-4fee-b11d-d53642054abf",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "527e136e-6817-493a-8e9f-ec0abc32967a.request.json",
+        "response_file": "2219f5c6-30f0-490d-92e0-4d8dcc903433.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:52:02.798Z"
+      },
+      "fork_agent_id": "a174dacfe3ff50b9e",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "msg_011CfvsdNpKb6Ye1dMpKQne5",
+        "message_uuid": "0d5b92d9-4104-4c12-92b7-261afe8f46f4",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:custom",
+        "request_file": "bf821549-fc68-44ae-b208-3b097a8970a2.request.json",
+        "response_file": "1ed8ebb8-a80b-4599-b159-c60d8ac529cd.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:51:56.833Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "msg_011CfvrmUM45Axnx1zQnzFU8",
+        "message_uuid": "fdcbd4cc-cb36-4825-a3cb-790141719c73",
+        "model": "claude-opus-4-6",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "ad9e0f0a-c4ed-49ec-9f32-6345d4b955ec.request.json",
+        "response_file": "3e65f96e-f53c-44e1-a8d3-5a2da12f560e.response.json",
+        "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+        "timestamp": "2026-10-11T17:39:38.290Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-3",
+        "skill": "strategy-architecture-review"
+      },
+      "parent_matching_fragments": 0,
+      "published_matching_fragments": 0,
+      "published_overlap_samples": [],
+      "published_review": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-3-review.md",
+      "published_review_sha256": "0cb05d6cdb9e4c8302cdbadbae4c81d239a16a7477dbe68ba7050a9060ac8ee2",
+      "published_role_section_sources": [
+        {
+          "fraction": 0.10344827586206896,
+          "matching_section_fragments": 9,
+          "receiving_request_file": "e0588bae-8a1b-4f33-b769-adf1897e2bfc.request.json",
+          "sample_fragments": [
+            "crd feast.dev/v1 namespaced : confirmed in feast.md crd table. the operator reconciles",
+            "feast.md crd table. the operator reconciles this single crd and owns 12",
+            "this single crd and owns 12 resource types including cronjobs. - /materialize-incremental"
+          ],
+          "source_input_sha256": "16aa55d6829afdc783f0f683f66a8c40bc8af76b84c8cbdffb17f8e5e9b366b3",
+          "source_path": "/tmp/strat-assess/RHAISTRAT-3/RHAISTRAT-3.result.md",
+          "source_precedes_specialist_launch": false,
+          "source_tool_index": {
+            "message_id": "msg_011Cfvsj5G3n1iqBPUipgapr",
+            "message_uuid": "50553f19-ed7b-446a-9eec-46781a4b7af7",
+            "model": "claude-opus-4-6",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "2a9935e0-9b40-4d4e-b5b1-1b0f2d0ab369.request.json",
+            "response_file": "0eb38e38-6e32-4db4-aed8-d5c7701e9983.response.json",
+            "session_id": "683ef164-86c2-4ffa-a263-b002c5ee401a",
+            "timestamp": "2026-10-11T17:52:14.922Z"
+          },
+          "source_tool_name": "Read",
+          "tool_use_id": "toolu_017aLNbmeQocS5XHjPCQRwCc",
+          "total_section_fragments": 87
+        }
+      ],
+      "published_section_present": true,
+      "role": "architecture",
+      "target": "RHAISTRAT-3",
+      "tool_use_id": "toolu_018LzYL9UyWQ1RFKqNyinYrw"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/02903cda-64cb-43ea-a519-b9f151554e03.request.json",
+      "sha256": "f6dd85706adb1329287743df8c9d2e2c702a58f87faf73860a8395460bedc387"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/0519c14b-2539-49bc-aef4-4f065a62353b.request.json",
+      "sha256": "482d4a3bfe4f6b175ef6de2066a904b4b1cc4c87e58a101dbb065e4c4582a7cf"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/07226704-c836-4f2e-9dd3-77d4e0fb4890.request.json",
+      "sha256": "904fa51f9b9bf9b36a5d6f1b2468b2ed02a6473e3286fe7ae9125e3a22835bd3"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/0ba6562b-3829-4f84-b835-c5233dba98d2.request.json",
+      "sha256": "152d24a663814835160a091bfe65603e178c6ffa135d527ad9cb76a6cb21552a"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/0d133444-266a-43cd-a179-cf93d608e752.response.json",
+      "sha256": "8fef07c9dc76d9cb71e11b3d487d789a312704bf87cf7d650255d6251b9ac850"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/0d4bd97b-9df9-4da4-858a-f9b991741001.request.json",
+      "sha256": "2da570c2400f82fbbbdb4b9be26965d20a40c4d5d0a46e7c3a0abc17ac689990"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/0eb38e38-6e32-4db4-aed8-d5c7701e9983.response.json",
+      "sha256": "1205fa54ac3e6b3a2e499adaa1befe069dc01b7556e6c47f4c5c02959ef55146"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/11eb41a4-47d4-4b2f-8307-e8cfe1e34028.request.json",
+      "sha256": "a1431be9a96c37cd2f1969c9e6b6b9bf6d9a376fdf1b322da36f79f05f095aa8"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/1285efec-f424-4d99-b5e7-409af7373ba4.request.json",
+      "sha256": "e9fb495f713ad8dc3dbbff8eda3c435895c3fd930c1db2d2e379c932160f18b7"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/1353d5bf-d7ec-4839-a118-4f8593959eaf.response.json",
+      "sha256": "9f02e9f90086c05ef9197fdb8c7c7c1a0a8bdd476c08102c5ceadad4353d01cf"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/138af0cc-4e95-4295-85ff-6bef45ab9cbe.response.json",
+      "sha256": "daed198aca18cdc718cc938b919a14e5cb768bcbc4ac619b95cd4ce81cdcc32c"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/13dec14d-2dc5-4260-bee3-b034dbdf6f05.response.json",
+      "sha256": "88d953aaad2efd968dfac042a6ae209c8bf3a5d5c4a8ea20c870b3ae71f4d1f5"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/1611669c-a794-4690-9439-95838567b246.response.json",
+      "sha256": "b3b9cba475233b142d1bde4ccb3a93c3d25146d9016708f1797d50860f145450"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/177d50c9-257d-4dc1-8add-604da725ab7a.request.json",
+      "sha256": "702bcf612294dbb470e5f5391753fc712f902cd2d8e0bf42ad957d204ef0f928"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/18a8e237-0a9a-4f5a-be20-04cd33c32028.response.json",
+      "sha256": "6892dd58ee430e4eabbdd1e6c2a7c7e2ad62307656539f9a19dd43912ad95edd"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/192eeb1d-771c-469a-b84d-55ed1e458456.response.json",
+      "sha256": "265b5fc5fee383d89ba608fdd27e9ee1baf3f4a1460256bda1fb214ae6b843e9"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/1d33e065-aff9-4f02-8543-bedaec9dbedf.response.json",
+      "sha256": "760c85946dd0d6771713d69e2b45ad59565d414bbc918b35170b399c0fe4b37b"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/1ed8ebb8-a80b-4599-b159-c60d8ac529cd.response.json",
+      "sha256": "c3d689dc6992e3b55254824a692574d502da3f9cf9aaa3506ed5983df5025643"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/1f0f21ef-2945-4251-abf2-4260929a478d.request.json",
+      "sha256": "e7c31e0aa95b3c5003c7b03cae046079d8c23814e19bd237bd11fc116d721fec"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/2219f5c6-30f0-490d-92e0-4d8dcc903433.response.json",
+      "sha256": "d3edf521f074c1a214271cf40abe26e91ec6e22157fdfd3fd7f497e527b1d010"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/2971e967-99e4-4da7-a9d6-424ca0bbfaf1.response.json",
+      "sha256": "6948e34e39b940ac8bc3a05eb3cb0b32486c7865980b41c207a9366169c012c3"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/2a274a01-7ae6-46ce-91b3-f906a9631792.request.json",
+      "sha256": "c74c1c75d3a6dcd49441b34c2b7ec7ceb2db29eb2b13151713536ac6c6476232"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/2a9935e0-9b40-4d4e-b5b1-1b0f2d0ab369.request.json",
+      "sha256": "a00b5089e15f3a390f8d48d718951c8b8fa38b927d55246b80b5c43bc21b767e"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/2b75a1ce-6cce-4877-9dc9-5d477e978054.response.json",
+      "sha256": "dd6326eb37ec0adfff352ec9d3a9805efbe73782e418ffa74e91fd4e1943720c"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/2bb4f87b-5b0c-43bb-95bd-dab3dc81feb7.response.json",
+      "sha256": "1957d35f7adb60c59cfcc561dc6f140128db0c6c5d445483336dca5b3ae5eb82"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/2bf25723-3056-452f-9362-95e0638ada36.response.json",
+      "sha256": "ee986637bfbdd6aa1476482de8b0a7530519f81f363a21bb1270ba8b3cf16833"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/2c8bbf82-bb3b-4a32-b32a-d353a2f7bae6.request.json",
+      "sha256": "4f4d2464648fb428463a922d0ff1145e495afd3e5858f17294370977a8297a97"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/3033ede4-68cc-433b-94fb-9eaac0572dff.response.json",
+      "sha256": "8539713183382a1221f17982a95cb0be5dff767d82da8b8b67117dbadcb36b2e"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/33113288-fbf7-4612-96ab-8fccf488a41d.request.json",
+      "sha256": "6253fd176f7b8cadea864e31bd572add830eea6c4039768336f2be57a44f2a7a"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/33bbe0e9-6dcd-48e5-b742-8698e2909e35.response.json",
+      "sha256": "abf8714d992904780b69108b2dcb7d7efd975cedc8494d6a0326f442fb09c967"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/355f5f7d-502a-4e09-ba67-b4639d5c7ed8.request.json",
+      "sha256": "240dfab3075a40cdbdddd2531997bc6e68eac03d87c7b2169851123f8e759137"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/3736350e-af4c-4020-b10a-ce338eb681fa.request.json",
+      "sha256": "dca6754cc748d3b535d4a2ad1142d5c58fa4597ca8f2866b44f50435ab3621e7"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/374a2c1d-266e-4e9e-a1df-9cafece3e940.response.json",
+      "sha256": "653534628fb550124c2657eafe175c1f82720f3875e0c63c873656a16757e760"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/38c79689-b35c-4f3d-b65b-d53b9f0cee50.response.json",
+      "sha256": "4f285f85d3fffb05ce24c53bd48e0d4cba2889e4d0d90867b66b7c6a0643cd79"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/3ad874f7-3e34-4517-9285-bb640f08bb07.response.json",
+      "sha256": "19921f7d713194c0c7538b360c0dbf16f1d0d1fbc44f7a387e31bab233df206b"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/3d7ba112-c85a-40e4-a49f-ab164ae02fce.response.json",
+      "sha256": "fa7bdc5d49dd87c1794a290b4c7d3c1cafa9f8a88aa436d33a6d4293a04b52a7"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/3e65f96e-f53c-44e1-a8d3-5a2da12f560e.response.json",
+      "sha256": "3b482766752431c9bb9a82cf67b430f8a32300d87d02dc0dcb89d33126458467"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/40889023-fad0-4aeb-810f-c2008784ade6.response.json",
+      "sha256": "fe05d569349077ef7953bdc2f4bb629d5ea4f0ffa9bbe8cfdbbe07ac0454f2e0"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/428321fd-b2a9-4082-ada9-3775c7fe5bd2.request.json",
+      "sha256": "c64550f2aae17ff34c4d9df43b0bbda317f3c1dab4fa9fbeb07bdff0d76553ba"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/43ef4f85-6495-490b-a37b-d20ce850ce19.request.json",
+      "sha256": "723d5c689bf975f05f8e94e779f25f4fa302f894a776c6b37c2a19ce550ea974"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/444da482-55b7-4e05-9f82-e5bf618260b9.request.json",
+      "sha256": "53c8464191aeda4b9b1cfb2f1a122b7de444e3f2b3249b55247f3c16f92d963d"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/44dc7539-fbad-44f8-b921-e0ef66c8222e.response.json",
+      "sha256": "71f63a079fb7d86df67c159c8aaf103bc90bf0a7efa096fc4b98446af46880c2"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/45c7aa49-3dd0-49e9-ae88-95dd6412513f.response.json",
+      "sha256": "cbd00085b8b263533264aa88ce9f16654ae05a2108d99a4003fdd7936031134b"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/46b43ec7-e569-4ee6-bb3c-2722ab37be95.request.json",
+      "sha256": "4fc4274e52c5be0131853b24837a483253afd3bf1f05cf33c306986dbc9d136c"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/47eb26f0-dd91-408b-832c-a1ef13174af2.response.json",
+      "sha256": "1bb191f7e92a8bff64b661a0cfcd0c8fd40d09a1657f9792d5d2ee49c242c954"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/49214ad8-8439-401c-88ea-f45976dde156.response.json",
+      "sha256": "c3cd83a127673f890311ea7b709b63fb236300e32807b381e9a416757d70a161"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/4aa925bf-23d7-4b77-a461-0ec62d37ebb9.response.json",
+      "sha256": "cc7eec1a998b6ee54bf137fe6ae362c898da9d56564a2c4011586e2d1f261272"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/4ae48893-e9cd-4f3d-b9d3-52779e229831.response.json",
+      "sha256": "b845dac1d221aa9e7cc68c91795478e4a68a4f45813117e2cfa79d9e739baafc"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/4b5e2afc-c66d-4e51-b09a-339f38881db5.request.json",
+      "sha256": "e1367a626474a598c778628bbc1c96b40c9d26c8be2d72536c226ddabff239ec"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/4c13297c-41af-4eea-bc25-10a4353959a5.request.json",
+      "sha256": "694e011840691f45e40cb9f5dd37d8eb9dcba7f88744e662d2b4c52b70d6f359"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/4cd10bb8-bf15-488e-903a-3e8fb7f45f86.response.json",
+      "sha256": "54cff97297866d8fadb4a0b26e4e68fbcaab9e72407cbd11c2d68975377d942f"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/4f75b034-4cff-4d18-b768-75595c728936.request.json",
+      "sha256": "473eb69287d362e3077a28b772f0033111e84d349076f57bb20e3191c97037b9"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/527e136e-6817-493a-8e9f-ec0abc32967a.request.json",
+      "sha256": "8942a6ff2681a5f9f70d9d5450f3b2e9307b19213707b853572bd29e808e382a"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/54272254-cb88-4dda-82af-3062881e5bf9.request.json",
+      "sha256": "27b1964b1f0474037949d6e50dfc8d934cf2d810223e3415b1c55182336446d1"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/556a03b3-9fec-4315-925a-55c468670fd8.response.json",
+      "sha256": "f651e2b568141bef5b96ac130ce27a7e40355bcba8f8d90d05631e16d0cfb8f7"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/5637a56b-20f5-4fee-a133-660c7b9cff18.response.json",
+      "sha256": "00b5a6ee236c5fcdf2a324b1acdd342b34f572efe97ce97766c4029e6936e050"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/56be5a2e-97bf-43e4-8ac5-455de8d3c14c.request.json",
+      "sha256": "9bdf9df4ca23a6c5b05a5002d6a713b7752f69f6cc439d7cfce1167adc11b71a"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/5c287635-2e88-43ff-9d5c-a1495d856973.request.json",
+      "sha256": "f51bf18daacb84827da0b5e795caca597676e7b32bc8da609f9d8de682f2a36b"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/5cac9619-caa4-49a3-ae91-c88371ead182.request.json",
+      "sha256": "d9bb0e03d05348654d5fa711890426b475a375c35d030b052c05a57a3e609b76"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/5ea98ba6-1c27-4d21-bce6-cf31d34a8e49.request.json",
+      "sha256": "295fa1ee5235d6ebb1e2f3caa67079eed7c45f937d450a69ead8c10e391331b7"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/5eb131fb-58a9-43a9-aa88-045db5049516.request.json",
+      "sha256": "a67481ea364faadd40502b76ae9824eb78d07db904faa6154ac6c607a6600d1e"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/5f90a050-0fef-4f8e-bcd7-805edaedc627.request.json",
+      "sha256": "73c43f063e9f5206e7aaea0a7d1980b0224ccd58625c6ad4f8e9e135e455ca97"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/6474f5e3-267d-4eca-aa66-0b24a9eebd5c.response.json",
+      "sha256": "1fdd891da495cf28f460a4cbfc4dd15dc08876e674aa0390ecee4019064eae13"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/653c52cd-af96-4025-b1d0-cf3e90773297.response.json",
+      "sha256": "482fdf9a124b19924d499465bfde011e2d9465bfdf78d1e7110d0212ec3a0fc2"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/6693a8a0-b2a5-424a-a4c5-ed78347d9014.request.json",
+      "sha256": "f921a24df963223483a1df30caa8a580fd3d34d00f0859464f61e10c83f7fb6f"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/69272877-ba87-4ebb-92b8-c0fba4f2f7c5.response.json",
+      "sha256": "d5f4af7e16e00192c35bae6f74d4aa2fede97e9863a56e54985867b2e9d8b541"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/695c6693-2648-4750-8883-31f0ab45ff84.request.json",
+      "sha256": "b8580a0488d6aedc45f4dc920b9c140aa071d3316834ead612f8deeeb3202d17"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/69d1bfd6-79e6-42d5-80e3-293b593c3302.request.json",
+      "sha256": "451a3b7f6b96998735288c88a3b344ec47eec6eeae8607b98a64b2fed0c87db5"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/6ccce7ac-b98b-4154-94c2-2221c9743f27.response.json",
+      "sha256": "f5cacae04dc257ea6abf1d86a25ae540c47cb04b63916b6349f64969e90a5465"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/6cd14422-2f54-4d5e-b4ae-154d2c76734c.response.json",
+      "sha256": "fb107e61c6186d757874497e29e0ec1afbc1b5653c61ed12196f6b624629581d"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/6fb64036-6ad9-44e9-acf8-e085567d2824.request.json",
+      "sha256": "28bf2c7dd9372c68fdfc13036bdeda0589df26a926aed93b3aeb27747ec2cabe"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/7582dada-fbe5-4a7b-92f5-a74e806fabb0.response.json",
+      "sha256": "3dbae0af341bcc98e61286e1f93ff194a14d0a569daa39e55269618b5551e7cd"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/7713e4bd-9f18-49f0-8e0c-5fb6c0bc1a65.request.json",
+      "sha256": "2e6189098688f24dc8ddf35ff7aef3e5e25704aadbf1a44958801836eddf8b37"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/7c23b18c-96fc-4989-90cc-aa37e18121a3.response.json",
+      "sha256": "80b1bf590ca3792e59a63688a6b660b9cb7895239b6b151de32e51ff52b9c1c0"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/818c525a-b91a-4553-bc74-65aa8153c11f.request.json",
+      "sha256": "079497099f9e87b78da882c6fe33bb0819896f55f809d14ca26dc3314ef411f3"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/82d92412-7026-4954-b281-ac897a78b019.request.json",
+      "sha256": "5e18c41d365834c10314959128a957ec310d0e162a29dc9ba4c0924c005fd445"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/863ea9e3-3f83-4a8b-8a6e-0b2035300b07.response.json",
+      "sha256": "6091301308c01eef89b41ed18ab91a3aae1502a677b1395345442c58d1e5e318"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/86580902-45d1-4c89-b6b1-f3fe1787e1e5.request.json",
+      "sha256": "2a2ec1816f9d8b9ea0d80b47d47ae3e79786cc66ea836ab17c4bc1d53c404297"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/8ba654ad-ba35-4e3c-9058-1c541032fe32.request.json",
+      "sha256": "c2a885f485f16ccb7dd0d4dca9cc61395f07c996d871229642b382174bf74590"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/8c501efe-c76a-4409-959b-40859d89331e.request.json",
+      "sha256": "bb392771b38d68fd1b3aa369367433164efc7b095a40a875486c258d937ce52e"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/8ec4afd1-bc78-4cad-a1ce-4d13a3474c65.response.json",
+      "sha256": "df6de59c3b5ee444c2aa7d5721dd50025a0b76ceea42310212864c5c8678b19e"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/966cdf9d-51d5-4da3-8179-2e854203eec9.response.json",
+      "sha256": "17200b8fdf35dd86bb30ddd840ae965d411563ebcdb4b1aca2c1da2e8bfca4b7"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/9676a9b9-eae1-4d32-9e9d-1e3570f707f7.response.json",
+      "sha256": "3df8762a426dcffe76ed1dd415eeb180fa7259c74989982efcaac7b37992a760"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/975b5972-8de9-41dc-834c-3a1a8f93a711.response.json",
+      "sha256": "be47cd9ebdd83de534523fc32066e1115dd068f81d3712e80ed51f359fc3d865"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/9997ed00-6caf-44ef-8d6c-e26dd549c521.request.json",
+      "sha256": "eaf5a5a13b39acad07a211d9b229d49b3406fb79f16283943607544fcc3e75dc"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/9ef57f51-4904-49bc-8ace-e72a39d3d62d.request.json",
+      "sha256": "010aa4b3664dc5d942cce740589711db754b76d7d5ef86ebe49bc3f4ec8523ca"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/a02781c1-11fc-43ab-9f2f-c69e41dd4c08.request.json",
+      "sha256": "aa83d68827e53e406ab2a7243b53a9cfe0eb7536d404ce69a76716132c4e0ba8"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/a0e4c835-c67b-416a-a1d4-9d8246b98ef1.request.json",
+      "sha256": "0078918f2b466dcfc21c6066ae6b54315f132277a5f0739343328d1424d464a6"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/a88ab28e-9cb5-4605-bc15-74ca52eb4518.request.json",
+      "sha256": "35766685649833cf6f80d15287923edc665070307343295cb7315dd344f42353"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/aa1da6e5-4ad2-4fee-9a0c-866a38c7f7e5.request.json",
+      "sha256": "21d3651b43cb443ace8476a39f2fbfc26af1df6f9807e62c516a918c66f6d21d"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/ac9cb562-8568-4c58-8370-d4d723d54a1b.response.json",
+      "sha256": "a63d6b5cae56942affe857b1d92cdf9926ec4953d5c6fcc78833eca4c2da5c55"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/ad9e0f0a-c4ed-49ec-9f32-6345d4b955ec.request.json",
+      "sha256": "8e486b50a69e3cb1b690c7ffb34f2c03407956702ba1204cc7b49218a61e4dd4"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/af6e4213-ca51-4777-80dd-0553eb078a93.request.json",
+      "sha256": "d74c3d26f686c3ddba5678035968028c17cdb6dbf10613d8e03ef826621d9c7b"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/af7fb0f7-35de-4305-9945-e7336bfafeca.request.json",
+      "sha256": "92440619d318f1760f109ae442c2fb74f04e22020fb6cc22339dbfc992673fc9"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/b142ef9b-e5e0-429e-8222-3cdc349083ec.response.json",
+      "sha256": "c5a1ef77339542af9b4493f33d23a6260713522d4ad3ebd5ce09ea226525a34f"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/b3fc397c-946f-483d-b574-e4227359933e.request.json",
+      "sha256": "00ecea181281ea8391e2f07ed149f8dc67ce16d2b12e0819c0fae926bd26b142"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/bae90dd4-cb5d-4062-a09a-21db3b8495ed.request.json",
+      "sha256": "07025d0e070efab59778173606ff83562d8b6d5db70e7e9011ff797c4e34aaf5"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/bdaabd60-8269-4864-a869-a596db96d229.response.json",
+      "sha256": "a1f7133a372bcca99d467aff6477f4a8f1d341bbaa2c266d190d901936c713bc"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/bf3b27e7-a924-4978-bbf3-2bba428e5e62.request.json",
+      "sha256": "b883329cb6d4c7c44e08f03dca265a67e2f5b82fb06d98c6d445eaf450d8832f"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/bf821549-fc68-44ae-b208-3b097a8970a2.request.json",
+      "sha256": "b9670963ffaeb75168a4adcf47396df69c6119f13baa33902814fb96002532f0"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/c114a056-e344-4f9a-8fe7-4bc609f33353.response.json",
+      "sha256": "0bb52342894d39425b497b7a4b43734f23de2ef2688eb22f97cb853d4fde1706"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/c1ca0119-2f05-48b8-b31e-dec770b768fd.request.json",
+      "sha256": "fc2782883978f447c5b19eb8f585c7027f8a44c9b24a557d2e8c68cc0271dcf0"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/c64b4abe-9e6c-43c5-910e-5b443d24333c.response.json",
+      "sha256": "d533875393c81792577dc543cf411831714e83df830561bc5e59a218218eba78"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/d0f617e0-2689-4924-a9a5-623afb6005d3.response.json",
+      "sha256": "26909b1858bd88f2594b627d941f69328a38b44c1dda6a4a5239f04cd4d90596"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/d1597531-abab-4e39-98a6-ff61953a5744.request.json",
+      "sha256": "26d266a35530d7f45cb59b77a974176535d6c0a5d8f6973c4849f5f5fb269073"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/d1c68bdb-8e26-4e1f-b0aa-6e29cb8c9601.request.json",
+      "sha256": "dd03a9d1bfd399ef5b21741141fde2ac21bbfa2d9d27ab05390c9a315800b731"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/d61bb002-50c0-46b3-b9d5-77a66a00f32c.request.json",
+      "sha256": "9379aa0a09452e08d7657b9b3a1d1880cfd09136ab3577a7b85fe4a8a6de1e86"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/d9870019-466e-4c2e-95c4-6b20dc2f3da2.response.json",
+      "sha256": "7407de277a8ef6befd6cd2ceb5af18bde5545a695c4771fafef52ad48d16f3a6"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/da137df4-aa0d-4db0-9dcf-cfb37f195369.request.json",
+      "sha256": "0a11028615ad2034e9fa940878807acb45c4873ad7a8fe3b22cd5ff78d2a95c6"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/dd410868-64cc-4133-8f2f-f637315bfbdf.response.json",
+      "sha256": "f7aff502e6eb92b56d112d02ee4504adf3d493a74236ae86d92c10132774806a"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/de182fb4-7fdd-4fc5-9683-7418296c79cb.request.json",
+      "sha256": "50b53e463ccacbd2e2a5ea274e5c7a4663665f9fec355ed13475fac26f82348d"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/df8bbf52-bd9f-4d2b-b5f4-f719ab8c480d.request.json",
+      "sha256": "864dab4a4a5a11b98e8838829ef1f12924826e8fcf59d993397763b61ec685cd"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/e0588bae-8a1b-4f33-b769-adf1897e2bfc.request.json",
+      "sha256": "84ba1156f4ad5a63c2b06cd4d0cc7b0c3eb305731466b921718806abd65a7d52"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/e223deef-e96e-45ad-ad0a-e6c7a8b067d4.response.json",
+      "sha256": "8f038affb8430dc8ef562dbd82909e552ab7d968a231903071e343b0dbd4d798"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/e40643f6-e492-457d-b97e-31632d9aae02.response.json",
+      "sha256": "61d894693165b8eca0926ffa337835b7ef10a874e981cbbd4dfa4b99c66245e9"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/e823e947-96b0-4a3b-809f-62cfc6c73dfb.response.json",
+      "sha256": "5f8558927730334794c055826d94da18425f319b2cbdaea022925ba8c5a4891e"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/e952da11-fede-4c64-8b18-5bfb6dce6a10.request.json",
+      "sha256": "bef6e8ece2700a8eec6fe3bed08299b51a3f7e7d3c1b9f96c1e8a1417dd0d27e"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/ec99bddf-362b-4544-94e2-fa1d770774c5.response.json",
+      "sha256": "46f4ce93ab546d0f07c2679d2605839636a96e61049696b4e5462037a98c6f23"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/ed6129ee-3e5d-407e-8282-179efb32f315.request.json",
+      "sha256": "2ce4acc3c9e2c719d3561c5def6df061c1d934af5ae6b44b13405d390440d2b1"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/ee190a31-3a65-489c-aa20-f32a93a7f853.request.json",
+      "sha256": "a45154ac91a7cea89729be7df7cf81309cdf9a118dc965dbd1a456af1c16a776"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/ee1e72fe-46f9-4f0a-a276-41b7c8213642.response.json",
+      "sha256": "74661060117c9eb1d9e73a4b3a9c9e7d2e4c7a4535157cefece25bcd1532185a"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/ee701f4c-71a5-4a7d-91b9-dcfe6887db42.response.json",
+      "sha256": "3abb7ca5d72918bf5da531496cc095298658b369005359103769421675d7f7ad"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/eee0e846-f7bc-430f-8fab-46645fe9c6e6.request.json",
+      "sha256": "8f253039032d990326a1d3b0a8eb16d765be5f5dbe3fed23462bee7f3c9b9a1d"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/f26140f2-bc51-4974-957c-9921b7636b4a.request.json",
+      "sha256": "faf6100b2a318dcea4497bc97d547885cb42469a090ab98a7f8aa6370c5cc41d"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/f40418bc-65af-4528-8f5a-3034a6109ea6.response.json",
+      "sha256": "b5336ef4cd793bd55dde5f2b5ec014a7f95b055c90f039e4d3b3987818f5575e"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/f633eefe-56e7-4bf6-8792-3fa9f4c74832.response.json",
+      "sha256": "ef1447dd8619d6b78768d6c7bbd3e42d677a2c679a9afc375f69c2f5ae833e86"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/f7243a28-3dd9-4cea-9052-740ac6d79db2.request.json",
+      "sha256": "24fef756a6ed530c2e4fc8b3e8e4d794debd59caec9b06f10a56e7f74e4a4532"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/f901c6d0-6398-43d8-a6d8-cf76a1c11f12.request.json",
+      "sha256": "bc810a77f1d4f92bc3329744dd01abcbdf02c7b4292313a5e20db56807ee0158"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/fd29dc8c-4096-4879-b53e-7b451c215af9.request.json",
+      "sha256": "589761d64db5f634251ea91a50230e8e6601e9d8097f5124dc90ca327d28ded8"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/ff9a4d3c-8704-4318-8d41-6df9dec3c41b.request.json",
+      "sha256": "02fc03122ce8245b935623aa0a2b505d75828a11323e3a8f9324370f92741f93"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/index.jsonl",
+      "sha256": "f9f9fe68bfa22a1111475d959070422fcd6f44f306d1edaf0de1717f771ff1f4"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/eval-result.json",
+      "sha256": "a1f9bf618730d20262b935f7a4f51774c1bde13c201b0433ad80c0b075a13fff"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-1-review.md",
+      "sha256": "0c85e8f462558cc51f97b8423202e87be7f8aeac6928360c866919369c74f03e"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-2-review.md",
+      "sha256": "6a942dcf40ec51a9909642117713b048d25284f112ee9519331c5fde9d214b8e"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-3-review.md",
+      "sha256": "0cb05d6cdb9e4c8302cdbadbae4c81d239a16a7477dbe68ba7050a9060ac8ee2"
+    }
+  ],
+  "job": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed",
+  "limitations": [
+    "Alternate paths are lexical candidates, not proof of semantic delivery",
+    "A complete-looking section does not establish fidelity or fabrication",
+    "Missing task-start prompts weaken joins outside the S1 stream archive"
+  ],
+  "runner_sha256": "400aa40c7d02d9b147548d2a03f3ca2604df919820481e0149d6a1bc880c7a7a",
+  "schema_version": 1,
+  "summary": {
+    "delivered": 2,
+    "not observed": 10
+  }
+}

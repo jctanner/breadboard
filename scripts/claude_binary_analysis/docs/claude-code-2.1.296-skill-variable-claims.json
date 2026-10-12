@@ -1,0 +1,452 @@
+{
+  "schema_version": 1,
+  "evidence_precedence": [
+    "runtime",
+    "exact-bundle",
+    "old-source"
+  ],
+  "claims": [
+    {
+      "id": "local-context-placeholders",
+      "claim": "The local skill factory resolves SKILL_DIR, PROJECT_DIR, SESSION_ID and EFFORT in the prompt at invocation; bare/wrong aliases and arbitrary environment placeholders remain literal.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            129855252,
+            129858176
+          ],
+          [
+            122571388,
+            122571464
+          ],
+          [
+            118099823,
+            118099887
+          ],
+          [
+            118088522,
+            118088581
+          ],
+          [
+            118085412,
+            118085455
+          ],
+          [
+            122056251,
+            122056320
+          ]
+        ],
+        "anchors": [
+          "aYt",
+          "F4e",
+          "Kr",
+          "cr",
+          "K",
+          "GA"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Remote project/session restrictions are static-only; target is Linux x64."
+      ],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-args-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-empty-v1"
+        ]
+      }
+    },
+    {
+      "id": "plugin-context-placeholders",
+      "claim": "Plugin prompts resolve plugin root/project root/data, skill directory in skill mode, session ID and effort; the data directory is derived from the plugin source ID and ensured on resolution.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            127437935,
+            127442396
+          ],
+          [
+            124391342,
+            124391579
+          ],
+          [
+            122755827,
+            122755915
+          ],
+          [
+            122756455,
+            122756554
+          ],
+          [
+            122757015,
+            122757057
+          ],
+          [
+            122757057,
+            122757112
+          ]
+        ],
+        "anchors": [
+          "y6",
+          "lce",
+          "bl",
+          "A",
+          "wh",
+          "uNe"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Direct --plugin-dir fixture; installed/plugin-cache variants were inspected statically."
+      ],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-plugin-args-v1"
+        ]
+      }
+    },
+    {
+      "id": "argument-forms",
+      "claim": "Invocation arguments support full raw ARGUMENTS, zero-based indexed/short forms and declared positional aliases; quoted words are parsed without executing them.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            126913580,
+            126914533
+          ],
+          [
+            126913174,
+            126913279
+          ],
+          [
+            126913279,
+            126913477
+          ],
+          [
+            125911933,
+            125912058
+          ]
+        ],
+        "anchors": [
+          "nHe",
+          "I6r",
+          "Goe",
+          "_v"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Literal parser failure falls back to whitespace splitting; all complex shell grammar was not exercised."
+      ],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-args-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-plugin-args-v1"
+        ]
+      }
+    },
+    {
+      "id": "argument-empty-and-escaping",
+      "claim": "Missing numeric arguments remain literal; missing named aliases become empty; recognized argument dollar signs can be escaped with a backslash. A matched missing alias counts as consumed.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            126913580,
+            126914533
+          ]
+        ],
+        "anchors": [
+          "nHe"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Null/undefined argument handling and double-backslash edge cases are static-only."
+      ],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-empty-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-escapes-v1"
+        ]
+      }
+    },
+    {
+      "id": "fallback-arguments",
+      "claim": "If no argument placeholder was consumed and a nonempty argument string exists, the helper appends ARGUMENTS with the original string.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            126913580,
+            126914533
+          ]
+        ],
+        "anchors": [
+          "nHe"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-fallback-v2"
+        ]
+      }
+    },
+    {
+      "id": "option-substitution",
+      "claim": "Plugin skill-body options use exact own-key lookup of stored values, redact schema-sensitive options and leave absent values literal; the body path does not independently merge schema defaults.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            127437935,
+            127442396
+          ],
+          [
+            124391956,
+            124392193
+          ],
+          [
+            120466500,
+            120466555
+          ],
+          [
+            124382877,
+            124383066
+          ],
+          [
+            124383066,
+            124383240
+          ],
+          [
+            124391006,
+            124391342
+          ]
+        ],
+        "anchors": [
+          "y6",
+          "epr",
+          "_s",
+          "Ox",
+          "At",
+          "Dqe"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Settings values including a fake sensitive marker were used; real secrets and secure-store alias precedence were not exercised."
+      ],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-plugin-config-v2"
+        ]
+      }
+    },
+    {
+      "id": "ordered-passes",
+      "claim": "Argument placeholders are protected against same-pass recursive argument expansion, but later built-in passes can expand markers inserted by an argument.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            126913580,
+            126914533
+          ],
+          [
+            126912746,
+            126912841
+          ],
+          [
+            129855252,
+            129858176
+          ],
+          [
+            127437935,
+            127442396
+          ]
+        ],
+        "anchors": [
+          "nHe",
+          "bx",
+          "aYt",
+          "y6"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "One session marker demonstrates later-stage substitution; no general recursive template engine is implied."
+      ],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-argument-variables-v1"
+        ]
+      }
+    },
+    {
+      "id": "shell-after-variables",
+      "claim": "Inline shell runs after prompt substitutions, can execute a script referenced by SKILL_DIR, uses the session working directory and does not re-expand supported placeholders printed by the script.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            126912961,
+            126913146
+          ],
+          [
+            126912624,
+            126912746
+          ],
+          [
+            129846497,
+            129848889
+          ],
+          [
+            129855252,
+            129858176
+          ],
+          [
+            127437935,
+            127442396
+          ]
+        ],
+        "anchors": [
+          "Etr",
+          "uIe",
+          "eye",
+          "aYt",
+          "y6"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Bash/sh controls only; policy, PowerShell and permission handoff branches inspected statically."
+      ],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-local-shell-v2",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/skill-variables-plugin-shell-v2"
+        ]
+      }
+    },
+    {
+      "id": "load-and-invocation-timing",
+      "claim": "Allowed-tool directory substitutions happen during command construction. Body expansion runs in getPromptForCommand on invocation/preloading rather than ordinary availability listing; explicit subagent skills preloading invokes it with empty arguments.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            129855252,
+            129858176
+          ],
+          [
+            127437935,
+            127442396
+          ],
+          [
+            129854433,
+            129855252
+          ],
+          [
+            134421289,
+            134445556
+          ],
+          [
+            129014187,
+            129017174
+          ]
+        ],
+        "anchors": [
+          "aYt",
+          "y6",
+          "Alr",
+          "SA",
+          "YKt"
+        ]
+      },
+      "verdict": "bundle-confirmed",
+      "limitations": [
+        "No runtime preload or hook controls; skill mode controls the plugin SKILL_DIR pass."
+      ]
+    },
+    {
+      "id": "remote-and-hook-contexts",
+      "claim": "Remote policy suppresses local project/session expansion and inline shell execution in the remote skill factory path. Hook commands use their own project/plugin/option and environment rules, distinct from body variables.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            122571388,
+            122571464
+          ],
+          [
+            122571135,
+            122571388
+          ],
+          [
+            122571464,
+            122571556
+          ],
+          [
+            129850427,
+            129850470
+          ],
+          [
+            129855252,
+            129858176
+          ],
+          [
+            129447348,
+            129458163
+          ]
+        ],
+        "anchors": [
+          "F4e",
+          "Ldo",
+          "Cyr",
+          "dAr",
+          "aYt",
+          "i$"
+        ]
+      },
+      "verdict": "bundle-confirmed",
+      "limitations": [
+        "Remote and hook branches were not exercised; synced-skill classification depends on host mode."
+      ]
+    }
+  ]
+}

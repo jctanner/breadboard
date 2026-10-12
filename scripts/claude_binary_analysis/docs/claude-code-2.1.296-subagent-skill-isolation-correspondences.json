@@ -1,0 +1,493 @@
+{
+  "schema_version": 1,
+  "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+  },
+  "binary_manifest": "claude-code-2.1.296-workflow-binary-manifest.json",
+  "payload": {
+    "offset": 89120768,
+    "offset_hex": "0x54fe000",
+    "size": 167890151,
+    "size_hex": "0xa01cce7",
+    "sha256": "32a4df7685c914cf66238ffa9b1ea3ae1b164688039364d660c4506f68fb8e2f"
+  },
+  "offset_unit": "Byte offsets in extracted .bun section, exclusive ends",
+  "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json",
+  "symbols": [
+    {
+      "name": "Lae",
+      "kind": "FunctionDeclaration",
+      "start": 126881316,
+      "end_exclusive": 126881615,
+      "length": 299,
+      "sha256": "f95584e3c43fd0b12802f3db66d4085734cbe8b59e106c6c7ad240c6cdd78297"
+    },
+    {
+      "name": "nXr",
+      "kind": "FunctionDeclaration",
+      "start": 128148566,
+      "end_exclusive": 128148650,
+      "length": 84,
+      "sha256": "7089dc76ffe91d986cd1161561183deff4db130d251a9cfc1ebd923c0fcd9bef"
+    },
+    {
+      "name": "uEo",
+      "kind": "FunctionDeclaration",
+      "start": 128150832,
+      "end_exclusive": 128153141,
+      "length": 2309,
+      "sha256": "2bf477a16d85111fd091f5b40a15a98a25006abaffaca195eb38d045ba977edc"
+    },
+    {
+      "name": "cEo",
+      "kind": "FunctionDeclaration",
+      "start": 128153141,
+      "end_exclusive": 128153411,
+      "length": 270,
+      "sha256": "ebe8cd458d8d65d6f36f1122e5a254b24663f244d1d5b07d2fd054a5c60053ab"
+    },
+    {
+      "name": "jjt",
+      "kind": "FunctionDeclaration",
+      "start": 128153411,
+      "end_exclusive": 128153579,
+      "length": 168,
+      "sha256": "e5c79ac47f3f952768f5231fbb71f83c5e10b30f390fc55d741619d6c9d5caee"
+    },
+    {
+      "name": "WC",
+      "kind": "FunctionDeclaration",
+      "start": 128153966,
+      "end_exclusive": 128154012,
+      "length": 46,
+      "sha256": "53d35ceabc4b9bf8903dee49c642b05b136297c5a3282a82fb6e133a0acee8e6"
+    },
+    {
+      "name": "zC",
+      "kind": "FunctionDeclaration",
+      "start": 128154842,
+      "end_exclusive": 128154913,
+      "length": 71,
+      "sha256": "8850041e818f492680249f5113dce8d344dfc55b660198b3e855fb2b8785ea2a"
+    },
+    {
+      "name": "hEo",
+      "kind": "FunctionDeclaration",
+      "start": 128154913,
+      "end_exclusive": 128155002,
+      "length": 89,
+      "sha256": "d1b9d221deb75a7db2c42555b0252b2b6e63521c1253b8f480f74fe46d1adfb6"
+    },
+    {
+      "name": "pvt",
+      "kind": "FunctionDeclaration",
+      "start": 128507426,
+      "end_exclusive": 128507511,
+      "length": 85,
+      "sha256": "9e9ff8dec8dfc594d3e1a98ff8f9d0427619c7c6dfe0409df595698196e37964"
+    },
+    {
+      "name": "J5t",
+      "kind": "FunctionDeclaration",
+      "start": 128509014,
+      "end_exclusive": 128510121,
+      "length": 1107,
+      "sha256": "7f3a95ff36e958e3bd468b297fb2e7b65938692a1c0d9807bd6a47db1fd1d5a0"
+    },
+    {
+      "name": "air",
+      "kind": "FunctionDeclaration",
+      "start": 129017688,
+      "end_exclusive": 129021998,
+      "length": 4310,
+      "sha256": "265bc6190f22609b06c95aa95df8d3c892fd01575b649bc7b99b881a820fd6f2"
+    },
+    {
+      "name": "Alr",
+      "kind": "FunctionDeclaration",
+      "start": 129854433,
+      "end_exclusive": 129855252,
+      "length": 819,
+      "sha256": "464910482fa66217f517c9f1c033aa799efca73b354250342e7d2ccaea738686"
+    },
+    {
+      "name": "aYt",
+      "kind": "FunctionDeclaration",
+      "start": 129855252,
+      "end_exclusive": 129858176,
+      "length": 2924,
+      "sha256": "0d150d9a0236c6fd5d1eb97cf7fb6fa788346cef08c8a2717fb0bd5511d1b75c"
+    },
+    {
+      "name": "FX",
+      "kind": "FunctionDeclaration",
+      "start": 129873562,
+      "end_exclusive": 129873611,
+      "length": 49,
+      "sha256": "470a5c8d2e00d89da31dbb670d5df483f0aefd3540dfa65b6e3ec113dd5e17fc"
+    },
+    {
+      "name": "Ly",
+      "kind": "FunctionDeclaration",
+      "start": 129873638,
+      "end_exclusive": 129873734,
+      "length": 96,
+      "sha256": "fefe5427faaa850aba11068d1a8980805d5110e1fd065e5076e3edd7f1bbf059"
+    },
+    {
+      "name": "$X",
+      "kind": "FunctionDeclaration",
+      "start": 129873734,
+      "end_exclusive": 129873795,
+      "length": 61,
+      "sha256": "1a62a85b0a88311eaec0bfa2c410392a86a36a8d4b6f7c6a7718aa700c398a9a"
+    },
+    {
+      "name": "lts",
+      "kind": "FunctionDeclaration",
+      "start": 129873847,
+      "end_exclusive": 129873935,
+      "length": 88,
+      "sha256": "091a865f50f7733d498f1ef8d8aa2ee03bbc9765fc26de6e2b8b1519533609c8"
+    },
+    {
+      "name": "OAr",
+      "kind": "FunctionDeclaration",
+      "start": 129874659,
+      "end_exclusive": 129875653,
+      "length": 994,
+      "sha256": "b67f629fed6f3c23266f1b0bf1954119838a12a8813217277143c00ddabf7827"
+    },
+    {
+      "name": "lYt",
+      "kind": "FunctionDeclaration",
+      "start": 129875729,
+      "end_exclusive": 129876772,
+      "length": 1043,
+      "sha256": "53a7e36bb7c2f06fbf882261694ad2a031b5227b7cccbc50887d2c2cba0e2ca5"
+    },
+    {
+      "name": "UDe",
+      "kind": "FunctionDeclaration",
+      "start": 129876772,
+      "end_exclusive": 129876940,
+      "length": 168,
+      "sha256": "8716f94cbc9fb9229360c2c41a39a96e5473ec7c9cda558b7194bfa81b3c4148"
+    },
+    {
+      "name": "uj",
+      "kind": "FunctionDeclaration",
+      "start": 129877702,
+      "end_exclusive": 129877882,
+      "length": 180,
+      "sha256": "92d6ef42833c3a3bc39edf2f9db22dd77fda0448c4f8a47b2cb7f3fc14ce40ca"
+    },
+    {
+      "name": "nOr",
+      "kind": "FunctionDeclaration",
+      "start": 130024567,
+      "end_exclusive": 130027172,
+      "length": 2605,
+      "sha256": "2622b06be7295be90226ccec9bbef357497dae04ad07123d398811198154f126"
+    },
+    {
+      "name": "CLr",
+      "kind": "FunctionDeclaration",
+      "start": 130166121,
+      "end_exclusive": 130167128,
+      "length": 1007,
+      "sha256": "26a2f66032574dd89c096120577ab01199195840788d4fb846ef31bfeba9b02d"
+    },
+    {
+      "name": "o_n",
+      "kind": "ClassDeclaration",
+      "start": 130167128,
+      "end_exclusive": 130167261,
+      "length": 133,
+      "sha256": "514203951e8dca1b5a97fe1ffe3ad5937f8009028e28feb85fa35d628ec95a98"
+    },
+    {
+      "name": "PLr",
+      "kind": "FunctionDeclaration",
+      "start": 130168456,
+      "end_exclusive": 130168914,
+      "length": 458,
+      "sha256": "89ca6853a6e95f41f62bfa3925a434b3a20572e322606405341e620b4fac80ba"
+    },
+    {
+      "name": "nar",
+      "kind": "FunctionDeclaration",
+      "start": 130169159,
+      "end_exclusive": 130169261,
+      "length": 102,
+      "sha256": "2f786aaae986da5296c583b8fa2d252459d8fdc2571760cd0858f2f4e62ef73d"
+    },
+    {
+      "name": "ILr",
+      "kind": "FunctionDeclaration",
+      "start": 130169261,
+      "end_exclusive": 130169988,
+      "length": 727,
+      "sha256": "1dc8dc88e535d76a42af464962ca3cbdae50e4261fbaebf38ff74da4c985c2ed"
+    },
+    {
+      "name": "clr",
+      "kind": "VariableDeclarator",
+      "start": 130934794,
+      "end_exclusive": 130949125,
+      "length": 14331,
+      "sha256": "8dde3ca0ce22933ed26ce24ad064df85bdf6578c7981313abb022548dd6038b6"
+    },
+    {
+      "name": "o",
+      "kind": "VariableDeclarator",
+      "start": 121376614,
+      "end_exclusive": 121376621,
+      "length": 7,
+      "sha256": "dba7bfd9442aba6e4035709ea41a66b874dc690f10b67edcc8ff22ffa42f5edc",
+      "module_start": 121375900
+    },
+    {
+      "name": "s",
+      "kind": "ClassDeclaration",
+      "start": 121376622,
+      "end_exclusive": 121379219,
+      "length": 2597,
+      "sha256": "8dac813b9ca623abc9d3d06d26e35bf626b705ca43cbb24803445257892bb50c",
+      "module_start": 121375900
+    },
+    {
+      "name": "xr",
+      "kind": "FunctionDeclaration",
+      "start": 121379361,
+      "end_exclusive": 121379397,
+      "length": 36,
+      "sha256": "5c45a69238cba1b9d06062fbf74d3053f56524ac93119da68610cb4fc122c595",
+      "module_start": 121375900
+    },
+    {
+      "name": "te",
+      "kind": "FunctionDeclaration",
+      "start": 136266006,
+      "end_exclusive": 136266388,
+      "length": 382,
+      "sha256": "fed554ecabdb3192945dd7f43058b6b591d7c698fd02ca93cd9f50ae9f10d57c",
+      "module_start": 136264064
+    },
+    {
+      "name": "Mne",
+      "kind": "FunctionDeclaration",
+      "start": 125411487,
+      "end_exclusive": 125411667,
+      "length": 180,
+      "sha256": "63ee06538739d25df519b512cadf2e2302f5515939fa0f67542c7539025507d2",
+      "module_start": 124958324
+    },
+    {
+      "name": "VZ",
+      "kind": "FunctionDeclaration",
+      "start": 118122230,
+      "end_exclusive": 118122373,
+      "length": 143,
+      "sha256": "f8d4992d1270f7b17454dbf859ded08caa86356ee6f647beca485d71a21397e7",
+      "module_start": 118008726
+    },
+    {
+      "name": "mIo",
+      "kind": "FunctionDeclaration",
+      "start": 118122525,
+      "end_exclusive": 118122644,
+      "length": 119,
+      "sha256": "8ea5f3e43c8a603feaaf7f4d3d61e137c2c097e4dada887a0b520d67ca512bd4",
+      "module_start": 118008726
+    },
+    {
+      "name": "aG",
+      "kind": "FunctionDeclaration",
+      "start": 118123591,
+      "end_exclusive": 118123662,
+      "length": 71,
+      "sha256": "5225c32757083b27a8bb9b338508bffbac442d3bdb58d4b1fdef9dc74f8298f0",
+      "module_start": 118008726
+    },
+    {
+      "name": "skill_listing",
+      "kind": "ObjectProperty",
+      "start": 130940826,
+      "end_exclusive": 130940986,
+      "length": 160,
+      "sha256": "82cdb73278de45b1160e3e95dfd9b7635631a6258c29dbf5524adc2cca0969bc"
+    },
+    {
+      "name": "dynamic_skill",
+      "kind": "ObjectProperty",
+      "start": 130940987,
+      "end_exclusive": 130941354,
+      "length": 367,
+      "sha256": "74705b42a0167c38acdf37e7d6eea68d8459d00489e6b75b0eb2e79cd4ee0079"
+    }
+  ],
+  "old_source": {
+    "head": "126c31154f72ec9babb39142d173ef8c2a5a9803",
+    "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/deploy/repos.bak/claude-code",
+    "origin": "Unofficial snapshot, correspondence only",
+    "files": [
+      {
+        "path": "src/skills/loadSkillsDir.ts",
+        "sha256": "bef7a235872cbba90612bc11763bdd7f74f95980c0fbfe4fa5d28f45c385d2f6",
+        "relevant_lines": [
+          821,
+          822,
+          882,
+          883,
+          937,
+          948,
+          955,
+          966,
+          981,
+          982,
+          1031,
+          1047,
+          1048,
+          1071,
+          1072
+        ]
+      },
+      {
+        "path": "src/commands.ts",
+        "sha256": "88c1f7258ba79b5dc00cf301627dc6ed0532166c8b00fdb433d2f1a0b0a18295",
+        "relevant_lines": [
+          159,
+          482,
+          489,
+          495
+        ]
+      },
+      {
+        "path": "src/utils/attachments.ts",
+        "sha256": "5ec35a1f98d1d20355339ddd9b426007ab1c0adaf491f897802cfc8f19c088e7",
+        "relevant_lines": [
+          874,
+          875,
+          2545,
+          2547,
+          2553,
+          2554,
+          2558,
+          2597,
+          2607,
+          2613,
+          2622,
+          2661,
+          2700,
+          2703
+        ]
+      },
+      {
+        "path": "src/utils/messages.ts",
+        "sha256": "0b779e0ec72ab7881512f7b60edb0c7fdac2c7431d0fc6d0d36f193853d21bab",
+        "relevant_lines": []
+      },
+      {
+        "path": "src/utils/forkedAgent.ts",
+        "sha256": "8c98bf4e5c7758ec5ac44600244d63ec055125c1cbeb0d10182276937241592c",
+        "relevant_lines": [
+          325,
+          329,
+          337,
+          345,
+          384,
+          515
+        ]
+      },
+      {
+        "path": "src/tools/FileReadTool/FileReadTool.ts",
+        "sha256": "a649909df707163cd6e6442e39e60c3a24e2ad5917cd5bc36cb267c0b1867540",
+        "relevant_lines": [
+          583
+        ]
+      },
+      {
+        "path": "src/utils/skills/skillChangeDetector.ts",
+        "sha256": "bda37d8aafddbff7e3ca46fd44debfde902d418e8a2ea93de5f48c854ba59455",
+        "relevant_lines": [
+          69,
+          90,
+          91
+        ]
+      },
+      {
+        "path": "src/bootstrap/state.ts",
+        "sha256": "0f4b2dbc63ac161a23f9cfa321efc3cc20247fc276531a5688e39506abaca82e",
+        "relevant_lines": [
+          1510,
+          1530
+        ]
+      }
+    ]
+  },
+  "architecture_context_layout": {
+    "path": "/home/jtanner/workspace/github/jctanner.redhat/odh.architecture-context",
+    "head": "90bee50239144e162984c8855246a7aef74920ee",
+    "skill_count": 14,
+    "skills": [
+      {
+        "path": ".claude/skills/aggregate-platform-architecture/SKILL.md",
+        "sha256": "c6f01ea6f358b051b3895644250efd1373d525e60e8b475fb036f12a61b988a6"
+      },
+      {
+        "path": ".claude/skills/analyze-platform-components/SKILL.md",
+        "sha256": "b8fa2941568b7f25b40b61cfbe7ec8bbf4981754ac39c732a2c03d2a133d372f"
+      },
+      {
+        "path": ".claude/skills/analyze-running-cluster/SKILL.md",
+        "sha256": "288343e3207b8ace76a4b047122e341803786f5757ca9d4824fd9f2b95332e62"
+      },
+      {
+        "path": ".claude/skills/classify-checkout/SKILL.md",
+        "sha256": "ed92b9caa54024a0d60f3376ce937147f49963bb7ca7bcc38695e20759e8ea4d"
+      },
+      {
+        "path": ".claude/skills/collect-component-architectures/SKILL.md",
+        "sha256": "9840ff1ea7d094d2b32682a5e200375c7da6237d0f45f70a11e8b4842fcdd015"
+      },
+      {
+        "path": ".claude/skills/discover-components/SKILL.md",
+        "sha256": "4b5d1a585c8aef3d84c038006409e4293d772e5b2c36831bae518905ba055565"
+      },
+      {
+        "path": ".claude/skills/generate-architecture-diagrams/SKILL.md",
+        "sha256": "5ce52cffae8a5c09b07b719faa3e2e96456fca20815bdb66570c0b59d026c928"
+      },
+      {
+        "path": ".claude/skills/generate-component-diagrams/SKILL.md",
+        "sha256": "d807e31e1c8899ae3543f82b1af3289f4a8490ed85817f67a31ad23be5ff0b07"
+      },
+      {
+        "path": ".claude/skills/generate-platform-diagrams/SKILL.md",
+        "sha256": "2be593f7297b13c435dc06ab36aae4c77e94c6657ef3c36e6cece220fbae44e3"
+      },
+      {
+        "path": ".claude/skills/repo-to-architecture-summary/SKILL.md",
+        "sha256": "1d239d7dd924f0790a66f21415e606897d488a1d551105deef8b5d8766c7673e"
+      },
+      {
+        "path": ".claude/skills/update-aipcc-base-images-overlay/SKILL.md",
+        "sha256": "6b3ace97eaa763c50c89fdbb484f113af3d436abbe58d606baafd04f7cce2464"
+      },
+      {
+        "path": ".claude/skills/update-rhai-pipeline-overlay/SKILL.md",
+        "sha256": "25246d1bc9a285fe1774b9612dbd66c4697f45a3413201627213a00f55bd2ecf"
+      },
+      {
+        "path": ".claude/skills/update-rhaiis-pipeline-overlay/SKILL.md",
+        "sha256": "bb198f2d73a8a706489767dcb8fbf1aade788b5d3e0cc5ec4bf39833a04b0e26"
+      },
+      {
+        "path": ".claude/skills/update-wheels-builder-overlay/SKILL.md",
+        "sha256": "1d3e6e2a2eba59773ef8e340bd90ea8cb82901298c6e9bd5fdbe73f05527a48b"
+      }
+    ]
+  }
+}

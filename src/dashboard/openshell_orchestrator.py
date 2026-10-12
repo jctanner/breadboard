@@ -178,8 +178,8 @@ class OpenShellOrchestrator:
             environment["ENABLE_OTEL"] = "0"
         if args.get("strace"):
             environment["ENABLE_STRACE"] = "1"
-        if args.get("api_dump") is not False:
-            environment["ANTHROPIC_LOG"] = f"/app/artifacts/apibodies/{job_name}"
+        # Wrappers configure API capture with OTEL_LOG_RAW_API_BODIES.
+        # ANTHROPIC_LOG is an SDK log level, not an output directory.
         environment.update(PipelineOrchestrator._normalize_extra_env(args.get("extra_env")))
         return environment
 

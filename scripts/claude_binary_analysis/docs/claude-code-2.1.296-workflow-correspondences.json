@@ -1,0 +1,2641 @@
+{
+  "schema_version": 1,
+  "payload_sha256": "32a4df7685c914cf66238ffa9b1ea3ae1b164688039364d660c4506f68fb8e2f",
+  "offset_unit": "bytes in extracted .bun section; end exclusive",
+  "parser": "Prettier 3.6.2 Babel; no target execution",
+  "modules": [
+    {
+      "topic": "availability",
+      "module": {
+        "ascii_printable_ratio": 1,
+        "end_exclusive": 122040988,
+        "end_exclusive_hex": "0x746329c",
+        "length": 3590,
+        "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/segments/raw/module-122037398.js",
+        "sha256": "ca5ed2e687be0126a018ae659eab1719ea870737a3e5edf324a182a788e2b593",
+        "start": 122037398,
+        "start_hex": "0x7462496"
+      },
+      "parsed_symbols": [
+        {
+          "name": "wNn",
+          "kind": "FunctionDeclaration",
+          "start": 122039383,
+          "end_exclusive": 122039449,
+          "length": 66,
+          "sha256": "8d286cb5564ce14b65a98fb00913b04ec8f64ef303d0774004451784ed7e5970"
+        },
+        {
+          "name": "dg",
+          "kind": "FunctionDeclaration",
+          "start": 122039637,
+          "end_exclusive": 122039673,
+          "length": 36,
+          "sha256": "a8495e22069576741694e439e5ced33574d6151ef6f3a4484973fc40a507d8fd"
+        },
+        {
+          "name": "Suo",
+          "kind": "FunctionDeclaration",
+          "start": 122039673,
+          "end_exclusive": 122040095,
+          "length": 422,
+          "sha256": "e8bf903fa0688f45e90be7ec369e30a1a117c7210648c1180830d8a2ba2bf2ff"
+        },
+        {
+          "name": "W",
+          "kind": "FunctionDeclaration",
+          "start": 122040566,
+          "end_exclusive": 122040862,
+          "length": 296,
+          "sha256": "c5479b8ea8fff550ffb40ac5b2403c9c57954922db61ba7f0beb1e884165ebc6"
+        }
+      ],
+      "exports": [
+        {
+          "local": "buo",
+          "exported": "buo"
+        },
+        {
+          "local": "fJt",
+          "exported": "fJt"
+        },
+        {
+          "local": "Chs",
+          "exported": "Chs"
+        },
+        {
+          "local": "Rhs",
+          "exported": "Rhs"
+        },
+        {
+          "local": "xhs",
+          "exported": "xhs"
+        },
+        {
+          "local": "Phs",
+          "exported": "Phs"
+        },
+        {
+          "local": "wNn",
+          "exported": "wNn"
+        },
+        {
+          "local": "s_r",
+          "exported": "s_r"
+        },
+        {
+          "local": "dg",
+          "exported": "dg"
+        },
+        {
+          "local": "Suo",
+          "exported": "Suo"
+        },
+        {
+          "local": "wuo",
+          "exported": "wuo"
+        },
+        {
+          "local": "ude",
+          "exported": "ude"
+        },
+        {
+          "local": "vNn",
+          "exported": "vNn"
+        },
+        {
+          "local": "mJt",
+          "exported": "mJt"
+        },
+        {
+          "local": "ENn",
+          "exported": "ENn"
+        },
+        {
+          "local": "Ihs",
+          "exported": "Ihs"
+        },
+        {
+          "local": "vuo",
+          "exported": "vuo"
+        }
+      ],
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122037398-symbols.json"
+    },
+    {
+      "topic": "metadata",
+      "module": {
+        "ascii_printable_ratio": 1,
+        "end_exclusive": 139128086,
+        "end_exclusive_hex": "0x84aed16",
+        "length": 7945,
+        "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/segments/raw/module-139120141.js",
+        "sha256": "83b0cf92f3b9cb87b3a5c8de0da8de97852a393618501abf99faf436d3297a34",
+        "start": 139120141,
+        "start_hex": "0x84ace0d"
+      },
+      "parsed_symbols": [
+        {
+          "name": "Kb",
+          "kind": "FunctionDeclaration",
+          "start": 139123811,
+          "end_exclusive": 139124644,
+          "length": 833,
+          "sha256": "04a0934709ed679c16bd30cededea364b1e8f07c6dd3a43b1348b94ee299614a"
+        },
+        {
+          "name": "j",
+          "kind": "FunctionDeclaration",
+          "start": 139126780,
+          "end_exclusive": 139127104,
+          "length": 324,
+          "sha256": "222314ae5553a47d8387039fe82245d71d4a5867aa22477f00bb439dcd956360"
+        },
+        {
+          "name": "M",
+          "kind": "FunctionDeclaration",
+          "start": 139127363,
+          "end_exclusive": 139127792,
+          "length": 429,
+          "sha256": "f05dbf145c04224bdbd17a0f4b9bbe0e8b5703575cc4c5d972b818f13452914d"
+        },
+        {
+          "name": "K",
+          "kind": "FunctionDeclaration",
+          "start": 139127792,
+          "end_exclusive": 139128069,
+          "length": 277,
+          "sha256": "0a7e427219b462103b7c1bbd9eb87bcfcde6b8389114281ce92d515809a09ce6"
+        }
+      ],
+      "exports": [
+        {
+          "local": "Kb",
+          "exported": "Kb"
+        },
+        {
+          "local": "bGo",
+          "exported": "bGo"
+        }
+      ],
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-139120141-symbols.json"
+    },
+    {
+      "topic": "discovery",
+      "module": {
+        "ascii_printable_ratio": 1,
+        "end_exclusive": 139145067,
+        "end_exclusive_hex": "0x84b2f6b",
+        "length": 8675,
+        "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/segments/raw/module-139136392.js",
+        "sha256": "5b693ce9aacaa3620a798852982ae05eab5112e470102787da071599703aad46",
+        "start": 139136392,
+        "start_hex": "0x84b0d88"
+      },
+      "parsed_symbols": [
+        {
+          "name": "LQe",
+          "kind": "FunctionDeclaration",
+          "start": 139137946,
+          "end_exclusive": 139137996,
+          "length": 50,
+          "sha256": "b548c882c782d32cc896a139b50f30a569176187f028659ff0c342c6aaf638f8"
+        },
+        {
+          "name": "P",
+          "kind": "FunctionDeclaration",
+          "start": 139138926,
+          "end_exclusive": 139140244,
+          "length": 1318,
+          "sha256": "b14697dca54c515c9a093c8d7e4586f22161e7b771267e8f677485547b613c25"
+        },
+        {
+          "name": "W",
+          "kind": "FunctionDeclaration",
+          "start": 139140272,
+          "end_exclusive": 139140473,
+          "length": 201,
+          "sha256": "24ce864736c01cf584c3f747db1ab5f493e48b64576c58dced0c7e77e56245bb"
+        },
+        {
+          "name": "D",
+          "kind": "FunctionDeclaration",
+          "start": 139140841,
+          "end_exclusive": 139141713,
+          "length": 872,
+          "sha256": "5ae1d69e81f6e9b579aac08387700cbdb580ad0f0ebf4e5e45c17bc97ba0ad25"
+        },
+        {
+          "name": "b",
+          "kind": "FunctionDeclaration",
+          "start": 139143208,
+          "end_exclusive": 139144401,
+          "length": 1193,
+          "sha256": "0809335b30f699f74cc4d34cb53e4cf313755932a4741cf430ee4d660a65f461"
+        },
+        {
+          "name": "M",
+          "kind": "FunctionDeclaration",
+          "start": 139144488,
+          "end_exclusive": 139144850,
+          "length": 362,
+          "sha256": "738d7880ef7120d8c5601030958a34928089387ec7788fd284ac1874d416336a"
+        },
+        {
+          "name": "j1t",
+          "kind": "FunctionDeclaration",
+          "start": 139144907,
+          "end_exclusive": 139144978,
+          "length": 71,
+          "sha256": "f847416803c9fd6cb6454951b837aa9790bb22faad5bc6e8fce33364c8f83927"
+        }
+      ],
+      "exports": [
+        {
+          "local": "yGo",
+          "exported": "yGo"
+        },
+        {
+          "local": "ljr",
+          "exported": "ljr"
+        },
+        {
+          "local": "_Go",
+          "exported": "_Go"
+        },
+        {
+          "local": "LQe",
+          "exported": "LQe"
+        },
+        {
+          "local": "uyt",
+          "exported": "uyt"
+        },
+        {
+          "local": "TOe",
+          "exported": "TOe"
+        },
+        {
+          "local": "j1t",
+          "exported": "j1t"
+        },
+        {
+          "local": "K9n",
+          "exported": "K9n"
+        }
+      ],
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-139136392-symbols.json"
+    },
+    {
+      "topic": "invocation",
+      "module": {
+        "ascii_printable_ratio": 1,
+        "end_exclusive": 153108756,
+        "end_exclusive_hex": "0x9204114",
+        "length": 74698,
+        "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/segments/raw/module-153034058.js",
+        "sha256": "76aea9a7262fde6c6c2695f852d38ae99fd0037bddce561a629417bc9c796c1d",
+        "start": 153034058,
+        "start_hex": "0x91f1d4a"
+      },
+      "parsed_symbols": [
+        {
+          "name": "we",
+          "kind": "FunctionDeclaration",
+          "start": 153092096,
+          "end_exclusive": 153092117,
+          "length": 21,
+          "sha256": "2d18c78329e13c456717617b68239a4ae3066d5026f8c22fa6449dd1ac7486a1"
+        },
+        {
+          "name": "Gt",
+          "kind": "VariableDeclarator",
+          "start": 153092420,
+          "end_exclusive": 153094390,
+          "length": 1970,
+          "sha256": "865ece1b2bc55cfd4f6a551be688e0181b067ab6ea3cd13874339de08aaca759"
+        },
+        {
+          "name": "Xt",
+          "kind": "VariableDeclarator",
+          "start": 153094391,
+          "end_exclusive": 153095848,
+          "length": 1457,
+          "sha256": "a7aece0b97399d88914dafc0921e13e9260cd9b3090a78912dfdbb2d6152cc0d"
+        },
+        {
+          "name": "Rr",
+          "kind": "FunctionDeclaration",
+          "start": 153095928,
+          "end_exclusive": 153096659,
+          "length": 731,
+          "sha256": "de2f434215dc814cd107338da0be6bb28edaca2716c01e6a2259be14ce942f1f"
+        },
+        {
+          "name": "si",
+          "kind": "VariableDeclarator",
+          "start": 153097403,
+          "end_exclusive": 153107594,
+          "length": 10191,
+          "sha256": "08e027a9bd9a0aaefc28373d060c9c88451c9f68f2e5be9a3b1e52c3bde1c4d6"
+        },
+        {
+          "name": "validateInput",
+          "kind": "ObjectMethod",
+          "start": 153098615,
+          "end_exclusive": 153101073,
+          "length": 2458,
+          "sha256": "89f1d51d893a3cf69ab455ed162309634aae6e75e6e15f0cb992bb9dc6614047"
+        },
+        {
+          "name": "checkPermissions",
+          "kind": "ObjectMethod",
+          "start": 153101074,
+          "end_exclusive": 153102443,
+          "length": 1369,
+          "sha256": "8d4a49ae223b5b9e87e608315b2e90e5a8c562331d408efb18186e3d007de500"
+        },
+        {
+          "name": "call",
+          "kind": "ObjectMethod",
+          "start": 153102444,
+          "end_exclusive": 153105555,
+          "length": 3111,
+          "sha256": "8f74c3851d9ce4e9252c86ec0de28294ad2188a90e528ac6f8ee0a88d4bf41d3"
+        },
+        {
+          "name": "Ir",
+          "kind": "FunctionDeclaration",
+          "start": 153107820,
+          "end_exclusive": 153108728,
+          "length": 908,
+          "sha256": "87d635a88b40a6a3749cd0aa25fdf1d594c9d08cba07c638e2006b027013df4e"
+        }
+      ],
+      "exports": [
+        {
+          "local": "si",
+          "exported": "WorkflowTool"
+        }
+      ],
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-153034058-symbols.json"
+    },
+    {
+      "topic": "engine",
+      "module": {
+        "ascii_printable_ratio": 1,
+        "end_exclusive": 139240321,
+        "end_exclusive_hex": "0x84ca381",
+        "length": 95253,
+        "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/segments/raw/module-139145068.js",
+        "sha256": "12e41da88fd79fa3bc3d67952ed37ab046a7d9cc5390ef7520f77a72a77e91c4",
+        "start": 139145068,
+        "start_hex": "0x84b2f6c"
+      },
+      "parsed_symbols": [
+        {
+          "name": "N9n",
+          "kind": "FunctionDeclaration",
+          "start": 139159442,
+          "end_exclusive": 139159928,
+          "length": 486,
+          "sha256": "6176577c8a7aacbcf0972c34f89f8a4f91b7c7c8bf376b02398fe6ddbbeaa2ab"
+        },
+        {
+          "name": "Lr",
+          "kind": "FunctionDeclaration",
+          "start": 139160222,
+          "end_exclusive": 139161786,
+          "length": 1564,
+          "sha256": "a4a85fa081a51c767d99d1d4700b7f857103dfd81d77785945951f49982da571"
+        },
+        {
+          "name": "$ie",
+          "kind": "FunctionDeclaration",
+          "start": 139161786,
+          "end_exclusive": 139163523,
+          "length": 1737,
+          "sha256": "8cd089df154294c7839b1473ef6d8299358c0a0d904083f52b5960c41834e375"
+        },
+        {
+          "name": "ms",
+          "kind": "FunctionDeclaration",
+          "start": 139182341,
+          "end_exclusive": 139182392,
+          "length": 51,
+          "sha256": "6d24588230f2dd94dc0cd510f22a188eadcb79b15f25cdc41ee9ee2708d072eb"
+        },
+        {
+          "name": "gs",
+          "kind": "VariableDeclarator",
+          "start": 139182396,
+          "end_exclusive": 139182407,
+          "length": 11,
+          "sha256": "c07d2f93bc49974b65ce547eeaee6b59f106e5c152c80ba9ba922f51293aadb1"
+        },
+        {
+          "name": "ws",
+          "kind": "VariableDeclarator",
+          "start": 139182408,
+          "end_exclusive": 139182413,
+          "length": 5,
+          "sha256": "2c030397643d7dd4125705092b718de4fcadbad80be7837331f7872e503ef6b3"
+        },
+        {
+          "name": "or",
+          "kind": "VariableDeclarator",
+          "start": 139182414,
+          "end_exclusive": 139182421,
+          "length": 7,
+          "sha256": "17efc5bf0a4057b9a287d7bb83afedc09694ed38b13b1f1efc5c032a212fb048"
+        },
+        {
+          "name": "tr",
+          "kind": "VariableDeclarator",
+          "start": 139185335,
+          "end_exclusive": 139185339,
+          "length": 4,
+          "sha256": "b032020aa2e7b958179afcb6e5a9bf6dbec34455e018dd370c2b05b23842e186"
+        },
+        {
+          "name": "ir",
+          "kind": "FunctionDeclaration",
+          "start": 139185349,
+          "end_exclusive": 139226151,
+          "length": 40802,
+          "sha256": "e1ad960889f854aab60dcdd471644ef24f9cef1bced6dbdb4783ca41724c016a"
+        },
+        {
+          "name": "F9n",
+          "kind": "FunctionDeclaration",
+          "start": 139226525,
+          "end_exclusive": 139228364,
+          "length": 1839,
+          "sha256": "c5911b0bb3139b9189d77bd85dda45d575d96ac009fe1688d349e6c77d574558"
+        },
+        {
+          "name": "lr",
+          "kind": "FunctionDeclaration",
+          "start": 139228376,
+          "end_exclusive": 139230042,
+          "length": 1666,
+          "sha256": "3cb47aad01c7b3bd5ce86d337f1b4bce68fdbd17f568e9b17d63957c19dea17f"
+        },
+        {
+          "name": "F1t",
+          "kind": "FunctionDeclaration",
+          "start": 139231083,
+          "end_exclusive": 139238642,
+          "length": 7559,
+          "sha256": "09febd6c093ebde95c4ebcbff18ad0aca026e80c39374dbce2b920c465b6828e"
+        }
+      ],
+      "exports": [
+        {
+          "local": "B1r",
+          "exported": "B1r"
+        },
+        {
+          "local": "D1t",
+          "exported": "D1t"
+        },
+        {
+          "local": "N9n",
+          "exported": "N9n"
+        },
+        {
+          "local": "j1r",
+          "exported": "j1r"
+        },
+        {
+          "local": "$ie",
+          "exported": "$ie"
+        },
+        {
+          "local": "W1r",
+          "exported": "W1r"
+        },
+        {
+          "local": "z1r",
+          "exported": "z1r"
+        },
+        {
+          "local": "G1r",
+          "exported": "G1r"
+        },
+        {
+          "local": "V1r",
+          "exported": "V1r"
+        },
+        {
+          "local": "$9n",
+          "exported": "$9n"
+        },
+        {
+          "local": "nhn",
+          "exported": "nhn"
+        },
+        {
+          "local": "L1t",
+          "exported": "L1t"
+        },
+        {
+          "local": "F9n",
+          "exported": "F9n"
+        },
+        {
+          "local": "N1t",
+          "exported": "N1t"
+        },
+        {
+          "local": "iGo",
+          "exported": "iGo"
+        },
+        {
+          "local": "U9n",
+          "exported": "U9n"
+        },
+        {
+          "local": "q1r",
+          "exported": "q1r"
+        },
+        {
+          "local": "aGo",
+          "exported": "aGo"
+        },
+        {
+          "local": "lGo",
+          "exported": "lGo"
+        },
+        {
+          "local": "$1t",
+          "exported": "$1t"
+        },
+        {
+          "local": "rhn",
+          "exported": "rhn"
+        },
+        {
+          "local": "ohn",
+          "exported": "ohn"
+        },
+        {
+          "local": "F1t",
+          "exported": "F1t"
+        },
+        {
+          "local": "cGo",
+          "exported": "cGo"
+        }
+      ],
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-139145068-symbols.json"
+    },
+    {
+      "topic": "journal",
+      "module": {
+        "ascii_printable_ratio": 1,
+        "end_exclusive": 139240321,
+        "end_exclusive_hex": "0x84ca381",
+        "length": 95253,
+        "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/segments/raw/module-139145068.js",
+        "sha256": "12e41da88fd79fa3bc3d67952ed37ab046a7d9cc5390ef7520f77a72a77e91c4",
+        "start": 139145068,
+        "start_hex": "0x84b2f6c"
+      },
+      "parsed_symbols": [
+        {
+          "name": "Fo",
+          "kind": "FunctionDeclaration",
+          "start": 139165729,
+          "end_exclusive": 139165989,
+          "length": 260,
+          "sha256": "b000917ed2242b526718ddcda69c8a8b4c72ed4c3cc17138b39a954dd339490b"
+        },
+        {
+          "name": "Hr",
+          "kind": "FunctionDeclaration",
+          "start": 139165989,
+          "end_exclusive": 139166505,
+          "length": 516,
+          "sha256": "6101b745d22c16e06cb27cdef431db760394109589db1ff9e0e8b17334cab6d7"
+        },
+        {
+          "name": "No",
+          "kind": "FunctionDeclaration",
+          "start": 139166505,
+          "end_exclusive": 139166640,
+          "length": 135,
+          "sha256": "03583e6114f43bed54e6d64014e85d6aab8b4c9bd43613ace6fc7fbd506a6e65"
+        },
+        {
+          "name": "sn",
+          "kind": "ClassDeclaration",
+          "start": 139166770,
+          "end_exclusive": 139168886,
+          "length": 2116,
+          "sha256": "ba50fb726535024dd917d7cb2aa4b376c5718dbde645c9f09330ab2a208b4b59"
+        },
+        {
+          "name": "Ko",
+          "kind": "FunctionDeclaration",
+          "start": 139169709,
+          "end_exclusive": 139169873,
+          "length": 164,
+          "sha256": "3bef32484d61398ef31540063331748a933299cb5dd4ec1a12b81b777304da84"
+        }
+      ],
+      "exports": [
+        {
+          "local": "B1r",
+          "exported": "B1r"
+        },
+        {
+          "local": "D1t",
+          "exported": "D1t"
+        },
+        {
+          "local": "N9n",
+          "exported": "N9n"
+        },
+        {
+          "local": "j1r",
+          "exported": "j1r"
+        },
+        {
+          "local": "$ie",
+          "exported": "$ie"
+        },
+        {
+          "local": "W1r",
+          "exported": "W1r"
+        },
+        {
+          "local": "z1r",
+          "exported": "z1r"
+        },
+        {
+          "local": "G1r",
+          "exported": "G1r"
+        },
+        {
+          "local": "V1r",
+          "exported": "V1r"
+        },
+        {
+          "local": "$9n",
+          "exported": "$9n"
+        },
+        {
+          "local": "nhn",
+          "exported": "nhn"
+        },
+        {
+          "local": "L1t",
+          "exported": "L1t"
+        },
+        {
+          "local": "F9n",
+          "exported": "F9n"
+        },
+        {
+          "local": "N1t",
+          "exported": "N1t"
+        },
+        {
+          "local": "iGo",
+          "exported": "iGo"
+        },
+        {
+          "local": "U9n",
+          "exported": "U9n"
+        },
+        {
+          "local": "q1r",
+          "exported": "q1r"
+        },
+        {
+          "local": "aGo",
+          "exported": "aGo"
+        },
+        {
+          "local": "lGo",
+          "exported": "lGo"
+        },
+        {
+          "local": "$1t",
+          "exported": "$1t"
+        },
+        {
+          "local": "rhn",
+          "exported": "rhn"
+        },
+        {
+          "local": "ohn",
+          "exported": "ohn"
+        },
+        {
+          "local": "F1t",
+          "exported": "F1t"
+        },
+        {
+          "local": "cGo",
+          "exported": "cGo"
+        }
+      ],
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-139145068-symbols.json"
+    },
+    {
+      "topic": "child-workflow",
+      "module": {
+        "ascii_printable_ratio": 1,
+        "end_exclusive": 139240321,
+        "end_exclusive_hex": "0x84ca381",
+        "length": 95253,
+        "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/segments/raw/module-139145068.js",
+        "sha256": "12e41da88fd79fa3bc3d67952ed37ab046a7d9cc5390ef7520f77a72a77e91c4",
+        "start": 139145068,
+        "start_hex": "0x84b2f6c"
+      },
+      "parsed_symbols": [
+        {
+          "name": "W1r",
+          "kind": "FunctionDeclaration",
+          "start": 139173939,
+          "end_exclusive": 139175001,
+          "length": 1062,
+          "sha256": "e8ab19e37c79dec897e11497930a7043c502e265e442cc2075b7199b768c6316"
+        },
+        {
+          "name": "z1r",
+          "kind": "FunctionDeclaration",
+          "start": 139175001,
+          "end_exclusive": 139176074,
+          "length": 1073,
+          "sha256": "c66ac15fd2d377e082c857ba7aff52710d51c37da64aa70e5c1dcc143d1c3b77"
+        },
+        {
+          "name": "G1r",
+          "kind": "FunctionDeclaration",
+          "start": 139176074,
+          "end_exclusive": 139176271,
+          "length": 197,
+          "sha256": "b99de8a4309005a4830843d7de99a9b1c68c4ba46bdfb102c7f22d1076fa5296"
+        },
+        {
+          "name": "Go",
+          "kind": "FunctionDeclaration",
+          "start": 139176384,
+          "end_exclusive": 139177580,
+          "length": 1196,
+          "sha256": "31f536fda04e2babb0386c93f1793e3662775b6eef71c67b539d476db19de000"
+        }
+      ],
+      "exports": [
+        {
+          "local": "B1r",
+          "exported": "B1r"
+        },
+        {
+          "local": "D1t",
+          "exported": "D1t"
+        },
+        {
+          "local": "N9n",
+          "exported": "N9n"
+        },
+        {
+          "local": "j1r",
+          "exported": "j1r"
+        },
+        {
+          "local": "$ie",
+          "exported": "$ie"
+        },
+        {
+          "local": "W1r",
+          "exported": "W1r"
+        },
+        {
+          "local": "z1r",
+          "exported": "z1r"
+        },
+        {
+          "local": "G1r",
+          "exported": "G1r"
+        },
+        {
+          "local": "V1r",
+          "exported": "V1r"
+        },
+        {
+          "local": "$9n",
+          "exported": "$9n"
+        },
+        {
+          "local": "nhn",
+          "exported": "nhn"
+        },
+        {
+          "local": "L1t",
+          "exported": "L1t"
+        },
+        {
+          "local": "F9n",
+          "exported": "F9n"
+        },
+        {
+          "local": "N1t",
+          "exported": "N1t"
+        },
+        {
+          "local": "iGo",
+          "exported": "iGo"
+        },
+        {
+          "local": "U9n",
+          "exported": "U9n"
+        },
+        {
+          "local": "q1r",
+          "exported": "q1r"
+        },
+        {
+          "local": "aGo",
+          "exported": "aGo"
+        },
+        {
+          "local": "lGo",
+          "exported": "lGo"
+        },
+        {
+          "local": "$1t",
+          "exported": "$1t"
+        },
+        {
+          "local": "rhn",
+          "exported": "rhn"
+        },
+        {
+          "local": "ohn",
+          "exported": "ohn"
+        },
+        {
+          "local": "F1t",
+          "exported": "F1t"
+        },
+        {
+          "local": "cGo",
+          "exported": "cGo"
+        }
+      ],
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-139145068-symbols.json"
+    },
+    {
+      "topic": "task-lifecycle",
+      "module": {
+        "ascii_printable_ratio": 1,
+        "end_exclusive": 136493047,
+        "end_exclusive_hex": "0x822b7f7",
+        "length": 9139,
+        "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/segments/raw/module-136483908.js",
+        "sha256": "f589a55f32ae427598d7c00ea72330e03a02ecea9e628e5ff735a2c00d8094c4",
+        "start": 136483908,
+        "start_hex": "0x8229444"
+      },
+      "parsed_symbols": [
+        {
+          "name": "rjr",
+          "kind": "FunctionDeclaration",
+          "start": 136485246,
+          "end_exclusive": 136485980,
+          "length": 734,
+          "sha256": "05073fc1526d6901c3d27c4d05c7c6ffa4b9b380b7cd6af99f50829f5e47fd1f"
+        },
+        {
+          "name": "sjr",
+          "kind": "FunctionDeclaration",
+          "start": 136486423,
+          "end_exclusive": 136487336,
+          "length": 913,
+          "sha256": "453af0c44cd0af60ca5e8c2a3b5e7058a7ec08e3ee807266c45b8d25a655363b"
+        },
+        {
+          "name": "b",
+          "kind": "FunctionDeclaration",
+          "start": 136487588,
+          "end_exclusive": 136488165,
+          "length": 577,
+          "sha256": "f089f8cc82f2924bdab3773acf84aeee05bb5f0dd4bc5406cad6bd57c240eb48"
+        },
+        {
+          "name": "cX",
+          "kind": "FunctionDeclaration",
+          "start": 136489167,
+          "end_exclusive": 136489471,
+          "length": 304,
+          "sha256": "64a65409618ff47cd7b6415944f7c4315c883d0788197c843c6e78cfe9dd52db"
+        },
+        {
+          "name": "HQe",
+          "kind": "FunctionDeclaration",
+          "start": 136489765,
+          "end_exclusive": 136489813,
+          "length": 48,
+          "sha256": "27d496d9973b470e6bd1ed32cc68049848877ceb0589132585f976a06ecf391c"
+        },
+        {
+          "name": "DQe",
+          "kind": "FunctionDeclaration",
+          "start": 136489813,
+          "end_exclusive": 136489862,
+          "length": 49,
+          "sha256": "998d2ab89e5451678b1e0fef2d7a7a470e6e7fe14410921ac1cda9b8b6dc7f59"
+        },
+        {
+          "name": "q9n",
+          "kind": "FunctionDeclaration",
+          "start": 136489930,
+          "end_exclusive": 136492990,
+          "length": 3060,
+          "sha256": "ee49fb040fb5142eaa77fbbe126ccb7b2466ac635c5ddad5cd9353e9ebf35ba0"
+        }
+      ],
+      "exports": [
+        {
+          "local": "rjr",
+          "exported": "rjr"
+        },
+        {
+          "local": "ojr",
+          "exported": "ojr"
+        },
+        {
+          "local": "sjr",
+          "exported": "sjr"
+        },
+        {
+          "local": "ijr",
+          "exported": "ijr"
+        },
+        {
+          "local": "ajr",
+          "exported": "ajr"
+        },
+        {
+          "local": "G9n",
+          "exported": "G9n"
+        },
+        {
+          "local": "rEe",
+          "exported": "rEe"
+        },
+        {
+          "local": "V9n",
+          "exported": "V9n"
+        },
+        {
+          "local": "cX",
+          "exported": "cX"
+        },
+        {
+          "local": "HQe",
+          "exported": "HQe"
+        },
+        {
+          "local": "DQe",
+          "exported": "DQe"
+        },
+        {
+          "local": "q9n",
+          "exported": "q9n"
+        }
+      ],
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-136483908-symbols.json"
+    },
+    {
+      "topic": "persistence",
+      "module": {
+        "ascii_printable_ratio": 1,
+        "end_exclusive": 136496916,
+        "end_exclusive_hex": "0x822c714",
+        "length": 3868,
+        "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/segments/raw/module-136493048.js",
+        "sha256": "9aec64db1787eab0c8a47ea3c80d66e52ab93c5b1d55dcca8326813d861b397b",
+        "start": 136493048,
+        "start_hex": "0x822b7f8"
+      },
+      "parsed_symbols": [
+        {
+          "name": "P",
+          "kind": "FunctionDeclaration",
+          "start": 136494038,
+          "end_exclusive": 136494078,
+          "length": 40,
+          "sha256": "c967c0ee0b73e478ef078aa13371af291e4aff5a93b4b6996fd73a03fa1561b1"
+        },
+        {
+          "name": "m",
+          "kind": "FunctionDeclaration",
+          "start": 136494078,
+          "end_exclusive": 136494130,
+          "length": 52,
+          "sha256": "3023fe3cd606900e0a54f5c33b9396c9640ca8f302bbeb527e6fcd821af29841"
+        },
+        {
+          "name": "Q0",
+          "kind": "FunctionDeclaration",
+          "start": 136494130,
+          "end_exclusive": 136494198,
+          "length": 68,
+          "sha256": "1c7439ae610ec693f1d83555d2579652367d939f69f8ae34754261a6e8e11041"
+        },
+        {
+          "name": "hGo",
+          "kind": "FunctionDeclaration",
+          "start": 136494322,
+          "end_exclusive": 136494804,
+          "length": 482,
+          "sha256": "27882bbb8b8618af4c47bebd641afa7e6114446619dd21b0575cd7e8049f193d"
+        }
+      ],
+      "exports": [
+        {
+          "local": "Q0",
+          "exported": "Q0"
+        },
+        {
+          "local": "j9n",
+          "exported": "j9n"
+        },
+        {
+          "local": "hGo",
+          "exported": "hGo"
+        },
+        {
+          "local": "njr",
+          "exported": "njr"
+        }
+      ],
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-136493048-symbols.json"
+    },
+    {
+      "topic": "script-path",
+      "module": {
+        "ascii_printable_ratio": 1,
+        "end_exclusive": 123249708,
+        "end_exclusive_hex": "0x758a42c",
+        "length": 245964,
+        "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/segments/raw/module-123003744.js",
+        "sha256": "4285cc2ba53ddf1faa24373004ecfb63041d48048bd9733a18c5025d213befd9",
+        "start": 123003744,
+        "start_hex": "0x754e360"
+      },
+      "parsed_symbols": [
+        {
+          "name": "Sv",
+          "kind": "VariableDeclarator",
+          "start": 123153598,
+          "end_exclusive": 123153607,
+          "length": 9,
+          "sha256": "d7f72c59d56f66ba4c10f9dc58ed3f534a216d63ac194b7a6d29a1cac418ae7c"
+        },
+        {
+          "name": "e0n",
+          "kind": "FunctionDeclaration",
+          "start": 123153898,
+          "end_exclusive": 123154407,
+          "length": 509,
+          "sha256": "0801e4a7f55182e593d19abc00e0532b1288cb27cbd16801abcb6e29df82784a"
+        },
+        {
+          "name": "Zlo",
+          "kind": "FunctionDeclaration",
+          "start": 123154837,
+          "end_exclusive": 123154990,
+          "length": 153,
+          "sha256": "752a4f55e61eb6c05b0c794821b4c8f6dbed3ce6c348260d0ea5822fd030a39c"
+        },
+        {
+          "name": "Gce",
+          "kind": "FunctionDeclaration",
+          "start": 123236717,
+          "end_exclusive": 123236763,
+          "length": 46,
+          "sha256": "d0a5cdadbb4a081381a1129af4f6d59291a21a5c857745b0029b605b33e17d9b"
+        }
+      ],
+      "exports": [
+        {
+          "local": "kre",
+          "exported": "kre"
+        },
+        {
+          "local": "Ngr",
+          "exported": "Ngr"
+        },
+        {
+          "local": "r4e",
+          "exported": "r4e"
+        },
+        {
+          "local": "Mst",
+          "exported": "Mst"
+        },
+        {
+          "local": "Jps",
+          "exported": "Jps"
+        },
+        {
+          "local": "HCt",
+          "exported": "HCt"
+        },
+        {
+          "local": "TQ",
+          "exported": "TQ"
+        },
+        {
+          "local": "w9t",
+          "exported": "w9t"
+        },
+        {
+          "local": "BLe",
+          "exported": "BLe"
+        },
+        {
+          "local": "v9t",
+          "exported": "v9t"
+        },
+        {
+          "local": "Hst",
+          "exported": "Hst"
+        },
+        {
+          "local": "DM",
+          "exported": "DM"
+        },
+        {
+          "local": "B_",
+          "exported": "B_"
+        },
+        {
+          "local": "j$",
+          "exported": "j$"
+        },
+        {
+          "local": "IDn",
+          "exported": "IDn"
+        },
+        {
+          "local": "Rm",
+          "exported": "Rm"
+        },
+        {
+          "local": "Tre",
+          "exported": "Tre"
+        },
+        {
+          "local": "Clo",
+          "exported": "Clo"
+        },
+        {
+          "local": "R_e",
+          "exported": "R_e"
+        },
+        {
+          "local": "$gr",
+          "exported": "$gr"
+        },
+        {
+          "local": "DCt",
+          "exported": "DCt"
+        },
+        {
+          "local": "Qps",
+          "exported": "Qps"
+        },
+        {
+          "local": "ODn",
+          "exported": "ODn"
+        },
+        {
+          "local": "Zps",
+          "exported": "Zps"
+        },
+        {
+          "local": "MDn",
+          "exported": "MDn"
+        },
+        {
+          "local": "AQ",
+          "exported": "AQ"
+        },
+        {
+          "local": "aS",
+          "exported": "aS"
+        },
+        {
+          "local": "E9t",
+          "exported": "E9t"
+        },
+        {
+          "local": "Dst",
+          "exported": "Dst"
+        },
+        {
+          "local": "CQ",
+          "exported": "CQ"
+        },
+        {
+          "local": "vB",
+          "exported": "vB"
+        },
+        {
+          "local": "Lst",
+          "exported": "Lst"
+        },
+        {
+          "local": "A5",
+          "exported": "A5"
+        },
+        {
+          "local": "k9t",
+          "exported": "k9t"
+        },
+        {
+          "local": "efs",
+          "exported": "efs"
+        },
+        {
+          "local": "QAe",
+          "exported": "QAe"
+        },
+        {
+          "local": "HDn",
+          "exported": "HDn"
+        },
+        {
+          "local": "tfs",
+          "exported": "tfs"
+        },
+        {
+          "local": "nfs",
+          "exported": "nfs"
+        },
+        {
+          "local": "rfs",
+          "exported": "rfs"
+        },
+        {
+          "local": "ofs",
+          "exported": "ofs"
+        },
+        {
+          "local": "LCt",
+          "exported": "LCt"
+        },
+        {
+          "local": "Rlo",
+          "exported": "Rlo"
+        },
+        {
+          "local": "a_",
+          "exported": "a_"
+        },
+        {
+          "local": "Nst",
+          "exported": "Nst"
+        },
+        {
+          "local": "DDn",
+          "exported": "DDn"
+        },
+        {
+          "local": "sfs",
+          "exported": "sfs"
+        },
+        {
+          "local": "RW",
+          "exported": "RW"
+        },
+        {
+          "local": "ifs",
+          "exported": "ifs"
+        },
+        {
+          "local": "LDn",
+          "exported": "LDn"
+        },
+        {
+          "local": "xlo",
+          "exported": "xlo"
+        },
+        {
+          "local": "Plo",
+          "exported": "Plo"
+        },
+        {
+          "local": "NCt",
+          "exported": "NCt"
+        },
+        {
+          "local": "Fgr",
+          "exported": "Fgr"
+        },
+        {
+          "local": "Ilo",
+          "exported": "Ilo"
+        },
+        {
+          "local": "Olo",
+          "exported": "Olo"
+        },
+        {
+          "local": "Mlo",
+          "exported": "Mlo"
+        },
+        {
+          "local": "NDn",
+          "exported": "NDn"
+        },
+        {
+          "local": "$Ct",
+          "exported": "$Ct"
+        },
+        {
+          "local": "Hlo",
+          "exported": "Hlo"
+        },
+        {
+          "local": "Pa",
+          "exported": "Pa"
+        },
+        {
+          "local": "ZAe",
+          "exported": "ZAe"
+        },
+        {
+          "local": "FCt",
+          "exported": "FCt"
+        },
+        {
+          "local": "jLe",
+          "exported": "jLe"
+        },
+        {
+          "local": "$Dn",
+          "exported": "$Dn"
+        },
+        {
+          "local": "FDn",
+          "exported": "FDn"
+        },
+        {
+          "local": "UCt",
+          "exported": "UCt"
+        },
+        {
+          "local": "BCt",
+          "exported": "BCt"
+        },
+        {
+          "local": "Dlo",
+          "exported": "Dlo"
+        },
+        {
+          "local": "Llo",
+          "exported": "Llo"
+        },
+        {
+          "local": "UDn",
+          "exported": "UDn"
+        },
+        {
+          "local": "$st",
+          "exported": "$st"
+        },
+        {
+          "local": "afs",
+          "exported": "afs"
+        },
+        {
+          "local": "Nlo",
+          "exported": "Nlo"
+        },
+        {
+          "local": "$lo",
+          "exported": "$lo"
+        },
+        {
+          "local": "Flo",
+          "exported": "Flo"
+        },
+        {
+          "local": "Ulo",
+          "exported": "Ulo"
+        },
+        {
+          "local": "Blo",
+          "exported": "Blo"
+        },
+        {
+          "local": "x_e",
+          "exported": "x_e"
+        },
+        {
+          "local": "P_e",
+          "exported": "P_e"
+        },
+        {
+          "local": "lfs",
+          "exported": "lfs"
+        },
+        {
+          "local": "Are",
+          "exported": "Are"
+        },
+        {
+          "local": "Fst",
+          "exported": "Fst"
+        },
+        {
+          "local": "jCt",
+          "exported": "jCt"
+        },
+        {
+          "local": "bv",
+          "exported": "bv"
+        },
+        {
+          "local": "Ugr",
+          "exported": "Ugr"
+        },
+        {
+          "local": "eCe",
+          "exported": "eCe"
+        },
+        {
+          "local": "WCt",
+          "exported": "WCt"
+        },
+        {
+          "local": "zCt",
+          "exported": "zCt"
+        },
+        {
+          "local": "Bgr",
+          "exported": "Bgr"
+        },
+        {
+          "local": "GCt",
+          "exported": "GCt"
+        },
+        {
+          "local": "jgr",
+          "exported": "jgr"
+        },
+        {
+          "local": "zh",
+          "exported": "zh"
+        },
+        {
+          "local": "cfs",
+          "exported": "cfs"
+        },
+        {
+          "local": "dfs",
+          "exported": "dfs"
+        },
+        {
+          "local": "ufs",
+          "exported": "ufs"
+        },
+        {
+          "local": "VCt",
+          "exported": "VCt"
+        },
+        {
+          "local": "Rk",
+          "exported": "Rk"
+        },
+        {
+          "local": "jlo",
+          "exported": "jlo"
+        },
+        {
+          "local": "tCe",
+          "exported": "tCe"
+        },
+        {
+          "local": "Wgr",
+          "exported": "Wgr"
+        },
+        {
+          "local": "zgr",
+          "exported": "zgr"
+        },
+        {
+          "local": "BDn",
+          "exported": "BDn"
+        },
+        {
+          "local": "T9t",
+          "exported": "T9t"
+        },
+        {
+          "local": "Wlo",
+          "exported": "Wlo"
+        },
+        {
+          "local": "zlo",
+          "exported": "zlo"
+        },
+        {
+          "local": "qCt",
+          "exported": "qCt"
+        },
+        {
+          "local": "jDn",
+          "exported": "jDn"
+        },
+        {
+          "local": "KCt",
+          "exported": "KCt"
+        },
+        {
+          "local": "A9t",
+          "exported": "A9t"
+        },
+        {
+          "local": "o4e",
+          "exported": "o4e"
+        },
+        {
+          "local": "YCt",
+          "exported": "YCt"
+        },
+        {
+          "local": "Ggr",
+          "exported": "Ggr"
+        },
+        {
+          "local": "Glo",
+          "exported": "Glo"
+        },
+        {
+          "local": "Uce",
+          "exported": "Uce"
+        },
+        {
+          "local": "WDn",
+          "exported": "WDn"
+        },
+        {
+          "local": "WLe",
+          "exported": "WLe"
+        },
+        {
+          "local": "zLe",
+          "exported": "zLe"
+        },
+        {
+          "local": "zDn",
+          "exported": "zDn"
+        },
+        {
+          "local": "Vlo",
+          "exported": "Vlo"
+        },
+        {
+          "local": "pfs",
+          "exported": "pfs"
+        },
+        {
+          "local": "bh",
+          "exported": "bh"
+        },
+        {
+          "local": "W$",
+          "exported": "W$"
+        },
+        {
+          "local": "GDn",
+          "exported": "GDn"
+        },
+        {
+          "local": "ffs",
+          "exported": "ffs"
+        },
+        {
+          "local": "Vgr",
+          "exported": "Vgr"
+        },
+        {
+          "local": "s4e",
+          "exported": "s4e"
+        },
+        {
+          "local": "qgr",
+          "exported": "qgr"
+        },
+        {
+          "local": "qlo",
+          "exported": "qlo"
+        },
+        {
+          "local": "Bce",
+          "exported": "Bce"
+        },
+        {
+          "local": "mfs",
+          "exported": "mfs"
+        },
+        {
+          "local": "I_e",
+          "exported": "I_e"
+        },
+        {
+          "local": "XCt",
+          "exported": "XCt"
+        },
+        {
+          "local": "xW",
+          "exported": "xW"
+        },
+        {
+          "local": "VDn",
+          "exported": "VDn"
+        },
+        {
+          "local": "qDn",
+          "exported": "qDn"
+        },
+        {
+          "local": "i4e",
+          "exported": "i4e"
+        },
+        {
+          "local": "KDn",
+          "exported": "KDn"
+        },
+        {
+          "local": "Klo",
+          "exported": "Klo"
+        },
+        {
+          "local": "C9t",
+          "exported": "C9t"
+        },
+        {
+          "local": "YDn",
+          "exported": "YDn"
+        },
+        {
+          "local": "nCe",
+          "exported": "nCe"
+        },
+        {
+          "local": "XDn",
+          "exported": "XDn"
+        },
+        {
+          "local": "GLe",
+          "exported": "GLe"
+        },
+        {
+          "local": "JCt",
+          "exported": "JCt"
+        },
+        {
+          "local": "R9t",
+          "exported": "R9t"
+        },
+        {
+          "local": "a4e",
+          "exported": "a4e"
+        },
+        {
+          "local": "C5",
+          "exported": "C5"
+        },
+        {
+          "local": "M4",
+          "exported": "M4"
+        },
+        {
+          "local": "gfs",
+          "exported": "gfs"
+        },
+        {
+          "local": "x9t",
+          "exported": "x9t"
+        },
+        {
+          "local": "hfs",
+          "exported": "hfs"
+        },
+        {
+          "local": "Ylo",
+          "exported": "Ylo"
+        },
+        {
+          "local": "Ust",
+          "exported": "Ust"
+        },
+        {
+          "local": "xk",
+          "exported": "xk"
+        },
+        {
+          "local": "P9t",
+          "exported": "P9t"
+        },
+        {
+          "local": "PW",
+          "exported": "PW"
+        },
+        {
+          "local": "Xlo",
+          "exported": "Xlo"
+        },
+        {
+          "local": "j_",
+          "exported": "j_"
+        },
+        {
+          "local": "Kgr",
+          "exported": "Kgr"
+        },
+        {
+          "local": "yfs",
+          "exported": "yfs"
+        },
+        {
+          "local": "VLe",
+          "exported": "VLe"
+        },
+        {
+          "local": "rCe",
+          "exported": "rCe"
+        },
+        {
+          "local": "Bst",
+          "exported": "Bst"
+        },
+        {
+          "local": "EB",
+          "exported": "EB"
+        },
+        {
+          "local": "_fs",
+          "exported": "_fs"
+        },
+        {
+          "local": "O_e",
+          "exported": "O_e"
+        },
+        {
+          "local": "JDn",
+          "exported": "JDn"
+        },
+        {
+          "local": "Jlo",
+          "exported": "Jlo"
+        },
+        {
+          "local": "Qlo",
+          "exported": "Qlo"
+        },
+        {
+          "local": "I9t",
+          "exported": "I9t"
+        },
+        {
+          "local": "bfs",
+          "exported": "bfs"
+        },
+        {
+          "local": "Sfs",
+          "exported": "Sfs"
+        },
+        {
+          "local": "Ygr",
+          "exported": "Ygr"
+        },
+        {
+          "local": "wfs",
+          "exported": "wfs"
+        },
+        {
+          "local": "vfs",
+          "exported": "vfs"
+        },
+        {
+          "local": "QCt",
+          "exported": "QCt"
+        },
+        {
+          "local": "QDn",
+          "exported": "QDn"
+        },
+        {
+          "local": "jst",
+          "exported": "jst"
+        },
+        {
+          "local": "Sv",
+          "exported": "Sv"
+        },
+        {
+          "local": "ZDn",
+          "exported": "ZDn"
+        },
+        {
+          "local": "Cre",
+          "exported": "Cre"
+        },
+        {
+          "local": "Wst",
+          "exported": "Wst"
+        },
+        {
+          "local": "e0n",
+          "exported": "e0n"
+        },
+        {
+          "local": "jce",
+          "exported": "jce"
+        },
+        {
+          "local": "Efs",
+          "exported": "Efs"
+        },
+        {
+          "local": "Zlo",
+          "exported": "Zlo"
+        },
+        {
+          "local": "kfs",
+          "exported": "kfs"
+        },
+        {
+          "local": "ZCt",
+          "exported": "ZCt"
+        },
+        {
+          "local": "IW",
+          "exported": "IW"
+        },
+        {
+          "local": "Tfs",
+          "exported": "Tfs"
+        },
+        {
+          "local": "Afs",
+          "exported": "Afs"
+        },
+        {
+          "local": "l4e",
+          "exported": "l4e"
+        },
+        {
+          "local": "O9t",
+          "exported": "O9t"
+        },
+        {
+          "local": "Cfs",
+          "exported": "Cfs"
+        },
+        {
+          "local": "zst",
+          "exported": "zst"
+        },
+        {
+          "local": "eco",
+          "exported": "eco"
+        },
+        {
+          "local": "qLe",
+          "exported": "qLe"
+        },
+        {
+          "local": "Gst",
+          "exported": "Gst"
+        },
+        {
+          "local": "t0n",
+          "exported": "t0n"
+        },
+        {
+          "local": "tco",
+          "exported": "tco"
+        },
+        {
+          "local": "Rfs",
+          "exported": "Rfs"
+        },
+        {
+          "local": "xfs",
+          "exported": "xfs"
+        },
+        {
+          "local": "Xgr",
+          "exported": "Xgr"
+        },
+        {
+          "local": "n0n",
+          "exported": "n0n"
+        },
+        {
+          "local": "Vst",
+          "exported": "Vst"
+        },
+        {
+          "local": "qst",
+          "exported": "qst"
+        },
+        {
+          "local": "eRt",
+          "exported": "eRt"
+        },
+        {
+          "local": "M9t",
+          "exported": "M9t"
+        },
+        {
+          "local": "$n",
+          "exported": "$n"
+        },
+        {
+          "local": "LM",
+          "exported": "LM"
+        },
+        {
+          "local": "RQ",
+          "exported": "RQ"
+        },
+        {
+          "local": "Kst",
+          "exported": "Kst"
+        },
+        {
+          "local": "H9t",
+          "exported": "H9t"
+        },
+        {
+          "local": "Jgr",
+          "exported": "Jgr"
+        },
+        {
+          "local": "D9t",
+          "exported": "D9t"
+        },
+        {
+          "local": "L9t",
+          "exported": "L9t"
+        },
+        {
+          "local": "N9t",
+          "exported": "N9t"
+        },
+        {
+          "local": "r0n",
+          "exported": "r0n"
+        },
+        {
+          "local": "Qgr",
+          "exported": "Qgr"
+        },
+        {
+          "local": "o0n",
+          "exported": "o0n"
+        },
+        {
+          "local": "Pfs",
+          "exported": "Pfs"
+        },
+        {
+          "local": "s0n",
+          "exported": "s0n"
+        },
+        {
+          "local": "RT",
+          "exported": "RT"
+        },
+        {
+          "local": "c4e",
+          "exported": "c4e"
+        },
+        {
+          "local": "tRt",
+          "exported": "tRt"
+        },
+        {
+          "local": "Zgr",
+          "exported": "Zgr"
+        },
+        {
+          "local": "i0n",
+          "exported": "i0n"
+        },
+        {
+          "local": "$9t",
+          "exported": "$9t"
+        },
+        {
+          "local": "nRt",
+          "exported": "nRt"
+        },
+        {
+          "local": "nco",
+          "exported": "nco"
+        },
+        {
+          "local": "jd",
+          "exported": "jd"
+        },
+        {
+          "local": "Ifs",
+          "exported": "Ifs"
+        },
+        {
+          "local": "Ofs",
+          "exported": "Ofs"
+        },
+        {
+          "local": "GI",
+          "exported": "GI"
+        },
+        {
+          "local": "d4e",
+          "exported": "d4e"
+        },
+        {
+          "local": "R5",
+          "exported": "R5"
+        },
+        {
+          "local": "kB",
+          "exported": "kB"
+        },
+        {
+          "local": "u4e",
+          "exported": "u4e"
+        },
+        {
+          "local": "ehr",
+          "exported": "ehr"
+        },
+        {
+          "local": "to",
+          "exported": "to"
+        },
+        {
+          "local": "KLe",
+          "exported": "KLe"
+        },
+        {
+          "local": "jA",
+          "exported": "jA"
+        },
+        {
+          "local": "YLe",
+          "exported": "YLe"
+        },
+        {
+          "local": "Yst",
+          "exported": "Yst"
+        },
+        {
+          "local": "rRt",
+          "exported": "rRt"
+        },
+        {
+          "local": "thr",
+          "exported": "thr"
+        },
+        {
+          "local": "rco",
+          "exported": "rco"
+        },
+        {
+          "local": "p4e",
+          "exported": "p4e"
+        },
+        {
+          "local": "f4e",
+          "exported": "f4e"
+        },
+        {
+          "local": "m4e",
+          "exported": "m4e"
+        },
+        {
+          "local": "oco",
+          "exported": "oco"
+        },
+        {
+          "local": "sco",
+          "exported": "sco"
+        },
+        {
+          "local": "AE",
+          "exported": "AE"
+        },
+        {
+          "local": "oRt",
+          "exported": "oRt"
+        },
+        {
+          "local": "Pk",
+          "exported": "Pk"
+        },
+        {
+          "local": "Wce",
+          "exported": "Wce"
+        },
+        {
+          "local": "OW",
+          "exported": "OW"
+        },
+        {
+          "local": "sRt",
+          "exported": "sRt"
+        },
+        {
+          "local": "iRt",
+          "exported": "iRt"
+        },
+        {
+          "local": "Ik",
+          "exported": "Ik"
+        },
+        {
+          "local": "iV",
+          "exported": "iV"
+        },
+        {
+          "local": "zce",
+          "exported": "zce"
+        },
+        {
+          "local": "M_e",
+          "exported": "M_e"
+        },
+        {
+          "local": "H4",
+          "exported": "H4"
+        },
+        {
+          "local": "aRt",
+          "exported": "aRt"
+        },
+        {
+          "local": "g4e",
+          "exported": "g4e"
+        },
+        {
+          "local": "Xst",
+          "exported": "Xst"
+        },
+        {
+          "local": "MW",
+          "exported": "MW"
+        },
+        {
+          "local": "Ok",
+          "exported": "Ok"
+        },
+        {
+          "local": "XLe",
+          "exported": "XLe"
+        },
+        {
+          "local": "a0n",
+          "exported": "a0n"
+        },
+        {
+          "local": "oCe",
+          "exported": "oCe"
+        },
+        {
+          "local": "Kg",
+          "exported": "Kg"
+        },
+        {
+          "local": "nhr",
+          "exported": "nhr"
+        },
+        {
+          "local": "ico",
+          "exported": "ico"
+        },
+        {
+          "local": "Wd",
+          "exported": "Wd"
+        },
+        {
+          "local": "lRt",
+          "exported": "lRt"
+        },
+        {
+          "local": "cRt",
+          "exported": "cRt"
+        },
+        {
+          "local": "dRt",
+          "exported": "dRt"
+        },
+        {
+          "local": "JLe",
+          "exported": "JLe"
+        },
+        {
+          "local": "Rre",
+          "exported": "Rre"
+        },
+        {
+          "local": "aco",
+          "exported": "aco"
+        },
+        {
+          "local": "F9t",
+          "exported": "F9t"
+        },
+        {
+          "local": "l0n",
+          "exported": "l0n"
+        },
+        {
+          "local": "lco",
+          "exported": "lco"
+        },
+        {
+          "local": "cco",
+          "exported": "cco"
+        },
+        {
+          "local": "dco",
+          "exported": "dco"
+        },
+        {
+          "local": "Ui",
+          "exported": "Ui"
+        },
+        {
+          "local": "Jst",
+          "exported": "Jst"
+        },
+        {
+          "local": "h4e",
+          "exported": "h4e"
+        },
+        {
+          "local": "U9t",
+          "exported": "U9t"
+        },
+        {
+          "local": "B9t",
+          "exported": "B9t"
+        },
+        {
+          "local": "QLe",
+          "exported": "QLe"
+        },
+        {
+          "local": "c0n",
+          "exported": "c0n"
+        },
+        {
+          "local": "sCe",
+          "exported": "sCe"
+        },
+        {
+          "local": "BD",
+          "exported": "BD"
+        },
+        {
+          "local": "ag",
+          "exported": "ag"
+        },
+        {
+          "local": "xT",
+          "exported": "xT"
+        },
+        {
+          "local": "ZLe",
+          "exported": "ZLe"
+        },
+        {
+          "local": "eNe",
+          "exported": "eNe"
+        },
+        {
+          "local": "Gce",
+          "exported": "Gce"
+        },
+        {
+          "local": "CE",
+          "exported": "CE"
+        },
+        {
+          "local": "l_",
+          "exported": "l_"
+        },
+        {
+          "local": "tNe",
+          "exported": "tNe"
+        },
+        {
+          "local": "H_e",
+          "exported": "H_e"
+        },
+        {
+          "local": "nNe",
+          "exported": "nNe"
+        },
+        {
+          "local": "rhr",
+          "exported": "rhr"
+        },
+        {
+          "local": "uRt",
+          "exported": "uRt"
+        },
+        {
+          "local": "iCe",
+          "exported": "iCe"
+        },
+        {
+          "local": "d0n",
+          "exported": "d0n"
+        },
+        {
+          "local": "Qst",
+          "exported": "Qst"
+        },
+        {
+          "local": "u0n",
+          "exported": "u0n"
+        },
+        {
+          "local": "uco",
+          "exported": "uco"
+        },
+        {
+          "local": "j9t",
+          "exported": "j9t"
+        },
+        {
+          "local": "rNe",
+          "exported": "rNe"
+        },
+        {
+          "local": "Vce",
+          "exported": "Vce"
+        },
+        {
+          "local": "pRt",
+          "exported": "pRt"
+        }
+      ],
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-123003744-symbols.json"
+    },
+    {
+      "topic": "provenance",
+      "module": {
+        "ascii_printable_ratio": 1,
+        "end_exclusive": 139132167,
+        "end_exclusive_hex": "0x84afd07",
+        "length": 4080,
+        "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/segments/raw/module-139128087.js",
+        "sha256": "db8d5f72c1b9a1adc806069cd10b00dd38a0adfabdf22d1b0f687da7179b2c76",
+        "start": 139128087,
+        "start_hex": "0x84aed17"
+      },
+      "parsed_symbols": [
+        {
+          "name": "Y1r",
+          "kind": "FunctionDeclaration",
+          "start": 139130352,
+          "end_exclusive": 139130473,
+          "length": 121,
+          "sha256": "d367dbec3ed1c7b49174cd44b24efb2c7d462f19543d1a27a0fd2e77aefe6cfb"
+        },
+        {
+          "name": "B9n",
+          "kind": "FunctionDeclaration",
+          "start": 139130473,
+          "end_exclusive": 139130509,
+          "length": 36,
+          "sha256": "174f772ed9c989b588183e980f2f5997eecdc133a201dd7acc301852408378a4"
+        },
+        {
+          "name": "X1r",
+          "kind": "FunctionDeclaration",
+          "start": 139130655,
+          "end_exclusive": 139131060,
+          "length": 405,
+          "sha256": "58e399ec9eadbba7cfc480d44b275c14687e80e0506d18d8713659be39453a52"
+        },
+        {
+          "name": "Z1r",
+          "kind": "FunctionDeclaration",
+          "start": 139131190,
+          "end_exclusive": 139131309,
+          "length": 119,
+          "sha256": "2eec019046ef996983492edce34d978bd77e29d33dead56c2852925590e23fb2"
+        }
+      ],
+      "exports": [
+        {
+          "local": "Y1r",
+          "exported": "Y1r"
+        },
+        {
+          "local": "B9n",
+          "exported": "B9n"
+        },
+        {
+          "local": "fGo",
+          "exported": "fGo"
+        },
+        {
+          "local": "X1r",
+          "exported": "X1r"
+        },
+        {
+          "local": "J1r",
+          "exported": "J1r"
+        },
+        {
+          "local": "Q1r",
+          "exported": "Q1r"
+        },
+        {
+          "local": "Z1r",
+          "exported": "Z1r"
+        },
+        {
+          "local": "ihn",
+          "exported": "ihn"
+        },
+        {
+          "local": "mGo",
+          "exported": "mGo"
+        },
+        {
+          "local": "ahn",
+          "exported": "ahn"
+        },
+        {
+          "local": "U1t",
+          "exported": "U1t"
+        }
+      ],
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-139128087-symbols.json"
+    },
+    {
+      "topic": "slash-commands",
+      "module": {
+        "ascii_printable_ratio": 1,
+        "end_exclusive": 141189654,
+        "end_exclusive_hex": "0x86a6216",
+        "length": 15280,
+        "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/tmp/claude-code-binary-analysis/2.1.296/segments/raw/module-141174374.js",
+        "sha256": "60e96bcc60e1eea51cb06a67427bd690eb23ec4d3ff7742ef0920825c0e8967a",
+        "start": 141174374,
+        "start_hex": "0x86a2666"
+      },
+      "parsed_symbols": [
+        {
+          "name": "m",
+          "kind": "FunctionDeclaration",
+          "start": 141188390,
+          "end_exclusive": 141189500,
+          "length": 1110,
+          "sha256": "9d2646532f336f9f2ba6a1016c295b71fbb8e8f06e1c6468eb89e9cc85d89b97"
+        },
+        {
+          "name": "getPromptForCommand",
+          "kind": "ObjectMethod",
+          "start": 141189009,
+          "end_exclusive": 141189498,
+          "length": 489,
+          "sha256": "6560afc4c764c221f3aba5ef89a9c73a1c4f09b57cd5fa4741b08cd9ee8e0ce8"
+        },
+        {
+          "name": "d",
+          "kind": "FunctionDeclaration",
+          "start": 141189500,
+          "end_exclusive": 141189570,
+          "length": 70,
+          "sha256": "41bb93b479f3cfc0614785f3a57e0b57d5c8d5ec9d148099be473288d8913e51"
+        }
+      ],
+      "exports": [
+        {
+          "local": "d",
+          "exported": "getWorkflowCommands"
+        },
+        {
+          "local": "K9n",
+          "exported": "invalidateWorkflowCache"
+        },
+        {
+          "local": "g",
+          "exported": "warmWorkflows"
+        }
+      ],
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-141174374-symbols.json"
+    }
+  ],
+  "old_source": {
+    "schema_version": 1,
+    "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/deploy/repos.bak/claude-code",
+    "head": "126c31154f72ec9babb39142d173ef8c2a5a9803",
+    "commit_time": "2026-04-07T16:38:19+05:30",
+    "subject": "Update README.md",
+    "dirty": [],
+    "origin": "Unofficial source snapshot; semantic correspondence only; workflow implementation directories missing",
+    "integration_files": [
+      {
+        "path": "src/tools.ts",
+        "sha256": "c3b94a0075e6187a76fbd7d19c50a773f5f741cd21a1fd6114fe125a71126ec8",
+        "workflow_reference_lines": [
+          129,
+          131,
+          132,
+          233
+        ]
+      },
+      {
+        "path": "src/commands.ts",
+        "sha256": "88c1f7258ba79b5dc00cf301627dc6ed0532166c8b00fdb433d2f1a0b0a18295",
+        "workflow_reference_lines": [
+          86,
+          88,
+          343,
+          403,
+          405,
+          406,
+          448,
+          455,
+          459,
+          466,
+          735,
+          736
+        ]
+      },
+      {
+        "path": "src/tasks.ts",
+        "sha256": "309a4366a37223ebedfb40398edba6b02188a4101909d335a009eab6413a196f",
+        "workflow_reference_lines": [
+          9,
+          10,
+          29
+        ]
+      },
+      {
+        "path": "src/shims/bun-bundle.ts",
+        "sha256": "3ab8642ac75bb2d799e40e4dc3dccfa6237e8fe562e32e9680efbd773e1f7ea6",
+        "workflow_reference_lines": [
+          21
+        ]
+      },
+      {
+        "path": "src/utils/task/sdkProgress.ts",
+        "sha256": "926fef78fd2e18edd497d0723f7418304f9eaad41215e62464ce82cc02eecef5",
+        "workflow_reference_lines": [
+          1,
+          6,
+          8,
+          19,
+          34
+        ]
+      },
+      {
+        "path": "src/utils/sessionStorage.ts",
+        "sha256": "52e0b1e52a36e16c217f9c4e8512e88fe0ff60178969fbdd83f01018cca5d741",
+        "workflow_reference_lines": [
+          232
+        ]
+      },
+      {
+        "path": "src/utils/hooks/sessionHooks.ts",
+        "sha256": "adfefd70193bfded51e4b2db2e39ff7f264abcd39f2ebf866df9657de6688821",
+        "workflow_reference_lines": [
+          54,
+          56
+        ]
+      }
+    ],
+    "missing_implementation_paths": [
+      "src/tools/WorkflowTool",
+      "src/tasks/LocalWorkflowTask"
+    ]
+  },
+  "notes": [
+    "Workflow implementation absent from the old source; integrations correlate commands.ts, tools.ts, tasks.ts, utils/task/sdkProgress.ts, utils/sessionStorage.ts and shims/bun-bundle.ts.",
+    "Latest payload is split into ES modules. The older primary_application index is not a complete application representation."
+  ]
+}

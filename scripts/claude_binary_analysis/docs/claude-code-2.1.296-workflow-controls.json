@@ -1,0 +1,252 @@
+{
+  "binary_sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de",
+  "controls": [
+    {
+      "agent_requests": 0,
+      "api_requests": 3,
+      "case": "plain-return",
+      "outcome": {
+        "agent_count": 0,
+        "error": null,
+        "result": {
+          "args": {
+            "marker": "input-object"
+          },
+          "budgetTotal": null,
+          "node": "undefined",
+          "ok": true,
+          "require": "undefined"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-plain-return-v1"
+    },
+    {
+      "agent_requests": 0,
+      "api_requests": 3,
+      "case": "pipeline-errors",
+      "outcome": {
+        "agent_count": 0,
+        "error": null,
+        "result": {
+          "events": [
+            "A2",
+            "B2",
+            "A3",
+            "A1",
+            "B1"
+          ],
+          "results": [
+            3,
+            5,
+            null
+          ]
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-pipeline-errors-v1"
+    },
+    {
+      "agent_requests": 0,
+      "api_requests": 3,
+      "case": "parallel-errors",
+      "outcome": {
+        "agent_count": 0,
+        "error": null,
+        "result": [
+          7,
+          null,
+          9
+        ],
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-parallel-errors-v1"
+    },
+    {
+      "agent_requests": 0,
+      "api_requests": 2,
+      "case": "metadata-error",
+      "outcome": {
+        "message_contains": "FIRST statement",
+        "rejected": true
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-metadata-error-v1"
+    },
+    {
+      "agent_requests": 0,
+      "api_requests": 2,
+      "case": "determinism-error",
+      "outcome": {
+        "message_contains": "must be deterministic",
+        "rejected": true
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-determinism-error-v1"
+    },
+    {
+      "agent_requests": 0,
+      "api_requests": 2,
+      "case": "dynamic-import-error",
+      "outcome": {
+        "message_contains": "import() is not available",
+        "rejected": true
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-dynamic-import-error-v1"
+    },
+    {
+      "agent_requests": 1,
+      "api_requests": 4,
+      "case": "agent-text",
+      "outcome": {
+        "agent_count": 1,
+        "error": null,
+        "result": {
+          "value": "WORKFLOW_FIXTURE_FINAL_TEXT"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-agent-text-v1"
+    },
+    {
+      "agent_requests": 1,
+      "api_requests": 4,
+      "case": "agent-schema",
+      "outcome": {
+        "agent_count": 1,
+        "error": null,
+        "result": {
+          "value": {
+            "marker": "structured",
+            "ok": true
+          }
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-agent-schema-v1"
+    },
+    {
+      "agent_requests": 2,
+      "api_requests": 5,
+      "case": "missing-structured",
+      "outcome": {
+        "agent_count": 1,
+        "error": "Error: agent({schema}): subagent completed without calling StructuredOutput (after in-conversation nudge)\n    at kr (/$bunfs/root/chunk-y10by25k.js:76:117)\n    at async <anonymous> (/$bunfs/root/chunk-w6rkdzfe.js:11:211)\n    at async <anonymous> (/$bunfs/root/chunk-y10by25k.js:67:9235)\n    at async <anonymous> (/$bunfs/root/chunk-30jbnw20.js:1385:595)",
+        "result": null,
+        "status": "failed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-missing-structured-v1"
+    },
+    {
+      "agent_requests": 2,
+      "api_requests": 5,
+      "case": "missing-structured-parallel",
+      "outcome": {
+        "agent_count": 1,
+        "error": null,
+        "result": [
+          null
+        ],
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-missing-structured-parallel-v1"
+    },
+    {
+      "agent_requests": 3,
+      "api_requests": 12,
+      "case": "resume",
+      "outcome": {
+        "agent_api_calls_by_round": [
+          2,
+          0,
+          0,
+          1
+        ],
+        "agent_count": 2,
+        "error": null,
+        "result": {
+          "a": "WORKFLOW_FIXTURE_FINAL_TEXT",
+          "b": "WORKFLOW_FIXTURE_FINAL_TEXT"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-resume-v1"
+    },
+    {
+      "agent_requests": 0,
+      "api_requests": 3,
+      "case": "named-valid",
+      "outcome": {
+        "agent_count": 0,
+        "error": null,
+        "result": {
+          "origin": "project"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-named-valid-v1"
+    },
+    {
+      "agent_requests": 0,
+      "api_requests": 3,
+      "case": "named-invalid",
+      "outcome": {
+        "agent_count": 0,
+        "error": null,
+        "result": {
+          "origin": "user"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-named-invalid-v1"
+    },
+    {
+      "agent_requests": 0,
+      "api_requests": 2,
+      "case": "extension",
+      "outcome": {
+        "message_contains": "\"typescript-only\" not found",
+        "rejected": true
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-extension-v1"
+    },
+    {
+      "agent_requests": 0,
+      "api_requests": 1,
+      "case": "disabled",
+      "outcome": {
+        "workflow_tool_offered": false
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-disabled-v1"
+    },
+    {
+      "agent_requests": 0,
+      "api_requests": 3,
+      "case": "child",
+      "outcome": {
+        "agent_count": 0,
+        "error": null,
+        "result": {
+          "origin": "project"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-child-v1"
+    }
+  ],
+  "schema_version": 1
+}

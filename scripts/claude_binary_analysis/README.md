@@ -1,7 +1,9 @@
 # Claude Bun binary analysis tools
 
-These tools recover small, evidence-scoped plugin control-flow regions from a
-Bun standalone executable. Generated binaries, payloads, formatted segments,
+These tools recover evidence-scoped plugin and workflow control flow from a
+Bun standalone executable. [Reverse-engineering insights](docs/README.md)
+contains the maintained reports, pseudocode, and compact evidence records.
+Generated binaries, payloads, formatted segments,
 and traces belong only under the ignored `tmp/claude-code-binary-analysis/`
 tree. Do not commit them.
 
@@ -49,6 +51,14 @@ does not establish semantic equivalence by itself.
 
 ## Runtime controls
 
+The [subagent skill isolation investigation](docs/claude-code-2.1.296-subagent-skill-isolation-analysis.md)
+uses `run_subagent_skill_experiments.py BINARY OUTPUT --case CASE` to isolate
+nested-checkout discovery from a child's returned answer. Cases include
+Explore/general-purpose/Workflow Read, no read, Bash-only, gitignored checkout,
+disabled project settings, direct child skill reads/invocations, and explicit
+primary invocation. `verify_subagent_skill_controls.py TRACES OUTPUT.json`
+checks the ten retained `subagent-skill-*-v1` cases and fixture hashes.
+
 The experiment runner creates a fresh `CLAUDE_CONFIG_DIR`, local fixture
 marketplaces, deterministic fixed-date Git commits covering every marketplace
 and plugin fixture, and a loopback-only Anthropic response server. It inherits
@@ -73,7 +83,7 @@ directory retains argv, debug/stdout/stderr output, raw strace, and extracted
 BUN_BIN=/path/to/pinned/bun \
   python3 -m unittest discover -s scripts/claude_binary_analysis/tests -v
 python3 scripts/claude_binary_analysis/validate_claims.py \
-  .ledger/notes/claude-code-2.1.214-plugin-claims.json --check-paths
+  scripts/claude_binary_analysis/docs/claude-code-2.1.214-plugin-claims.json --check-paths
 python3 scripts/claude_binary_analysis/check_commit_safety.py
 ```
 
@@ -84,6 +94,96 @@ NUL-containing files, analysis deliverables over 1 MiB, and common token
 shapes.
 
 ## A later Claude version
+
+The workflow investigation for 2.1.296 is recorded in
+[the workflow report](docs/claude-code-2.1.296-workflow-analysis.md), with a claim ledger,
+parsed symbol catalog, and 16 verified runtime controls beside it.
+
+This release uses multiple ES modules. The old `index_payload.py` heuristic's
+`primary_application` is only an anchor-rich module; its CommonJS wording
+must not be read as proof of a single application bundle. Follow explicit
+import/export bindings into other modules, including modules shorter than
+the long-run threshold. Carve each module with `carve_segment.py`, then parse
+it without execution to obtain function byte ranges and hashes:
+
+```bash
+node scripts/claude_binary_analysis/index_js_module.mjs \
+  "$root/segments/raw/module-OFFSET.js" \
+  "$root/anchors/module-OFFSET-symbols.json" \
+  tmp/claude-code-binary-analysis/tooling/node_modules/prettier/plugins/babel.mjs
+```
+
+`run_workflow_experiments.py BINARY OUTPUT --input INPUT.json` runs an
+unmodified release against a deterministic loopback API. The input file
+contains a Workflow tool call's JSON arguments; omitting it probes tool
+availability. Every output directory must be new. Optional controls include
+`--settings`, `--named-fixtures valid|invalid-project`, `--text-only-agents`,
+and `--resume-controls`. The latter expects two sequential agent prompts
+ending in `WORKFLOW_FIXTURE_AGENT first` and `WORKFLOW_FIXTURE_AGENT second`,
+with `label:"first"`, to replay, relabel, then change the second prompt.
+Recorded `command.json` and mock responses preserve fixture inputs.
+
+The sixteen baseline cases can be checked with:
+
+```bash
+python3 scripts/claude_binary_analysis/verify_workflow_controls.py \
+  tmp/claude-code-binary-analysis/2.1.296/traces /tmp/workflow-controls.json
+PRETTIER_BABEL_PLUGIN="$PWD/tmp/claude-code-binary-analysis/tooling/node_modules/prettier/plugins/babel.mjs" \
+  python3 -m unittest discover -s scripts/claude_binary_analysis/tests -v
+```
+
+The verifier reads persisted workflow states and actual API captures: a zero
+CLI exit status alone does not establish that a background workflow succeeded.
+
+`run_workflow_operations_experiments.py BINARY OUTPUT --case CASE` probes the
+operational boundaries with the same mock-only approach: crash boundaries,
+journal truncation, competing resumptions, task stop, SIGTERM, the print
+background-wait ceiling, concurrency overrides (including nested workflows),
+budget gates, injected 429/500/broken-stream faults and stall recovery. Its
+crash cases capture only the crash boundary; `run_workflow_crash_resume_experiments.py
+BINARY OUTPUT --case crash-during-agent|crash-before-result|crash-after-result`
+re-runs them with a fresh-process resume derived from the surviving journal.
+Every output directory must be new; supervisor signals are bounded and sent
+only to fixture-owned processes.
+
+```bash
+python3 scripts/claude_binary_analysis/verify_workflow_operations_controls.py \
+  tmp/claude-code-binary-analysis/2.1.296/traces /tmp/workflow-operations-controls.json
+```
+
+The verifier checks journals, workflow states, fixture side-effect counters,
+late writes, injected faults and terminal results across the operations cases
+and the crash-resume completions.
+
+`run_subagent_skill_experiments.py BINARY OUTPUT --case CASE` uses the same
+mock-only approach for skill discovery and other subagent information channels.
+Successful new runs retain a copy of the exact runner. Cases include
+`memory-read`, `memory-propagate`, `file-edit`, `file-edit-unread`,
+`file-edit-parent-write` and `bash-output`, alongside the earlier skill cases.
+The memory-propagate case sets coordinator environment variables as a control;
+the shipped typed flag object does not enable instruction propagation.
+
+```bash
+python3 scripts/claude_binary_analysis/verify_subagent_skill_controls.py \
+  tmp/claude-code-binary-analysis/2.1.296/traces /tmp/skill-controls.json
+python3 scripts/claude_binary_analysis/verify_subagent_information_controls.py \
+  tmp/claude-code-binary-analysis/2.1.296/traces /tmp/information-controls.json
+```
+
+The verifiers select retained run revisions and check actual child tools,
+primary request markers and side effects. They separate the primary's model
+messages from child events exposed by the SDK stream.
+
+`run_skill_variable_experiments.py BINARY OUTPUT --case CASE` invokes authored
+local/plugin skills against a local API stub. Its cases cover arguments,
+directories, session/effort, options and harmless bundled-script preprocessing.
+Retained runs snapshot the runner and record fixture/config provenance. Verify
+the selected nine controls with:
+
+```bash
+python3 scripts/claude_binary_analysis/verify_skill_variable_controls.py \
+  tmp/claude-code-binary-analysis/2.1.296/traces /tmp/skill-variable-controls.json
+```
 
 Choose a new version directory, run the same inspection/index/anchor commands,
 compare `representations.json` and anchor multiplicity, and re-carve only

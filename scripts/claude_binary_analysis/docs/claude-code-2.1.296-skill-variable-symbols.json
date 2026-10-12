@@ -1,0 +1,421 @@
+{
+  "schema_version": 1,
+  "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+  },
+  "payload_sha256": "32a4df7685c914cf66238ffa9b1ea3ae1b164688039364d660c4506f68fb8e2f",
+  "offset_unit": "Byte offsets in extracted .bun section, exclusive ends",
+  "symbols": [
+    {
+      "name": "nHe",
+      "kind": "FunctionDeclaration",
+      "start": 126913580,
+      "end_exclusive": 126914533,
+      "length": 953,
+      "sha256": "7e5b3986b9a1649749a6e51a48dea1cb968b156c5dea09ad9251f11fe27ab6dd",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "I6r",
+      "kind": "FunctionDeclaration",
+      "start": 126913174,
+      "end_exclusive": 126913279,
+      "length": 105,
+      "sha256": "ac8114f087410f7417cc3130b3f7534540f1b1def73dbd102b26c4c139f4e404",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "Goe",
+      "kind": "FunctionDeclaration",
+      "start": 126913279,
+      "end_exclusive": 126913477,
+      "length": 198,
+      "sha256": "9039f6713b999c0f5a7997ba84792266827692e92643671e7599dbfaa918ad8b",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "bx",
+      "kind": "FunctionDeclaration",
+      "start": 126912746,
+      "end_exclusive": 126912841,
+      "length": 95,
+      "sha256": "b3283d0551cc70b86021ed977ce79323ffa9d024c93cb0bb4e2a614fed9aa25b",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "Etr",
+      "kind": "FunctionDeclaration",
+      "start": 126912961,
+      "end_exclusive": 126913146,
+      "length": 185,
+      "sha256": "1a954d8b4ab15307ecd63ebc60fcc94a9218d0511f87e6053e50da5b51ddf9e3",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "uIe",
+      "kind": "FunctionDeclaration",
+      "start": 126912624,
+      "end_exclusive": 126912746,
+      "length": 122,
+      "sha256": "a6e734396ebed60ea464ee179937e9316b2f356838df4359b3ed673d75b122b4",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "aYt",
+      "kind": "FunctionDeclaration",
+      "start": 129855252,
+      "end_exclusive": 129858176,
+      "length": 2924,
+      "sha256": "0d150d9a0236c6fd5d1eb97cf7fb6fa788346cef08c8a2717fb0bd5511d1b75c",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "Alr",
+      "kind": "FunctionDeclaration",
+      "start": 129854433,
+      "end_exclusive": 129855252,
+      "length": 819,
+      "sha256": "464910482fa66217f517c9f1c033aa799efca73b354250342e7d2ccaea738686",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "y6",
+      "kind": "FunctionDeclaration",
+      "start": 127437935,
+      "end_exclusive": 127442396,
+      "length": 4461,
+      "sha256": "3a67fe82082c3cc017ccbc2fe4e99892b40d874a59b2255437fae420bb68cd88",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "MDt",
+      "kind": "FunctionDeclaration",
+      "start": 127437722,
+      "end_exclusive": 127437935,
+      "length": 213,
+      "sha256": "70477a3856ac4373af5250b085eafbce9ac9885c429976eac77c212606b49187",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "Qoe",
+      "kind": "FunctionDeclaration",
+      "start": 126925593,
+      "end_exclusive": 126925754,
+      "length": 161,
+      "sha256": "3b8d4cf8f327de73204feca6d6b50cf975c13401004083596bfd1f6bab8e1337",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "PL",
+      "kind": "FunctionDeclaration",
+      "start": 126925754,
+      "end_exclusive": 126925936,
+      "length": 182,
+      "sha256": "347710b093aa4f93c61227d48006c37d3d9aa8a470d860a54304f5b0a6784b13",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "eye",
+      "kind": "FunctionDeclaration",
+      "start": 129846497,
+      "end_exclusive": 129848889,
+      "length": 2392,
+      "sha256": "228fc56a468ede7d4c093403c4e2dc13fa08edfa7b33dfadf60c90825e70042a",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "lAr",
+      "kind": "FunctionDeclaration",
+      "start": 129850295,
+      "end_exclusive": 129850427,
+      "length": 132,
+      "sha256": "7a5b3817041b4da65450bad05b0aade720dcd4e8806f482ecb60ed0b7a0acf3a",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "dAr",
+      "kind": "FunctionDeclaration",
+      "start": 129850427,
+      "end_exclusive": 129850470,
+      "length": 43,
+      "sha256": "4e2491b770a36ff4fe876c1f2a47c4ab718c14239bd36191c4163feaf9b6d670",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "_x",
+      "kind": "VariableDeclarator",
+      "start": 126901174,
+      "end_exclusive": 126901183,
+      "length": 9,
+      "sha256": "7cda20db80b9b1ec94b4eb044f9258b0b0651ccde66b5386ef925e7b5e4c5d1a",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "mAr",
+      "kind": "VariableDeclarator",
+      "start": 129854323,
+      "end_exclusive": 129854350,
+      "length": 27,
+      "sha256": "600202727535ba32ae8673c8b7b290977aa7b7ae47bb4c145383ac0f8ee4abc3",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "hAr",
+      "kind": "VariableDeclarator",
+      "start": 129854351,
+      "end_exclusive": 129854376,
+      "length": 25,
+      "sha256": "ed274debb192ef7e203e590edca842b4e487b9fd64fb97fe5d3e24db5ed63a7e",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "i$",
+      "kind": "FunctionDeclaration",
+      "start": 129447348,
+      "end_exclusive": 129458163,
+      "length": 10815,
+      "sha256": "298b5731fb2f8d19d09b821c985240fb2d1b11280475c8a551d40567d3724fdd",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "lce",
+      "kind": "FunctionDeclaration",
+      "start": 124391342,
+      "end_exclusive": 124391579,
+      "length": 237,
+      "sha256": "e70f61249513220d3d62e04f9ad14b88ab394be3fb3533c9fc40c427c3c43490",
+      "module_start": 124365854,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-124365854-symbols.json"
+    },
+    {
+      "name": "epr",
+      "kind": "FunctionDeclaration",
+      "start": 124391956,
+      "end_exclusive": 124392193,
+      "length": 237,
+      "sha256": "defe044a795b7ac3f230c9aaf4efcacf86f3875cde389bc5fb3198e5b87a0c6e",
+      "module_start": 124365854,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-124365854-symbols.json"
+    },
+    {
+      "name": "Ox",
+      "kind": "FunctionDeclaration",
+      "start": 124382877,
+      "end_exclusive": 124383066,
+      "length": 189,
+      "sha256": "ccf1641f380366bf46acebd4967d85b4d8bb020cddbb2531d2745a07c13246d3",
+      "module_start": 124365854,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-124365854-symbols.json"
+    },
+    {
+      "name": "At",
+      "kind": "FunctionDeclaration",
+      "start": 124383066,
+      "end_exclusive": 124383240,
+      "length": 174,
+      "sha256": "8ae67da9c487b04109f02fce0a01996bc4c45797c4cbb4148c3f40b215b7f5aa",
+      "module_start": 124365854,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-124365854-symbols.json"
+    },
+    {
+      "name": "Dqe",
+      "kind": "FunctionDeclaration",
+      "start": 124391006,
+      "end_exclusive": 124391342,
+      "length": 336,
+      "sha256": "4c74b393476759e8a68907f7d04848cc9db525567ce0da15171ff05e7a0eae59",
+      "module_start": 124365854,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-124365854-symbols.json"
+    },
+    {
+      "name": "bl",
+      "kind": "FunctionDeclaration",
+      "start": 122755827,
+      "end_exclusive": 122755915,
+      "length": 88,
+      "sha256": "4006980f4096d17490ccd21652974ff15c3d369958eeaf054aa7b8750cd5f2f6",
+      "module_start": 122748475,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122748475-symbols.json"
+    },
+    {
+      "name": "A",
+      "kind": "FunctionDeclaration",
+      "start": 122756455,
+      "end_exclusive": 122756554,
+      "length": 99,
+      "sha256": "4bec2b5d3d0e39cba85fb2b025bc56c2714078e94e5990e347e2940bb7cca81c",
+      "module_start": 122748475,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122748475-symbols.json"
+    },
+    {
+      "name": "wh",
+      "kind": "FunctionDeclaration",
+      "start": 122757015,
+      "end_exclusive": 122757057,
+      "length": 42,
+      "sha256": "ea2734098f09c705f1572deb285d60c82cdfcc542fafdf1070134d55ad4fa45d",
+      "module_start": 122748475,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122748475-symbols.json"
+    },
+    {
+      "name": "uNe",
+      "kind": "FunctionDeclaration",
+      "start": 122757057,
+      "end_exclusive": 122757112,
+      "length": 55,
+      "sha256": "914e28c037e7bb9bbc6c325ded5ff1e7497ecb1af9d19f55ddbe8999a35e7401",
+      "module_start": 122748475,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122748475-symbols.json"
+    },
+    {
+      "name": "Ev",
+      "kind": "FunctionDeclaration",
+      "start": 122055019,
+      "end_exclusive": 122055326,
+      "length": 307,
+      "sha256": "eaf8ef95a59e1e5d7e5ee5d3942f9cba7ddde94904fe5a21a9c16265188d14c6",
+      "module_start": 122042047,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122042047-symbols.json"
+    },
+    {
+      "name": "GA",
+      "kind": "FunctionDeclaration",
+      "start": 122056251,
+      "end_exclusive": 122056320,
+      "length": 69,
+      "sha256": "b1a47fb457c85c2730da1acac9731581ed94682dcb027ca780ab2e63035cf491",
+      "module_start": 122042047,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122042047-symbols.json"
+    },
+    {
+      "name": "$B",
+      "kind": "FunctionDeclaration",
+      "start": 122056552,
+      "end_exclusive": 122056625,
+      "length": 73,
+      "sha256": "f2494b02ac1564fb10b20d9911b79dee41edfb37cf5b35cadfaeb9609d99beeb",
+      "module_start": 122042047,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122042047-symbols.json"
+    },
+    {
+      "name": "Ldo",
+      "kind": "FunctionDeclaration",
+      "start": 122571135,
+      "end_exclusive": 122571388,
+      "length": 253,
+      "sha256": "12d078e0fd517a3783fa9d6a859396cc739bca64a4bdb30cfe594f9a065eae5a",
+      "module_start": 122570377,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122570377-symbols.json"
+    },
+    {
+      "name": "F4e",
+      "kind": "FunctionDeclaration",
+      "start": 122571388,
+      "end_exclusive": 122571464,
+      "length": 76,
+      "sha256": "41ad323296dcf444c3990972ce808dd3f74076edde4aa1cc2649c7ad3bcbec2c",
+      "module_start": 122570377,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122570377-symbols.json"
+    },
+    {
+      "name": "Cyr",
+      "kind": "FunctionDeclaration",
+      "start": 122571464,
+      "end_exclusive": 122571556,
+      "length": 92,
+      "sha256": "59eb03b7f3519a56b918a0729eb3391de51da94953fac0f8cf69396fe2a0f1a3",
+      "module_start": 122570377,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-122570377-symbols.json"
+    },
+    {
+      "name": "K",
+      "kind": "FunctionDeclaration",
+      "start": 118085412,
+      "end_exclusive": 118085455,
+      "length": 43,
+      "sha256": "8bb3b620f0783859bae318b8cc9bc2cf3bd4086ff86ea4dd8d0e94805ba01493",
+      "module_start": 118008726,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-118008726-symbols.json"
+    },
+    {
+      "name": "Kr",
+      "kind": "FunctionDeclaration",
+      "start": 118099823,
+      "end_exclusive": 118099887,
+      "length": 64,
+      "sha256": "c997d21fcc15d24307e7dcdd92f856ee25be0cbecbbe319d2e7ff39817dae685",
+      "module_start": 118008726,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-118008726-symbols.json"
+    },
+    {
+      "name": "cr",
+      "kind": "FunctionDeclaration",
+      "start": 118088522,
+      "end_exclusive": 118088581,
+      "length": 59,
+      "sha256": "6d24a7b44c77f5ae9735471fc43540fb984ce3811a352d56b24da73993211260",
+      "module_start": 118008726,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-118008726-symbols.json"
+    },
+    {
+      "name": "_v",
+      "kind": "FunctionDeclaration",
+      "start": 125911933,
+      "end_exclusive": 125912058,
+      "length": 125,
+      "sha256": "8fe684431b7875ddf01118ad89ae2512aa2fadd0455582a924cf78a06beec3e9",
+      "module_start": 125907236,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-125907236-symbols.json"
+    },
+    {
+      "name": "_s",
+      "kind": "FunctionDeclaration",
+      "start": 120466500,
+      "end_exclusive": 120466555,
+      "length": 55,
+      "sha256": "37505cf4e8b17199f107902dd06318361c4bb32a31187b9323b80d7790c08e09",
+      "module_start": 120465041,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-120465041-symbols.json"
+    },
+    {
+      "name": "SA",
+      "kind": "FunctionDeclaration",
+      "start": 134421289,
+      "end_exclusive": 134445556,
+      "length": 24267,
+      "sha256": "9c534bac536087c0b730ff4e235a0a984f8ebdcb6e95f6ed0f5c3d9446982517",
+      "module_start": 134300128,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-134300128-symbols.json"
+    },
+    {
+      "name": "YKt",
+      "kind": "FunctionDeclaration",
+      "start": 129014187,
+      "end_exclusive": 129017174,
+      "length": 2987,
+      "sha256": "b0c466870d8c8a2c1c41334b202d8ba88559950f9d89de56ef1263af1bcdaa8c",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    }
+  ]
+}

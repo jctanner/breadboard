@@ -1,0 +1,451 @@
+{
+  "controls": [
+    {
+      "api_requests": 1,
+      "case": "cli-text-direct-prose",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": null,
+      "outcome": {
+        "cli_subtype": "success",
+        "structured_output": null
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-text-direct-prose-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": false,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 3,
+      "case": "cli-text-fork-prose",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": {
+        "HANDOFF_ASSESSMENT_MARKER": true,
+        "HANDOFF_DISSENT_REVISE_MARKER": true,
+        "HANDOFF_TARGET_STRATEGY_A": true
+      },
+      "outcome": {
+        "cli_subtype": "success",
+        "structured_output": null
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-text-fork-prose-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": false,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 2,
+      "case": "cli-schema-direct-prose",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": null,
+      "outcome": {
+        "cli_subtype": "success",
+        "structured_output": null
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-schema-direct-prose-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": false,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 1,
+      "case": "cli-schema-direct-structured",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": null,
+      "outcome": {
+        "cli_subtype": "success",
+        "structured_output": {
+          "assessment": "HANDOFF_ASSESSMENT_MARKER",
+          "dissent": "HANDOFF_DISSENT_REVISE_MARKER",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        }
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-schema-direct-structured-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": false,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 1,
+      "case": "cli-schema-direct-mixed",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": null,
+      "outcome": {
+        "cli_subtype": "success",
+        "structured_output": {
+          "assessment": "HANDOFF_ASSESSMENT_MARKER",
+          "dissent": "HANDOFF_DISSENT_REVISE_MARKER",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        }
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-schema-direct-mixed-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": false,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 2,
+      "case": "cli-schema-direct-earlier-prose",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": null,
+      "outcome": {
+        "cli_subtype": "success",
+        "structured_output": {
+          "assessment": "HANDOFF_ASSESSMENT_MARKER",
+          "dissent": "HANDOFF_DISSENT_REVISE_MARKER",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        }
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-schema-direct-earlier-prose-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": false,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 3,
+      "case": "cli-schema-fork-prose",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": {
+        "HANDOFF_ASSESSMENT_MARKER": true,
+        "HANDOFF_DISSENT_REVISE_MARKER": true,
+        "HANDOFF_TARGET_STRATEGY_A": true
+      },
+      "outcome": {
+        "cli_subtype": "success",
+        "structured_output": {
+          "assessment": "RECEIVER_ASSESSMENT_DELIVERED=True",
+          "dissent": "RECEIVER_DISSENT_DELIVERED=True",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        }
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-schema-fork-prose-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": true,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 3,
+      "case": "cli-schema-fork-structured",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": {
+        "HANDOFF_ASSESSMENT_MARKER": false,
+        "HANDOFF_DISSENT_REVISE_MARKER": false,
+        "HANDOFF_TARGET_STRATEGY_A": false
+      },
+      "outcome": {
+        "cli_subtype": "success",
+        "structured_output": {
+          "assessment": "RECEIVER_ASSESSMENT_DELIVERED=False",
+          "dissent": "RECEIVER_DISSENT_DELIVERED=False",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        }
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-schema-fork-structured-v2",
+      "runner_sha256": "fe3791d4b7e15a074400b98bbf213d1a427758d0503e1a688ebb36a58b0e5418",
+      "specialist_schema_inherited": true,
+      "specialist_structured_instructions": [
+        {
+          "lines": [
+            "Use this tool to return your final response in the requested structured format. You MUST call this tool exactly once at the end of your response to provide the structured output."
+          ],
+          "path": ".structured_tool_description"
+        }
+      ]
+    },
+    {
+      "api_requests": 3,
+      "case": "cli-schema-fork-mixed",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": {
+        "HANDOFF_ASSESSMENT_MARKER": false,
+        "HANDOFF_DISSENT_REVISE_MARKER": false,
+        "HANDOFF_TARGET_STRATEGY_A": false
+      },
+      "outcome": {
+        "cli_subtype": "success",
+        "structured_output": {
+          "assessment": "RECEIVER_ASSESSMENT_DELIVERED=False",
+          "dissent": "RECEIVER_DISSENT_DELIVERED=False",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        }
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-schema-fork-mixed-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": true,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 4,
+      "case": "cli-schema-fork-earlier-prose",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": {
+        "HANDOFF_ASSESSMENT_MARKER": false,
+        "HANDOFF_DISSENT_REVISE_MARKER": false,
+        "HANDOFF_TARGET_STRATEGY_A": false
+      },
+      "outcome": {
+        "cli_subtype": "success",
+        "structured_output": {
+          "assessment": "RECEIVER_ASSESSMENT_DELIVERED=False",
+          "dissent": "RECEIVER_DISSENT_DELIVERED=False",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        }
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-cli-schema-fork-earlier-prose-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": true,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 4,
+      "case": "workflow-text-direct-prose",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": null,
+      "outcome": {
+        "error": null,
+        "result": "HANDOFF_ASSESSMENT_MARKER: boundary finding; HANDOFF_DISSENT_REVISE_MARKER: revise; HANDOFF_TARGET_STRATEGY_A",
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-text-direct-prose-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": false,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 6,
+      "case": "workflow-text-fork-prose",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": {
+        "HANDOFF_ASSESSMENT_MARKER": true,
+        "HANDOFF_DISSENT_REVISE_MARKER": true,
+        "HANDOFF_TARGET_STRATEGY_A": true
+      },
+      "outcome": {
+        "error": null,
+        "result": "{\"assessment\": \"RECEIVER_ASSESSMENT_DELIVERED=True\", \"dissent\": \"RECEIVER_DISSENT_DELIVERED=True\", \"target\": \"HANDOFF_TARGET_STRATEGY_A\"}",
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-text-fork-prose-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": false,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 5,
+      "case": "workflow-schema-direct-prose",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": null,
+      "outcome": {
+        "error": "Error: agent({schema}): subagent completed without calling StructuredOutput (after in-conversation nudge)\n    at kr (/$bunfs/root/chunk-y10by25k.js:76:117)\n    at async <anonymous> (/$bunfs/root/chunk-w6rkdzfe.js:11:211)\n    at async <anonymous> (/$bunfs/root/chunk-y10by25k.js:67:9235)\n    at async <anonymous> (/$bunfs/root/chunk-30jbnw20.js:1385:595)",
+        "result": null,
+        "status": "failed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-direct-prose-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": false,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 4,
+      "case": "workflow-schema-direct-structured",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": null,
+      "outcome": {
+        "error": null,
+        "result": {
+          "assessment": "HANDOFF_ASSESSMENT_MARKER",
+          "dissent": "HANDOFF_DISSENT_REVISE_MARKER",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-direct-structured-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": false,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 4,
+      "case": "workflow-schema-direct-mixed",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": null,
+      "outcome": {
+        "error": null,
+        "result": {
+          "assessment": "HANDOFF_ASSESSMENT_MARKER",
+          "dissent": "HANDOFF_DISSENT_REVISE_MARKER",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-direct-mixed-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": false,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 5,
+      "case": "workflow-schema-direct-earlier-prose",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": null,
+      "outcome": {
+        "error": null,
+        "result": {
+          "assessment": "HANDOFF_ASSESSMENT_MARKER",
+          "dissent": "HANDOFF_DISSENT_REVISE_MARKER",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-direct-earlier-prose-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": false,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 6,
+      "case": "workflow-schema-fork-prose",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": {
+        "HANDOFF_ASSESSMENT_MARKER": true,
+        "HANDOFF_DISSENT_REVISE_MARKER": true,
+        "HANDOFF_TARGET_STRATEGY_A": true
+      },
+      "outcome": {
+        "error": null,
+        "result": {
+          "assessment": "RECEIVER_ASSESSMENT_DELIVERED=True",
+          "dissent": "RECEIVER_DISSENT_DELIVERED=True",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-fork-prose-v2",
+      "runner_sha256": "fe3791d4b7e15a074400b98bbf213d1a427758d0503e1a688ebb36a58b0e5418",
+      "specialist_schema_inherited": true,
+      "specialist_structured_instructions": [
+        {
+          "lines": [
+            "Use this tool to return your final response in the requested structured format. You MUST call this tool exactly once at the end of your response to provide the structured output."
+          ],
+          "path": ".structured_tool_description"
+        }
+      ]
+    },
+    {
+      "api_requests": 6,
+      "case": "workflow-schema-fork-structured",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": {
+        "HANDOFF_ASSESSMENT_MARKER": false,
+        "HANDOFF_DISSENT_REVISE_MARKER": false,
+        "HANDOFF_TARGET_STRATEGY_A": false
+      },
+      "outcome": {
+        "error": null,
+        "result": {
+          "assessment": "RECEIVER_ASSESSMENT_DELIVERED=False",
+          "dissent": "RECEIVER_DISSENT_DELIVERED=False",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-fork-structured-v2",
+      "runner_sha256": "fe3791d4b7e15a074400b98bbf213d1a427758d0503e1a688ebb36a58b0e5418",
+      "specialist_schema_inherited": true,
+      "specialist_structured_instructions": [
+        {
+          "lines": [
+            "Use this tool to return your final response in the requested structured format. You MUST call this tool exactly once at the end of your response to provide the structured output."
+          ],
+          "path": ".structured_tool_description"
+        }
+      ]
+    },
+    {
+      "api_requests": 6,
+      "case": "workflow-schema-fork-mixed",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": {
+        "HANDOFF_ASSESSMENT_MARKER": false,
+        "HANDOFF_DISSENT_REVISE_MARKER": false,
+        "HANDOFF_TARGET_STRATEGY_A": false
+      },
+      "outcome": {
+        "error": null,
+        "result": {
+          "assessment": "RECEIVER_ASSESSMENT_DELIVERED=False",
+          "dissent": "RECEIVER_DISSENT_DELIVERED=False",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-fork-mixed-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": true,
+      "specialist_structured_instructions": []
+    },
+    {
+      "api_requests": 7,
+      "case": "workflow-schema-fork-earlier-prose",
+      "fixture_tree_sha256": "6e3dac75f2322a8fec4c518b52d5441f7f333f36d45b1d975bc3a2eefa9d197c",
+      "markers_delivered_in_skill_result_and_receiving_request": {
+        "HANDOFF_ASSESSMENT_MARKER": false,
+        "HANDOFF_DISSENT_REVISE_MARKER": false,
+        "HANDOFF_TARGET_STRATEGY_A": false
+      },
+      "outcome": {
+        "error": null,
+        "result": {
+          "assessment": "RECEIVER_ASSESSMENT_DELIVERED=False",
+          "dissent": "RECEIVER_DISSENT_DELIVERED=False",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        },
+        "status": "completed"
+      },
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-fork-earlier-prose-v1",
+      "runner_sha256": "72940ad1dbe76f573e02a5421c08efd7a86cd533abb439e04c59eaaacfad30c3",
+      "specialist_schema_inherited": true,
+      "specialist_structured_instructions": []
+    },
+    {
+      "case": "workflow-schema-fork-reader",
+      "child_tools": [
+        "Read"
+      ],
+      "markers_delivered": true,
+      "outcome": {
+        "result": {
+          "assessment": "RECEIVER_ASSESSMENT_DELIVERED=True",
+          "dissent": "RECEIVER_DISSENT_DELIVERED=True",
+          "target": "HANDOFF_TARGET_STRATEGY_A"
+        },
+        "status": "completed"
+      },
+      "outer_schema_preserved": true,
+      "passed": true,
+      "run": "tmp/claude-code-binary-analysis/2.1.296/traces/handoff-workflow-schema-fork-reader-v1",
+      "runner_sha256": "7feddb18ca204b9c16a6a265141147243d1bd92a1dfad48c2c85f80b1cf41897"
+    }
+  ],
+  "schema_version": 1
+}

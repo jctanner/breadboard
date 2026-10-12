@@ -1,0 +1,398 @@
+{
+  "schema_version": 1,
+  "evidence_precedence": [
+    "runtime",
+    "exact-bundle",
+    "old-source"
+  ],
+  "claims": [
+    {
+      "id": "shared-dynamic-skill-registry",
+      "claim": "Dynamic skill state belongs to the host extension registry and its default cli key, rather than the discovering agent ID. Child-discovered skills enter the primary command source.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            128150832,
+            128153141
+          ],
+          [
+            129873562,
+            129873611
+          ],
+          [
+            129873638,
+            129873734
+          ],
+          [
+            129876772,
+            129876940
+          ],
+          [
+            121376622,
+            121379219
+          ],
+          [
+            121379361,
+            121379397
+          ]
+        ],
+        "anchors": [
+          "xr",
+          "s",
+          "FX",
+          "Ly",
+          "UDe",
+          "uEo"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-explore-read-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-general-read-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-workflow-read-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": []
+    },
+    {
+      "id": "read-triggers-discovery",
+      "claim": "The Read helper calls discovery/load without an agent-ID restriction; reading an ordinary nested checkout file suffices to discover its sibling .claude/skills tree.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            129874659,
+            129875653
+          ],
+          [
+            129875729,
+            129876772
+          ],
+          [
+            129877702,
+            129877882
+          ],
+          [
+            130024567,
+            130027172
+          ]
+        ],
+        "anchors": [
+          "nOr",
+          "uj",
+          "OAr",
+          "lYt"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-explore-read-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": []
+    },
+    {
+      "id": "cache-invalidation",
+      "claim": "Loading dynamic skill directories emits a shared signal whose registered listener invalidates command caches.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            128153966,
+            128154012
+          ],
+          [
+            129873847,
+            129873935
+          ],
+          [
+            129875729,
+            129876772
+          ],
+          [
+            136266006,
+            136266388
+          ]
+        ],
+        "anchors": [
+          "lYt",
+          "lts",
+          "WC",
+          "te"
+        ]
+      },
+      "runtime": {
+        "runs": []
+      },
+      "verdict": "bundle-confirmed",
+      "limitations": []
+    },
+    {
+      "id": "listing-dedup-is-not-registry-isolation",
+      "claim": "Skill listing delivery tracks names by agent ID, while sourcing available commands from the shared dynamic registry; the primary receives unseen child-discovered metadata.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            128150832,
+            128153141
+          ],
+          [
+            128154842,
+            128154913
+          ],
+          [
+            128154913,
+            128155002
+          ],
+          [
+            130167128,
+            130167261
+          ],
+          [
+            130168456,
+            130168914
+          ],
+          [
+            130169261,
+            130169988
+          ]
+        ],
+        "anchors": [
+          "ILr",
+          "PLr",
+          "o_n",
+          "zC",
+          "hEo",
+          "uEo"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-explore-read-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": []
+    },
+    {
+      "id": "actual-primary-context-injection",
+      "claim": "The primary API messages receive a system-reminder skill listing with the discovered name and description although its child returns only a fixed answer without skill details.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            128507426,
+            128507511
+          ],
+          [
+            128509014,
+            128510121
+          ],
+          [
+            130169261,
+            130169988
+          ],
+          [
+            130940826,
+            130940986
+          ]
+        ],
+        "anchors": [
+          "ILr",
+          "skill_listing",
+          "J5t",
+          "pvt"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-explore-read-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-general-read-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-workflow-read-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": []
+    },
+    {
+      "id": "metadata-versus-body",
+      "claim": "Listing uses command descriptions/whenToUse rather than the instruction body. In the controls, child reads or Skill invocations do not automatically inject body text into primary requests; explicit primary Skill invocation does.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            128507426,
+            128507511
+          ],
+          [
+            128509014,
+            128510121
+          ],
+          [
+            129855252,
+            129858176
+          ],
+          [
+            118122230,
+            118122373
+          ],
+          [
+            118122525,
+            118122644
+          ]
+        ],
+        "anchors": [
+          "J5t",
+          "pvt",
+          "aYt",
+          "VZ",
+          "mIo"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-explore-read-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-child-skill-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-child-read-skill-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-primary-skill-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Compaction and fork-context skill declarations were not runtime tested."
+      ]
+    },
+    {
+      "id": "separate-subagent-context-fields",
+      "claim": "Subagent context creation clones readFileState and creates fresh dynamicSkillDirTriggers but retains session/host access; this does not clone the extension registry.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            129017688,
+            129021998
+          ]
+        ],
+        "anchors": [
+          "air"
+        ]
+      },
+      "runtime": {
+        "runs": []
+      },
+      "verdict": "bundle-confirmed",
+      "limitations": [
+        "Runtime behavior proves cross-agent metadata visibility; not every mutable context field was audited."
+      ]
+    },
+    {
+      "id": "operation-and-source-controls",
+      "claim": "No child read, Bash cat alone, a gitignored nested checkout, and disabled project settings leave the primary without the fixture skill metadata in these controls.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            129874659,
+            129875653
+          ],
+          [
+            129875729,
+            129876772
+          ],
+          [
+            130024567,
+            130027172
+          ]
+        ],
+        "anchors": [
+          "nOr",
+          "OAr",
+          "lYt"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-no-read-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-explore-bash-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-ignored-read-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-settings-disabled-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "This does not claim all Bash patterns, all discovery APIs, or all managed-policy combinations behave identically."
+      ]
+    },
+    {
+      "id": "scope-labels-are-not-agent-ownership",
+      "claim": "Nested skills receive directory-scope descriptions or collision-qualified names, but these describe applicability and do not restrict registration to the discovering agent.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            128150832,
+            128153141
+          ],
+          [
+            128153141,
+            128153411
+          ],
+          [
+            128153411,
+            128153579
+          ],
+          [
+            130169261,
+            130169988
+          ]
+        ],
+        "anchors": [
+          "cEo",
+          "jjt",
+          "uEo",
+          "ILr"
+        ]
+      },
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-explore-read-v1"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Name-collision combinations were read statically, not separately varied."
+      ]
+    }
+  ]
+}

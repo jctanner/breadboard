@@ -697,8 +697,10 @@ close, extend towards 45. Comparing three variants at once needs more
 These are the original estimates. The tier 2 rows below assumed stub
 passes and a separate real-skill confirmation pass; they are superseded
 by the 2026-10-11 as-is baseline policy. Re-estimate tier 2 after selecting
-the real-skill scenario set and opus repeats. Heavy 429s from the account
-would make the runs take longer.
+the real-skill scenario set and opus repeats. Account-budget 429s can abort
+the runs, not merely lengthen them. Report whether the campaign completes
+within the available five-hour account allowance; see the account-budget
+finding below.
 
 | Part | Runs | Model cost (list price) | Time (one at a time) |
 | --- | --- | --- | --- |
@@ -1619,7 +1621,7 @@ S1 round 1 of `markov-run-41e56ed5` did a normal amount of work: 125 calls,
   Relay and were retried, about 4 minutes lost. Relay's upstream timeout
   defaults to 120s (`SHIM_UPSTREAM_TIMEOUT_SECONDS`, not set in our
   deployment). Recorded as a bug
-  (`.ledger/bugs/open/model-relay-120s-upstream-timeout.md`).
+  (`.ledger/bugs/fixed/model-relay-120s-upstream-timeout.md`).
 - **A few heavy thinking turns:** one took 97s for 23k output tokens (17k
   thinking), and others 30–50s.
 
@@ -1834,20 +1836,24 @@ it as failed.
 - **Opus calls are about twice as slow.** The median is 6–8 s against 3 s on
   haiku, and up to 120 s for long writes. Opus writes 3–5× fewer output
   tokens.
-- **Without the 120 s cuts, both designs take about 25 minutes on opus.**
-  Haiku's S1 overhead came from the reviewer reruns; opus does none.
+- **Subtracting 120 s per cut gives approximately 25 minutes for both
+  designs on opus.** This is a heuristic adjustment, not a measured
+  fixed-relay runtime or evidence of timing equivalence. Haiku's S1
+  overhead included reviewer reruns; opus does none.
 
 **The relay still cut streams at 120 s.**
 - The 600 s setting only reaches the environment-configured upstream.
 - Managed accounts are hard-coded to 120 s. See
-  `.ledger/bugs/open/model-relay-120s-upstream-timeout.md`; fixed in relay
-  `59d6f06`, not deployed.
-- 13 calls were cut, each costing 2 minutes and a full retry:
+  `.ledger/bugs/fixed/model-relay-120s-upstream-timeout.md`. The earlier
+  `59d6f06` fix missed this constructor; the complete repair was deployed
+  later on 2026-10-11 and verified in `markov-run-c5ba3904`.
+- 13 calls were cut after 2 minutes and retried:
   - S1: 0, 1, 2 per round;
   - S2: 0, 4, 6 per round.
 - **The cuts hit whichever agent writes about 5k output tokens in one
   turn:** the scorer, the reviewers, or refine. Both designs have those
-  agents, so S2's larger share is chance, not design. S2 r3's architecture
+  agents. This small sample does not establish whether S2's larger share
+  reflects chance or differences in timeout exposure. S2 r3's architecture
   reviewer was cut four times on the same request.
 - The haiku re-run's two cuts (S1 r1) had the same cause.
 
@@ -1952,7 +1958,9 @@ the other way round) would separate them.
   or tokens.
 - **The latency lean is probably time of day:** S2's slowest run is the
   solo re-run at 04:25.
-- **Raw wall time** differs only by the relay's 120 s cuts.
+- **Raw wall time is confounded by unequal relay timeout exposure.** The
+  approximate subtraction does not establish that the relay accounts for
+  the entire difference.
 - **Tokens, file reads, errors and scores** show no difference.
 - **For conclusive timing and token comparisons,** run 4 or more per
   design (or more scenarios). 4 is the smallest n at which the
@@ -2708,3 +2716,1103 @@ model mismatch rejection, wait-budget forwarding, and terminal-run archival
 waiting. A detached host collector will wait for this run to finish, then
 save the full verified archive and publish its receipt, including failure
 evidence if the run fails. No S2 or additional repeat is authorized.
+
+**Publication and launch completed:** pushed Breadboard
+**`2615e72e79704874620be092af2ae5fffc76b8e9`**, synced project 1 and imported
+the exact 45-file benchmark definition. New archive guards are now deployed
+in the imported workflow; both passed before the seed reset. The initial
+artifact wipe was skipped. Submitted exactly one POST to create the run:
+
+| Field | Value |
+| --- | --- |
+| Markov run | `markov-run-7845a7f1` (database ID 565) |
+| Submitted | 2026-10-11 **15:10:00.522 UTC / 11:10:00 EDT** |
+| Tier/design/model | `tier2-opus` / S1 / `claude-opus-4-6` |
+| Scenario/repeats | `batch-three-new-rfes` / 1 |
+| Seed job | `script-seed-scenario-all-claude-haiku-5-5-1011-151003-ca726b` |
+| S1 job | `script-run-workflow-all-claude-opus-4-6-1011-151014-95af64` |
+| S1 job created | 15:10:14 UTC / 11:10:14 EDT |
+| S1 design pin | `1bd7f1718c7ed10f2900691c0e9eaea2b8e48e43` (unchanged) |
+| Background wait | 5,400,000 ms / 90 minutes |
+| MLflow experiment | `strat-workflow-eval/tier2-opus/S1/opus` |
+
+Seed completed and discovery exactly matched RHAIRFE-1/2/3 in that order.
+Verified S1 job arguments `batch-discover`, `BATCH_SIZE=3`, matching
+`BATCH_EXPECTED_KEYS`, design pin and wait override. Claude init and all
+first **23 indexed requests** use Opus 4.6. Creation completed; refinement
+started. Planning finish window is **15:50–16:10 UTC / 11:50–12:10 EDT**,
+conditional on normal progress; archive collection follows completion.
+
+**Automatic final evidence collection:** detached host collector PID
+`2315335`, launched with `archive_run.py --run markov-run-7845a7f1 --wait
+8100`. Its log/state are under `var/run-data/strat-workflow/markov-run-7845a7f1/`.
+Host inspection confirmed it remains active. Sandbox process inspection
+initially hid the escalated host process, leading to a duplicate managed
+waiter; that duplicate was stopped, leaving one collector and the model job
+running. A temporary status-log gap from the second writer does not affect
+raw model evidence. The collector waits for terminal jobs/run, creates a
+separate timestamped final capture with browsable API/strace directories,
+verifies checksums, and publishes a receipt. Check its log/manifest after
+completion before claiming archival success. No additional S1 run or S2
+was submitted. Next: completed-run analysis, including model handoffs,
+reviewer outputs, concurrency, usage, context growth and relay behavior.
+
+## 2026-10-11 — Provisional assessment: Claude Workflow, bash, and Markov
+
+Architectural preference for this platform: **Markov owns the long-running
+pipeline; small scripts execute deterministic operations and validate agent
+outputs; agents perform strategy creation, refinement, scoring and review.**
+Markov has substantial integration evidence as the benchmark driver, but
+has not yet been tested as a third strategy-orchestration arm. This is a
+design judgment, not a measured Markov/S1/S2 reliability or performance result.
+
+| Approach | Best fit | Main tradeoff in this evaluation |
+| --- | --- | --- |
+| Bash | Small, stable pipelines and deterministic adapters | Direct exit codes/JSON avoid model-mediated bookkeeping; durable recovery, concurrent work, cancellation and operational visibility require additional implementation. Current S2 is sequential; bash itself does not require sequential execution. |
+| Claude Workflow | Agent-local coordination with native agent integration | Its JS control flow is deterministic and supports parallel/pipelined work, but current S1 hands ordinary script output through agents and couples execution to CLI/session and tool-schema behavior. The malformed refine return and inherited reviewer StructuredOutput show failures at those boundaries. |
+| Markov | Cross-service, long-running pipelines with recorded steps, gates and bounded fan-out | Explicit control and checkpoint state support operator visibility and recovery; there is more engine/deployment complexity, and external side effects still require idempotency and postcondition checks. |
+
+Evidence for Markov includes exact-source imports, nested fan-out, submitted
+job identity/log tracking, recorded failed tests, and the no-model feature
+check exercising failure → resume → gate → completion. New archive guards
+also ran successfully before the current Opus batch reset. Prior work
+exposed and repaired resume behavior, bundled-binary drift, callback auth
+stability and tracked-job cancellation. Current markovd cancellation evidence
+documents a remaining window before a newly submitted job's identity reaches
+the wait step. Current Markov callback code has bounded HTTP retries but can
+still drop events after retries or on unretried statuses; avoid repeating the
+old blanket claim that it has no callback retries. These are operational
+limits, not proof Markov cannot coordinate the pipeline.
+
+Checkpointing alone cannot guarantee exactly-once Jira writes: a crash
+after a successful POST but before recording completion can replay the
+operation. Stable identities, read-before-create/reconciliation, and explicit
+result validation are needed regardless of orchestrator. Markov completion
+also does not imply all business checks pass: our driver intentionally
+collects a failed S1 result and completes its evidence/reporting workflow.
+
+A third arm should expose create/refine/push/score/review as Markov steps,
+with script-validated results and per-strategy identities, using the same
+fixtures, skills, model and postconditions. Wrapping unchanged S1/S2 as one
+Markov job measures the wrapper rather than Markov's internal orchestration.
+No third arm or pipeline modification was implemented during the active
+Opus run.
+
+## 2026-10-11 — Markov development proposals
+
+The proposed engine/language features are maintained in Markov's
+[durable task orchestration plan](../../checkouts/markov/.ledger/plans/002-durable-task-orchestration.md).
+This evaluation plan retains the comparison evidence; implementation
+planning belongs to the Markov repository.
+
+## 2026-10-11 — Single S1 Opus batch completed; reviewer-return gate failed
+
+`markov-run-7845a7f1` completed **16:22:08.825 UTC / 12:22:08 EDT**.
+S1 job `script-run-workflow-all-claude-opus-4-6-1011-151014-95af64`
+completed **16:21:59 UTC**, after **4,305 seconds / 71.8 minutes**.
+All runner stages (pre, Claude, validation, post, release) exited zero.
+All three RFEs have exactly one strategy and recorded APPROVE review:
+RHAISTRAT-1 **8/8**, RHAISTRAT-2 **8/8**, RHAISTRAT-3 **7/8**.
+Locks were released, records agree, and all observed models match Opus 4.6.
+The Haiku refinement-return mismatch did not recur.
+
+**Benchmark result remains FAIL:** the sole failed check is
+`reviewer_outputs_returned`. Eleven of twelve specialist Skill calls return
+only `Skill execution completed`; the twelfth (RHAISTRAT-3 architecture)
+returns `API Error: Connection lost mid-response. The response above may be
+incomplete.` The current detector counts this nonempty error as returned,
+so its nominal 1/12 return count is not one substantive specialist review.
+Final review documents do contain substantive prose; the failing check
+specifically measures the Skill tool-result handoff. Whether reviewers'
+output was recovered through another path needs separate inspection.
+Successful job completion and APPROVE verdicts do not establish that this
+handoff worked or that the evaluation passed.
+
+Measured agents: create **3.4 min**; refinement **5.1 / 5.9 / 5.0 min**;
+scoring **3.8 / 4.0 / 2.8 min**; reviews **24.5 / 20.4 / 29.3 min**.
+Review 3 starts when review 2 frees a worker at 15:51:39 UTC. Reviews
+exceeded the historical single-ticket estimates and explain the overrun of
+the initial 40–60-minute planning range. Captured usage: **292 calls**,
+**172,332 output**, **12,346,641 cache-read**, **1,692,890 cache-write**
+tokens; zero reported rate limits. These are aggregate usage counts, not
+the primary agent's final context size.
+
+**Final archive verified and receipts published** by the automatic
+collector: `var/run-data/strat-workflow/markov-run-7845a7f1/20261011T162230677725Z/`.
+Manifest: final=true, complete=true, zero errors, **20 sources**, **2,517
+files / 1,210,005,016 bytes**. S1 browsable evidence includes **587 API
+dump files** and **1,471 strace files**, plus workflow streams/results,
+Jira, shared-service state, logs and relay telemetry. Capture interval:
+16:22:30.678–16:26:31.790 UTC. Collector verification returned ok=true,
+problems=[], receipts_published=true. No repeat or S2 was launched.
+
+**Connection-error follow-up:** relay telemetry contains 19
+`upstream_stream_error` failures at 120001–120003 ms, HTTP 200 and partial
+usage; 17 message IDs match S1 API dumps. No completed stream in this
+capture exceeds 120 s. The relay raises this classification when reading
+its upstream response stream, indicating a failure on its model-provider
+path. The deployment still specifies a 600 s timeout and the archived
+build ID matches the previously verified fixed source. The remaining
+120 s limit's origin is unresolved; deployment verification did not prove
+the fix effective. Details/evidence are recorded in
+`bugs/fixed/model-relay-120s-upstream-timeout.md`. This also qualifies the
+previous timing analysis: interrupted/retried streaming is a potential
+contributor to the long reviews, not simply normal model work. The single
+error string surfaced to the review parent is not the total upstream
+failure count. No model rerun or redeployment was performed.
+
+**Remaining timeout identified:** live `upstream-profiles` confirms
+`tanner-jc-personal` is a UI-managed OAuth account. Its separate constructor
+`checkouts/model-relay/src/accounts.rs:208` still supplies a hard-coded
+120 s timeout to reqwest. The earlier fix in `projects.rs` covered
+configured profiles, not this constructor. The relay's HTTP client thus
+ends these streams at its own 120 s deadline; it does not wait the
+configured 600 s. The generic `upstream_stream_error` classification masks
+timeouts during response-body reads and does not by itself prove the
+provider terminated the connection. The prior claim that the deployment
+fully fixed managed-account timeouts was too broad. Bug updated with
+source and live-routing evidence; no component change or redeployment.
+
+## 2026-10-11 — Remaining managed-account timeout fixed and deployed
+
+User authorized the relay fix. The UI-managed account constructor now
+uses the shared configured timeout. Stream read timeouts are classified
+as `timeout_error`; non-timeout read errors remain `upstream_stream_error`.
+Synthetic regression checks effective 1 s/3 s budgets against the same
+1.5 s SSE response through the managed-account client and production
+forwarder, including usage telemetry and a separate broken stream.
+All 29 tests, format and clippy pass, including the production image's
+pinned Rust toolchain checks. No paid model call or strategy rerun.
+
+`make host-rebuild-relay` succeeded; new pod
+`model-relay-f46688557-5tflw` started **16:54:20 UTC**, ready/zero restarts.
+Live health build fingerprint exactly matches tested source:
+`84bb7c79a09bfcb0c29dd7edd517605bfcf293994d95a9dbe4818a0fdc40b8c0`.
+Pod timeout remains 600 s, and the real managed OAuth account is restored.
+Private storage health is clean. The identified constructor bug is fixed;
+actual provider-stream behavior beyond 120 s awaits the next authorized
+run. Existing S1 evidence is preserved in its verified final archive.
+
+## 2026-10-11 — Single S1 Opus repeat launched after the relay fix
+
+User requested another S1 batch. Submitted exactly one unchanged three-RFE
+S1 Opus pass: **`markov-run-c5ba3904`**, database ID 568, started
+**17:04:21.986 UTC / 13:04:21 EDT**. Harness/import stays `2615e72e`,
+S1 source stays `1bd7f17`; only_tests=S1, tier2-opus, repeats=1,
+Opus 4.6 and 90-minute wait budget. No S2 or follow-on repeat.
+
+Before launch, the previous Opus final archive passed host checksums and
+the live reset guard recognized both earlier Haiku/Opus receipts. No active
+pipeline jobs or Markov runs; fixed relay build `84bb7c79...dc40b8c0`,
+private storage health clean. Seed
+`script-seed-scenario-all-claude-haiku-5-5-1011-170425-10f2cf` completed
+and exactly selected RHAIRFE-1/2/3. S1 job
+`script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed` is running.
+Actual K8s job batch size, expected keys, source pin, wait budget and
+MLflow experiment fields match the intended settings.
+
+Detached collector host PID **2460265**, started 17:06:25 UTC, waits for
+terminal state with `--wait 8100`, then captures/verifies/publishes receipts.
+Logs/state: `var/run-data/strat-workflow/markov-run-c5ba3904/`.
+Verified `launch-context/` additionally retains the exact uncommitted relay
+source, patch and deployment provenance (three files, 135,333 bytes), so
+the run remains reproducible if the component working tree later changes.
+Next: final evidence and analysis of >120 s streams, timeout classification,
+retries, runtime, reviewer handoffs, usage and primary context. The unchanged
+S1 reviewer-return bug can still fail the benchmark independently of the
+relay fix.
+
+## 2026-10-11 — Relay-fixed S1 repeat completed and archived
+
+`markov-run-c5ba3904` completed 17:55:49.922 UTC; S1 job finished
+**17:55:45 UTC / 13:55:45 EDT** after **51.2 min (3070 s)**.
+All runner stages exit zero. Exactly three strategies, one recorded review
+per RFE, all locks released and records consistent. All strategy model
+calls match Opus 4.6. Verdicts: **APPROVE 7/8, APPROVE 8/8, APPROVE 6/8**.
+The evaluation still **FAILS solely on reviewer_outputs_returned**.
+
+### Relay and runtime evidence
+
+The repaired relay records **335 complete requests and zero failures**:
+283 streaming generations (all join to S1 API responses), 50 token-count
+requests and two preflight generations. All captured records have the
+repaired build ID. **Seven streams complete beyond 120 s**, spanning
+**124.211–170.314 s**, all with complete usage and matching S1 response
+IDs. This confirms the 120 s managed-account deadline is removed. It does
+not exercise the full 600 s ceiling. No rate limits or storage loss/errors.
+
+| Measure | Pre-fix Opus batch | Relay-fixed Opus batch |
+| --- | --- | --- |
+| Job minutes | 71.8 | 51.2 |
+| Review agent minutes, strategies 1/2/3 | 24.5 / 20.4 / 29.3 | 15.2 / 19.0 / 16.3 |
+| Reported calls | 292 | 283 |
+| Output tokens | 172332 | 216778 |
+| Cache-read tokens | 12346641 | 11038816 |
+| Cache-write tokens | 1692890 | 1696541 |
+| Failed relay requests in capture | 19 | 0 |
+| Substantive specialist Skill returns | 0/12 (one error string counted nonempty) | 2/12 |
+
+Observed wall time decreases **20.6 min / 28.7%**, despite higher output
+token volume. This is a two-run observation with nondeterministic model
+work, not a guaranteed or isolated causal performance estimate. Concurrency
+remains a two-worker pipeline: review 1 starts while score 3 runs; review 2
+starts when score 3 finishes; review 3 starts when review 1 finishes.
+No connection-error retries are evident in the complete relay records;
+the reviewer gate records one launch per strategy/role, no reruns.
+
+### Persistent specialist return and scope defects
+
+Ten of twelve Skill tool results are only `Skill execution completed`.
+Two testability returns have substantive prose, but both assess the entire
+three-strategy batch despite being launched separately for strategies 1
+and 2. This is additional evidence that the handoff defect persists
+independently of relay failure, and that returned prose alone does not
+establish correct review scope. Scope drift is recorded separately in
+`bugs/open/strat-workflow-specialist-review-scope.md`; existing return-loss
+bug updated. Final reviews exist and approve all three; no S1/S2 change.
+
+### Primary workflow agent context
+
+Joined the six unique outer-stream assistant message IDs to relay records,
+separately from all helper calls. Measured input context:
+
+| Primary call | Input tokens | Meaning |
+| --- | --- | --- |
+| 1 | 24103 | Launch Workflow |
+| 2 | 24762 | End turn while background workflow runs |
+| 3 | 25584 | Resume after completion; attempt result-file read |
+| 4 | 25827 | List output files |
+| 5 | 26192 | Read pipeline progress/result |
+| 6 | 26887 | Final reply |
+
+There are **no primary model calls/polls** between completion of call 2 at
+17:05:02.590 UTC and call 3 at 17:55:16.548 UTC, about 50 minutes.
+Completion adds **822 tokens** relative to the pre-wait sample; subsequent
+checks add **1303**. Overall measured input growth is **2784 tokens**.
+Last measured input is **26.9k**, about 2.69% of the recorded 1M capacity;
+the final answer adds 161 output tokens. There is no sampled growth curve
+during the wait. The run's 11M cache-read usage is repeated aggregate
+billing/usage, not the primary context size. Other agent input samples reach
+167579 tokens, reinforcing the need to keep these conversations separate.
+
+### Final evidence
+
+Verified capture:
+`var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/`.
+Manifest final=true, complete=true, errors=[]; **20 sources, 2715 files,
+1267550579 bytes**. Browsable S1 **566 API dumps and 1710 strace files**;
+workflow results, Jira state, databases/files, service logs and relay
+telemetry included. Capture interval **17:56:15.928–18:00:46.133 UTC**.
+Collector report ok=true, problems=[], receipts_published=true. Separate
+verified launch-context snapshot preserves the uncommitted relay source
+and deployment provenance. No additional S1 or S2 was launched.
+
+## Tier 1 runtime interpretation after the complete relay repair
+
+The single-RFE measurements remain observations of the pre-fix stack;
+timeout-affected wall times are not clean baselines for the repaired stack
+or for comparing workflow designs. Opus S1 rounds had 0/1/2 cuts, versus
+S2's 0/4/6. Thus the raw means (27.0 versus 31.8 minutes) are confounded
+by unequal timeout exposure. The zero-cut first rounds, 24.6 and 24.0
+minutes, remain useful historical anchors, but do not alone establish
+current-stack performance or equivalence.
+
+Subtracting two minutes per cut is a rough diagnostic, not a replacement
+measurement: interrupted work, retries and model variation prevent exact
+reconstruction of the counterfactual runtime. The tier 2 batch's observed
+28.7% decrease must not be used as a correction factor for tier 1.
+Recorded Haiku rerun data has two cuts in S1 round 1 and none in the other
+rounds; the earlier wiped smoke lacks raw evidence to certify its status.
+
+Retain the historical results labeled pre-fix. If current-stack single-RFE
+timings are required, the minimal matched check would be one Opus pass per
+design with the same scenario and pins, archived relay evidence and no
+timeout failures. Such a pair would be a sanity check, not a statistical
+comparison. No new runs are authorized or launched by this analysis.
+
+## Single S2 Opus batch launched on the repaired relay
+
+User authorized one batched S2 pass on 2026-10-11, following the repaired
+S1 analysis. Submitted `markov-run-6bcb3c32` at **18:19:35 UTC / 14:19 EDT**:
+tier2-opus, only_tests=S2, repeats=1, same three fixtures and harness
+`2615e72e`. Prior archives verify and both reset guards pass; repaired
+relay build `84bb7c79…` remains ready. No S1/S2 source changes.
+
+S2 job `script-strategy-entrypoint-all-claude-opus-4-1011-181949-e387e8`
+is running on native bash entrypoint pin `0287b838`, Opus 4.6. Seed passed;
+native discovery found/locked RHAIRFE-1/2/3. API dumps, strace, MLflow and
+OTel enabled. One detached collector (PID 2550958) saves final system/run
+evidence under `var/run-data/strat-workflow/markov-run-6bcb3c32/`; verified
+launch-context preserves exact relay source/deployment provenance. Final
+capture and comparison with S1 pending; no repeats or additional tests.
+Task: `tasks/done/strat-workflow-tier2-s2-opus-pass.md`.
+
+## Relay-fixed S1 batch token cost
+
+For `markov-run-c5ba3904` (51.2 min, three RFEs), archived evaluation usage
+agrees with all 283 Opus streaming generation records in the relay capture.
+Totals cover the primary workflow agent and all helpers/specialists.
+Count-token operations and the two small non-Opus preflight probes are
+excluded from the S1 inference total.
+
+| Category | Tokens | USD per million | List-price equivalent |
+| --- | --- | --- | --- |
+| Uncached input | 1880 | 5.00 | $0.0094 |
+| Cache writes, 5-minute TTL | 1696541 | 6.25 | $10.6034 |
+| Cache reads | 11038816 | 0.50 | $5.5194 |
+| Output | 216778 | 25.00 | $5.4195 |
+| Total | 12954015 | — | **$21.5516** |
+
+Average **$7.18 per RFE**. Relay usage explicitly records zero 1-hour cache
+write tokens, so the 5-minute write rate applies to all cache creation.
+Rates verified 2026-10-11 against
+[Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing).
+This is standard API list-price equivalent; the run used the managed
+Claude OAuth account, so it is not a measured invoice or subscription-limit
+charge. These were ordinary streaming calls, without the provider Batch
+API discount. Cached input is repeated usage across calls, not a single
+12.9M-token context or unique source volume.
+
+### Comparison with historical single-RFE S1 Opus
+
+The three tier 1 S1 runs have a recorded total list-price equivalent of
+$20.84 (see "How much confidence do 3 runs buy?"), averaging **$6.95 per
+RFE**. The repaired-relay batch is **$21.55 total / $7.18 per RFE**, about
+**$0.24 or 3.4% higher per RFE**. This is approximately the same per-RFE
+cost, without evidence of a substantial batching saving.
+
+Calls decreased from 318 across the three single-RFE runs (106 per RFE)
+to 283 for the batch (94.3 per RFE), about 11% fewer. Batch output averages
+72.3k tokens per RFE versus approximately 62.8k historically, about 15%
+more. Cache writes per RFE remain approximately 570k versus 565.5k;
+cache reads approximately 3.63M versus 3.68M. Thus fewer calls do not imply
+lower token cost in these observations.
+
+Limits: tier 1 repeated the KServe canary/rollback fixture; tier 2 uses
+three different capabilities. The historical runs had 0/1/2 relay cuts,
+and their recorded usage is not an independently reconciled invoice for
+interrupted requests. This is a comparison of recorded usage at the same
+rates, not a controlled estimate of batching efficiency on the fixed stack.
+
+## S2 batch ended on an upstream account limit
+
+`markov-run-6bcb3c32` finishes its driver/reporting workflow at
+**19:15:42.682 UTC**. S2 job
+`script-strategy-entrypoint-all-claude-opus-4-1011-181949-e387e8`
+**fails**, exit 1 at **19:15:33 UTC / 15:15:33 EDT**, after **3344 s /
+55.7 min** from job creation. Script-only elapsed is 3334 s. The failed
+job's evaluation metadata has completed=null, so duration is derived from
+the job creation timestamp and explicit archived runner finish line.
+
+The terminal error is **HTTP 429: "This request would exceed your account's
+rate limit. Please try again later."** It occurs while the second strategy's
+review parent is about to assemble its final review after specialist work.
+Claude child exits 1 and the bash script aborts before reviewing strategy 3.
+All owned RFE locks are released. This is the same type of account-limit
+interruption seen in tier 1's initial S2 Opus round 3, separate from the
+repaired relay deadline. No repeat or recovery run was launched.
+
+### Persisted state and checks
+
+All three RFEs have distinct, created/refined strategies. RHAISTRAT-1 has
+published **APPROVE 7/8**. RHAISTRAT-2's scorer/specialists ran but no final
+review was published; RHAISTRAT-3 has no dedicated review. Failed checks:
+finished, steps_done, one_review, records_agree, reviewer_outputs_returned.
+Markov completed status denotes the completed reporting harness, not a
+successful S2 workload.
+
+### Relay and token cost
+
+Archive contains **235 relay records: 234 complete, one failed**, all from
+repaired build `84bb7c79…`. Only failure is rate_limit_error, HTTP 429,
+request **32d8fb77-a78d-404e-bbdb-627f2f56865d**, at
+19:15:25.737–19:15:25.960 UTC (222 ms), real managed Claude OAuth profile
+`tanner-jc-personal`; upstream request ID recorded. There are **no timeout
+or stream errors**. All **187 completed S2 streaming generation** message
+IDs match archived API responses; one further streaming request is rejected.
+Seven successful streams exceed 120 s, longest **186.484 s**. Relay health
+reports zero drops, storage errors and pending writes.
+
+| Measure | Repaired S1 batch | Repaired S2 attempt |
+| --- | --- | --- |
+| Job duration | 51.2 min | 55.7 min, then abort |
+| Created/refined strategies | 3 | 3 |
+| Published final reviews | 3 | 1 |
+| Completed streaming model calls | 283 | 187 |
+| Uncached input | 1880 | 227 |
+| Cache writes, all 5-minute | 1696541 | 1403324 |
+| Cache reads | 11038816 | 8655663 |
+| Output | 216778 | 168170 |
+| Standard API list-price equivalent | $21.5516 | $17.3040 spent before abort |
+| Relay failures | 0 | 1 account HTTP 429 |
+| Benchmark result | FAIL: reviewer-return gate | FAIL: incomplete reviews/job and return gate |
+
+At the same verified Opus rates, S2's incurred $17.30 is not a complete
+batch cost and cannot establish savings against S1. This is not a clean
+comparison of end-to-end timing or quality because S2 was interrupted.
+Subscription billing and actual quota consumption are not inferred from
+the API list-price equivalents.
+
+### Specialist evidence and evaluation limits
+
+Eight specialist Skill launches for strategies 1/2 return nonempty text;
+**seven substantive assessments all cover all three strategies** despite
+individual-target launches. Feasibility/testability/scope for target 1 and
+all four roles for target 2 have explicit headings for RHAISTRAT-1/2/3.
+This reproduces scope drift in S2; the finding now spans both designs.
+API request evidence: `7b43b84e-238e-466e-871e-cc1a5a23b8ec.request.json`
+and `09cf2531-d9ad-42e0-aed4-125b81b1b889.request.json`.
+
+Target 1 architecture returns only a 170-character message saying it has
+launched four research agents and will wait before composing the review.
+The detector marks it returned=true despite no assessment in that result.
+Recorded a separate gate bug for status/error false positives; this does
+not establish whether later asynchronous work arrived via another path.
+Target 3 roles have no launches, so the overall return gate fails anyway.
+No S1/S2 or benchmark implementation change.
+
+### Final archive
+
+Collector completed; independent host verification passes, receipts published:
+`var/run-data/strat-workflow/markov-run-6bcb3c32/20261011T191550355513Z/`.
+final=true, complete=true, errors=[]; **20 sources, 2457 files,
+1382240358 bytes**, including browsable S2 **376 API files and 1774 strace
+files**. Capture interval **19:15:50.356–19:19:56.927 UTC**. Launch-context
+provenance retained. Task moved to done for the completed authorized attempt,
+archive and analysis; workload outcome remains failed. No further run.
+
+## Account-budget completion is a benchmark metric
+
+2026-10-11 user observation: **we could not finish the L1 Opus campaign
+(three iterations per design) within the available Anthropic five-hour
+usage allowance.** Record this operational outcome alongside token cost,
+runtime, output quality and handoff correctness. A campaign whose active
+execution fits inside five hours can still exceed that window's account
+usage allowance and require a reset before completing.
+
+Evidence: tier 1's original third S2 Opus attempt was rejected after about
+610 accumulated Opus calls, with two account-limit 429s at 02:11:36 UTC.
+It failed after approximately ten minutes and needed a separately authorized
+rerun after the limit reset. Six successful single-RFE runs were eventually
+obtained, but the original campaign did not finish uninterrupted on the
+available allowance. The later tier 2 S2 attempt also aborts on an account
+429 after preceding Opus work, leaving only one of three final reviews.
+
+Limits: these are observed campaign outcomes on a shared managed OAuth
+account. We did not measure a fresh, otherwise idle five-hour window's
+remaining allowance at launch. Therefore the evidence does not establish
+that every isolated L1 campaign necessarily exceeds a full allowance, nor
+that approximately 610 calls is a fixed quota threshold. Call count and
+API list-price equivalent are usage descriptors, not a measured conversion
+to the subscription's allowance.
+
+For future authorized campaigns, report:
+
+- Whether all planned iterations finish before an account-budget rejection.
+- Planned versus completed runs/RFEs and partial work at the first rejection.
+- Calls, token categories and elapsed time accumulated before the first 429.
+- Account allowance/reset observations at launch and rejection, when available;
+  distinguish unmeasured/shared prior use from an isolated fresh window.
+- Reset waiting time and repeats needed, so campaign elapsed time includes
+  account-limit delays as well as active job runtime.
+
+This metric requires no change to S1/S2. It is a constraint on practical
+evaluation and production throughput under our current account allowance;
+no further test, recovery run or account change is authorized by this note.
+
+## GLM compatibility validation authorized
+
+2026-10-11: with EnMaaS model routing deployed, user authorized exactly one
+single-RFE iteration each of S1 and S2 on `rits/zai-org/glm-5-3`, using medium
+effort. S1 first, archive/analyze, then S2 separately. This is compatibility
+validation, not another three-ticket batch or a quality/cost A/B campaign.
+Keep both implementation pins unchanged and preserve all evidence.
+
+Harness adds isolated `glm-smoke` with one selected design/repeat and no artifact
+wipe. A tiny job wiring check precedes S1 and is included in that run's archive.
+Explicit helper/default alias env avoids the existing wrapper's `claude-*`-only
+pinning. Jobs retain their Vertex relay credentials and built-in project;
+private EnMaaS credentials stay server-side. GLM-only identity checks require the
+exact hosted request ID, allowing the verified `zai-org/GLM-5.3` response spelling.
+Reconcile actual routing separately from relay telemetry, including helper calls.
+
+[Task](../tasks/done/strat-workflow-glm-single-passes.md). No run launched yet.
+
+### GLM S1 single-RFE result
+
+Published harness `7f4362ec65a56cbf8c58da1cda76acb775a9b055`; separate
+`glm-smoke` tier preserves tier 1/2 and both design pins. Markov run
+`markov-run-23df27ac`, S1 job
+`script-run-workflow-all-glm-5-3-1011-224849-152aa2`, 22:48:49–23:29:15 UTC
+on 2026-10-11, **2426 seconds / 40.4 minutes**. Tiny GLM job wiring check
+and one-RFE seed passed first. All single-RFE smoke checks pass: one created,
+refined/pushed strategy, APPROVE 6/8 review, consistent label/comment, released
+locks, exact GLM request IDs and verified response spelling. No extra iteration.
+
+180 request/response pairs; provider-reported usage: 740791 uncached input,
+7258112 cache-read input, zero cache writes, 179890 output tokens. No API errors,
+missing/unreadable responses or Claude helpers. Relay has 198 records including
+wiring/counting, all `rits/zai-org/glm-5-3` on `enmaas-personal`, no errors.
+No GLM price/invoice inferred, and the absence of a separate thinking count does
+not prove absence of reasoning. Native CLI duration excludes background workflow
+work; use job wall time rather than its approximately 45-second result duration.
+
+**Known S1 defect reproduces:** all four specialist Skill results contain only
+completion acknowledgements (100/100/94/101 characters). Captures contain 11
+StructuredOutput calls overall. The reviewer-return detector fails when applied
+manually; tier 1's smoke pass does not establish reviewer handoff correctness.
+No S1/S2 changes were made. GLM transport compatibility does not repair PR #83.
+
+**New telemetry limitation:** EnMaaS response IDs are `chatcmpl-...`, discarded by
+relay `msg_`-only filtering, so exact generation-ID reconciliation gives 0/180.
+Job API indexes retain original IDs; isolated time/account scope confirms routing.
+[Deferred bug](../bugs/open/model-relay-enmaas-message-id-not-recorded.md).
+Two MLflow traces in experiment 9 report OK; API dumps still cover subagents.
+
+Final archive independently verified and receipts published, before S2 reset:
+`var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/`.
+Complete/final=true, errors=[], 21 sources, 1931 files, 1304175093 bytes;
+361 browsable S1 API files, 1197 strace files. S2 is separately authorized and
+will use the same exact model, scenario and repeat count after this analysis.
+
+### GLM S2 result and compatibility comparison
+
+After S1 archive/analysis, one separate POST at 2026-10-11 23:37:40.618 UTC
+created `markov-run-428f237a`, source `7f4362e`. S2 job
+`script-strategy-entrypoint-all-glm-5-3-1011-233753-27ed46` runs
+23:37:53 UTC–2026-10-12 00:23:59 UTC, **2766 seconds / 46.1 minutes**, exit 0.
+Same single-RFE fixture and exact hosted model, medium request effort, original
+S2 pin `0287b838d2bc59a2569cf2dd971aad7ad2d76dad`. All smoke/model gates pass,
+APPROVE 6/8, one created/refined/pushed strategy and released locks.
+
+| Metric | S1 GLM | S2 GLM |
+| --- | --- | --- |
+| Benchmark iterations / RFEs | 1 / 1 | 1 / 1 |
+| Smoke outcome | PASS | PASS |
+| Published review | APPROVE 6/8 | APPROVE 6/8 |
+| Job wall time | 2426 s / 40.4 min | 2766 s / 46.1 min |
+| Request dumps / successful responses | 180 / 180 | 143 / 141 |
+| Provider-reported uncached input | 740791 | 790961 |
+| Provider-reported cache-read input | 7258112 | 7814144 |
+| Provider-reported cache writes | 0 | 0 |
+| Provider-reported output | 179890 | 206070 |
+| Specialist assessments returned | 0/4 (acknowledgements only) | 4/4 substantive |
+| StructuredOutput calls | 11 | 0 |
+| Relay incomplete streams / cancellations | 0 / 0 | 1 / 1 |
+| Same-model non-stream fallback responses | 0 | 1 |
+| HTTP 429s | 0 | 0 |
+
+S2's 162 relay records all use GLM on `enmaas-personal`: 142 streaming
+attempts (140 complete, one failed, one cancelled), one complete non-stream
+generation and 19 complete count requests. They reconcile with the job's
+143 request files / 141 response files. No Claude-model requests or Anthropic
+account usage. Source API response-only errors={} is not clean-stream evidence:
+two attempted streams have no successful response dump.
+
+The incomplete stream is relay `16e8d603-1e7d-44ee-8774-6e21a87a9fc7`, HTTP
+200, starts 23:55:12.463, ends `incomplete_upstream_stream` after 48381 ms.
+`06e2b7fa-ed2f-4eb9-bbf6-3ef0eaa7edad` starts 23:58:29.875 and becomes
+cancelled after 323979 ms. Neither is an observed 600-second relay timeout.
+The exact reason for cancellation and the incomplete-stream root cause remain
+unresolved. The client recovers within this single attempt: streaming request
+`42606e7c-77da-4ea7-84d0-3c479a3dcf9b.request.json` and non-streaming request
+`929c9558-d65b-412b-a509-22bd209e965b.request.json` differ only in `stream`.
+The latter succeeds at 00:04:37.094 UTC, model echoes the exact hosted ID,
+stop_reason=tool_use, 3584 output tokens. All other successful response bodies
+report `zai-org/GLM-5.3`. [Stream investigation](../bugs/open/enmaas-strategy-stream-incomplete.md).
+
+S2 four Skill returns contain 12439/7859/5488/11399 chars of substantive
+feasibility/testability/scope/architecture assessment. Manual return gate passes;
+this does not prove verbatim preservation in the final published summary. S1
+forked reviewers all selected approve in StructuredOutput; feasibility also set
+needs_attention=true. Those fields, like the absent prose, were not delivered
+in the acknowledgement-only Skill result; the final review helper returns
+needs_attention=false. Do not infer an intentional flag override from this alone.
+
+A S2 reviewer examines earlier archived review files under shared
+`artifacts/RHAISTRAT/2026*/` and identifies one as a pre-refinement version;
+its final assessment identifies the current refine_count=1 strategy. This is
+prior-artifact access, not proof it used an incorrect strategy. Retained artifacts
+and reused Jira keys limit the isolation of this validation. S2 is 5.7 minutes
+longer in this pair despite fewer successful model calls; n=1, recovery and
+review-context differences prevent a general runtime/quality comparison.
+GLM billing rates, cache billing semantics, context capacity and actual reasoning
+budget remain unverified; native client's assumed prices/limits are not evidence.
+
+Final S2 capture independently verifies, receipts published:
+`var/run-data/strat-workflow/markov-run-428f237a/20261012T002415035434Z/`.
+Complete/final=true, errors=[], 20 sources, 1700 files, 1310235963 bytes;
+285 browsable API files, 1190 strace files. Two MLflow traces in experiment 10
+report OK; raw API dumps cover subagents. Relay message-ID joins are 0/141,
+so routing/error reconciliation uses isolated run/account/time scope and counts.
+
+Both authorized one-iteration GLM passes are complete. Job env pinning and
+existing Vertex relay credentials work without exposing the private EnMaaS key
+to jobs or changing S1/S2. GLM compatibility is established for these attempts;
+S1's reviewer contract remains defective and S2's stream recovery deserves
+follow-up. No extra iteration, provider redeploy or design change was performed.
+
+### S2 tier 2 Opus repeat after account rate-limit reset
+
+User reports the rate-limit window has passed and requests the outstanding
+level 2 S2 run. One iteration authorized; no design changes or automatic paid
+retry. Cluster idle, all six prior design jobs have verified final archive
+receipts, managed Anthropic auth ready. Auth readiness does not measure quota.
+
+One POST at 2026-10-12 00:50:22 UTC creates `markov-run-79d3241a`, harness
+`7f4362e`, tier2-opus / S2 / opus / repeats=1 / wipe_at_start=false. Both
+archive guards and distinct three-RFE seeding pass. S2 job
+`script-strategy-entrypoint-all-claude-opus-4-1012-005035-b81781` starts
+00:50:35 UTC on original pin `0287b838d2bc59a2569cf2dd971aad7ad2d76dad`,
+batch_size=3, expected keys RHAIRFE-1/2/3. Early evidence: 42 requests all
+claude-opus-4-6, 41 successful response dumps, no response error bodies.
+The batch is still running; no terminal outcome inferred.
+
+Detached archive collector PID 3021536 waits for terminal run/jobs and will
+collect/verify/publish receipts under
+`var/run-data/strat-workflow/markov-run-79d3241a/`. Launch context saved.
+[Task](../tasks/done/strat-workflow-tier2-s2-opus-rate-limit-retry.md).
+Compare the completed three-strategy review coverage, actual specialist returns,
+scope drift, runtime, usage and relay failures with the earlier 429-aborted
+S2 run before drawing S1/S2 conclusions. Final capture/analysis pending.
+
+#### Completed S2 Opus batch: PASS, with reviewer scope drift
+
+Job finished 2026-10-12 02:19:18 UTC (22:19:18 EDT on Oct 11), exit zero;
+**5323 seconds / 88.7 minutes**. Markov reporting finished 02:19:25.651 UTC.
+All benchmark gates pass, failed_checks=[]. Three distinct RFEs have exactly
+one linked created/refined/published strategy and one final review each:
+RHAISTRAT-1 APPROVE 7/8, RHAISTRAT-2 APPROVE 7/8, RHAISTRAT-3 APPROVE 6/8.
+Labels/comments agree and all locks released. Third review explicitly retains
+testability=revise and unresolved implementation questions alongside aggregate
+approve / needs_attention=false; the aggregate verdict is not unanimous
+specialist approval or proof the implementation is ready.
+
+**12/12 substantive specialist Skill returns**, 8952–18350 characters excluding
+wrappers; none are acknowledgements or progress-only messages. Every return has
+separate assessment headings for RHAISTRAT-1/2/3 despite a single-strategy
+launch target. The known scope-drift bug reproduces for all roles and targets.
+The detector passes the handoff; intended per-target isolation remains broken.
+This attempt provides a complete batch outcome, without fixing either design.
+
+| Metric | Repaired S1 Opus | Completed S2 Opus repeat |
+| --- | --- | --- |
+| RFEs / iterations | 3 / 1 | 3 / 1 |
+| Benchmark outcome | FAIL reviewer return gate | PASS |
+| Job wall time | 3070 s / 51.2 min | 5323 s / 88.7 min |
+| Successful captured generation calls | 283 | 248 |
+| Substantive specialist results | 2/12 | 12/12 |
+| Cache-write input | 1696541 | 1945238 |
+| Cache-read input | 11038816 | 9882208 |
+| Output tokens | 216778 | 264161 |
+| Published scores | 7/8, 8/8, 6/8 | 7/8, 7/8, 6/8 |
+| Rate-limit / stream failures | 0 / 0 | 0 / 0 |
+
+S2 uncached input: 115760. Checker reports 71211 thinking tokens, included in
+output rather than additive. All 248 API request/response pairs report Opus 4.6
+and join exactly to complete relay streaming records. S2 is 37.6 minutes longer
+in this pair while generating fewer calls and more output. Different returned
+content, repeated full-batch reviews, retained artifacts, relay builds and n=1
+prevent attributing the runtime difference to orchestration alone. The prior
+55.7-minute S2 abort is not a complete runtime or cost estimate. No new price
+quote or billed-cost inference made here.
+
+Relay capture contains 319 complete records, HTTP200, usage_status=complete,
+observation_error=null, all on tanner-jc-personal: 248 Opus streaming generations,
+63 Opus count requests, and eight tiny non-stream generations (four Haiku4.5,
+four Sonnet4.5, each 22 input / 1 output). The tiny messages are outside the
+job API pairs; exact caller remains unestablished, so keep them separate from
+strategy usage. No 429, timeout, incomplete stream or cancellation. Twelve
+Opus streams successfully exceed 120 seconds, maximum 276.825 seconds.
+
+Final capture independently verifies and receipts are published:
+`var/run-data/strat-workflow/markov-run-79d3241a/20261012T021947729737Z/`.
+Complete/final=true, errors=[], 20 sources, 3029 files / 1711015450 bytes.
+S2 has 497 browsable API files (496 bodies + index) and 2136 strace files,
+with MLflow, Jira, Observatory, logs and full available system snapshots.
+Launch context preserved separately. This authorized repeat is complete;
+no extra inference run or S1/S2 code change.
+
+### Comparison: completed Opus tier 2 S1 versus S2
+
+Comparison uses relay-fixed S1 `markov-run-c5ba3904` and completed S2
+`markov-run-79d3241a`: three identical RFE problem statements, one iteration
+per design, preserved original design pins. The earlier S2 HTTP429 abort and
+pre-fix S1 measurements are historical failures, excluded from the completed
+pair. Both captures are verified. Different harness/relay source versions,
+retained artifacts and stochastic model work limit controlled inference.
+
+| Metric | S1 Workflow | S2 bash |
+| --- | --- | --- |
+| Job duration | 3070 s / 51.2 min | 5323 s / 88.7 min |
+| Completed strategies/refinements/reviews | 3/3 each | 3/3 each |
+| Runtime exit | 0 | 0 |
+| Benchmark outcome | FAIL reviewer return gate | PASS |
+| Transport / quota failures | 0 | 0 |
+| Substantive specialist handoffs | 2/12 | 12/12 |
+| Whole-batch scope drift | Both substantive returns | All 12 substantive returns |
+| Captured Opus generations | 283 | 248 |
+| Uncached input tokens | 1880 | 115760 |
+| Cache-write input, 5-minute | 1696541 | 1945238 |
+| Cache-read input | 11038816 | 9882208 |
+| Output tokens, including thinking | 216778 | 264161 |
+| Thinking subset, reported | 71296 | 71211 |
+| API list-price equivalent | $21.55163925 | $24.28166650 |
+| Equivalent per RFE | $7.18 | $8.09 |
+| Published scores, strategies 1/2/3 | 7/8, 8/8, 6/8 | 7/8, 7/8, 6/8 |
+
+Cost recomputed directly from archived eval-result usage and exact joined
+relay generation IDs (283/283 and 248/248). Both record exclusively 5-minute
+cache creation, zero 1-hour writes. Standard global Opus4.6 rates reconfirmed
+2026-10-12: $5 uncached input, $6.25 cache writes, $0.50 cache reads and $25
+output per million, [official pricing](https://platform.claude.com/docs/en/about-claude/pricing).
+This is an API list-price equivalent for managed Claude OAuth workload, not
+a measured subscription invoice or consumption of its five-hour allowance.
+Provider Batch API discounts do not apply to this ordinary streaming batch.
+Count operations and separately captured tiny non-Opus generations are excluded.
+
+Cost components (uncached/write/read/output): S1
+$0.009400/$10.603381/$5.519408/$5.419450; S2
+$0.578800/$12.157738/$4.941104/$6.604025.
+S2 has 12.4% fewer generation calls but 21.9% more output and more cache writes;
+its equivalent cost is $2.73 / 12.7% higher. Aggregate input is 12.737M versus
+11.943M, repeated across separate conversations, not a context-window size.
+Thinking is already inside output; never add the subset a second time.
+
+S2 takes 37.55 extra minutes / 73.4% longer in this pair. S1's two-worker
+pipeline overlaps scoring/review work; its three review tasks take about
+15.2/19.0/16.3 minutes individually. S2's archive index identifies three
+successive review sessions (first/last response timestamps):
+01:11:14–01:27:54, 01:28:21–01:50:50, 01:51:17–02:18:49 UTC.
+Its first review starts after the three successive refinement sessions.
+These are measured scheduling differences; returned content, scope duplication
+and request latency also differ, so concurrency is not an isolated causal
+estimate of the full 37.55-minute gap.
+
+**Accuracy interpretation:** both satisfy artifact cardinality, labels/comment
+agreement and cleanup checks. S2 demonstrably preserves 12 substantive
+specialist returns while S1 delivers only two and loses ten handoffs. S1
+nevertheless publishes complete-looking specialist sections; their existence
+does not establish faithful incorporation of the forked assessments.
+Neither passing handoffs nor passing the benchmark proves verbatim review
+fidelity or technical truth. Every substantive handoff in this pair expands
+beyond its per-strategy target. Reported rubric scores are model judgments
+about different generated strategies, not independently scored accuracy.
+
+Both designs publish aggregate approve despite at least one specialist revise:
+S1 strategy1 testability=revise; S2 strategy1 testability=revise, strategy2
+feasibility=revise, strategy3 testability=revise. Aggregate needs_attention=false
+does not establish unanimous reviewer agreement. Third-strategy unresolved
+implementation questions remain visible in prose. No ground-truth or independent
+expert assessment has been performed for these outputs. The one-point
+difference in strategy2's score does not establish greater accuracy in S1.
+
+Interpretation: S1 is faster and cheaper in this pair, but fails the reviewer
+handoff contract. S2 has stronger observed handoff correctness and a complete
+benchmark pass, at longer duration and modestly greater equivalent cost.
+Both need specialist scope isolation; factual strategy accuracy remains
+unmeasured. No new run or implementation change performed for this comparison.
+
+#### Scheduling confirmed from archived workflow code and exact request joins
+
+S1's executed JavaScript is embedded in the local_workflow task_started prompt
+in archived workflow/stream.jsonl. It explicitly calls `parallel()` for
+per-strategy refinement and `pipeline()` for score then review. Actual request
+intervals confirm two concurrent top-level strategy tasks; this is coordination
+by the workflow JavaScript rather than repeated primary-model decisions.
+
+S1 relay generation IDs joined through API index.jsonl give these UTC intervals:
+refine1 17:08:21–17:15:31, refine2 17:08:24–17:14:48, refine3
+17:14:48–17:20:40. Score1/2 begin together at 17:20:54/56. Score3 starts
+17:23:18; review1 starts17:23:39 alongside it. Review2 starts17:26:30 after
+score3; review3 starts17:38:51 after review1. Review ends respectively
+17:38:51, 17:45:27, 17:55:10. Combined score/review span is about34.3min.
+
+S2's archived API index and agent log show three sequential refinements followed
+by three sequential review sessions, whose internal scoring is included in
+each review. Review1/2/3 begin about01:11, 01:28, 01:51 UTC and end about
+01:28, 01:51, 02:19. Combined score/review span is about68min.
+The roughly34-minute phase-span difference accounts for most of the observed
+37.55-minute wall gap, but does not isolate concurrency's causal contribution:
+individual task durations and output content also differ, and S1 loses10/12
+specialist handoffs. Bash can implement concurrency; the observed sequential
+scheduling is a property of this pinned S2 implementation.
+
+#### Insight: specialist completion and delivery of findings are separate
+
+"Lost specialist handoffs" describes missing assessment content in the Skill
+tool result delivered to the agent assembling a strategy's final review.
+That receiving agent is a review step agent, rather than the outer S1 agent
+that launched the JavaScript workflow. Each strategy invokes four specialists:
+feasibility, testability, scope and architecture.
+
+In relay-fixed S1 `markov-run-c5ba3904`, ten of twelve specialist calls return
+only `Skill execution completed`; two return substantive assessments. The
+specialists ran and their work is present in captured evidence, but those ten
+tool results carry no findings, concerns or recommendation. Completed S2
+`markov-run-79d3241a` returns substantive assessments through all twelve
+expected handoffs. This separates task execution from result delivery.
+
+S1 nevertheless publishes final documents containing specialist sections.
+It remains unverified whether those sections faithfully incorporate the
+specialists' findings through another route or are reconstructed by the
+receiving agent. Missing tool-result prose does not establish that the
+underlying assessment was deleted, nor that the published prose was fabricated.
+Establishing provenance would require tracing alternate reads/messages and
+comparing specialist findings with the final published sections.
+
+Consequently, exit zero, task-completed notifications and APPROVE verdicts
+cannot substitute for checking the returned assessment and its incorporation.
+Execution, result delivery, target scope and final review fidelity are separate
+properties. S1 fails the observed delivery check; S2 passes delivery while
+still exhibiting whole-batch scope drift. Parallel scheduling alone does not
+explain the handoff defect, and this evidence does not establish a causal link
+between concurrency and missing findings.
+
+Related: [reviewer output loss](../bugs/open/strat-workflow-reviewer-output-loss.md),
+[reviewer scope drift](../bugs/open/strat-workflow-specialist-review-scope.md).
+
+### Production recommendation after benchmark and binary investigation
+
+Recommendation, awaiting an implementation decision: use the bash-based design
+as the production foundation, with explicit agent invocations and externally
+validated, persisted results. Preserve current benchmark pins; this is advice,
+not authorization to modify S2 or deploy a new production pipeline. The current
+S2 still requires hardening, especially specialist scope isolation.
+
+The completed Opus pair favors S1 for speed/equivalent cost (51.2min/$21.55
+versus 88.7min/$24.28), but favors S2 for observed delivery of specialist
+assessments (12/12 versus 2/12). The GLM single-RFE pair reproduces the same
+direction for reviewer delivery: S1 acknowledgement-only returns versus S2
+four substantive results. These are limited observations rather than proof
+of universal behavior or independent factual accuracy. Missing handoffs matter
+more to production review integrity than the observed speed advantage.
+
+Claude Workflow itself executes deterministic JavaScript and provides useful
+parallel/pipeline helpers, journals and cached-prefix replay. Its core is not
+an LLM choosing every scheduling decision. However, the tested integration
+adds script-to-agent schemas, nested Skill returns, background completion and
+session restoration boundaries. Binary controls show that rejected parallel
+branches can become null while the outer workflow completes. Journal replay
+is useful, but cross-process restoration/concurrent resume was not exercised;
+the inspected local path had null total token budget and no separately
+identified total workflow deadline. Those observations do not mean every
+Claude invocation lacks timeout or budget controls.
+
+An external script runner makes invocation status, output validation,
+checkpointing, cancellation and publication rules directly inspectable and
+testable. It still must implement them; neither exit zero nor prose that
+looks complete proves the business task succeeded. Anthropic documents
+programmatic CLI JSON output and schema-constrained results, which can support
+these boundaries, without replacing application-level validation:
+[headless interface](https://code.claude.com/docs/en/headless).
+
+Recommended hardening before production:
+
+- Persist each specialist assessment with run/strategy/role identity and
+  validate target scope, required findings and completion before composition.
+  Verify the final review incorporates those findings and explicit dissent.
+- Add bounded concurrency for independent strategy stages, with separate
+  artifact paths and controlled shared writes. S1's scheduling advantage can
+  be adopted without requiring its native Workflow result boundaries; do not
+  promise an unmeasured future speedup.
+- Persist checkpoints and make publication idempotent; enforce external
+  deadlines, bounded retries and quota-aware pause/resume. The earlier S2
+  account429 is an infrastructure constraint, not a bash-specific defect.
+- Retain the proven run archives and require validated business results,
+  rather than process/workflow completion, to mark a pipeline successful.
+
+Keep bash as a thin execution layer under the existing operational job/run
+infrastructure; avoid growing a single shell script into the whole durable
+workflow service. Reconsider native Claude Workflow after reproducible tests
+establish faithful nested-result delivery, target isolation, fail-closed
+handling, restart/cancellation behavior and enforced limits for the exact
+deployed version. No extra model run or implementation change made here.
+
+### 2026-10-12: Production-gap investigation, first two priorities
+
+Twenty deterministic result-boundary matrix cases and a configured-agent
+workaround now reproduce and explain missing specialist Skill returns in pinned
+Claude2.1.296. Forks inherit the receiver's StructuredOutput tool/schema. A
+tool-ending specialist loses earlier prose/structured fields through the Skill
+last-assistant-text projection and returns an acknowledgement. Prose-ending
+controls deliver. Ordinary CLI --json-schema also reproduces: this is not a
+Workflow scheduling defect, and shell orchestration is not intrinsically immune.
+A custom specialist agent with an explicit tool whitelist excluding
+StructuredOutput returns prose while preserving the receiver's outer schema.
+Direct schema assessment calls also avoid the nested projection. Both remain
+subject to required-result and target validation; no S1/S2 edit was made.
+
+Read-only provenance audit covers12S1/12S2 Opus and4S1/4S2 GLM calls. S1 Opus
+ten acknowledgement-only endings use SO; its two delivered testability endings
+use text. S2 Opus has no SO tool in inspected specialist requests and returns12
+reports. S1 GLM explicitly recovers earlier text from native transcripts after
+four missing expected returns: three full selected bodies and substantial
+architecture prose arrive through Bash/Read. Some S1 Opus published sections
+instead closely follow scorer material read before specialist launches.
+Missing expected return prose does not establish fabricated published sections.
+Expanded target keys reach the specialists; whole-batch scope drift is not
+explained by dropped argument substitution. Independent accuracy and exhaustive
+semantic fidelity remain unmeasured.
+
+This narrows the original recommendation: explicit validated/persisted role
+contracts are necessary with either execution path. Native Workflow's scheduling
+can be retained if those contracts are enforced; an external runner's advantage
+must be justified by durability/control boundaries, not by an assumed immunity
+to nested Skill loss. The recovery/cancellation/limits/retry probes were then
+completed and are recorded in the section below; do not treat any of this as
+authorization to alter production or pins.
+Maintained reports: [handoff diagnosis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-specialist-handoff.md)
+and [review provenance](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-review-provenance.md).
+
+### 2026-10-12: Remaining workflow production controls completed
+
+The handoff's remaining controls (crash recovery, cancellation/deadlines,
+budget/concurrency, retries/incomplete streams, replay with changed shared
+state) are now run and verified: twenty-three mock-only cases plus three
+crash-resume completions against the pinned 2.1.296 binary, all checked by an
+executable verifier. Maintained report:
+[workflow operations](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-operations.md).
+
+Findings that matter for the S1/S2 decision:
+
+- **Recovery is at-least-once for un-journaled agents.** After SIGKILL, a
+  fresh-process `resumeFromRunId` re-executes any agent without a journaled
+  result from scratch, duplicating its tool side effects; journaled results
+  are reused without re-execution. A truncated journal entry is treated as a
+  missing result, not corruption, and also re-executes. Neither design gets
+  exactly-once side effects for free; publication must be idempotent and
+  externally validated either way.
+- **Cancellation and the print background-wait ceiling terminate children.**
+  `TaskStop`, SIGTERM and the ceiling all stopped an in-flight fixture shell
+  with no late writes. The ceiling kills the workflow (state `killed`) rather
+  than detaching it. SIGTERM and stall exhaustion still emit `success`-looking
+  CLI result events while the workflow dies or fails — exit status alone does
+  not establish workflow outcome, on either path.
+- **The `--max-budget-usd` gate fires at agent launches and at completion.**
+  A final agent can exceed the budget while the workflow still completes;
+  the failure surfaces only in the CLI's final result and exit code. Nested
+  Skill fork usage is counted. The concurrency override is honored and shared
+  globally with nested workflows.
+- **Request-level retries are side-effect safe; agent-level restarts are
+  not.** Single 429/500/broken-stream faults retried without duplicating a
+  counter; retry exhaustion and stall recovery (up to five iterations, six
+  executions) restart the agent conversation and re-execute side effects.
+- **Replay does not detect changed shared state.** Changed files,
+  instructions and discovered skills are ignored when prompt/options match;
+  the cached result is served. Freshness is the caller's responsibility.
+
+These findings strengthen the existing recommendation (validated, persisted
+role contracts and external result validation) without changing it: the
+external runner's advantage is durability/control boundaries, not immunity to
+side-effect duplication, which both paths exhibit under restart conditions.
+
+### 2026-10-12: ANTHROPIC_LOG warning fixed for future jobs
+
+User requested the deferred cleanup. Removed the incorrect directory-valued
+ANTHROPIC_LOG defaults from Kubernetes and OpenShell dashboard launchers.
+Raw API captures continue through OTEL_LOG_RAW_API_BODIES in runner wrappers.
+Explicit valid extra_env log levels remain supported. Eighteen focused tests
+pass; local native2.1.296 mock reproduces the old warning and verifies corrected
+warning-free execution with one request/response dump and index in both cases.
+No paid inference or extra benchmark. make host-rebuild-dashboard deploys the
+fix; new pod healthy, source hashes and both environment builders verified.
+No agent/relay rebuild or S1/S2 edit. Historical captures remain unchanged.
+[Fix evidence](../tasks/done/fix-anthropic-log-directory-warning.md).
+
+### 2026-10-12: Consolidated benchmark insights, with updated interpretation
+
+This recap supersedes stronger historical interpretations where later evidence
+resolved a mechanism or exposed a confound. Original measurements remain intact.
+
+| Tested workload | S1 observed duration | S2 observed duration | Interpretation |
+| --- | --- | --- | --- |
+| Single-RFE Haiku, fixed architecture, 3 rounds/design | Mean21.8min | Mean13.3min | Harness smoke; S1 extra calls/reviewer reruns; incomplete relay repair |
+| Single-RFE Opus, 3 successful rounds/design | Mean27.0min | Mean31.8min | Historical, unequal120s stream cuts; S2 third round required quota-reset repeat |
+| Completed three-RFE Opus, repaired relay, 1/design | 51.2min | 88.7min | No transport errors; S1 handoff gate FAIL, S2 PASS; scheduling/content differ |
+| Single-RFE GLM, 1/design | 40.4min | 46.1min | Both smoke PASS; S1 expected returns missing but transcript recovery observed; S2 stream recovery |
+
+1. **Completion is insufficient.** Check cardinality, recorded phase completion,
+   model identity, labels/comment agreement, lock release, returned assessments,
+   target scope and final incorporation separately. Historical smoke PASS did
+   not test all these properties. Markov reporting completion can legitimately
+   contain a failed design result. Nonempty acknowledgement/error/progress text
+   is not a substantive review. Aggregate APPROVE is not unanimous specialist
+   approval or independent technical truth.
+2. **Specialist loss now has a reproduced cause.** Parent schemas expose
+   StructuredOutput to nested Skill forks. A final tool-only assistant record
+   produces an empty text selection and completion fallback, dropping earlier
+   prose and structured fields from that Skill result. This occurs in ordinary
+   CLI --json-schema too; parallelism is not necessary. S1 Opus has10/12 affected
+   returns and S2 has0/12 in the completed pair. A custom specialist tool whitelist
+   or direct schema assessment avoids the boundary in mock controls. Neither
+   remedy has been validated in a paid strategy run or deployed.
+3. **Missing return does not settle provenance.** S1 GLM explicitly recovers
+   earlier specialist text through transcript reads, with architecture/structured
+   field completeness limits. Some S1 Opus sections reuse within-run scorer
+   findings. One audited Opus feasibility section omits a distinct specialist
+   routing concern. Broad claims of fabrication or complete loss of all findings
+   are unsupported; delivery and semantic incorporation need separate evidence.
+4. **Scope remains defective.** Distinct batch fixtures produce three distinct
+   strategies without deduplication. Nevertheless every substantive specialist
+   return in the completed Opus pair assesses all three despite individual
+   targets. Expanded prompts contain the correct keys; arguments were not
+   silently dropped. The extra review work and attribution problems remain.
+5. **Structured shape is not semantic correctness.** Haiku's first S1 batch
+   wrote a completed refinement but returned nested JSON as a string in recorded.
+   A permissive schema accepted it; exact-key comparison rejected it and omitted
+   that strategy from review. This distinguishes a model formatting error from
+   an orchestration reconciliation gap; weaker reasoning is not proven by n=1.
+6. **Scheduling changes batch performance.** S1 runs deterministic JS inside
+   Claude and uses parallel refinement and pipelined scoring/review, observed
+   with two top-level tasks. S2 serializes strategy stages. Combined score/review
+   spans about34 versus68min in the completed batches. Single-RFE tests expose
+   little cross-strategy parallelism. Individual content/latencies also differ;
+   the whole37.55min wall gap cannot be assigned to concurrency alone.
+7. **Calls, costs and context measure different things.** S2 has248 versus283
+   completed batch generations but more output/cache writes. Standard Opus API
+   equivalents are$24.28 versus$21.55, about13% more for S2, not measured OAuth
+   invoices. S1 batching shows no clear per-RFE savings versus historical singles
+   ($7.18 versus$6.95), with different fixtures/relay exposure. Thinking is already
+   included in output; cache reads are repeated usage, not one giant context.
+8. **Primary context stays small during delegated work.** S1 smoke primary
+   input grows from about24k to30k, and repaired batch ends26.9k. No primary
+   model calls during the long background wait; completion/artifact reads add
+   bursts of context. Helpers have separate windows, sometimes100k–193k. The
+   finding establishes primary isolation, not reduced aggregate helper cost.
+9. **Infrastructure confounded early timing.** Managed relay accounts still
+   had120s deadlines after the first configured600s change. Full repair allows
+   successful streams beyond120s, including276.8s in S2. Earlier timings remain
+   pre-fix observations; subtracting timeout seconds is not a new measurement.
+   Shared-account quota aborts interrupted both the L1 campaign and an S2 batch.
+   Record quota completion/delays, without treating call count as a fixed limit.
+10. **Model substitutions change behavior.** Haiku finds plumbing defects but
+    does not predict Opus timing, output volume, recovery or scores. GLM routing
+    works with explicit helper/alias pinning and the private key retained on the
+    relay. S2 GLM recovers from an incomplete stream/cancellation with same-model
+    non-stream fallback. Provider pricing/context/cache semantics are unverified;
+    its absent relay message-ID joins are a telemetry limitation, not missing
+    job API evidence. No controlled GLM-versus-Opus quality comparison exists.
+11. **Evidence preservation and isolation both matter.** The early wipe lost
+    raw historical captures; all subsequent reset checkpoints require verified
+    host archives/receipts. API indexes and unique tool IDs establish exact
+    joins; aggregate session IDs, extracted mtimes or successful response dumps
+    alone can mislead. Our MLflow setup does not cover all nested tool activity;
+    strace cannot alone distinguish in-process agents. Retained shared files can
+    enter later reviews, so future fixtures need scope/isolation controls.
+12. **Specific plumbing fixes are complete.** Architecture snapshot refresh
+    previously sparse-checked the enclosing strategy repository; the identical
+    fix on both design pins preserves the repo and snapshot. Relay telemetry and
+    managed deadlines were repaired. Invalid directory-valued ANTHROPIC_LOG
+    defaults are now removed/deployed; raw captures remain enabled.
+
+The tested working baseline remains S2; S1 demonstrates useful concurrency and
+lower observed batch cost. However, the confirmed return-contract defect is
+shared by schema-constrained CLI and Workflow and has configuration remedies.
+Production choice should prioritize validated, persisted assessment contracts,
+scope/fidelity and operational durability rather than a blanket language winner.
+Markov orchestrates these benchmark jobs; a native Markov strategy arm has not
+been benchmarked. Current batch coverage is three new RFEs, not the full proposed
+mixed-state/resume matrix. n=3 historical singles and n=1 completed batches/GLM
+pairs do not establish general speed, cost or accuracy rankings. Independent
+technical grading remains absent. No new run or pipeline redesign for this recap.

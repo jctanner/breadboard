@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+  },
+  "payload_sha256": "32a4df7685c914cf66238ffa9b1ea3ae1b164688039364d660c4506f68fb8e2f",
+  "symbols": [
+    {
+      "name": "Re",
+      "kind": "FunctionDeclaration",
+      "start": 134621902,
+      "end_exclusive": 134626110,
+      "length": 4208,
+      "sha256": "0e618b0cd21947d20d558fb5538bed723f59332a23520813d4eb63561c6150f8",
+      "module_start": 134609832,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-134609832-symbols.json"
+    },
+    {
+      "name": "Fe",
+      "kind": "FunctionDeclaration",
+      "start": 134627392,
+      "end_exclusive": 134630887,
+      "length": 3495,
+      "sha256": "dbe084b9b63001c9dfb2a9b20a9d593ef71f09201d5278d21e05f89555aa345b",
+      "module_start": 134609832,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-134609832-symbols.json"
+    },
+    {
+      "name": "XKt",
+      "kind": "FunctionDeclaration",
+      "start": 129017501,
+      "end_exclusive": 129017604,
+      "length": 103,
+      "sha256": "edd97f798c7e5f723c4bc9b74ffe0a7232f7263b5b7141df0144f7af24df5a98",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "YKt",
+      "kind": "FunctionDeclaration",
+      "start": 129014187,
+      "end_exclusive": 129017174,
+      "length": 2987,
+      "sha256": "b0c466870d8c8a2c1c41334b202d8ba88559950f9d89de56ef1263af1bcdaa8c",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "air",
+      "kind": "FunctionDeclaration",
+      "start": 129017688,
+      "end_exclusive": 129021998,
+      "length": 4310,
+      "sha256": "265bc6190f22609b06c95aa95df8d3c892fd01575b649bc7b99b881a820fd6f2",
+      "module_start": 126478178,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-126478178-symbols.json"
+    },
+    {
+      "name": "kr",
+      "kind": "FunctionDeclaration",
+      "start": 139195996,
+      "end_exclusive": 139220157,
+      "length": 24161,
+      "sha256": "19cb872f9a124506cce47c4391ad3bf770b57fedd33bd47560f5d0b4d1e3834c",
+      "module_start": 139145068,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-139145068-symbols.json"
+    },
+    {
+      "name": "vr",
+      "kind": "FunctionDeclaration",
+      "start": 139206137,
+      "end_exclusive": 139213881,
+      "length": 7744,
+      "sha256": "d5298ff1fab6bb2b8dd52a17394e7f242eea4fd91aec31e8ea21fb27ea4e17b4",
+      "module_start": 139145068,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-139145068-symbols.json"
+    },
+    {
+      "name": "SA",
+      "kind": "FunctionDeclaration",
+      "start": 134421289,
+      "end_exclusive": 134445556,
+      "length": 24267,
+      "sha256": "9c534bac536087c0b730ff4e235a0a984f8ebdcb6e95f6ed0f5c3d9446982517",
+      "module_start": 134300128,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-134300128-symbols.json"
+    },
+    {
+      "name": "VJn",
+      "kind": "FunctionDeclaration",
+      "start": 134393635,
+      "end_exclusive": 134396652,
+      "length": 3017,
+      "sha256": "8568ad330c46ec980925d41f710ee35baf3081d201619932cb544e947186b4ae",
+      "module_start": 134300128,
+      "symbol_index": "tmp/claude-code-binary-analysis/2.1.296/anchors/module-134300128-symbols.json"
+    }
+  ],
+  "offset_unit": "Bytes in .bun section, exclusive ends"
+}

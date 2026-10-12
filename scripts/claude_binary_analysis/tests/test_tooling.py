@@ -103,6 +103,28 @@ class BinaryToolingTests(unittest.TestCase):
         )
         self.assertNotEqual(result.returncode, 0)
 
+    def test_js_symbol_index_uses_byte_offsets_and_rejects_tampering(self) -> None:
+        plugin = os.environ.get("PRETTIER_BABEL_PLUGIN")
+        node = shutil.which("node")
+        if not node or not plugin:
+            self.skipTest("set PRETTIER_BABEL_PLUGIN to the pinned 3.6.2 Babel plugin")
+        source = 'const marker="😀"; function fixture(){return "é";} export {fixture as publicFixture};\n'.encode()
+        payload = self.root / "payload.bin"
+        payload.write_bytes(b"prefix\0" + source + b"\0suffix")
+        carved = self.root / "module.js"
+        self.run_cmd(TOOLS / "carve_segment.py", payload, carved, "--start", "7", "--end", str(7 + len(source)), "--topic", "unicode-module")
+        output = self.root / "symbols.json"
+        self.run_cmd(node, TOOLS / "index_js_module.mjs", carved, output, plugin)
+        index = json.loads(output.read_text())
+        symbol = next(s for s in index["symbols"] if s["name"] == "fixture")
+        recovered = payload.read_bytes()[symbol["start"]:symbol["end_exclusive"]]
+        self.assertEqual(recovered, 'function fixture(){return "é";}'.encode())
+        self.assertEqual(symbol["sha256"], hashlib.sha256(recovered).hexdigest())
+        self.assertIn({"local": "fixture", "exported": "publicFixture"}, index["exports"])
+        carved.write_bytes(source + b"// changed")
+        result = self.run_cmd(node, TOOLS / "index_js_module.mjs", carved, output, plugin, check=False)
+        self.assertNotEqual(result.returncode, 0)
+
     def test_extracts_injected_bun_section_from_local_elf_fixture(self) -> None:
         cc = shutil.which("cc")
         objcopy = shutil.which("objcopy")
@@ -191,6 +213,22 @@ class BinaryToolingTests(unittest.TestCase):
             check=False,
         )
         self.assertNotEqual(result.returncode, 0)
+
+    def test_archive_claim_requires_existing_source_evidence(self) -> None:
+        ledger = self.root / "archive-claims.json"
+        claim = {"id": "archive-fixture", "claim": "Observed in an archived request", "binary": {"version": "fixture", "sha256": "a" * 64}, "verdict": "archive-observed"}
+        ledger.write_text(json.dumps({"claims": [claim]}))
+        result = self.run_cmd(TOOLS / "validate_claims.py", ledger, "--check-paths", check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("requires archive paths", result.stderr)
+        source = self.root / "request.json"
+        claim["archives"] = {"paths": [str(source)]}
+        ledger.write_text(json.dumps({"claims": [claim]}))
+        result = self.run_cmd(TOOLS / "validate_claims.py", ledger, "--check-paths", check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("missing referenced archive path", result.stderr)
+        source.write_text("{}")
+        self.run_cmd(TOOLS / "validate_claims.py", ledger, "--check-paths")
 
     def test_claim_validator_enforces_runtime_evidence(self) -> None:
         ledger = self.root / "claims.json"

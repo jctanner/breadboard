@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "binary_sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de",
+  "run": "tmp/claude-code-binary-analysis/2.1.296/traces/workflow-language-capabilities-v2",
+  "status": "completed",
+  "result": {
+    "available": {
+      "process": "undefined",
+      "require": "undefined",
+      "fetch": "undefined",
+      "Buffer": "undefined",
+      "URL": "undefined",
+      "URLSearchParams": "undefined",
+      "TextEncoder": "undefined",
+      "crypto": "undefined",
+      "Intl": "object",
+      "setTimeout": "function",
+      "clearTimeout": "function",
+      "setInterval": "undefined",
+      "setImmediate": "undefined",
+      "queueMicrotask": "undefined",
+      "WebAssembly": "undefined",
+      "Proxy": "function",
+      "performance": "undefined",
+      "AbortController": "undefined"
+    },
+    "attempts": {
+      "eval": {
+        "error": "Code generation from strings disallowed for this context"
+      },
+      "Function": {
+        "error": "Code generation from strings disallowed for this context"
+      },
+      "Date.now": {
+        "error": "Date.now() / new Date() are unavailable in workflow scripts (breaks resume). Stamp results after the workflow returns, or pass timestamps via args."
+      },
+      "random": {
+        "error": "Math.random() is unavailable in workflow scripts (breaks resume). For N independent samples, include the index in the agent label or prompt."
+      },
+      "new Date": {
+        "error": "Date.now() / new Date() are unavailable in workflow scripts (breaks resume). Stamp results after the workflow returns, or pass timestamps via args."
+      },
+      "array-prototype": {
+        "error": "Attempting to define property on object that is not extensible."
+      }
+    },
+    "classValue": 1,
+    "generatorValues": [
+      2,
+      3
+    ],
+    "asyncValues": [
+      4,
+      5
+    ],
+    "mapValue": 7,
+    "setSize": 2,
+    "regexp": true,
+    "typed": 9,
+    "date": "2020-01-01T00:00:00.000Z",
+    "promise": 11,
+    "frozen": true
+  },
+  "assertions_passed": true,
+  "note": "Additional language probe; the sixteen baseline controls remain unchanged."
+}

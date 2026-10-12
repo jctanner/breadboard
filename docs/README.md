@@ -52,6 +52,7 @@ Stable reference material.
 - [data-sources-and-access.md](reference/data-sources-and-access.md) — Pipeline data sources, field mappings, access methods
 - [mlflow-basics.md](reference/mlflow-basics.md) — MLflow evaluations with Claude via Vertex API
 - [mlflow-claude.md](reference/mlflow-claude.md) — Claude Code tracing via MLflow autolog
+- [Claude Code reverse-engineering insights](../scripts/claude_binary_analysis/docs/README.md) — Versioned plugin/workflow findings, JavaScript limits, pseudocode, and binary evidence
 
 ## Reference (top-level)
 

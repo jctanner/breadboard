@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-11T23:50:50Z",
+  "binary": {
+    "source_path": "/home/jtanner/.local/share/claude/versions/2.1.296",
+    "size": 257068216,
+    "mode": "755",
+    "owner": "jtanner",
+    "group": "jtanner",
+    "mtime": "2026-10-09 15:34:47.912830596 -0400",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de",
+    "build_id": "ca2032b38650b44e05b2074617d524c7475c80f0",
+    "version_output": "2.1.296 (Claude Code)"
+  },
+  "runtime_identifiers": [
+    "    https://github.com/oven-sh/webkit/blob/main/Source/JavaScriptCore/runtime/OptionsList.h",
+    "    https://github.com/oven-sh/webkit/blob/main/Source/JavaScriptCore/runtime/OptionsList.h",
+    "vendor/WebKit/Source/JavaScriptCore/tools/Integrity.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/runtime/JSArray.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGOSRExit.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/runtime/JSObject.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/ftl/FTLOperations.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGOperations.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGArgumentsUtilities.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/heap/LocalAllocator.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGAvailabilityMap.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/ffi/FFIDFGCodegen.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGGraph.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGFlowIndexing.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGAbstractValue.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGAtTailAbstractState.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGInPlaceAbstractState.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/b3/air/AirValidate.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGValidate.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/b3/B3Validate.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGOSRAvailabilityAnalysisPhase.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGFixupPhase.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGStoreBarrierInsertionPhase.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGPhantomInsertionPhase.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGIntegerRangeOptimizationPhase.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGLiveCatchVariablePreservationPhase.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGArgumentsEliminationPhase.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGStaticExecutionCountEstimationPhase.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGPredictionPropagationPhase.cpp",
+    "vendor/WebKit/Source/JavaScriptCore/dfg/DFGLoopPreHeaderCreationPhase.cpp",
+    "Bun v1.4.3 (Linux x64)",
+    "Bun/1.4.3",
+    "Bun/1.4.3",
+    "Bun v1.4.3 (eecfd55de) Linux x64"
+  ],
+  "tools": {
+    "file": "file-5.46",
+    "readelf": "GNU readelf version 2.46.1-1.fc44",
+    "objcopy": "GNU objcopy version 2.46.1-1.fc44",
+    "strings": "GNU strings version 2.46.1-1.fc44",
+    "jq": "jq-1.8.1",
+    "git": "git version 2.55.0"
+  },
+  "bun_section": {
+    "offset": 89120768,
+    "offset_hex": "0x54fe000",
+    "size": 167890151,
+    "size_hex": "0xa01cce7",
+    "sha256": "32a4df7685c914cf66238ffa9b1ea3ae1b164688039364d660c4506f68fb8e2f"
+  },
+  "official_release": {
+    "url": "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/2.1.296/manifest.json",
+    "latest_url": "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/latest",
+    "latest_response": "2.1.296",
+    "version": "2.1.296",
+    "commit": "fdb6c17a97b6e0e3cf15e3566663fca58e7c43a9",
+    "build_date": "2026-10-09T14:46:35Z",
+    "linux_x64": {
+      "binary": "claude",
+      "checksum": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de",
+      "size": 257068216
+    },
+    "checksum_matches": true
+  },
+  "old_source_baseline": {
+    "schema_version": 1,
+    "path": "/home/jtanner/workspace/github/jctanner.redhat/breadboard/deploy/repos.bak/claude-code",
+    "head": "126c31154f72ec9babb39142d173ef8c2a5a9803",
+    "commit_time": "2026-04-07T16:38:19+05:30",
+    "subject": "Update README.md",
+    "dirty": [],
+    "origin": "Unofficial source snapshot; semantic correspondence only; workflow implementation directories missing"
+  }
+}

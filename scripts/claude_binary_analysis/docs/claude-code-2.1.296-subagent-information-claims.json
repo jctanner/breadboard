@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "evidence_precedence": [
+    "runtime",
+    "exact-bundle",
+    "old-source"
+  ],
+  "claims": [
+    {
+      "id": "eligible-child-edits-enter-primary",
+      "claim": "A child edit to a file represented by a complete parent Write cache entry enters the primary model request as changed-file text; the child final answer need not contain the edit.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            130157997,
+            130160507
+          ],
+          [
+            130119637,
+            130126400
+          ],
+          [
+            130935100,
+            130935599
+          ]
+        ],
+        "anchors": [
+          "ear",
+          "BDr",
+          "edited_text_file"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Ordinary Read cache entries have an offset and are skipped; default shared checkout only."
+      ],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-file-edit-parent-write-v1"
+        ]
+      }
+    },
+    {
+      "id": "read-and-unread-files-negative",
+      "claim": "Ordinary parent Read and no prior parent access did not deliver the child edit marker in the retained controls, although the child successfully changed the file.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            130157997,
+            130160507
+          ]
+        ],
+        "anchors": [
+          "ear"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "The unread control ends at completion; the ordinary Read control additionally advances through a separate file Read."
+      ],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-file-edit-v2",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-file-edit-unread-v1"
+        ]
+      }
+    },
+    {
+      "id": "bash-output-host-versus-model",
+      "claim": "Child Bash output is present in child API tool results and SDK child messages but absent from primary API requests when the child returns a fixed answer.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            134421289,
+            134445556
+          ],
+          [
+            134415483,
+            134415786
+          ],
+          [
+            134393635,
+            134396652
+          ]
+        ],
+        "anchors": [
+          "SA",
+          "ZOe",
+          "VJn"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "One Bash command, no cwd changes; does not cover all progress forwarding configurations."
+      ],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-bash-output-v1"
+        ]
+      }
+    },
+    {
+      "id": "background-transcript-pointer",
+      "claim": "Normal background Agent launch receipts supply a path described as the full subagent JSONL transcript; the coordinator control omits that pointer from its model-facing receipt.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            134421289,
+            134445556
+          ]
+        ],
+        "anchors": [
+          "SA"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "The primary was not directed to read the transcript; the supplied pointer establishes an explicit access path rather than automatic transcript injection."
+      ],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-bash-output-v1",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-memory-propagate-v3"
+        ]
+      }
+    },
+    {
+      "id": "result-notification-metadata",
+      "claim": "Agent reporting includes final text plus harness conditions, completion status, token/tool counts and elapsed time; ordinary notifications can contain output paths and worktree metadata.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            130702722,
+            130705002
+          ],
+          [
+            134393635,
+            134396652
+          ],
+          [
+            134396880,
+            134397542
+          ]
+        ],
+        "anchors": [
+          "nvt",
+          "VJn",
+          "Nl"
+        ]
+      },
+      "verdict": "bundle-confirmed",
+      "limitations": [
+        "Not every conditional note was exercised; mock token counters are not real model usage."
+      ]
+    },
+    {
+      "id": "shared-state-ownership",
+      "claim": "Context creation shares session permission setters, selected registries/callbacks and other session state; synchronous agents share general AppState mutation, while background wrappers propagate only the four named whitelist fields.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            129017688,
+            129021998
+          ],
+          [
+            129017608,
+            129017687
+          ],
+          [
+            134421289,
+            134445556
+          ]
+        ],
+        "anchors": [
+          "air",
+          "wur",
+          "SA"
+        ]
+      },
+      "verdict": "bundle-confirmed",
+      "limitations": [
+        "Shared references alone are not proof of automatic model-message delivery; permission/browser/artifact effects were not tested."
+      ]
+    },
+    {
+      "id": "nested-memory-dormant-gate",
+      "claim": "Nested instruction propagation has an implementation, but its flag is read from Yn constructed with an empty shape. Setting the same-named environment variable does not create a getter; paired controls keep child nested text out of primary requests.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            134421289,
+            134445556
+          ],
+          [
+            118462350,
+            118462684
+          ],
+          [
+            118462700,
+            118462705
+          ],
+          [
+            118462706,
+            118462721
+          ],
+          [
+            130160507,
+            130160973
+          ],
+          [
+            130148461,
+            130149532
+          ],
+          [
+            130939734,
+            130939838
+          ]
+        ],
+        "anchors": [
+          "SA",
+          "SPe",
+          "kx",
+          "Yn",
+          "Nyn",
+          "Dyn",
+          "nested_memory"
+        ]
+      },
+      "verdict": "runtime-confirmed",
+      "limitations": [
+        "Applies to the unmodified shipped typed-environment module; no code injection or internal-build flag registration was attempted."
+      ],
+      "runtime": {
+        "runs": [
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-memory-read-v2",
+          "tmp/claude-code-binary-analysis/2.1.296/traces/subagent-skill-memory-propagate-v3"
+        ]
+      }
+    },
+    {
+      "id": "separate-read-and-trigger-state",
+      "claim": "Subagent context creates a separate read cache, nested-memory trigger array and memory selector; dynamic skills use a different host registry, established in the preceding investigation.",
+      "binary": {
+        "version": "2.1.296",
+        "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+      },
+      "bundle": {
+        "offsets": [
+          [
+            129017688,
+            129021998
+          ],
+          [
+            122785003,
+            122785203
+          ],
+          [
+            134421289,
+            134445556
+          ]
+        ],
+        "anchors": [
+          "air",
+          "Pre",
+          "SA"
+        ]
+      },
+      "verdict": "bundle-confirmed",
+      "limitations": [
+        "Conversation isolation does not imply workspace or host state isolation."
+      ]
+    }
+  ]
+}

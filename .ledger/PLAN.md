@@ -2,6 +2,20 @@
 
 ## Current milestone
 
+- [Fix invalid ANTHROPIC_LOG job setting](tasks/done/fix-anthropic-log-directory-warning.md):
+  deployed; both launchers corrected, 18 tests and mock capture check pass.
+- [Claude Workflow production-gap investigation](notes/claude-workflow-production-gaps-handoff.md):
+  complete. Specialist result delivery and review provenance diagnosed (priorities 1–2),
+  and recovery, cancellation, budgets, retries and replay consistency verified as
+  twenty-three operational controls
+  ([task](tasks/done/claude-workflow-operations-controls.md)).
+- [One S2 Opus batch after rate-limit reset](tasks/done/strat-workflow-tier2-s2-opus-rate-limit-retry.md):
+  PASS in 88.7 min; three reviews, 12 substantive specialist returns; scope drift
+  persists. Final archive independently verified and receipts published.
+- [One GLM single-RFE pass each of S1/S2](tasks/done/strat-workflow-glm-single-passes.md):
+  complete: both smoke passes/archives verified; S1 reviewer loss and S2
+  same-model non-stream fallback recorded.
+
 - **Proposed (awaiting review):** [Testing the strat-creator Claude Workflow](plans/strat-workflow-eval-plan.md).
   Smoke and full tiers for PR #83's Workflow, run as dashboard jobs through
   Model Relay (haiku-5-5 to wire up, opus-4-6 for results), with per-test
@@ -11,12 +25,22 @@
   analysis and a separately authorized S2 run; preserve tier 1.
   [First S1 tier 2 pass](tasks/current/strat-workflow-tier2-s1-first-pass.md):
   publication and one S1 launch authorized 2026-10-11; analyze before S2.
-  [Per-run evidence archives](tasks/current/strat-workflow-run-data-archives.md):
+  [Per-run evidence archives](tasks/done/strat-workflow-run-data-archives.md):
   preserve complete system/run data in `var/run-data` before the next reset.
   S1 failed: [completed refine rejected by return mismatch](bugs/open/strat-workflow-refine-return-mismatch.md);
   [reviewer prose lost](bugs/open/strat-workflow-reviewer-output-loss.md).
+  [Specialist review scope drift](bugs/open/strat-workflow-specialist-review-scope.md):
+  individual-target testability calls return assessments of the full batch.
   [Single S1 Opus batch](tasks/current/strat-workflow-tier2-s1-opus-pass.md):
   authorized 2026-10-11, three RFEs, one run, archive then analyze.
+  [Relay managed-account timeout fix](tasks/done/model-relay-managed-account-timeout.md):
+  honor the configured deadline, distinguish stream timeouts, validate and redeploy.
+  [Single S1 Opus repeat after the relay fix](tasks/done/strat-workflow-tier2-s1-opus-relay-fixed-repeat.md):
+  completed/archived in 51.2 min; relay fix confirmed, reviewer-return gate still fails.
+  [Single S2 Opus batch on the repaired relay](tasks/done/strat-workflow-tier2-s2-opus-pass.md):
+  archived/analyzed; stopped at 55.7 min on account HTTP 429, one published review.
+  [Reviewer return gate false positives](bugs/open/strat-workflow-review-return-gate-accepts-status.md):
+  progress messages/errors can count as delivered assessments.
 - **New, divergent POC:** [Native Fullsend strategy agents](plans/fullsend-agent-led-strategy-poc.md).
   Checkout `checkouts.fullsend_agent_led_poc/jctanner.strat-creator`, branch
   `feat/fullsend-agent-led-strategy`; strat-single/strat-batch prompts on
@@ -104,6 +128,18 @@
 
 Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 
+- [Subagent skill isolation investigation](tasks/done/claude-subagent-skill-isolation-analysis.md):
+  completed 2026-10-11; code proof and ten controls confirm child-discovered
+  skills reach the primary as availability metadata through the host registry.
+  [Report](../scripts/claude_binary_analysis/docs/claude-code-2.1.296-subagent-skill-isolation-analysis.md)
+  distinguishes metadata sharing from full instruction loading.
+
+- [Claude Code workflow binary analysis](tasks/done/claude-code-workflow-binary-analysis.md):
+  completed 2026-10-11 against official latest 2.1.296; twelve parsed topic
+  groups, seventeen evidence-labeled claims, sixteen runtime controls.
+  [Report](../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-analysis.md) documents return values,
+  failure handling, chained journal resume, scheduling and actual budget wiring.
+
 ## Resolved integration bugs
 
 - [Sandbox Jira connectivity](bugs/fixed/fullsend-sandbox-jira-connectivity.md) — fixed and verified by M4.2.
@@ -111,8 +147,10 @@ Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 
 ## Open integration bugs
 
+- [ANTHROPIC_LOG directory warning fixed](bugs/fixed/anthropic-log-directory-warning.md).
+  Deferred cleanup; API capture verified working during S2.
 - [Model Relay drops telemetry records under load](bugs/open/model-relay-telemetry-drops-under-load.md).
-- [Model Relay cuts off upstream calls at 120 seconds](bugs/open/model-relay-120s-upstream-timeout.md)
+- [Model Relay cuts off upstream calls at 120 seconds](bugs/fixed/model-relay-120s-upstream-timeout.md)
   Inference is unaffected; relay call and token totals are lower bounds until fixed.
 
 - [Jira component ID references silently ignored](bugs/open/jira-emulator-component-id-ref-ignored.md).
@@ -171,3 +209,7 @@ Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 - [One-RFE batch after verified policy](tasks/done/strat-one-rfe-verified-policy-batch-start.md): started2071/4029 for freshRHAIRFE-9, size1, verified source3fd1563.
 
 - [Repeat one-RFE batch](tasks/done/strat-one-rfe-policy-repeat-batch-start.md): started2073/4033 for freshRHAIRFE-10, size1, verified policy.
+
+- [Other Claude subagent information channels](tasks/done/claude-subagent-shared-information-analysis.md): complete; six new controls, file-change injection, host/model distinction and dormant nested-memory flag documented.
+
+- [Claude skill variable expansion](tasks/done/claude-skill-variable-expansion-analysis.md): complete; full prompt-placeholder catalog, field/stage differences, nine controls and forty-one exact symbols documented.

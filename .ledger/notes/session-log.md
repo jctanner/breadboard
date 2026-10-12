@@ -1,5 +1,47 @@
 # Session log
 
+## 2026-10-11 — Subagent skill discovery crosses into the primary context
+
+Proved the shared-registry path in unmodified Claude Code 2.1.296. Nested
+checkout Read operations by Explore/general-purpose/Workflow children load
+skills into host dynamic state; the primary later receives names/descriptions
+in API message listings even though the child returns only a fixed answer.
+Full body markers stayed out of primary requests when the child read or
+invoked the skill, and entered only after explicit primary Skill invocation.
+No-read, Bash-cat, ignored-path and project-settings-disabled controls did not
+inject metadata. Saved report/pseudocode, 38 symbol hashes, nine claims and ten
+verified controls in scripts/claude_binary_analysis/docs; added reusable
+runner/verifier and an open isolation issue. Correlated fourteen local
+architecture-context skills by paths/hashes. Compile, JSON/link, claim/path,
+payload-hash and whitespace checks passed; no paid inference, deployment
+changes, upstream report or harness fix. Task moved to done.
+
+## 2026-10-11 — Reverse-engineering documentation home
+
+Moved the maintained Claude Code 2.1.214 plugin and 2.1.296 workflow reports,
+pseudocode, discovery guide and compact JSON evidence records into
+`scripts/claude_binary_analysis/docs/` at the user's request. Added a topic
+and evidence index, updated tooling/documentation/ledger links and validation
+commands. Plans, task records and raw ignored artifacts retain their existing
+homes. Checked documentation links, JSON parsing, claim validation and
+whitespace; no runtime experiments rerun.
+
+## 2026-10-11 — Claude workflow binary analysis
+
+Verified latest 2.1.296 and official Linux x64 checksum; extracted the Bun
+payload and followed split ES modules. Correlated the April source snapshot's
+integration files; omitted workflow implementations were recovered from the
+binary. Recorded report/pseudocode, manifest, twelve parsed topic groups,
+seventeen evidence-labeled claims, and sixteen runtime controls. Probes used
+fresh configs, local fixtures and a loopback mock API without paid inference.
+Confirmed text vs StructuredOutput returns, per-item pipelining, null branch
+failures despite completed workflow status, discovery overrides, child
+composition, and journal replay/relabel/edited-prompt behavior. Local launch
+passes budget.total=null. Added parser/probe/verifier tools; seven tests passed
+and optional Bun compile fixture skipped; byte hashes/claim paths/compile and
+whitespace checks passed. Task moved to done. Static-only limits are explicit
+in the report; no deployed services or real credentials used.
+
 ## 2026-10-07 — Removed redundant standalone Fullsend smoke milestone
 
 User confirmed native Fullsend already works in Breadboard and wants runtime
@@ -375,3 +417,314 @@ Haiku smoke defaults unchanged. No active jobs/runs; previous Haiku archive
 reverified and live receipt guard passes; relay health is clear. Twenty-three
 offline tests plus Markov, compile, shell syntax, and diff checks passed.
 Next: publish/sync this harness and submit the single authorized batch.
+
+## 2026-10-11 — Single S1 Opus batch launched
+
+Published `2615e72`, synced/imported exact benchmark source, and launched
+`markov-run-7845a7f1` at 15:10:00.522 UTC / 11:10 EDT. S1 only, Opus 4.6,
+three RFEs, one repeat, no artifact wipe, 90-minute background wait. Both
+new archive guards passed before Jira reset. Seed completed for exactly
+RHAIRFE-1/2/3. S1 job
+`script-run-workflow-all-claude-opus-4-6-1011-151014-95af64` is running;
+init and first 23 requests confirm Opus, pinned S1 unchanged. Creation done,
+refinement started. ETA 11:50–12:10 EDT. Detached host archive collector
+PID 2315335 is waiting for completion; duplicate diagnosis waiter stopped.
+Archive implementation task moved to done; Opus completion/archive/analysis
+task stays current. No S2 or repeat. Runtime evidence is recorded in the
+evaluation plan; post-launch ledger updates are uncommitted.
+
+User asked for an architectural comparison while Opus runs. Recorded the
+provisional preference for Markov orchestration with small deterministic
+script adapters and agents for strategy work, distinguishing measured S1/S2
+findings from Markov integration evidence. Checked current Markov/markovd
+docs, resume/cancel evidence and callback code; current callbacks have bounded
+retries, so the historical no-retry statement is stale. No live pipeline
+changes or third-arm implementation.
+
+User asked which Markov architecture/language features would bridge the gaps.
+Checked parser, state, task and callback code; recorded prioritized proposals
+for durable external tasks, engine-side output contracts, safe retry policies,
+durable event replay, shared resource/budget controls and evidence completion
+contracts. Distinguished these from already implemented keyed fan-out, cleanup,
+resume and source-integrity features. Discussion only; no component or active
+pipeline changes.
+
+User corrected ownership of the Markov feature proposals. Moved them into
+`checkouts/markov/.ledger/plans/002-durable-task-orchestration.md`,
+indexed in Markov's ledger. The evaluation plan now holds a reference
+instead of the proposals. No implementation or live-run changes.
+# 2026-10-11 — S1 Opus batch completion checkpoint
+
+Confirmed `markov-run-7845a7f1` completed at 16:22:08 UTC; S1 job completed
+at 16:21:59 UTC after 71.8 minutes. Three APPROVE verdicts (8/8, 8/8, 7/8),
+all job exits zero, but benchmark FAIL on specialist Skill returns:
+11 empty completion markers and one connection error. Final review prose
+exists; alternative recovery path is not yet diagnosed. Automatic archive
+verified and receipts published at `var/run-data/strat-workflow/markov-run-7845a7f1/20261011T162230677725Z/`,
+2,517 files, zero errors. Updated evaluation plan, current task and existing
+reviewer-output bug. No S2, repeat, reset or implementation change.
+
+## 2026-10-11 — Remaining relay timeout diagnosed
+
+UI-managed account `tanner-jc-personal` confirmed via private profile API.
+Its `accounts.rs:208` constructor still supplies a hard-coded 120 s
+reqwest timeout, despite configured 600 s. Previous fix covered the
+separate `projects.rs` configured-profile path. This explains the batch's
+120 s stream failures; generic streaming error logging had obscured the
+local timeout. Corrected the relay bug and evaluation plan. No component
+implementation, deployment or new model request.
+
+## 2026-10-11 — Relay managed-account timeout fix completed
+
+User authorized the fix. Corrected UI-managed account constructor and
+classified response-body timeouts as `timeout_error`. Added synthetic
+streaming regression; all 29 tests, format, clippy and diff checks pass.
+Production image checks pass, rebuild/redeployment succeeded. New pod
+`model-relay-f46688557-5tflw` ready/zero restarts, 600 s setting and account
+restored; public build ID matches tested source `84bb7c79...dc40b8c0`.
+Telemetry storage health clean. Recorded evidence, moved task to done and
+known constructor-timeout bug to fixed. No paid model run, commit or push.
+
+## 2026-10-11 — S1 Opus repeat launched after relay repair
+
+User requested another S1 batch. Previous archive checksums/receipts pass;
+no active jobs/runs. Launched one `markov-run-c5ba3904` at 17:04:21 UTC,
+unchanged harness/S1, Opus 4.6, same three RFEs and 90-minute budget.
+Seed completed, S1 `script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed`
+running; exact batch keys/pin/budget verified. One host archive collector
+PID 2460265 active. Saved verified relay source/deployment provenance under
+the new run's `launch-context/`. Final archive/analysis pending. No S2.
+
+## 2026-10-11 — Relay-fixed S1 repeat completed and analyzed
+
+`markov-run-c5ba3904` completed: S1 51.2 min, three APPROVE reviews
+(7/8, 8/8, 6/8), but return-output gate still fails (10/12 empty results).
+Relay has zero failures and seven successful >120 s streams, longest
+170.314 s; all match S1. This confirms the timeout fix in real runtime.
+Observed 20.6 min reduction, subject to variation between single trials.
+Primary has six calls, last input context 26887 tokens, no polls during
+50-minute wait. Two returned specialist reviews cover all three strategies
+despite individual targets; added a separate scope bug. Verified archive
+2715 files/1267550579 bytes, receipts published. Updated evaluation plan
+and existing bugs; repeat task moved to done. No additional model run.
+
+## 2026-10-11 — Qualified tier 1 timing after relay repair
+
+Rechecked recorded single-RFE stream cuts: Opus S1 0/1/2, S2 0/4/6;
+Haiku rerun S1 round 1 had two, other rounds none. Historical raw timings
+remain valid observations of the pre-fix stack, but affected rounds are
+confounded as repaired-stack/design baselines. Corrected evaluation plan
+claims of timing equivalence, chance-only exposure and relay-only timing
+differences; recorded that subtracting 120 s per cut and applying tier 2's
+28.7% decrease cannot reconstruct fixed-stack tier 1 runtimes. No new run.
+
+## 2026-10-11 — Single S2 Opus batch launched
+
+User authorized one S2 batch. Prior archive checksums/reset receipts pass,
+no active jobs/runs, repaired relay build verified. Submitted exactly one
+`markov-run-6bcb3c32` at 18:19:35 UTC, unchanged harness/S2, Opus 4.6,
+same three fixtures. Seed passed; S2 job
+`script-strategy-entrypoint-all-claude-opus-4-1011-181949-e387e8` running.
+Verified exact clone/model/batch keys; discovery locked all three RFEs;
+API dumps/strace/MLflow/OTel enabled. Collector PID 2550958 active;
+verified source/deployment launch provenance under the new run root.
+Created current S2 task and updated plan/index. Final archive/analysis
+pending; no further run or design change.
+
+## 2026-10-11 — Deferred ANTHROPIC_LOG configuration bug
+
+User requested recording the warning for a future fix. Added
+`bugs/open/anthropic-log-directory-warning.md` and linked it from the index.
+Both job orchestrators assign a dump directory to the log-level variable;
+the runner separately configures capture via OTEL_LOG_RAW_API_BODIES.
+Documented the S2 warning, verified dump/strace files and proposed validation.
+No runtime configuration or implementation changed.
+
+## 2026-10-11 — Relay-fixed S1 batch token cost
+
+Joined archived evaluation totals to the 283 Opus streaming relay records.
+All 1,696,541 cache-write tokens use 5-minute TTL; 11,038,816 cache reads,
+1,880 uncached input and 216,778 output. Verified official Anthropic rates;
+standard API list-price equivalent $21.5516 for the batch ($7.18 per RFE).
+Recorded calculation and OAuth billing distinction in the evaluation plan.
+
+## 2026-10-11 — Compared batch and historical single-RFE S1 cost
+
+Historical three S1 Opus runs recorded $20.84 total / $6.95 per RFE;
+repaired-relay batch $21.55 / $7.18, approximately 3.4% higher per RFE.
+Calls per RFE fell 11%, output increased approximately 15%, cache usage
+stayed close. Recorded comparison in the evaluation plan with differing
+fixtures, historical relay interruptions and usage/invoice limitations.
+
+## 2026-10-11 — S2 batch aborted on account limit; archive verified
+
+S2 `markov-run-6bcb3c32` job exits 1 at 19:15:33 UTC, after 55.7 min,
+on upstream account HTTP 429 while assembling strategy 2's final review.
+All three strategies created/refined; only strategy 1 published APPROVE
+7/8, all locks released. Markov reporting completes, benchmark fails.
+Relay has one rate_limit_error, zero timeout/stream errors and seven
+successful >120 s streams (max 186.484 s). All 187 completed streaming
+message IDs match S2 API dumps; incurred list-price equivalent $17.304,
+which is not a completed-batch comparison with S1's $21.552.
+Seven substantive specialist returns review all three strategies despite
+individual targets; updated scope bug. Added gate false-positive bug for
+architecture's progress-only return. Archive independently verifies:
+2457 files/1382240358 bytes, 20 sources, 376 API files, 1774 strace files,
+final/complete, zero errors, receipts published. Updated evaluation plan
+and index; authorized-attempt task moved to done. No rerun or code change.
+
+## 2026-10-11 — Added account-budget completion metric
+
+User highlighted inability to finish the three-iteration L1 Opus campaign
+within the available five-hour Anthropic account allowance. Recorded the
+observed tier 1 failure/reset/rerun and tier 2 account-limit abort in the
+evaluation plan. Added campaign completion, partial work, usage at first
+429 and reset-delay reporting, with shared-account/fresh-window limitations.
+Runtime and API list-price equivalents do not determine subscription quota.
+No new run or implementation change.
+
+## 2026-10-11 — GLM strategy compatibility passes (finish crosses midnight UTC)
+
+Published harness `7f4362e`: isolated glm-smoke, explicit helper aliases/medium
+effort, real job preflight, exact hosted request ID and verified response aliases;
+26 offline tests/Markov validation/syntax/diff/secret checks passed. Existing tiers
+and design pins unchanged. S1 `markov-run-23df27ac` passes in 40.4 min, 180
+responses, APPROVE 6/8, all four reviewer reports lost as completion acks.
+Archived/verified before S2 reset. S2 `markov-run-428f237a` passes in 46.1 min,
+141 responses from 143 attempts, APPROVE 6/8, four substantive reviewer returns.
+One incomplete stream and one cancellation; identical-message non-stream
+fallback succeeds within the same attempt. No HTTP 429s or other-model requests.
+Both final archives verify with receipts; evidence under var/run-data/strat-workflow.
+Plan/task completed. Deferred message-ID telemetry and streaming investigations
+recorded; no additional iteration or design/provider change. Outcome notes remain
+local, preserving unrelated work. No private EnMaaS credential passed to jobs.
+
+## 2026-10-12: S2 tier 2 Opus rate-limit repeat
+
+User authorized one S2 three-RFE Opus run after reporting quota reset.
+Launched markov-run-79d3241a once on imported 7f4362e; prior archives verified,
+original design pin and no-wipe setting preserved. Design job running on
+claude-opus-4-6, batch_size=3. Detached collector PID3021536 saves final
+evidence under var/run-data. Terminal outcome and analysis pending.
+
+## 2026-10-11: Other Claude subagent information channels
+
+Extended the pinned 2.1.296 analysis beyond skill metadata. Saved maintained
+report, eight claims, twenty-two exact ranges/hashes and six verified controls
+under scripts/claude_binary_analysis/docs/. A child edit reaches the primary
+through changed-file attachments when the primary previously wrote the file;
+ordinary Read entries are skipped. Bash output reaches SDK child messages but
+stays out of primary model requests in the fixed-answer control. Shared session
+permission/browser/artifact state is distinguished from proven prompt delivery.
+
+Nested-memory propagation is present in teardown code, but its typed flag object
+is empty in this build. Default and explicit coordinator environment controls
+remain negative after a primary tool turn. Corrected an initial Explore launch
+to coordinator's worker agent; incomplete attempts are excluded from proof.
+Probe runner snapshots, original fixture blobs and final mutations are checked.
+Six new controls and ten original skill controls pass, as do claim/path checks,
+exact hashes, JSON, document links, Python compilation and whitespace. No real
+credentials, paid model calls, deployments, commits or upstream publication.
+
+## 2026-10-12: S2 tier 2 Opus repeat completed
+
+markov-run-79d3241a passed: 88.7 minutes, all three strategies created/refined,
+APPROVE 7/8, 7/8, 6/8; locks released. 248 Opus API pairs join exactly to
+relay streams; no 429/timeout/stream errors. All 12 specialist returns are
+substantive but assess the whole batch, reproducing the known scope bug.
+Collector completed and independent checksum verification passed; final
+archive 20261012T021947729737Z under var/run-data, receipts published.
+Plan and scope bug updated; task moved to done. No extra run or design edit.
+
+## 2026-10-12: Claude skill variable expansion
+
+Traced the pinned 2.1.296 local/plugin prompt factories, argument parser, plugin
+option lookup, data paths, effort/session/project resolution and inline shell
+preprocessing. Saved maintained report, ten claims, forty-one exact symbols
+and nine verified mock API controls under scripts/claude_binary_analysis/docs/.
+Frontmatter tool-path expansion happens at load; body expansion happens when
+getPromptForCommand is invoked, including explicit subagent skill preloads.
+
+Verified correct braced spellings, quoted zero-based arguments, declared aliases,
+empty/missing/escaped arguments, fallback footer and ordered later-pass
+substitution. Configured plugin options expand, sensitive options redact,
+missing/default-only options remain literal. Bundled shell scripts execute after
+variables, from session cwd, without re-expanding placeholders in their stdout.
+Remote and hook differences are labeled static-only. Corrected fixture inline
+shell positioning and scoped footer capture; earlier versions remain ignored.
+Nine controls, ten claim/path checks, forty-one hashes, thirty-five links, JSON,
+compilation and whitespace passed. No real credentials or paid model calls.
+
+## 2026-10-12: Fixed ANTHROPIC_LOG job warning
+
+Removed invalid directory log levels from both dashboard orchestrators.
+18 focused tests and native loopback warning/capture controls pass; no paid
+inference. Rebuilt/deployed dashboard through make host-rebuild-dashboard;
+new pod ready, deployed source/environment checks pass. Bug moved to fixed,
+task to done, plan/index updated. API capture preserved.
+
+## 2026-10-12: Completed remaining workflow production controls
+
+Analyzed the twenty-three run-but-unwritten workflow operations probes
+(crash boundaries, journal truncation, competing resumptions, TaskStop,
+SIGTERM, print bg-wait ceiling, concurrency overrides incl. nested workflows,
+budget gates, 429/500/broken-stream retries, stall recovery) against the
+pinned 2.1.296 binary. The original crash cases had captured only the crash
+boundary (no restorable state file after SIGKILL), so added a journal-derived
+resume driver and ran the fresh-process resume phase for all three
+boundaries: un-journaled agents re-execute from scratch and duplicate tool
+side effects; journaled results are reused. Wrote an executable verifier
+covering all twenty-three controls; all pass. Saved the maintained operations
+report and controls record, updated the docs index and the stale static-only
+note in the workflow analysis report, and recorded findings in the evaluation
+plan. Budget gates fire at agent launches/completion (a final agent can
+exceed while completing; nested Skill usage counted); request-level retries
+are side-effect safe while agent-level restarts are not; replay ignores
+changed shared state; SIGTERM/stall exhaustion still emit success-looking
+CLI result events. Recommendation unchanged. No credentials, paid calls,
+deploys or commits; task filed done.
+
+## 2026-10-12: Enumerated workflow sandbox globals
+
+Answered whether an import-free subprocess path exists in workflow scripts.
+New mock-only probe (workflow-vm-globals-probe-v1) enumerated all 75 context
+globals: Bun and Deno are not injected although the host is a Bun executable;
+the only non-standard globals are the orchestration helpers plus console,
+timers and the internal resolver. No native subprocess capability of any
+kind; recorded in the workflow analysis report. No credentials or paid calls.
+
+## 2026-10-12: Bash tool invocation path and workflow unreachability
+
+Recovered the Bash tool's execution path from the exact 2.1.296 bundle
+(bundle-confirmed): default mode is a resident `bash --noprofile --norc`
+process (detached group, piped, scrubbed env) receiving commands via stdin
+with a random sentinel and exit-code printf; sandboxed one-shot path builds
+`[shell, "-c", wrapped]`. Documented why no layer of it is callable from
+workflow scripts (no references obtainable, model-mediated tool_use gate,
+session-private shell), with the verified-absence caveat, and tied it to the
+S1 handoff defects and external-runner recommendation. Recorded in the
+workflow analysis report with payload offsets. No credentials or paid calls.
+
+## 2026-10-12: Determinism-layering analysis documented
+
+Added "Where the determinism guarantee ends" to the workflow analysis report:
+native Workflows quarantine non-determinism below the agent() boundary —
+deterministic orchestration over stochastic effects and content — while the
+external bash runner confines it to content alone. Documented the leaky
+interface (unvalidated results, projection loss, stochastic failure
+semantics, replay-as-caching including stale shared state) and the sandbox
+rationale. Also corrected the journal section: cross-process restoration and
+concurrent resumptions are now runtime-tested by the operations controls.
+
+## 2026-10-12: Breadboard commit review
+
+User authorized committing all pending Breadboard changes. Reviewed source,
+maintained reports and ledger updates; environment files, credentials, runtime
+archives, logs, raw binary payloads and component checkouts remain excluded.
+In-memory scans against local credentials and encoded variants found no matches.
+18 focused job/orchestrator tests and eight binary-tooling tests passed; the
+optional Bun compiler fixture was skipped because BUN_BIN was not configured.
+Verified 85 retained runtime controls, 32 archived specialist calls and six
+claim ledgers; Python/JavaScript/JSON parsing and whitespace checks passed.
+No new inference, benchmark run or deployment. Publication is a local commit;
+this request does not include pushing Breadboard.

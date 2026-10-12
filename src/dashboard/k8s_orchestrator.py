@@ -574,12 +574,8 @@ fi
                 value="1"
             ))
 
-        if args.get("api_dump") is not False:
-            env_vars.append(client.V1EnvVar(
-                name="ANTHROPIC_LOG",
-                value=f"/app/artifacts/apibodies/{job_name}"
-            ))
-
+        # Wrappers configure API capture with OTEL_LOG_RAW_API_BODIES.
+        # ANTHROPIC_LOG is an SDK log level, not an output directory.
         env_vars.append(client.V1EnvVar(
             name="AGENTIC_CI_HARNESS",
             value=harness

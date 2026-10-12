@@ -1,0 +1,1304 @@
+{
+  "api_pair_count": 180,
+  "calls": [
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "109033b8-6613-42a7-8754-44bceb59781b.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-9d580a3e447473da"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "2afc8dc4-9eb8-4f61-8631-effa43bf07ea.request.json",
+          "review_paths": [
+            "local/strat-reviews/`",
+            "artifacts/strat-reviews/`"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-aa89b49f26b9c3a9"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "8f4b28a2-0e58-4ee5-aa93-eea31bc3097a.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-995ac8fcad3648c7"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "8de8afec-35a4-4e2d-820b-fa877221cac5.request.json",
+          "review_paths": [
+            "local/strat-reviews/`",
+            "local/strat-reviews/`"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": true,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-ad7814a0ec75f181"
+        },
+        {
+          "full_assessment_body_observed": true,
+          "matching_fragment_count": 201,
+          "partial_transcript_assessment_observed": true,
+          "request_file": "6e700ce6-2dda-466e-9c74-46bdbfaee476.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-1-review.md`,"
+          ],
+          "sample_fragments": [
+            "i have completed my verification of the strategy s claims against the",
+            "the strategy s claims against the architecture context. all major citations check",
+            "architecture context. all major citations check out canarytrafficpercent and revision status fields",
+            "out canarytrafficpercent and revision status fields in the rhoai fork s v1beta1"
+          ],
+          "source_is_explicit_transcript_recovery": true,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-9656f2f368a26bd5"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 1,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "1ce42405-6b98-4dfd-9dd0-f5da6daed4b7.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [
+            "rhaistrat-1: automatic rollback of canary model rollouts on error or latency regressions"
+          ],
+          "source_is_explicit_transcript_recovery": true,
+          "source_path": "/tmp/reviewer-prose.txt",
+          "tool_use_id": "chatcmpl-tool-97e322c7fd75dda3"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "e0a5a810-c66f-4c49-802b-cf2e3d0f9197.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md",
+          "tool_use_id": "chatcmpl-tool-8ee493d829d01896"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "ed4e592f-32ef-4a0b-a5be-21c18686ba94.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-b3f9d9a4f15d2c21"
+        }
+      ],
+      "assessment_chars": 8624,
+      "assessment_sha256": "f5a77a5c3f31a6bc640a8fcaf7e9ac4700543834437bd3d515e2a818f553cbae",
+      "assessment_source_index": {
+        "message_id": "chatcmpl-839553fa-d285-47a3-a1fe-73125df1703c",
+        "message_uuid": "9a62a00d-7f82-4584-b376-0841c11ed326",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:custom",
+        "request_file": "581c726b-01af-446c-a5a9-cd5b8181db28.request.json",
+        "response_file": "9ea397d8-d39d-4aef-b3de-4b2d5a5793c9.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:13:50.334Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 25,
+      "child_structured_calls": 1,
+      "delivery_status": "delivered via another route",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-1` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 100,
+      "expected_return_preview": "Skill \"strategy-feasibility-review\" completed (forked execution).\n\nResult:\nSkill execution completed",
+      "first_child_index": {
+        "message_id": "chatcmpl-4397ad32-0a78-477d-991e-aa9630b08c7d",
+        "message_uuid": "06672603-b554-4781-aef9-946ac7688759",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:custom",
+        "request_file": "3fe0a6b7-b1d4-4cdb-ae77-949ee826b64a.request.json",
+        "response_file": "f0f702d4-7e3f-4d9d-bbd3-57d31bcce98a.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:08:23.509Z"
+      },
+      "first_receiving_index": {
+        "message_id": "chatcmpl-68043066-42c5-4376-ae77-5c619094cb29",
+        "message_uuid": "b0f64b46-6927-49da-8e3d-be65f9579d48",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "4110fc22-09a8-4321-8342-c481cbf13d63.request.json",
+        "response_file": "5e833cc0-a015-43ba-bd8c-02e117aef5aa.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:24:15.761Z"
+      },
+      "fork_agent_id": "a8340860c9a1679ea",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "chatcmpl-839553fa-d285-47a3-a1fe-73125df1703c",
+        "message_uuid": "9a62a00d-7f82-4584-b376-0841c11ed326",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:custom",
+        "request_file": "581c726b-01af-446c-a5a9-cd5b8181db28.request.json",
+        "response_file": "9ea397d8-d39d-4aef-b3de-4b2d5a5793c9.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:13:50.334Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "chatcmpl-b006fe8f-fa89-4d58-9587-9286e438f79f",
+        "message_uuid": "d7143734-de0f-4ce8-b993-0867847b320f",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "ba90e144-4bda-4710-b381-9071cf6df8a2.request.json",
+        "response_file": "7e1b8b2b-34f7-4aa1-bb52-95caf0a3a431.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:08:17.531Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-1",
+        "skill": "strategy-feasibility-review"
+      },
+      "parent_matching_fragments": 201,
+      "published_matching_fragments": 182,
+      "published_overlap_samples": [
+        "rollouts on error or latency regressions feasibility : feasible with named open",
+        "feasibility : feasible with named open questions that must close in the",
+        "questions that must close in the design doc before build effort estimate",
+        "design doc before build effort estimate : credible at l 6 9",
+        ": credible at l 6 9 sprints but two of the four",
+        "sprints but two of the four line items are optimistic the top"
+      ],
+      "published_review": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-1-review.md",
+      "published_review_sha256": "d1db658bac180e41d8e4bf57af4e5b88cdd17f12f4394cbbb9e0dd06ffcbc007",
+      "published_role_section_sources": [
+        {
+          "fraction": 1.0,
+          "matching_section_fragments": 181,
+          "receiving_request_file": "6e700ce6-2dda-466e-9c74-46bdbfaee476.request.json",
+          "sample_fragments": [
+            "feasibility : feasible with named open questions that must close in the",
+            "questions that must close in the design doc before build effort estimate",
+            "design doc before build effort estimate : credible at l 6 9"
+          ],
+          "source_input_sha256": "79d265376ba61767cede7a106a0031129170ea7f10f7272a49957b508f6b8942",
+          "source_path": null,
+          "source_precedes_specialist_launch": false,
+          "source_tool_index": {
+            "message_id": "chatcmpl-ae4a1a98-ba68-4b6b-b075-526b8824ec0d",
+            "message_uuid": "2712267d-320d-489a-973d-91f9b0f93c5b",
+            "model": "zai-org/GLM-5.3",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "8de8afec-35a4-4e2d-820b-fa877221cac5.request.json",
+            "response_file": "b1fc1fed-04ce-4114-b83c-af7686eab6d9.response.json",
+            "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+            "timestamp": "2026-10-11T23:25:10.006Z"
+          },
+          "source_tool_name": "Bash",
+          "tool_use_id": "chatcmpl-tool-9656f2f368a26bd5",
+          "total_section_fragments": 181
+        }
+      ],
+      "published_section_present": true,
+      "role": "feasibility",
+      "target": "RHAISTRAT-1",
+      "tool_use_id": "chatcmpl-tool-a37664a4d066fd25"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "109033b8-6613-42a7-8754-44bceb59781b.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-9d580a3e447473da"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "2afc8dc4-9eb8-4f61-8631-effa43bf07ea.request.json",
+          "review_paths": [
+            "local/strat-reviews/`",
+            "artifacts/strat-reviews/`"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-aa89b49f26b9c3a9"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "8f4b28a2-0e58-4ee5-aa93-eea31bc3097a.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-995ac8fcad3648c7"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "8de8afec-35a4-4e2d-820b-fa877221cac5.request.json",
+          "review_paths": [
+            "local/strat-reviews/`",
+            "local/strat-reviews/`"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": true,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-ad7814a0ec75f181"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "6e700ce6-2dda-466e-9c74-46bdbfaee476.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-1-review.md`,"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": true,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-9656f2f368a26bd5"
+        },
+        {
+          "full_assessment_body_observed": true,
+          "matching_fragment_count": 135,
+          "partial_transcript_assessment_observed": true,
+          "request_file": "1ce42405-6b98-4dfd-9dd0-f5da6daed4b7.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [
+            "all verifications pass. overlay 0014 confirms the gateway api canary maturity claim",
+            "the gateway api canary maturity claim and the scrape-interval absence claim holds",
+            "and the scrape-interval absence claim holds odh-observability.md documents tls and label injection",
+            "odh-observability.md documents tls and label injection but no interval defaults . i"
+          ],
+          "source_is_explicit_transcript_recovery": true,
+          "source_path": "/tmp/reviewer-prose.txt",
+          "tool_use_id": "chatcmpl-tool-97e322c7fd75dda3"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "e0a5a810-c66f-4c49-802b-cf2e3d0f9197.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md",
+          "tool_use_id": "chatcmpl-tool-8ee493d829d01896"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "ed4e592f-32ef-4a0b-a5be-21c18686ba94.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-b3f9d9a4f15d2c21"
+        }
+      ],
+      "assessment_chars": 6046,
+      "assessment_sha256": "e97bee1e6883644bf9e52fed3388c921c84c85a252eb62ffd4ef8e103ff63b05",
+      "assessment_source_index": {
+        "message_id": "chatcmpl-62750e49-19f6-43f9-8750-a017b822dbad",
+        "message_uuid": "8bd0623f-d4dc-4335-aff1-a0d1bf3d6baa",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:custom",
+        "request_file": "314c2eb9-5dfa-4d33-b127-9e6c00129371.request.json",
+        "response_file": "2dcf2c10-d136-4faa-8096-3aa3d10b9942.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:16:54.413Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 10,
+      "child_structured_calls": 1,
+      "delivery_status": "delivered via another route",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-1` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 100,
+      "expected_return_preview": "Skill \"strategy-testability-review\" completed (forked execution).\n\nResult:\nSkill execution completed",
+      "first_child_index": {
+        "message_id": "chatcmpl-02d5af59-2aba-45bf-84d9-5b0dc696e098",
+        "message_uuid": "7fc312c7-649e-4640-9a3d-ac70eda0decb",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:custom",
+        "request_file": "93b56c70-e4b7-4d85-8e29-ed6665de60f8.request.json",
+        "response_file": "d9e861ff-2ecf-4172-863e-7abb0dcad314.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:13:55.858Z"
+      },
+      "first_receiving_index": {
+        "message_id": "chatcmpl-68043066-42c5-4376-ae77-5c619094cb29",
+        "message_uuid": "b0f64b46-6927-49da-8e3d-be65f9579d48",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "4110fc22-09a8-4321-8342-c481cbf13d63.request.json",
+        "response_file": "5e833cc0-a015-43ba-bd8c-02e117aef5aa.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:24:15.761Z"
+      },
+      "fork_agent_id": "a7a245712ded031b7",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "chatcmpl-62750e49-19f6-43f9-8750-a017b822dbad",
+        "message_uuid": "8bd0623f-d4dc-4335-aff1-a0d1bf3d6baa",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:custom",
+        "request_file": "314c2eb9-5dfa-4d33-b127-9e6c00129371.request.json",
+        "response_file": "2dcf2c10-d136-4faa-8096-3aa3d10b9942.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:16:54.413Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "chatcmpl-b006fe8f-fa89-4d58-9587-9286e438f79f",
+        "message_uuid": "d7143734-de0f-4ce8-b993-0867847b320f",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "ba90e144-4bda-4710-b381-9071cf6df8a2.request.json",
+        "response_file": "7e1b8b2b-34f7-4aa1-bb52-95caf0a3a431.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:08:17.531Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-1",
+        "skill": "strategy-testability-review"
+      },
+      "parent_matching_fragments": 135,
+      "published_matching_fragments": 128,
+      "published_overlap_samples": [
+        "rollback of canary model rollouts on error or latency regressions testability :",
+        "error or latency regressions testability : testable. all nine acceptance criteria use",
+        "testable. all nine acceptance criteria use given/when/then with a measured by clause",
+        "given/when/then with a measured by clause naming a concrete verification artifact cr",
+        "naming a concrete verification artifact cr field values spec.predictor.canarytrafficpercent rollout status evaluation",
+        "field values spec.predictor.canarytrafficpercent rollout status evaluation records with window timestamps metrics queries"
+      ],
+      "published_review": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-1-review.md",
+      "published_review_sha256": "d1db658bac180e41d8e4bf57af4e5b88cdd17f12f4394cbbb9e0dd06ffcbc007",
+      "published_role_section_sources": [
+        {
+          "fraction": 1.0,
+          "matching_section_fragments": 126,
+          "receiving_request_file": "1ce42405-6b98-4dfd-9dd0-f5da6daed4b7.request.json",
+          "sample_fragments": [
+            "testability : testable. all nine acceptance criteria use given/when/then with a measured",
+            "criteria use given/when/then with a measured by clause naming a concrete verification",
+            "by clause naming a concrete verification artifact cr field values spec.predictor.canarytrafficpercent rollout"
+          ],
+          "source_input_sha256": "4b68b62439161ef9a8e44f38e7acf338f03f89042c078355334efe4820826c58",
+          "source_path": "/tmp/reviewer-prose.txt",
+          "source_precedes_specialist_launch": false,
+          "source_tool_index": {
+            "message_id": "chatcmpl-2457b476-6d61-4ce3-89b6-136458c99b6d",
+            "message_uuid": "8707f7a5-d176-4a00-bed8-7cf9c612d974",
+            "model": "zai-org/GLM-5.3",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "6e700ce6-2dda-466e-9c74-46bdbfaee476.request.json",
+            "response_file": "48c91a38-199e-4270-8896-e953df8785a2.response.json",
+            "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+            "timestamp": "2026-10-11T23:25:13.858Z"
+          },
+          "source_tool_name": "Read",
+          "tool_use_id": "chatcmpl-tool-97e322c7fd75dda3",
+          "total_section_fragments": 126
+        }
+      ],
+      "published_section_present": true,
+      "role": "testability",
+      "target": "RHAISTRAT-1",
+      "tool_use_id": "chatcmpl-tool-820e9b393622028a"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 1,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "4110fc22-09a8-4321-8342-c481cbf13d63.request.json",
+          "review_paths": [],
+          "sample_fragments": [
+            "and if needed extend canarytrafficpercent revision semantics and gateway api weighted routing"
+          ],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-tasks/RHAISTRAT-1.md",
+          "tool_use_id": "chatcmpl-tool-83e1a9d6233aa6eb"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "109033b8-6613-42a7-8754-44bceb59781b.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-9d580a3e447473da"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "2afc8dc4-9eb8-4f61-8631-effa43bf07ea.request.json",
+          "review_paths": [
+            "local/strat-reviews/`",
+            "artifacts/strat-reviews/`"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-aa89b49f26b9c3a9"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "8f4b28a2-0e58-4ee5-aa93-eea31bc3097a.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-995ac8fcad3648c7"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "8de8afec-35a4-4e2d-820b-fa877221cac5.request.json",
+          "review_paths": [
+            "local/strat-reviews/`",
+            "local/strat-reviews/`"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": true,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-ad7814a0ec75f181"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "6e700ce6-2dda-466e-9c74-46bdbfaee476.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-1-review.md`,"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": true,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-9656f2f368a26bd5"
+        },
+        {
+          "full_assessment_body_observed": true,
+          "matching_fragment_count": 86,
+          "partial_transcript_assessment_observed": true,
+          "request_file": "1ce42405-6b98-4dfd-9dd0-f5da6daed4b7.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [
+            "i have everything needed. this is a re-review of a single refined",
+            "a re-review of a single refined strategy rhaistrat-1 against its source rfe",
+            "strategy rhaistrat-1 against its source rfe rhairfe-1 and the prior review which",
+            "rhairfe-1 and the prior review which scored scope 2/2 approve . scope"
+          ],
+          "source_is_explicit_transcript_recovery": true,
+          "source_path": "/tmp/reviewer-prose.txt",
+          "tool_use_id": "chatcmpl-tool-97e322c7fd75dda3"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "e0a5a810-c66f-4c49-802b-cf2e3d0f9197.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md",
+          "tool_use_id": "chatcmpl-tool-8ee493d829d01896"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "ed4e592f-32ef-4a0b-a5be-21c18686ba94.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-b3f9d9a4f15d2c21"
+        }
+      ],
+      "assessment_chars": 3977,
+      "assessment_sha256": "f9e6e12e636e68c04ae9a3946b0402157d8dd1156e29e8a471cc0ae5f8cd95ba",
+      "assessment_source_index": {
+        "message_id": "chatcmpl-43cdec03-e5aa-4509-9c4d-3146beff6493",
+        "message_uuid": "3ac3b73d-3934-4b2c-8403-dcfb7d14e971",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:custom",
+        "request_file": "e3ea0362-2733-440e-8397-cdd7e323f7c8.request.json",
+        "response_file": "3e732afb-dde7-4ee5-8a6b-acb1bef0444f.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:18:45.338Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 6,
+      "child_structured_calls": 1,
+      "delivery_status": "delivered via another route",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-1` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 94,
+      "expected_return_preview": "Skill \"strategy-scope-review\" completed (forked execution).\n\nResult:\nSkill execution completed",
+      "first_child_index": {
+        "message_id": "chatcmpl-1aa8be5b-c383-44bd-89ac-d43785b5eb4e",
+        "message_uuid": "ecfe3141-295e-4beb-9390-1c738a6cca23",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:custom",
+        "request_file": "14dd69e9-e4e2-4675-8c36-5ddf9d8d1e0b.request.json",
+        "response_file": "3deb7bce-c43d-4580-9708-d1cb6a425759.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:17:01.417Z"
+      },
+      "first_receiving_index": {
+        "message_id": "chatcmpl-68043066-42c5-4376-ae77-5c619094cb29",
+        "message_uuid": "b0f64b46-6927-49da-8e3d-be65f9579d48",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "4110fc22-09a8-4321-8342-c481cbf13d63.request.json",
+        "response_file": "5e833cc0-a015-43ba-bd8c-02e117aef5aa.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:24:15.761Z"
+      },
+      "fork_agent_id": "a68a08067397dbb33",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "chatcmpl-43cdec03-e5aa-4509-9c4d-3146beff6493",
+        "message_uuid": "3ac3b73d-3934-4b2c-8403-dcfb7d14e971",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:custom",
+        "request_file": "e3ea0362-2733-440e-8397-cdd7e323f7c8.request.json",
+        "response_file": "3e732afb-dde7-4ee5-8a6b-acb1bef0444f.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:18:45.338Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "chatcmpl-b006fe8f-fa89-4d58-9587-9286e438f79f",
+        "message_uuid": "d7143734-de0f-4ce8-b993-0867847b320f",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "ba90e144-4bda-4710-b381-9071cf6df8a2.request.json",
+        "response_file": "7e1b8b2b-34f7-4aa1-bb52-95caf0a3a431.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:08:17.531Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-1",
+        "skill": "strategy-scope-review"
+      },
+      "parent_matching_fragments": 86,
+      "published_matching_fragments": 78,
+      "published_overlap_samples": [
+        "canary model rollouts on error or latency regressions scope assessment : right-sized",
+        "latency regressions scope assessment : right-sized effort vs scope : matched rfe",
+        "effort vs scope : matched rfe coverage : full scope risks :",
+        "coverage : full scope risks : - the kserve work item validate",
+        "- the kserve work item validate and if needed extend canarytrafficpercent revision",
+        "and if needed extend canarytrafficpercent revision semantics and gateway api weighted routing"
+      ],
+      "published_review": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-1-review.md",
+      "published_review_sha256": "d1db658bac180e41d8e4bf57af4e5b88cdd17f12f4394cbbb9e0dd06ffcbc007",
+      "published_role_section_sources": [
+        {
+          "fraction": 1.0,
+          "matching_section_fragments": 77,
+          "receiving_request_file": "1ce42405-6b98-4dfd-9dd0-f5da6daed4b7.request.json",
+          "sample_fragments": [
+            "scope assessment : right-sized effort vs scope : matched rfe coverage :",
+            "scope : matched rfe coverage : full scope risks : - the",
+            "full scope risks : - the kserve work item validate and if"
+          ],
+          "source_input_sha256": "4b68b62439161ef9a8e44f38e7acf338f03f89042c078355334efe4820826c58",
+          "source_path": "/tmp/reviewer-prose.txt",
+          "source_precedes_specialist_launch": false,
+          "source_tool_index": {
+            "message_id": "chatcmpl-2457b476-6d61-4ce3-89b6-136458c99b6d",
+            "message_uuid": "8707f7a5-d176-4a00-bed8-7cf9c612d974",
+            "model": "zai-org/GLM-5.3",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "6e700ce6-2dda-466e-9c74-46bdbfaee476.request.json",
+            "response_file": "48c91a38-199e-4270-8896-e953df8785a2.response.json",
+            "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+            "timestamp": "2026-10-11T23:25:13.858Z"
+          },
+          "source_tool_name": "Read",
+          "tool_use_id": "chatcmpl-tool-97e322c7fd75dda3",
+          "total_section_fragments": 77
+        }
+      ],
+      "published_section_present": true,
+      "role": "scope",
+      "target": "RHAISTRAT-1",
+      "tool_use_id": "chatcmpl-tool-a969e9d5f4058258"
+    },
+    {
+      "alternate_delivery_candidates": [
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "109033b8-6613-42a7-8754-44bceb59781b.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-9d580a3e447473da"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "2afc8dc4-9eb8-4f61-8631-effa43bf07ea.request.json",
+          "review_paths": [
+            "local/strat-reviews/`",
+            "artifacts/strat-reviews/`"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-aa89b49f26b9c3a9"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "8f4b28a2-0e58-4ee5-aa93-eea31bc3097a.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-995ac8fcad3648c7"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "8de8afec-35a4-4e2d-820b-fa877221cac5.request.json",
+          "review_paths": [
+            "local/strat-reviews/`",
+            "local/strat-reviews/`"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": true,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-ad7814a0ec75f181"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 13,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "6e700ce6-2dda-466e-9c74-46bdbfaee476.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-1-review.md`,"
+          ],
+          "sample_fragments": [
+            "all inputs are verified. overlay 0025 is superseded excluded and the dashboard",
+            "is superseded excluded and the dashboard claim is confirmed odh-dashboard.md documents a",
+            "claim is confirmed odh-dashboard.md documents a kserve inferenceservice crd watch for model",
+            "kserve inferenceservice crd watch for model serving state with get/list/watch rbac on"
+          ],
+          "source_is_explicit_transcript_recovery": true,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-9656f2f368a26bd5"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 125,
+          "partial_transcript_assessment_observed": true,
+          "request_file": "1ce42405-6b98-4dfd-9dd0-f5da6daed4b7.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [
+            "overlays applied: - 0008: platform policy no external operator auto-install release: all",
+            "no external operator auto-install release: all - 0011: kserve llminferenceservice / llm-d",
+            "- 0011: kserve llminferenceservice / llm-d architecture bounds the out-of-scope serving path",
+            "architecture bounds the out-of-scope serving path - 0014: model runtimes team architecture"
+          ],
+          "source_is_explicit_transcript_recovery": true,
+          "source_path": "/tmp/reviewer-prose.txt",
+          "tool_use_id": "chatcmpl-tool-97e322c7fd75dda3"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "e0a5a810-c66f-4c49-802b-cf2e3d0f9197.request.json",
+          "review_paths": [
+            "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "/app/tmp/strat-workflow/script-run-workflow-all-glm-5-3-1011-224849-152aa2/repo/artifacts/strat-reviews/RHAISTRAT-1-review.md",
+          "tool_use_id": "chatcmpl-tool-8ee493d829d01896"
+        },
+        {
+          "full_assessment_body_observed": false,
+          "matching_fragment_count": 0,
+          "partial_transcript_assessment_observed": false,
+          "request_file": "ed4e592f-32ef-4a0b-a5be-21c18686ba94.request.json",
+          "review_paths": [
+            "artifacts/strat-reviews/RHAISTRAT-1-review.md"
+          ],
+          "sample_fragments": [],
+          "source_is_explicit_transcript_recovery": false,
+          "source_path": "",
+          "tool_use_id": "chatcmpl-tool-b3f9d9a4f15d2c21"
+        }
+      ],
+      "assessment_chars": 6524,
+      "assessment_sha256": "b0cef1ae0ee3d4c3a7e577f4d2884a0eab743c4f3fd094fedaaaf87027064e94",
+      "assessment_source_index": {
+        "message_id": "chatcmpl-edaced99-27ab-459d-b05d-e6c07991db86",
+        "message_uuid": "69df40d7-b020-4762-ad1e-2b2cf99c694e",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:custom",
+        "request_file": "b970ac33-40ad-4c8b-b9b1-70b2f8133a0b.request.json",
+        "response_file": "2090b065-2edd-43fe-a976-680b63e75655.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:24:09.536Z"
+      },
+      "child_continuation_joins": [],
+      "child_explicit_file_writes": [],
+      "child_join_method": "exact task_started prompt in API request",
+      "child_request_count": 12,
+      "child_structured_calls": 1,
+      "delivery_status": "delivered via another route",
+      "effective_child_schema": {
+        "properties": {
+          "key": {
+            "pattern": "^(RHAISTRAT|STRAT)-[0-9]+$",
+            "type": "string"
+          },
+          "needs_attention": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "enum": [
+              "approve",
+              "revise",
+              "reject"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "recommendation",
+          "needs_attention"
+        ],
+        "type": "object"
+      },
+      "expanded_target_lines": [
+        "If `RHAISTRAT-1` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory."
+      ],
+      "expected_return_chars": 101,
+      "expected_return_preview": "Skill \"strategy-architecture-review\" completed (forked execution).\n\nResult:\nSkill execution completed",
+      "first_child_index": {
+        "message_id": "chatcmpl-88a6de29-052a-4d49-93a2-b18637e52849",
+        "message_uuid": "3ebe3c34-5b30-41a1-a478-a4e99b35bb9d",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:custom",
+        "request_file": "ac1204ca-2dfb-4693-b744-96bc9a7d163e.request.json",
+        "response_file": "78f26a36-22f7-4fc2-87bb-79c48c1c45ad.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:18:59.918Z"
+      },
+      "first_receiving_index": {
+        "message_id": "chatcmpl-68043066-42c5-4376-ae77-5c619094cb29",
+        "message_uuid": "b0f64b46-6927-49da-8e3d-be65f9579d48",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "4110fc22-09a8-4321-8342-c481cbf13d63.request.json",
+        "response_file": "5e833cc0-a015-43ba-bd8c-02e117aef5aa.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:24:15.761Z"
+      },
+      "fork_agent_id": "a070ce39976b041f7",
+      "incorporation_status": "unresolved: section/lexical overlap does not establish semantic fidelity",
+      "last_child_index": {
+        "message_id": "chatcmpl-edaced99-27ab-459d-b05d-e6c07991db86",
+        "message_uuid": "69df40d7-b020-4762-ad1e-2b2cf99c694e",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:custom",
+        "request_file": "b970ac33-40ad-4c8b-b9b1-70b2f8133a0b.request.json",
+        "response_file": "2090b065-2edd-43fe-a976-680b63e75655.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:24:09.536Z"
+      },
+      "last_child_response_types": [
+        "thinking",
+        "text",
+        "tool_use:StructuredOutput"
+      ],
+      "launch_index": {
+        "message_id": "chatcmpl-b006fe8f-fa89-4d58-9587-9286e438f79f",
+        "message_uuid": "d7143734-de0f-4ce8-b993-0867847b320f",
+        "model": "zai-org/GLM-5.3",
+        "query_source": "agent:builtin:workflow-subagent",
+        "request_file": "ba90e144-4bda-4710-b381-9071cf6df8a2.request.json",
+        "response_file": "7e1b8b2b-34f7-4aa1-bb52-95caf0a3a431.response.json",
+        "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+        "timestamp": "2026-10-11T23:08:17.531Z"
+      },
+      "launch_input": {
+        "args": "RHAISTRAT-1",
+        "skill": "strategy-architecture-review"
+      },
+      "parent_matching_fragments": 137,
+      "published_matching_fragments": 126,
+      "published_overlap_samples": [
+        "present is rhaistrat-1 strat_id rhaistrat-1 source rhairfe-1 status refined refine_count 1 .",
+        "rhairfe-1 status refined refine_count 1 . architecture context: rhoai-3.6-ea.2 . prior review",
+        "architecture context: rhoai-3.6-ea.2 . prior review exists artifacts/strat-reviews/rhaistrat-1-review.md architecture 1/2 approve .",
+        "exists artifacts/strat-reviews/rhaistrat-1-review.md architecture 1/2 approve . overlays applied: - 0008: platform policy",
+        "overlays applied: - 0008: platform policy no external operator auto-install release: all",
+        "no external operator auto-install release: all - 0011: kserve llminferenceservice / llm-d"
+      ],
+      "published_review": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-1-review.md",
+      "published_review_sha256": "d1db658bac180e41d8e4bf57af4e5b88cdd17f12f4394cbbb9e0dd06ffcbc007",
+      "published_role_section_sources": [
+        {
+          "fraction": 0.9453125,
+          "matching_section_fragments": 121,
+          "receiving_request_file": "1ce42405-6b98-4dfd-9dd0-f5da6daed4b7.request.json",
+          "sample_fragments": [
+            "- 0008: platform policy no external operator auto-install release: all - 0011:",
+            "operator auto-install release: all - 0011: kserve llminferenceservice / llm-d architecture bounds",
+            "kserve llminferenceservice / llm-d architecture bounds the out-of-scope serving path - 0014:"
+          ],
+          "source_input_sha256": "4b68b62439161ef9a8e44f38e7acf338f03f89042c078355334efe4820826c58",
+          "source_path": "/tmp/reviewer-prose.txt",
+          "source_precedes_specialist_launch": false,
+          "source_tool_index": {
+            "message_id": "chatcmpl-2457b476-6d61-4ce3-89b6-136458c99b6d",
+            "message_uuid": "8707f7a5-d176-4a00-bed8-7cf9c612d974",
+            "model": "zai-org/GLM-5.3",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "6e700ce6-2dda-466e-9c74-46bdbfaee476.request.json",
+            "response_file": "48c91a38-199e-4270-8896-e953df8785a2.response.json",
+            "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+            "timestamp": "2026-10-11T23:25:13.858Z"
+          },
+          "source_tool_name": "Read",
+          "tool_use_id": "chatcmpl-tool-97e322c7fd75dda3",
+          "total_section_fragments": 128
+        },
+        {
+          "fraction": 0.03125,
+          "matching_section_fragments": 4,
+          "receiving_request_file": "6e700ce6-2dda-466e-9c74-46bdbfaee476.request.json",
+          "sample_fragments": [
+            "ci mode only strategy present is rhaistrat-1 strat_id rhaistrat-1 source rhairfe-1 status",
+            "rhaistrat-1 strat_id rhaistrat-1 source rhairfe-1 status refined refine_count 1 . architecture context:",
+            "refined refine_count 1 . architecture context: rhoai-3.6-ea.2 . prior review exists artifacts/strat-reviews/rhaistrat-1-review.md"
+          ],
+          "source_input_sha256": "79d265376ba61767cede7a106a0031129170ea7f10f7272a49957b508f6b8942",
+          "source_path": null,
+          "source_precedes_specialist_launch": false,
+          "source_tool_index": {
+            "message_id": "chatcmpl-ae4a1a98-ba68-4b6b-b075-526b8824ec0d",
+            "message_uuid": "2712267d-320d-489a-973d-91f9b0f93c5b",
+            "model": "zai-org/GLM-5.3",
+            "query_source": "agent:builtin:workflow-subagent",
+            "request_file": "8de8afec-35a4-4e2d-820b-fa877221cac5.request.json",
+            "response_file": "b1fc1fed-04ce-4114-b83c-af7686eab6d9.response.json",
+            "session_id": "d1bdbc9c-4e89-470c-866e-74cbbc9f8a46",
+            "timestamp": "2026-10-11T23:25:10.006Z"
+          },
+          "source_tool_name": "Bash",
+          "tool_use_id": "chatcmpl-tool-9656f2f368a26bd5",
+          "total_section_fragments": 128
+        }
+      ],
+      "published_section_present": true,
+      "role": "architecture",
+      "target": "RHAISTRAT-1",
+      "tool_use_id": "chatcmpl-tool-b1513181d8bca5e8"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/00ae5608-288d-4b71-b850-beb2e3ee7fa2.request.json",
+      "sha256": "6b5fdeafad5f68e61d36fe596849b250d765eff0522cf2bc84d1b09f03c52018"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/0374beab-cd84-49e2-84c7-2853b7bede3f.request.json",
+      "sha256": "06cb89b066a3a533ab0cd820c93b69dc9777e073fb66ef8fe3077f0af51842cb"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/05ac20e5-0847-48ed-80b4-3dadadb76f0b.response.json",
+      "sha256": "4bde701b6a399fa94fe29c21ceaf551aaa9a822e214d72f1d729b1e7607c5da9"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/0699ec59-3108-4255-9a75-29634915b3a5.request.json",
+      "sha256": "8469db467ba6006088d644ac87ed77d5814171494a918f5a167575b13723bc3e"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/0fed3192-9767-43aa-b3a3-7062686b9d0f.response.json",
+      "sha256": "aed6b1f34892c46b29c696d9883d7497bf4e78a075c82b84f70f03c6c39d5351"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/14dd69e9-e4e2-4675-8c36-5ddf9d8d1e0b.request.json",
+      "sha256": "ad22f2c04f877fd91c797fee00974e943e746c2067c8c89f77f47bea0394d776"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/1ce42405-6b98-4dfd-9dd0-f5da6daed4b7.request.json",
+      "sha256": "a94bb88e4808ea2c733be791fafea9c17409e206fb1644660026138dd90e0d8d"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/2090b065-2edd-43fe-a976-680b63e75655.response.json",
+      "sha256": "ce5da8f3d92b4e88527ae8f95ea6eb052e7660a2fbdbfdce5d81f2192a58c575"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/2dcf2c10-d136-4faa-8096-3aa3d10b9942.response.json",
+      "sha256": "fbb5cb4a05d8f1af3032acb7cf5e96a05d438cfcf2f6bef88b0255422e9f10b8"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/314c2eb9-5dfa-4d33-b127-9e6c00129371.request.json",
+      "sha256": "577cc1dc01d0ec216f974cbb0d543fd5c557eb9ac4494a17d71f75c4dca4094d"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/3deb7bce-c43d-4580-9708-d1cb6a425759.response.json",
+      "sha256": "a2bb8857bbbae3f690dd432ced87a558d2586a681ef1cd1b081bd7482f81c5aa"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/3e732afb-dde7-4ee5-8a6b-acb1bef0444f.response.json",
+      "sha256": "6b13dddfb5a784fb39453d31732d1cb2ac45e6100649e3dbffb63e5c1857a417"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/3fe0a6b7-b1d4-4cdb-ae77-949ee826b64a.request.json",
+      "sha256": "9ded00ec8acef16a0f0d88097535430afd41444ec00825523f3470308750aced"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/4110fc22-09a8-4321-8342-c481cbf13d63.request.json",
+      "sha256": "19b163b0fc998a0313e76d66b0ea743d273dec399c5c404643e23c925e7d66d6"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/48c91a38-199e-4270-8896-e953df8785a2.response.json",
+      "sha256": "7cfe67361df3ff9f9778da1fb30893143c1725be6cdd1b3ded1514d9b638c2ea"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/581c726b-01af-446c-a5a9-cd5b8181db28.request.json",
+      "sha256": "9cc4d07fe1501e712d4a98c12e1be21325468d009dad1a0d4e8bad732262c991"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/5c1c6c50-24fc-484c-a102-6476028d7f63.request.json",
+      "sha256": "c68fb80f643f9ebbb0c7a101c8bbf3629e2ce3a37e725515cc1c7034e99dc04c"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/5e7ab0b4-1595-446f-a51a-ed98d70b9e44.request.json",
+      "sha256": "6c1f64ceee99425cc7b07a6d9d2b8a2b2d338988005ae4b605046396d0d0bc22"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/5e833cc0-a015-43ba-bd8c-02e117aef5aa.response.json",
+      "sha256": "4584cb971a68a38b245f012505081ab067f49436c180b0a7d5a4398928e0f02f"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/60820766-47dc-4f18-b4c7-ef486912ee79.request.json",
+      "sha256": "108d561ee3c9bf29401f12320c3e2e68eeb707f9544e5b685a0333d2d377b49f"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/6e700ce6-2dda-466e-9c74-46bdbfaee476.request.json",
+      "sha256": "55e4f5a03656c68891353067f9ab1871680113b4a0a2e1edc72ea0b906d44e43"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/78f26a36-22f7-4fc2-87bb-79c48c1c45ad.response.json",
+      "sha256": "a3568c6a69157741e11da65d401d6d41e54e16e3a57f9c68b12f69ad71df1ff3"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/7e1b8b2b-34f7-4aa1-bb52-95caf0a3a431.response.json",
+      "sha256": "7e39e07a318ace9a00260365bbdc82c9a89a223fd1d1975a7e058789b0977505"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/8de8afec-35a4-4e2d-820b-fa877221cac5.request.json",
+      "sha256": "9466f7705042a0d5c237f172d5526f0f3bb039c5851d278ebc3ed58ea6fb8778"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/93b56c70-e4b7-4d85-8e29-ed6665de60f8.request.json",
+      "sha256": "8c16493d6666b18d7286ec9417233deb8cc4b9ffedbd4a1d96cb20034c669d94"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/95c77f10-6cf7-45c1-824b-bc97b58537ff.response.json",
+      "sha256": "54a66e428249f5fa524d49df6e1a49a265d10b792036f4a5cd2fa7bbe4f25386"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/9ea397d8-d39d-4aef-b3de-4b2d5a5793c9.response.json",
+      "sha256": "92931ab4b9aed2fde17e7faa330aa64674703d38d4d6964e0d9318a90881e08b"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/9ee35353-41af-4fa5-8364-d7ec3c171a77.response.json",
+      "sha256": "1d26aee3da803904e22c843038476c57a2075cbbc98b6bb1e29b4b836458a2d4"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/a6dedc4f-a547-4b9e-9394-969a9d0f68a8.response.json",
+      "sha256": "23b44bf2c8e704fd1d1592341de13b292acc7f0be239d277f9fa4d18466e5e67"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/ab171c98-3a57-4847-8065-f3f3c5778a5b.request.json",
+      "sha256": "e9d15bfd31865da491307e4d0de08c5b992d9495175fb57b94044f3cf18169dc"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/ac1204ca-2dfb-4693-b744-96bc9a7d163e.request.json",
+      "sha256": "c1b3d4a354e13a4e47a41ec42d4fbeb5af311b81ff960bc5f49fbe87bb532764"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/b1fc1fed-04ce-4114-b83c-af7686eab6d9.response.json",
+      "sha256": "a6917efa641313076b02611b7bcca9a212cece1a4f1ababd9f26725da5db8736"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/b30597a5-7d35-4283-aac5-a40b5167f82f.request.json",
+      "sha256": "a5ac1d9ebc98bc1208f85b184ac0efae93055c48224b5b9e5bfd13833e611445"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/b7585e5d-5094-449b-a18e-fcba5b70d58b.response.json",
+      "sha256": "fa823c8cc051d3e43789fe4814044fc0f7cdaa2838c2bacb2fdff5712707ba32"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/b7f7d055-3166-4907-9fd9-6cf785cb366b.request.json",
+      "sha256": "d5df75f057d58b345c1b8513cf1d9396c7c44cca7ecb2f8bde673651fe6c5202"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/b970ac33-40ad-4c8b-b9b1-70b2f8133a0b.request.json",
+      "sha256": "c24c3e1e5fe7a84f8404421b2f0b2c1f925da62fe7d897190aecbdefc04f56f1"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/ba90e144-4bda-4710-b381-9071cf6df8a2.request.json",
+      "sha256": "8e1f5f9c36576e76c83990c494027a5d4185e8e3288f7751839e49fd3242e1db"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/c24106c2-18f0-4dd9-9ed0-e96d7bc96c05.request.json",
+      "sha256": "956c073c4434a7e0ea580c6afe8b18a34074d6a7900cd4be9a8608e9fe22d228"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/c2a7ee4d-05c6-43a6-aefa-2726c8a01fea.response.json",
+      "sha256": "c4b30b9cbbe78df17a8526363dcab1daf2a9f573b7c21e464efc949eef97cb43"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/c42d885d-b4da-47dc-9b18-de96d0ce304b.response.json",
+      "sha256": "9f8a76040edb3a7272a04687544e67965177ff7fb00b4a92266477b01e1a9d7f"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/c60a85ed-11ec-4150-ac2c-d0f4093390fb.request.json",
+      "sha256": "163131b25d1031d359254dd548306bca8e0c1a8e49a905fd7b3aabb65aedfdce"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/d97438df-600a-4651-8bce-57069904fa1a.request.json",
+      "sha256": "116023674dcb2dbd677d2ca0f088e5aa6e34aef5a7a9835fc6f5675cf68c1757"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/d9e861ff-2ecf-4172-863e-7abb0dcad314.response.json",
+      "sha256": "e7881990b078f7a96d9cb0ce24c839baabc65defd9325ccc19f9f27c290233f5"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/e3ea0362-2733-440e-8397-cdd7e323f7c8.request.json",
+      "sha256": "13ac550f3c6bed0d0d672ed5ed09c719501f3bf3da256c873b7724b88474b4ac"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/e464cb68-daa8-46f5-9e5f-a8c6df23b1b8.response.json",
+      "sha256": "57936bbcc758320705f8ae8c0bdee7463f847fbef3964236aaecc112c54136a7"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/ecd7db84-42a5-4997-af34-d93961d7dc3c.response.json",
+      "sha256": "dafaa78f8665ca2c934b4182a7e37539505872d88245b9c3e0f18ed7445457bd"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/f0f702d4-7e3f-4d9d-bbd3-57d31bcce98a.response.json",
+      "sha256": "f9e961c3a75eccd2eaef46cd663ac505f8247a9d3f7994f27c7ec3c5232e03d9"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/f2f431af-a70d-4748-8b40-5d096f4b1e7d.response.json",
+      "sha256": "60551df4ffa0b177dd41e79ea501129bd41eed631f9452f07e99facc2b463704"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/fe203802-89fb-4b09-a672-974a5db87fdd.response.json",
+      "sha256": "9a2c646b6dda78078aa63da6592c9df8ca52367fba32fe6733b75f33d3497489"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/api-dumps/index.jsonl",
+      "sha256": "13ff8f7df53f82fd291db89bced2a4778ac5a51f2f1e3adce4d89b636f6d5d12"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/artifacts/eval-result.json",
+      "sha256": "ba3aa9afe522f5399ac8e12354bb1ec2499785c5c6066fad964508f03b1e05ff"
+    },
+    {
+      "path": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2/artifacts/repo-artifacts/strat-reviews/RHAISTRAT-1-review.md",
+      "sha256": "d1db658bac180e41d8e4bf57af4e5b88cdd17f12f4394cbbb9e0dd06ffcbc007"
+    }
+  ],
+  "job": "var/run-data/strat-workflow/markov-run-23df27ac/20261011T232950539833Z/jobs/script-run-workflow-all-glm-5-3-1011-224849-152aa2",
+  "limitations": [
+    "Alternate paths are lexical candidates, not proof of semantic delivery",
+    "A complete-looking section does not establish fidelity or fabrication",
+    "Missing task-start prompts weaken joins outside the S1 stream archive"
+  ],
+  "runner_sha256": "400aa40c7d02d9b147548d2a03f3ca2604df919820481e0149d6a1bc880c7a7a",
+  "schema_version": 1,
+  "summary": {
+    "delivered via another route": 4
+  }
+}

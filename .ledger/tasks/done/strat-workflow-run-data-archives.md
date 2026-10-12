@@ -18,7 +18,7 @@ symlink to `/data/breadboard`; never commit generated archives.
 - [x] Implement archive checks before wipe and each seed reset, including direct helpers.
 - [x] Collect and verify the completed first S1 batch; do not launch any new run.
 - [x] Record acceptance criterion and limitations in the plan.
-- [ ] Publish/sync updated guards before another deployed benchmark invocation.
+- [x] Publish/sync updated guards before another deployed benchmark invocation.
 
 ## Evidence
 
@@ -33,6 +33,7 @@ S1 contains 605 API dump files and 3,698 strace files.
 Expanded capture: 4,694 checksummed files totaling 1,601,583,672 bytes.
 Expanded checksums verified live and the final receipt refreshed.
 Twenty offline tests pass, including unpack safety and integrity checks.
-Guard implementation is local; the already deployed workflow remains pinned
-to `2cf4540` pending publication/sync. Detailed S1 failure analysis remains
-in the separate S1 task.
+Published and synced as `2615e72e79704874620be092af2ae5fffc76b8e9` before
+the separately authorized Opus run `markov-run-7845a7f1`; both archive gates
+passed before its seed reset. The first Haiku failure evidence is retained.
+Opus completion/archival remains in the separate current Opus task.

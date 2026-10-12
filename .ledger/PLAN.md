@@ -9,6 +9,9 @@
   and recovery, cancellation, budgets, retries and replay consistency verified as
   twenty-three operational controls
   ([task](tasks/done/claude-workflow-operations-controls.md)).
+- [Claude Code auto-mode analysis](tasks/done/claude-code-auto-mode-analysis.md):
+  complete. Two-stage Sonnet permission classifier, 140k-char rule prompt,
+  severity verdicts, default-on, billed ancillary calls; five verified controls.
 - [One S2 Opus batch after rate-limit reset](tasks/done/strat-workflow-tier2-s2-opus-rate-limit-retry.md):
   PASS in 88.7 min; three reviews, 12 substantive specialist returns; scope drift
   persists. Final archive independently verified and receipts published.

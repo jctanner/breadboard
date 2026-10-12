@@ -7,6 +7,13 @@ Reader's report: [Claude Workflows and scripted pipelines](../notes/claude-workf
 It summarizes the execution layers, evidence limits, proposed testing budgets,
 and production recommendation. Proposed study levels do not authorize new runs.
 
+2026-10-12 hardening: [fresh reproduction and reusable delivery checks](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-benchmark-hardening.md)
+are complete and privately archived. The installed binary is still 2.1.296;
+no newer-version conclusion is implied. Full normalized selected assessments
+match 2/12 versus 12/12 expected returns. [R1 matched-concurrency design](strat-workflow-matched-concurrency-retest.md)
+is pre-registered but has not launched. Delivery is measured separately from
+scope, final incorporation and technical accuracy; no baseline implementation changed.
+
 ## What we are trying to learn
 
 strat-creator turns approved RFEs into strategy documents in three steps:

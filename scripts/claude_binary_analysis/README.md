@@ -79,6 +79,14 @@ directory retains argv, debug/stdout/stderr output, raw strace, and extracted
 
 ## Tests and commit checks
 
+`check_specialist_delivery.py MANIFEST --api-dir JOB/api-dumps` checks expected
+strategy/role/tool IDs against actual receiving tool results. The manifest declares
+hashed reference reports or authored fragments; acknowledgements, partial reports,
+errors and identity mismatches fail. Alternatively use `--channels FILE.json`
+with an `observations` array for controlled fixtures. Exit 0 means every declared
+report was delivered, 1 means contract failure, and 2 means invalid input.
+See [the evidence and limits](docs/claude-code-2.1.296-benchmark-hardening.md).
+
 ```bash
 BUN_BIN=/path/to/pinned/bun \
   python3 -m unittest discover -s scripts/claude_binary_analysis/tests -v

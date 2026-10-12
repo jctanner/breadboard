@@ -7,6 +7,11 @@ must be revalidated before being applied to a different release.
 
 ## Investigations
 
+[Benchmark report hardening](claude-code-2.1.296-benchmark-hardening.md) adds a
+fresh installed-version reproduction and a manifest-driven delivery checker.
+Its read-only archive replays verify full normalized assessment returns, with
+the [source hashes](claude-code-2.1.296-benchmark-hardening-evidence.json) retained.
+
 | Target | Findings | Reconstructed control flow |
 | --- | --- | --- |
 | 2.1.296 production gaps, priorities 1–2 | [Nested specialist return diagnosis](claude-code-2.1.296-workflow-specialist-handoff.md), twenty-one controls and a configured-agent workaround; [real-run provenance](claude-code-2.1.296-workflow-review-provenance.md), thirty-two archived calls | Exact return-path pseudocode in the handoff report |

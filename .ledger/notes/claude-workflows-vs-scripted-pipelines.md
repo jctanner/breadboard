@@ -7,20 +7,23 @@ We compared two ways to turn enhancement requests into strategy documents:
 - **Native Workflow:** JavaScript running inside Claude Code coordinates the agents.
 - **Scripted Pipeline:** external bash and Python scripts coordinate Claude calls.
 
-Claude Workflows offer useful scheduling, separate agent conversations, and saved
-results. They do not make the whole pipeline deterministic. In the tested design,
-even routine script execution and result transfer pass through model decisions.
+Workflows offer scheduling, separate conversations and saved results. Routine
+script execution and result transfer still pass through model decisions.
 
 Our three-ticket comparison used a parallel Native Workflow and a sequential
 Scripted Pipeline. The Workflow finished faster at a slightly lower recorded
-cost; the Scripted Pipeline delivered all specialist assessments through the
-expected return path. Prefer an external runner: bash for launching commands,
-Python for data handling and validation. Keep agents responsible for the work
-that needs judgment.
+cost; the Scripted Pipeline delivered every specialist assessment through the
+expected path. Prefer external bash/Python coordination with validated results;
+keep agents responsible for judgment.
 
 Evidence date: 12 October 2026. Workflow behavior refers to Claude Code 2.1.296.
 The benchmark records label these designs S1 (Native Workflow) and S2 (Scripted
 Pipeline). An RFE is a request for enhancement. Sources are listed at the end.
+
+**Scope:** 2-of-12 is an existence proof with a reproduced mechanism, not a
+failure-rate estimate. This configured path dropped completed assessments;
+controlled responses explain how. One pair cannot establish general performance,
+quality or reliability rankings. The recommendation concerns these integrations. [3, 8]
 
 ## A. What a Workflow actually does
 
@@ -47,23 +50,23 @@ Deterministic means the same inputs lead to the same program decisions.
 | Routine operations | An agent runs commands and reports results | Scripts run commands and parse results directly |
 | Strategy and review content | Model judgment | Model judgment |
 
-The Native Workflow makes the first layer deterministic while moving uncertainty
-below `agent()`. The model chooses commands, interprets output, and decides what
-to return. The harness then packages that return for the next layer.
+The Native Workflow moves uncertainty below `agent()`: a model chooses commands,
+interprets output and returns a value; the harness packages it for the next layer.
 
 For example, the Scripted Pipeline reads state directly from a Python command.
-The Native Workflow asks an agent to run that command and repeat the JSON. The
-command may succeed while the reported value is wrong. In the Haiku batch, a
-completed refinement was returned as JSON inside a string; the pipeline then
-left that strategy out of review. [2]
+The Native Workflow asks an agent to repeat that command's JSON. In the Haiku
+batch, a completed refinement was returned as JSON inside a string; the pipeline
+left that strategy out of review despite successful underlying work. [2]
 
-Extra transfers create extra places to fail. A deterministic loop can skip an
-item an agent omitted; replay can reuse an incorrect result. Predictable
-scheduling can therefore preserve mistakes and hide incomplete work.
+Separately, the Skill harness selects the last assistant record's text: a final
+structured tool call can hide earlier specialist prose. These are transcription
+and result-projection boundaries, not faulty JavaScript loops. [3]
 
-The Scripted Pipeline's agents still make uncertain decisions internally. Its
-runner can keep discovery, validation, checkpointing, and publication outside
-those conversations. Model judgment remains uncertain.
+Extra transfers add failure points. Deterministic loops can skip agent-omitted
+items; replay can preserve incorrect results and hide incomplete work.
+
+The Scripted Pipeline can keep discovery, validation and publication outside
+conversations. Its agents still make uncertain internal decisions.
 
 ### 3. The useful parts
 
@@ -72,13 +75,18 @@ those conversations. Model judgment remains uncertain.
 - **Result-driven work:** an agent's returned list can drive a loop or fan-out.
 - **Replay:** completed agent results can be reused after a restart, saving work.
 
-Parallelism is available in bash too. It trades shorter elapsed time for harder
-debugging: logs can interleave, failures overlap, and shared-file races become
-possible. Workflow task grouping helps organize activity, but does not remove
-the difficulty of following several agent conversations at once.
+| Native Workflow concurrency | Scripted Pipeline concurrency |
+| --- | --- |
+| Built-in agent limits, task grouping and separate conversations | The author controls job pools, processes and per-job logs |
+| Agents still mediate effects/results; files can remain shared | The author must implement limits, cancellation and log separation |
 
-Returned lists can silently omit items. Separate conversations can share files
-and skill metadata. Neither guarantees a complete or isolated batch. [1, 5]
+Both designs need log and shared-write discipline under concurrency. Separate
+conversations are not filesystem isolation. Sequential logs are easier to follow;
+the original author's intent is unverified. Matched-concurrency performance and
+parallel safety remain unmeasured in this strategy comparison. [1, 5]
+
+Returned lists can silently omit items; conversations can share files and skill
+metadata. Completeness and isolation need checks. [1, 5]
 
 ### 4. Completion has several meanings
 
@@ -93,24 +101,31 @@ These are reproduced behaviors in the tested release:
 | Budget checks occur at agent launches and completion | The last agent can overshoot the budget |
 | CLI status and Workflow outcome can disagree | Read durable state and validate business results |
 
-The specialist defect also affects ordinary CLI schema output. Tool restrictions
-or direct structured assessment calls worked in fixtures; neither has been
-validated in a repaired paid strategy batch. Cancellation did stop fixture
-children. Request retries preserved completed tool work, while conversation
-restarts repeated side effects. [3, 4]
+Ordinary CLI schema output shares the specialist defect. Tool restrictions and
+direct structured assessments worked in fixtures, not a repaired paid strategy
+batch. Cancellation stopped fixture children. Request retries preserved completed
+tool work; conversation restarts repeated side effects. [3, 4]
+
+A fresh mock run on the installed release, still 2.1.296, preserved earlier prose
+on disk but returned only the acknowledgement. It tests prescribed responses,
+not model failure frequency; newer releases remain untested. [8]
 
 The 30-second JavaScript guard is not a total workflow deadline. The token
 budget was unset in the tested local launch path. External limits still matter.
 
+**Applicability:** neither Fullsend deployment was validated here. Runtime findings
+transfer only when version/configuration preserve the tested path; wrappers can
+change it or add validation. Relay/scaffold details do not automatically transfer.
+Both integrations need pinned sandbox evidence, receiving results and business
+checks. [1–4, 8]
+
 ### 5. Small primary context does not mean small total usage
 
-In the repaired Native Workflow batch, the primary agent's measured input grew
-from 24,103 to 26,887 tokens: an increase of 2,784. There were no primary model
-calls during the roughly 50-minute background wait. Waiting happened in the harness.
+The repaired Native Workflow's primary input grew from 24,103 to 26,887 tokens:
+2,784 more. Its roughly 50-minute background wait involved no primary model calls.
 
-One helper reached about 168,000 input tokens. Total job usage was 12.95 million
-tokens across repeated requests and separate conversations, not one context
-window. [2]
+One helper reached about 168,000 input tokens. The job's 12.95 million tokens
+count repeated requests and separate conversations, not one context window. [2]
 
 ## B. How much testing is enough?
 
@@ -119,8 +134,7 @@ window. [2]
 One run can expose a defect. Many successful runs are needed to estimate how
 rarely defects occur.
 
-Levels 1 and 2 follow the existing benchmark structure. Levels 3 and 4 below are
-proposed follow-ups, not authorization to launch more runs.
+Levels 1–2 follow the existing structure; 3–4 are proposals, not run authorization.
 
 | Level | Runs | Token planning estimate | Purpose |
 | --- | --- | --- | --- |
@@ -134,33 +148,28 @@ After smoke, prioritize missing results, wrong targets, empty batches, duplicate
 failed writes, broken streams, quota limits, crashes, cancellation, and stale
 resume. Mocks test harness behavior; a smaller live subset tests model behavior.
 
-Keep the original versions of both designs as controls; name repairs as new
-variants. Repeating a known failure adds little. Confidence campaigns should
-follow repairs and stronger checks, including the scope checks both designs
-currently fail.
+Keep original versions as controls; name repairs as variants. Confidence campaigns
+should follow repairs and stronger checks, including the scope checks both fail.
+Repeating a known defect adds little.
 
 ### 7. The budget arithmetic
 
 One measured three-RFE pair used:
 
-- Native Workflow: 12.95 million tokens and $21.55 API list-price equivalent.
-- Scripted Pipeline: 12.21 million tokens and $24.28 API list-price equivalent.
-- Together: 25.16 million tokens and $45.83.
+**12.95 + 12.21 = 25.16 million tokens**, and **$21.55 + $24.28 = $45.83**
+API list-price equivalent for the Native Workflow and Scripted Pipeline together.
 
-Ten pairs therefore cost roughly **10 × 25.16 = 252 million tokens** and
-**10 × $45.83 = $458**. They require about 23 hours if run one after another at
-the observed durations, before setup or quota waits.
+Ten pairs use roughly **10 × 25.16 = 252 million tokens** and **10 × $45.83 = $458**:
+about 23 sequential hours at observed durations, before setup or quota waits.
 
-Totals include uncached input, cache writes, cache reads, and output. Cached
-input counts repeatedly. The pair produced about 481,000 output tokens, including
-thinking. These categories have different prices; token totals alone cannot
-predict the bill.
+Totals include uncached input, cache writes/reads and output. Cached input counts
+repeatedly. The pair's roughly 481,000 output tokens include thinking. Category
+prices differ; token totals alone cannot predict the bill.
 
-Projections assume similar three-RFE workloads. Empty batches can cost less;
-large inputs, retries, setup, and independent grading add cost. Dollars are
-historical API equivalents, not subscription charges. Recalibrate the smoke
-estimate on the repaired infrastructure. Pin permission settings too: some
-modes add classifier calls. [2, 6]
+These are three-RFE projections. Empty batches can cost less; large inputs,
+retries, setup and independent grading add cost. Dollars are historical API
+equivalents, not subscription charges. Recalibrate smoke usage on repaired
+infrastructure and pin permission modes, which can add classifier calls. [2, 6]
 
 ### 8. Zero failures still leaves uncertainty
 
@@ -178,23 +187,27 @@ zero risk. The table applies separately to each design.
 | 60 | 5% | 1.51 billion | $2,750 |
 | 300 | 1% | 7.55 billion | $13,750 |
 
-Sixty per design means 120 paid batch runs. These are total study budgets, not
-additions to earlier rows. Qualifying only one candidate uses its own per-run cost.
+Sixty per design means 120 paid batch runs. These are total budgets, not additions
+to earlier rows; qualifying one candidate uses its own per-run cost.
 
-Bounds assume independent, representative trials of a stable version. Twelve
-specialists inside one batch are not twelve independent pipeline runs. Repeating
-one RFE gives narrow coverage. Keep injected faults separate from estimates of
-ordinary failure frequency.
+Bounds need independent, representative trials of a stable version. Repeating
+one RFE gives narrow coverage. Keep injected faults separate from ordinary
+failure-frequency estimates.
 
 “95% confidence” describes a method that covers the true rate in at least about
 95 of 100 repeated studies under those assumptions. It does not mean the next
 run is guaranteed to succeed. The rule applies only when there are zero failures;
 otherwise use a failure-rate confidence interval. [7]
 
-Ten pairs are a speed/cost pilot. For each pair, subtract the Native Workflow's
-time from the Scripted Pipeline's; report the average and spread. More runs
-depend on that spread and the difference we care about. Quality needs a fixed
-rubric and independent, blind grading. The failure-rate rule does not measure accuracy.
+The checker is deterministic; real agents are not. Counting reports in a fixed
+archive needs no confidence interval; predicting future delivery rates does.
+Twelve calls sharing a run/schema are not twelve independent trials. [8]
+
+Ten pairs are a speed/cost pilot: subtract Native time from Scripted time and
+report the average and spread. Required repeats depend on that spread and the
+difference we care about. Quality needs a fixed rubric and independent, blind
+grading; technical accuracy also needs reference facts or expert checks.
+The failure-rate rule cannot measure either.
 
 Our historical three-repeat Opus campaign could not complete within the available
 Anthropic five-hour usage allowance. Quota consumption is separate from wall
@@ -207,6 +220,8 @@ time. Large studies need planned quota windows and must record aborted runs. [2]
 Both designs received the same three distinct RFE problem statements on the
 repaired relay, once each, using Opus 4.6.
 Mixed-state and ten-RFE strategy batches remain untested.
+Each strategy has feasibility, testability, scope and architecture reviewers:
+**3 strategies × 4 reviewers = 12 expected reports**.
 
 | Measure | Native Workflow | Scripted Pipeline |
 | --- | --- | --- |
@@ -221,32 +236,59 @@ Mixed-state and ten-RFE strategy batches remain untested.
 | API list-price equivalent | $21.55 | $24.28 |
 
 The Scripted Pipeline took **88.7 − 51.2 = 37.5 extra minutes** and cost
-**$2.73 more**, about 13%. The main observed timing difference was scheduling:
-scoring and review spanned about 34 minutes in the parallel Workflow and 68
-minutes in the sequential Scripted Pipeline. Bash could also overlap this work.
-The comparison does not establish an inherent speed advantage for native
-Workflows; an equal-concurrency comparison has not been run. Content and latency
-also differed, so we cannot assign every minute of the gap to parallelism. [2]
+**$2.73 more**, about 13%. Scoring/review spanned about 34 minutes in the parallel
+Workflow versus 68 in the sequential Scripted Pipeline. Bash can overlap this work.
+Equal-concurrency performance is untested; different content/latencies prevent
+assigning every minute to parallelism or claiming an inherent Workflow speedup. [2]
 
-One pair, retained files, and differing harness/relay revisions limit general
-claims. Earlier single-RFE timings had unequal 120-second relay failures;
-subtracting timeout seconds does not reconstruct an error-free measurement.
+The $2.73 gap does not isolate design, cache or content effects. Equal-concurrency
+cost is unmeasured. A [pre-registered retest](../plans/strat-workflow-matched-concurrency-retest.md)
+proposes one fresh sequential run per design on common infrastructure, pending
+paid-run authorization; this original table stays.
 
-### 10. Delivery is not accuracy
+One pair, retained files and differing harness/relay revisions limit performance
+claims, not the reproduced projection defect. Unequal 120-second relay failures
+confound earlier timings; subtracting them cannot reconstruct a clean measurement.
+
+Run provenance: [Native Workflow](../tasks/done/strat-workflow-tier2-s1-opus-relay-fixed-repeat.md)
+and [Scripted Pipeline](../tasks/done/strat-workflow-tier2-s2-opus-rate-limit-retry.md).
+
+### 10. Delivery, content and recovery
+
+**Separate checks:** delivery means the report arrived; scope means the correct
+strategy was assessed; incorporation means findings/dissent survived composition;
+accuracy means findings are true. Shared scope defects do not erase the delivery
+difference; successful delivery does not excuse scope drift.
 
 The structured-output/text mismatch explains the Native Workflow's ten missing
 returns. Some final sections used earlier scorer reports. In the GLM test,
 transcript reads recovered specialist prose. Missing returns do not prove
 fabricated reviews. [3]
 
+An upstream fix or validated specialist configuration can remove this defect
+from CLI or Workflow, but cannot validate other model transcriptions. Retrieval
+must precede decisions or trigger reconciliation; finding prose later does not
+establish that the Haiku batch's omitted review ran. The tested scripted path
+needed no transcript recovery; another schema configuration could expose the
+same nested Skill bug. [3, 8]
+
 Both Opus designs showed scope drift: every substantive specialist report
 assessed the whole batch despite a per-strategy target. Both also published
 aggregate approval alongside at least one specialist request for revision.
 Correct target keys were present in the expanded prompts.
 
-Check **delivery, correct target, faithful incorporation, and technical truth**
-separately. Independent accuracy remains unmeasured. A passing job or a model
-score of 7 out of 8 does not settle it.
+Independent accuracy remains unmeasured. A job pass or model score of 7 out of 8
+does not settle it.
+
+[The reusable delivery checker](../../scripts/claude_binary_analysis/check_specialist_delivery.py)
+checks expected strategy/role/tool IDs against receiving results, without transcript
+recovery. Complete hashed reference reports reproduce 2 of 12 versus 12 of 12;
+the other axes are not graded. [8]
+
+**Isolation versus reuse:** both designs used per-strategy review conversations.
+Shared-session savings versus cross-ticket contamination need a separate test:
+identical documents, shared/separate sessions, tokens and blind quality/scope scores.
+Older shared-session production costs do not answer it for this pair.
 
 ### 11. Production recommendation
 
@@ -255,14 +297,13 @@ explicit result contracts. Bash launches commands; Python parses data, checks
 identities and required fields, persists checkpoints, and validates publication.
 Agents create, refine, and assess strategy content.
 
-Before production, require a complete input manifest, one persisted assessment
-per strategy and role, preserved dissent, explicit error handling, safe retries,
-external deadlines, and verified archives before cleanup.
+Before production, require complete input manifests, persisted assessments per
+strategy/role, preserved dissent, safe retries, deadlines and verified archives
+before cleanup.
 
-Choose concurrency deliberately. Sequential execution is easier to debug and its
-logs are easier to read. Add bounded parallelism when shorter completion time
-justifies the extra complexity, with separate logs and artifacts per strategy,
-run/strategy identifiers on events, and controlled shared writes.
+Choose concurrency deliberately: sequential logs are easier to read and debug.
+Parallel work needs bounded jobs, separate strategy logs/artifacts, event
+identifiers and controlled shared writes.
 Neither shell nor Workflow supplies exactly-once writes automatically.
 External scheduling requires explicit progress and resume code; keep the shell
 thin rather than building a whole workflow engine in bash.
@@ -281,3 +322,4 @@ business completion.
 5. [Subagent information sharing](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-subagent-information-sharing.md): conversation and state boundaries.
 6. [Permission classifier](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-auto-mode-analysis.md): five controls; ancillary model calls.
 7. [NIST confidence intervals](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm) and [zero-event risk estimation](https://qualitysafety.bmj.com/content/early/2013/08/19/bmjqs-2013-002246?versioned=true).
+8. [Fresh reproduction and delivery checks](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-benchmark-hardening.md): R2/R3 archive, manifests, source hashes and reusable assertion.

@@ -1,0 +1,132 @@
+{
+  "checker": {
+    "path": "scripts/claude_binary_analysis/check_specialist_delivery.py",
+    "sha256": "f733a939cbc474abdf96dd2389a41d0c76f0b5ff346033572433557e1c2fe8b3"
+  },
+  "delivery_replays": [
+    {
+      "api_index": {
+        "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/api-dumps/index.jsonl",
+        "sha256": "f9f9fe68bfa22a1111475d959070422fcd6f44f306d1edaf0de1717f771ff1f4"
+      },
+      "archived_run": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed",
+      "delivered": 2,
+      "design": "Native Workflow",
+      "exit_code": 1,
+      "expectation_source": {
+        "roles": [
+          "feasibility",
+          "testability",
+          "scope",
+          "architecture"
+        ],
+        "source": {
+          "path": "var/run-data/strat-workflow/markov-run-c5ba3904/20261011T175615927646Z/jobs/script-run-workflow-all-claude-opus-4-6-1011-170435-3f61ed/artifacts/eval-result.json",
+          "sha256": "a1f9bf618730d20262b935f7a4f51774c1bde13c201b0433ad80c0b075a13fff"
+        },
+        "strategy_keys": [
+          "RHAISTRAT-1",
+          "RHAISTRAT-2",
+          "RHAISTRAT-3"
+        ]
+      },
+      "expected": 12,
+      "manifest": {
+        "path": "var/run-data/claude-workflow-hardening/20261012-r2-r3/r3/r3-s1-opus/manifest.json",
+        "sha256": "94ffd92827200b77f1c0d7a3b0c543636a355d6d2b3cdd85ef4515b1b4c92708"
+      },
+      "provenance": {
+        "path": "scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-s1-opus-provenance.json",
+        "sha256": "e15fd130686b7b29190c4d7742949cdb71c2ec57ed69e2eefa6b93ae14219d50"
+      },
+      "result": {
+        "path": "var/run-data/claude-workflow-hardening/20261012-r2-r3/r3/r3-s1-opus/delivery.json",
+        "sha256": "bf09e5e6fb53c55b18df70c300990584a9ec184cc6e3af3749674b1199657567"
+      }
+    },
+    {
+      "api_index": {
+        "path": "var/run-data/strat-workflow/markov-run-79d3241a/20261012T021947729737Z/jobs/script-strategy-entrypoint-all-claude-opus-4-1012-005035-b81781/api-dumps/index.jsonl",
+        "sha256": "c096bc80c1b61bc83d58a16cea7cf2075b350b62c4127d360c385f143ccf1b55"
+      },
+      "archived_run": "var/run-data/strat-workflow/markov-run-79d3241a/20261012T021947729737Z/jobs/script-strategy-entrypoint-all-claude-opus-4-1012-005035-b81781",
+      "delivered": 12,
+      "design": "Scripted Pipeline",
+      "exit_code": 0,
+      "expectation_source": {
+        "roles": [
+          "feasibility",
+          "testability",
+          "scope",
+          "architecture"
+        ],
+        "source": {
+          "path": "var/run-data/strat-workflow/markov-run-79d3241a/20261012T021947729737Z/jobs/script-strategy-entrypoint-all-claude-opus-4-1012-005035-b81781/artifacts/eval-result.json",
+          "sha256": "f16f625d8fa0b921b54e47a45c147dc27214a736ea6137f4f18d5e5ffd1464fa"
+        },
+        "strategy_keys": [
+          "RHAISTRAT-1",
+          "RHAISTRAT-2",
+          "RHAISTRAT-3"
+        ]
+      },
+      "expected": 12,
+      "manifest": {
+        "path": "var/run-data/claude-workflow-hardening/20261012-r2-r3/r3/r3-s2-opus/manifest.json",
+        "sha256": "d8a98e180f5f98aceee47d1c8d5882cbf32c1341d14906bbdd393b1c833a8dfa"
+      },
+      "provenance": {
+        "path": "scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-s2-opus-provenance.json",
+        "sha256": "3e3eed5a04903c9e11dd1dc5b5f9dc6f5ca63d6bbcb0b54efb1b0d429f3b700f"
+      },
+      "result": {
+        "path": "var/run-data/claude-workflow-hardening/20261012-r2-r3/r3/r3-s2-opus/delivery.json",
+        "sha256": "1e84272aa983ad6a830003345a7132f3aaeb75dad62759b236b1aad7aaab6050"
+      }
+    }
+  ],
+  "evidence_date": "2026-10-12",
+  "limits": [
+    "Controlled mock responses test harness behavior, not model failure frequency.",
+    "Whole normalized selected reports matched; this does not grade final incorporation or factual accuracy.",
+    "No newer Claude release or matched-concurrency paid batch was tested."
+  ],
+  "private_archive": {
+    "manifest_sha256": "550272753c994f9d58ef286f12cd2fdd5ffe8c2f2f7c3287122d8cac52fd425b",
+    "path": "var/run-data/claude-workflow-hardening/20261012-r2-r3",
+    "verified_bytes": 934213,
+    "verified_files": 92
+  },
+  "reproduction": {
+    "api_requests": 7,
+    "binary_sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de",
+    "cli_exit": 0,
+    "command": {
+      "path": "var/run-data/claude-workflow-hardening/20261012-r2-r3/r2/command.json",
+      "sha256": "227bd94d2103ec53e6e8d48b3e85a4866b2e114dd375df9243086d4ef06fb3f3"
+    },
+    "delivery_check": {
+      "path": "var/run-data/claude-workflow-hardening/20261012-r2-r3/r3/r2-delivery.json",
+      "sha256": "a650248a378102d3cc556b0833c9bf00865dbcc7ab4ff1e52b135966c7d90b91"
+    },
+    "earlier_report_present_in_native_transcript": true,
+    "expected_return_delivered_markers": false,
+    "native_specialist_transcript": {
+      "path": "var/run-data/claude-workflow-hardening/20261012-r2-r3/r2/config/projects/-home-jtanner-workspace-github-jctanner-redhat-breadboard-tmp-claude-code-binary-analysis-2-1-296-traces-handoff-workflow-schema-fork-earlier-prose-r2-20261012-v1-fixtures/706f66c7-e868-46ad-b767-4363e5822dd4/subagents/agent-a11469d45aff1123b.jsonl",
+      "sha256": "66dd0c715a51965f19868fc546b6117c76ae90f7701afc784eb2f8fd6f372cc7"
+    },
+    "receiving_channel": {
+      "path": "var/run-data/claude-workflow-hardening/20261012-r2-r3/r3/r2-receiving-channel.json",
+      "sha256": "2cd544a91baa36bd03c9bad0e20ce4f75dfe4c98451954aa9e8d64c659c12c43"
+    },
+    "results": {
+      "path": "var/run-data/claude-workflow-hardening/20261012-r2-r3/r2/results.json",
+      "sha256": "d8e375300cb1044f44866e56a1fc57fd695bd4384306df9be302dda3553da647"
+    },
+    "run": "var/run-data/claude-workflow-hardening/20261012-r2-r3/r2",
+    "version": "2.1.296",
+    "version_scope": "current installed release, also the original benchmark release; newer releases untested",
+    "workflow_status": "completed"
+  },
+  "schema_version": 1
+}

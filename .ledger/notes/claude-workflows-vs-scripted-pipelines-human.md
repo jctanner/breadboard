@@ -280,12 +280,12 @@ Each chosen judge should grade both pipeline designs and all compared producer
 models. Hide their labels and check agreement and consistency. We can change
 judges on saved strategies without paying to regenerate them.
 
-I inspected agent-eval-harness. It supports code and LLM judges, pairwise
-comparisons and an external-command execution contract. I'd use it to score
-our exported artifacts while Markov and Breadboard keep running the jobs. That
-still needs an artifact adapter. Judge tokens and costs belong in a separate
-budget; missing prices must remain unknown. The [framework assessment](strat-workflow-content-eval-harness-assessment.md)
-records the inspected version, accounting limits and proposed integration.
+I'd use agent-eval-harness to score the saved strategies, while Markov and
+Breadboard keep running the pipeline jobs. We need an adapter to export the
+artifacts into the harness's case format. Track judge tokens and costs separately
+from pipeline spend, and leave unpriced calls marked as unknown. The
+[integration notes](strat-workflow-content-eval-harness-assessment.md) describe
+the artifact mapping and cost-accounting gaps.
 
 ### 10. Every change adds some validation work
 

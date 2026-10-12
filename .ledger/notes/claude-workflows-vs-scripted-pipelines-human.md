@@ -3,20 +3,41 @@
 We wanted to know whether Claude's Workflow feature was a better way to run our
 strategy pipeline than the bash and Python scripts we already had.
 
-The job is the same either way: take an enhancement request, create a strategy,
-refine it, and send it through specialist review. We call enhancement requests RFEs.
+The job is the same either way: take an RFE, create a strategy, refine it, and
+review it before publication. Four review agents check whether the proposal is
+feasible, can be tested, stays within the RFE's scope, and fits the architecture.
+Each is assigned one of those areas, so we can
+compare their findings and preserve disagreements in the final review.
 
 We tested two implementations. In the **Native Workflow**, JavaScript inside
 Claude coordinates the agents. In the **Scripted Pipeline**, bash and Python
 coordinate separate Claude calls. The archived runs call these S1 and S2.
 
-I'd keep the scripted approach as our production foundation. The Workflow has
-useful scheduling features, but it also puts model decisions into routine steps
-that scripts can handle directly.
+We did more than a single comparison:
+
+- **Level 1, Haiku:** three reference runs per design on the single-RFE scenario,
+  after fixing the architecture-context setup.
+- **Level 1, Opus 4.6:** three completed runs per design. An account-limit failure
+  required a separately launched replacement after the allowance reset.
+- **Level 1, GLM 5.3:** one single-RFE run per design, checking whether both
+  implementations worked with another model.
+- **Level 2, three RFEs:** one Haiku Workflow run, then Opus batches for both
+  designs, including additional attempts after infrastructure and quota failures.
+  There was no GLM batch run.
+- **Investigation:** API captures, system-call traces, job logs and saved artifacts
+  to examine context growth, concurrency, token use, review delivery and recovery.
+  Controlled tests against the Claude binary checked the suspected failure
+  mechanisms, restart behavior and limits.
 
 The evidence here comes from our benchmarks and analysis of Claude Code 2.1.296,
 through 12 October 2026. We reproduced specific failures; we have much less
-evidence about average performance or how often failures occur.
+evidence about average performance or how often failures occur. Part B proposes
+the additional testing needed to answer those questions, with token and dollar
+estimates so we can decide whether that evidence is worth the cost.
+
+I'd keep the scripted approach as our production foundation. The Workflow has
+useful scheduling features, but it also puts model decisions into routine steps
+that scripts can handle directly.
 
 ## A. What the Workflow feature actually does
 
@@ -39,9 +60,9 @@ a Python helper requires a model to make the tool call.
 The top layer is ordinary code. Given the same inputs, it follows the same rules.
 
 Below that layer, a model chooses tool calls, interprets their results, and
-returns information to the program. The harness—the code around the model—also
-decides how to package that information. A perfectly repeatable loop can still
-make the wrong decision if the information it receives is incomplete or wrong.
+returns information to the program. The harness, meaning the code around the
+model, also decides how to package that information. A perfectly repeatable loop
+can still make the wrong decision if its information is incomplete or wrong.
 
 In the Haiku batch, a refinement had finished, but its completion record came
 back as JSON tucked inside a string. The Workflow expected a different shape and
@@ -58,7 +79,7 @@ Both designs still rely on model judgment for strategy content.
 
 ### 3. A completed review can still lose its report
 
-We found a second problem in the way specialist reviews were returned. A reviewer
+We found a second problem in the way reviewer reports were returned. A reviewer
 could write its assessment, finish with a structured-output tool call, and have
 the parent receive only “Skill execution completed.”
 
@@ -90,13 +111,14 @@ needs separate logs, clear ticket identifiers, and rules for shared writes.
 Separate agent conversations do not mean separate filesystems.
 
 The primary agent's context stayed fairly small while helpers worked. In the
-repaired Workflow batch, its input grew from 24,103 to 26,887 tokens:
+completed Workflow batch, its input grew from 24,103 to 26,887 tokens:
 **26,887 − 24,103 = 2,784 more tokens**. During the roughly 50-minute background
 wait, there were no primary model calls.
 
-One helper reached about 168,000 input tokens. The job's 12.95 million total
-tokens include separate conversations and repeated requests. That total is
-usage across the job, not the size of one context window.
+The architecture reviewer reached **167,579 input tokens** after reading the
+platform and component documents in architecture-context. The job's 12.95 million
+total tokens include separate conversations and repeated requests. That total
+is usage across the job, not the size of one context window.
 
 ### 5. Restart and completion need their own checks
 
@@ -120,15 +142,29 @@ verification.
 
 ### 6. Start small, then test the things that can break
 
-For **level 1**, keep smoke testing to one Haiku run per design per scenario.
-Check that the pieces connect and the expected artifacts appear. Historical
-single-RFE usage suggests roughly 12 million tokens per pair, but that estimate
-needs recalibration after infrastructure repairs. It tells us little about Opus
-quality or cost.
+We ran **level 1** with Haiku, Opus and GLM. For future smoke tests, I'd still
+start with one Haiku run per design per scenario to check the wiring and artifacts.
+Historical Haiku usage suggests roughly 12 million tokens per pair, but needs
+recalibration after infrastructure repairs.
 
-For **level 2**, we used three different RFEs and one Opus 4.6 run per design.
-The RFEs must be different enough to avoid deduplication. The completed pair used
-25.16 million tokens and exposed problems a single-ticket smoke test could miss.
+For **level 2**, we started with one Haiku Workflow batch, which exposed the
+completion-record mismatch. We then ran Opus batches for both designs and obtained
+one completed comparison pair. GLM was tested only at level 1. The three RFEs were
+different enough to avoid deduplication.
+
+We can put both token and dollar figures on the Opus workloads. A pair means
+one Workflow run and one scripted run. These dollar figures use **Claude Opus 4.6
+(`claude-opus-4-6`) API list prices**:
+
+| Workload | Runs per design | Tokens per pair | Opus 4.6 API equivalent per pair |
+| --- | --- | --- | --- |
+| Level 1, one RFE | 1 | About 8.9 million | About $14.18 |
+| Level 2, three RFEs | 1 | 25.16 million | $45.83 |
+
+The level 1 row averages three historical pairs; the level 2 row is one completed
+pair. Earlier single-RFE runs had transport interruptions, so these are recorded
+usage estimates, not guaranteed future costs. The Haiku token estimate is separate;
+we have not verified GLM provider pricing.
 
 After that, test missing reports, wrong targets, empty batches, duplicates,
 failed writes, broken streams, quota limits, crashes, cancellation and stale
@@ -144,10 +180,9 @@ For a proposed **level 3** pilot, ten runs per design across varied batches woul
 start to measure time, cost and quality variation. Ten is a planning choice,
 not a guarantee of a useful comparison.
 
-All dollar figures in this document use **Claude Opus 4.6
-(`claude-opus-4-6`) API list prices**. These are usage equivalents, not subscription
-invoices or measurements of our account allowance.
-The Haiku smoke estimate above covers tokens only.
+All dollar figures use the Opus 4.6 pricing basis above. These are usage
+equivalents, not subscription invoices or measurements of our account allowance.
+The Haiku smoke estimate covers tokens only.
 
 The completed three-RFE pair gives us simple planning arithmetic:
 
@@ -227,8 +262,8 @@ not measured maintenance savings.
 ### 10. The Workflow finished sooner
 
 Our strongest completed comparison used the same three distinct RFE problem
-statements, one run per design, on the repaired model relay with Opus 4.6.
-Each strategy had four specialist reviewers: feasibility, testability, scope
+statements, one run per design, with Opus 4.6.
+Each strategy had four review agents: feasibility, testability, scope
 and architecture. That gives **3 × 4 = 12 expected reports** per design.
 
 | Measure | Native Workflow | Scripted Pipeline |
@@ -255,8 +290,8 @@ $46 API equivalent. It remains unrun, awaiting paid-run authorization. Its resul
 will go in a separate table.
 
 One pair cannot establish a general speed or cost ranking. Retained shared files
-and differing harness/relay revisions also limit comparison. Earlier timings had
-unequal 120-second relay failures; subtracting those seconds cannot recreate a
+and changes to test infrastructure also limit comparison. Earlier timings had
+unequal 120-second transport failures; subtracting those seconds cannot recreate a
 clean run.
 
 ### 11. Delivered reports still need to be right
@@ -267,9 +302,9 @@ for the Workflow and 12 of 12 for the scripted run. That count needs no confiden
 interval; predicting the delivery rate in future runs does.
 
 Delivery is only the first check. In both Opus designs, every substantive
-specialist report assessed the whole batch despite being given a specific
+reviewer report assessed the whole batch despite being given a specific
 strategy target. Both also published aggregate approval alongside at least one
-specialist request for revision. We need to check the right strategy was reviewed
+reviewer's request for revision. We need to check the right strategy was reviewed
 and that findings and dissent survived into the final document.
 
 Technical accuracy remains unmeasured; an agent's score of 7 out of 8 cannot
@@ -305,7 +340,7 @@ compact technical presentation. These records contain the underlying evidence:
 
 - [Benchmark plan and run records](../plans/strat-workflow-eval-plan.md), including the [Workflow run](../tasks/done/strat-workflow-tier2-s1-opus-relay-fixed-repeat.md) and [scripted run](../tasks/done/strat-workflow-tier2-s2-opus-rate-limit-retry.md).
 - [Workflow runtime analysis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-analysis.md) and [conversation/file sharing](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-subagent-information-sharing.md).
-- [Specialist handoff diagnosis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-specialist-handoff.md), [review provenance](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-review-provenance.md), and [fresh reproduction and delivery checks](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-benchmark-hardening.md).
+- [Reviewer handoff diagnosis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-specialist-handoff.md), [review provenance](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-review-provenance.md), and [fresh reproduction and delivery checks](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-benchmark-hardening.md).
 - [Restart, cancellation, retry and limit controls](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-operations.md) and [permission-classifier analysis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-auto-mode-analysis.md).
 - [Matched-concurrency retest plan](../plans/strat-workflow-matched-concurrency-retest.md), registered but not run.
 - [NIST confidence-interval guidance](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm) and [the zero-event risk calculation](https://qualitysafety.bmj.com/content/early/2013/08/19/bmjqs-2013-002246?versioned=true).

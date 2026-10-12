@@ -3839,6 +3839,19 @@ resolved a mechanism or exposed a confound. Original measurements remain intact.
     managed deadlines were repaired. Invalid directory-valued ANTHROPIC_LOG
     defaults are now removed/deployed; raw captures remain enabled.
 
+13. **Changes carry an evaluation burden.** Adding an intermediate script call
+    to a Native Workflow introduces model-mediated invocation and result-transfer
+    boundaries, even when the script itself is deterministic. It may change an
+    existing agent task rather than create another agent. Check exact invocation,
+    failures, returned data and downstream skill inputs with focused controls
+    and live cases. A full old/new A/B campaign is needed to support comparative
+    performance or quality claims, not every edit. Prior runs remain evidence for
+    their tested version; changed paths need requalification before carrying
+    forward reliability claims. Direct script execution can test routine steps
+    without model decisions, but both designs still need live checks when agent
+    prompts or inputs change. Maintenance/evaluation savings are an architectural
+    implication, not a measured result. No additional paid run is authorized.
+
 The tested working baseline remains S2; S1 demonstrates useful concurrency and
 lower observed batch cost. However, the confirmed return-contract defect is
 shared by schema-constrained CLI and Workflow and has configuration remedies.

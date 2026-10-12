@@ -65,6 +65,10 @@ and result-projection boundaries, not faulty JavaScript loops. [3]
 Extra transfers add failure points. Deterministic loops can skip agent-omitted
 items; replay can preserve incorrect results and hide incomplete work.
 
+Adding a script between skills adds an invocation and return boundary. The script
+may be deterministic while those boundaries depend on an agent. It may run in an
+existing conversation; a new agent is not required.
+
 The Scripted Pipeline can keep discovery, validation and publication outside
 conversations. Its agents still make uncertain internal decisions.
 
@@ -151,6 +155,21 @@ resume. Mocks test harness behavior; a smaller live subset tests model behavior.
 Keep original versions as controls; name repairs as variants. Confidence campaigns
 should follow repairs and stronger checks, including the scope checks both fail.
 Repeating a known defect adds little.
+
+**The cost of changing the pipeline.** Tests should cover the command, failures,
+returned data and next skill's input. Match the evidence to the change:
+
+| Change | Evidence to collect |
+| --- | --- |
+| Deterministic helper logic | Focused regression and input/output contract checks |
+| Agent task, prompt or handoff | Those checks plus focused mock and live integration cases |
+| Claim of better speed, cost or quality | Repeated old/new comparisons with other settings held fixed |
+
+A full A/B campaign is not needed for every edit. Prior success counts do not
+automatically qualify a changed path. Both designs need regression checks;
+direct execution lets routine script steps be tested without model decisions.
+This difference in evaluation burden follows from the architecture; maintenance
+cost savings have not been measured.
 
 ### 7. The budget arithmetic
 

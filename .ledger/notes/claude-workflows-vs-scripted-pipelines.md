@@ -11,8 +11,9 @@ Claude Workflows offer useful scheduling, separate agent conversations, and save
 results. They do not make the whole pipeline deterministic. In the tested design,
 even routine script execution and result transfer pass through model decisions.
 
-Our three-ticket comparison found the Native Workflow faster and slightly cheaper,
-but the Scripted Pipeline delivered all specialist assessments through the
+Our three-ticket comparison used a parallel Native Workflow and a sequential
+Scripted Pipeline. The Workflow finished faster at a slightly lower recorded
+cost; the Scripted Pipeline delivered all specialist assessments through the
 expected return path. Prefer an external runner: bash for launching commands,
 Python for data handling and validation. Keep agents responsible for the work
 that needs judgment.
@@ -70,6 +71,11 @@ those conversations. Model judgment remains uncertain.
 - **Pipelines:** one item can reach review while another is still being scored.
 - **Result-driven work:** an agent's returned list can drive a loop or fan-out.
 - **Replay:** completed agent results can be reused after a restart, saving work.
+
+Parallelism is available in bash too. It trades shorter elapsed time for harder
+debugging: logs can interleave, failures overlap, and shared-file races become
+possible. Workflow task grouping helps organize activity, but does not remove
+the difficulty of following several agent conversations at once.
 
 Returned lists can silently omit items. Separate conversations can share files
 and skill metadata. Neither guarantees a complete or isolated batch. [1, 5]
@@ -204,6 +210,7 @@ Mixed-state and ten-RFE strategy batches remain untested.
 
 | Measure | Native Workflow | Scripted Pipeline |
 | --- | --- | --- |
+| Scheduling | Two overlapping top-level tasks | Sequential stages |
 | Job duration | 51.2 minutes | 88.7 minutes |
 | Completed strategy/refine/review sets | 3 | 3 |
 | Transport or quota failures | 0 | 0 |
@@ -214,11 +221,12 @@ Mixed-state and ten-RFE strategy batches remain untested.
 | API list-price equivalent | $21.55 | $24.28 |
 
 The Scripted Pipeline took **88.7 − 51.2 = 37.5 extra minutes** and cost
-**$2.73 more**, about 13%. The Native Workflow overlapped two top-level strategy
-tasks; the Scripted Pipeline ran the stages sequentially.
-Scheduling explains much of the timing pattern, but content and latency also
-differed. Bash can support concurrency; the measured Scripted Pipeline did not
-use that same schedule. [2]
+**$2.73 more**, about 13%. The main observed timing difference was scheduling:
+scoring and review spanned about 34 minutes in the parallel Workflow and 68
+minutes in the sequential Scripted Pipeline. Bash could also overlap this work.
+The comparison does not establish an inherent speed advantage for native
+Workflows; an equal-concurrency comparison has not been run. Content and latency
+also differed, so we cannot assign every minute of the gap to parallelism. [2]
 
 One pair, retained files, and differing harness/relay revisions limit general
 claims. Earlier single-RFE timings had unequal 120-second relay failures;
@@ -249,8 +257,12 @@ Agents create, refine, and assess strategy content.
 
 Before production, require a complete input manifest, one persisted assessment
 per strategy and role, preserved dissent, explicit error handling, safe retries,
-external deadlines, and verified archives before cleanup. Add bounded concurrency
-for independent work, with separate artifacts and controlled shared writes.
+external deadlines, and verified archives before cleanup.
+
+Choose concurrency deliberately. Sequential execution is easier to debug and its
+logs are easier to read. Add bounded parallelism when shorter completion time
+justifies the extra complexity, with separate logs and artifacts per strategy,
+run/strategy identifiers on events, and controlled shared writes.
 Neither shell nor Workflow supplies exactly-once writes automatically.
 External scheduling requires explicit progress and resume code; keep the shell
 thin rather than building a whole workflow engine in bash.

@@ -135,8 +135,11 @@ local launch path had no Workflow token budget set; even a configured budget can
 be exceeded by the last agent before the next check. External limits still matter.
 
 These findings describe Claude Code 2.1.296 with the Workflow settings used in
-our benchmark and controlled tests. Neither Fullsend deployment was validated
-here. Other wrappers or Claude releases need their own verification.
+our benchmark and controlled tests. The benchmarks ran in Kubernetes jobs
+submitted through Breadboard's job API. Markov coordinated test setup, job
+submission, waiting and checks. Fullsend's runner and the OpenShell sandbox
+were not used. Running either design through those systems still needs its
+own integration testing.
 
 ## B. How much testing we need, and what it costs
 

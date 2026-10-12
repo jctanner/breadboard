@@ -177,30 +177,44 @@ cases test model behavior.
 Fix delivery and scope problems before funding a confidence study. Keep original
 versions as controls and name repairs separately.
 
+Our production pipeline accepts up to ten RFEs per run, every six hours. The
+average is around three, but that does not tell us the most common batch size or
+how often we reach ten. We need full ten-RFE tests before claiming readiness for
+that limit, alongside empty, one-RFE and three-RFE regression cases. A full batch
+means **10 strategies × 4 reviewers = 40 expected reports**.
+
+We are keeping the production batch limit at ten. Reducing it to three would cut
+nominal capacity from **4 × 10 = 40** to **4 × 3 = 12 RFEs per day**, before failures
+or delayed runs. Smaller benchmark batches are not a reason to reduce capacity.
+
 ### 7. A comparison study is a bigger commitment
 
-For a proposed **level 3** pilot, ten runs per design across varied batches would
-start to measure time, cost and quality variation. Ten is a planning choice,
+For a proposed **level 3** pilot, run **ten batches of ten RFEs per design** with
+Opus 4.6: twenty batch runs, or 100 RFE executions per design. Each pair uses
+the same ten RFE problem statements in both designs; vary the contents across
+pairs and keep RFEs distinct within each batch. Ten pairs is a planning choice,
 not a guarantee of a useful comparison.
 
 All dollar figures use the Opus 4.6 pricing basis above. These are usage
 equivalents, not subscription invoices or measurements of our account allowance.
 The Haiku smoke estimate covers tokens only.
 
-The completed three-RFE pair gives us simple planning arithmetic:
+We have only measured a completed three-RFE pair. To budget the larger workload,
+start with a rough assumption that usage grows with the number of tickets:
 
-**12.95 + 12.21 = 25.16 million tokens per pair**
+**25.16 million × 10 ÷ 3 ≈ 84 million tokens per ten-RFE pair**
 
-**$21.55 + $24.28 = $45.83 per pair**
+**$45.83 × 10 ÷ 3 ≈ $153 per ten-RFE pair**
 
-Ten pairs means roughly **252 million tokens and $458**, plus independent grading.
-At observed durations, that's about 23 hours of sequential jobs before setup
-or quota waits.
+Using those rounded estimates, ten pairs means roughly **840 million tokens and
+$1,530**, plus independent grading. These are projections, not measured ten-RFE
+costs. Caching, longer contexts, repeated reads and retries can change the rate
+of growth. Measure a full-size pair before committing to the repeats.
 
 Totals include input, cache writes, cache reads and output at different prices.
-The roughly 481,000 output tokens already include thinking. Fewer total tokens
-can still cost more. These are historical three-RFE estimates; larger inputs,
-retries or different caching can change them.
+The measured three-RFE pair's roughly 481,000 output tokens already include
+thinking. Fewer total tokens can still cost more. Runtime at ten RFEs also needs
+measurement, including whether jobs finish before the next six-hour window.
 
 Our historical three-repeat Opus campaign could not finish within the available
 Anthropic five-hour usage allowance. That account quota is separate from job
@@ -216,19 +230,21 @@ failures, a useful approximate 95% upper bound on the failure rate is:
 For 60 clean runs, **3 ÷ 60 = 5%**. Sixty successes still leave uncertainty about
 the true failure rate.
 
-| Clean runs per design | Approximate upper failure rate | Tokens for both designs | Opus 4.6 API equivalent for both |
+| Clean ten-RFE runs per design | Approximate upper failure rate | Projected tokens, both designs | Opus 4.6 budget, both designs |
 | --- | --- | --- | --- |
-| 10 | 30% | 252 million | $458 |
-| 30 | 10% | 755 million | $1,375 |
-| 60 | 5% | 1.51 billion | $2,750 |
-| 300 | 1% | 7.55 billion | $13,750 |
+| 10 | 30% | 840 million | $1,530 |
+| 30 | 10% | 2.52 billion | $4,590 |
+| 60 | 5% | 5.04 billion | $9,180 |
+| 300 | 1% | 25.2 billion | $45,900 |
 
-These are total budgets using the observed three-RFE pair. Sixty runs per design
-means 120 jobs; testing only one design uses its own per-run cost.
+These total budgets use the rounded ten-RFE projections above. Sixty runs per
+design means 120 jobs; testing only one design uses its own per-run cost.
 
 The calculation needs independent, representative runs of a stable version.
-Twelve reviewers in one batch are not twelve independent pipeline trials.
+Forty reviewers in one batch are not forty independent pipeline trials.
 Repeating one ticket gives narrow coverage. Keep injected faults separate.
+The bounds describe the ten-RFE cases we sample. Estimating the failure rate
+across ordinary production also needs its actual mix of smaller and full batches.
 
 “95% confidence” means the method covers the true rate about 95 times out of
 100 repeated studies under those assumptions. It cannot guarantee the next run.
@@ -287,10 +303,11 @@ and bash can overlap the work too. Different content and response times prevent
 us from assigning every saved minute to parallelism. The dollar gap also mixes
 design, caching and content effects.
 
-We registered a retest: one fresh sequential run per design on common
-infrastructure, matching top-level agent concurrency. The estimate is roughly
-$46 API equivalent. It remains unrun, awaiting paid-run authorization. Its results
-will go in a separate table.
+We registered a smaller retest: one fresh sequential three-RFE run per design on
+common infrastructure, matching top-level agent concurrency. The estimate is
+roughly $46 API equivalent. It addresses scheduling, not readiness for ten-RFE
+batches. It remains unrun, awaiting paid-run authorization. Its results will go
+in a separate table.
 
 One pair cannot establish a general speed or cost ranking. Retained shared files
 and changes to test infrastructure also limit comparison. Earlier timings had
@@ -327,6 +344,8 @@ do not automatically prevent duplicate writes after a restart.
 Before production, require complete input lists, persisted reports per strategy,
 preserved dissent, safe retries, deadlines and verified archives before cleanup.
 Parallelism needs bounded jobs, separate logs and controlled shared writes.
+Keep the ten-RFE batch limit and six-hour schedule, and validate full-size runs
+against both. Our three-RFE evidence is an intermediate baseline.
 
 I'd also keep bash thin. We already have job and run infrastructure; we should
 use it instead of turning one shell script into a whole workflow engine.

@@ -257,6 +257,12 @@ Call it from the dashboard pod with the admin key, as above.
   denied** by the auto-mode classifier. Ask the user to run them with `!`.
 - **Claude Code doesn't retry the account usage-limit 429.** The job fails
   outright; re-run only that test afterwards (`only_tests`, `repeats: "1"`).
+  Mechanistically confirmed 2026-10-12: spend/usage-limit 429s
+  (`service_spend_limit_reached` and kin) are classified non-retryable and
+  fail the request immediately, unlike ordinary 429/5xx/network faults,
+  which retry with backoff and then restart the agent conversation once —
+  see
+  [workflow network-fault taxonomy](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-operations.md).
 - **Tool results can end with `<system-reminder>` blocks.** Strip them
   before matching result text; `tool_calls.py` does.
 - **strace timestamps have no date.** `strace_timing.py` unwraps jobs that

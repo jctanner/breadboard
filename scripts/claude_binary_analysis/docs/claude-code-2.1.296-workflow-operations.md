@@ -11,7 +11,10 @@ changed shared state. Twenty-three cases were run by
 their crash boundary there (the runner could not derive a resume handle
 without a workflow state file, which an external SIGKILL never leaves), so
 `run_workflow_crash_resume_experiments.py` re-ran them with the fresh-process
-resume phase added. All outcomes are checked by an executable verifier.
+resume phase added. Four further network-fault cases (persistent rate limit,
+connection reset, spend-limit 429, 529 overload) were run by
+`run_workflow_network_fault_experiments.py`. All outcomes are checked by an
+executable verifier.
 
 ## Headline results
 
@@ -125,7 +128,8 @@ response chronology. Replay of that journal reused every result.
 ## Control 6: retries and incomplete streams
 
 With `CLAUDE_CODE_MAX_RETRIES=1` and a single injected fault after the
-counter side effect:
+ counter side effect (original controls; the network-fault extension below
+uses 2):
 
 | Fault | Outcome | Side-effect executions |
 | --- | --- | --- |
@@ -135,6 +139,77 @@ counter side effect:
 | Persistent 500 until exhaustion | journal `launched, started, failed`; workflow `completed` with result `null`; exit 1, `is_error` final result | 2 (conversation restarted once) |
 | Delayed response past `stallMs` (single) | fresh agent conversation (new `agentId`, same key); completed | 2 |
 | Delayed response past `stallMs` (persistent) | five recovery iterations (six executions), journal `failed`, workflow `failed`; exit 0 with `success` result event | 6 |
+
+### Network-fault taxonomy and the retry policy
+
+The retry engine was recovered from the exact bundle and confirmed by four
+additional controls (`workflow-network-*-v1`, `CLAUDE_CODE_MAX_RETRIES=2`).
+
+**Retry decision (bundle-confirmed).** Network errors without HTTP status
+(including `ECONNREFUSED`, `ECONNRESET`, `ETIMEDOUT`, `EPIPE` — the bundle
+carries an explicit socket-error taxonomy), 408, 409, SSE failures and
+≥500 are retryable. 401 consumes a credential-renewal budget (max 2) before
+failing. 404 triggers one retry *without streaming*. 529 (overloaded) counts
+into a separate `overloaded` bucket with fallback-model handling after three
+repeated overloads, and background queries can be dropped early on 529. 429
+is retryable **unless** it carries a spend/usage-limit marker
+(`service_spend_limit_reached`, `org_spend_cap_reached`, `out_of_credits`,
+`org_level_disabled`…) — those fail immediately.
+
+**Retry budget and backoff (bundle-confirmed).** Default max retries: **300
+for first-party auth, 10 for third-party/gateway**; `CLAUDE_CODE_MAX_RETRIES`
+is honored but clamped to 15 for non-first-party use. Delay is exponential
+with proportional jitter: `min(capMs, baseMs·2^(attempt-1)) + jitter`, cap
+32 s by default. `Retry-After` is honored and overrides the computed delay;
+a 429 with `Retry-After` ≥ 20 s (or absent) enters a long-wait path of at
+least 10 minutes (capped at 30 minutes) that can be woken early, and the
+`anthropic-ratelimit-unified-reset` header (capped at 6 h) is also honored.
+Separate buckets cap stalls (1), truncations (1), post-thinking failures,
+overloads and slept-through suspensions independently of the main retry
+count.
+
+**Runtime-confirmed outcomes** (all four fault classes, single-agent
+workflow, `CLAUDE_CODE_MAX_RETRIES=2`):
+
+| Fault | Request retries | Conversation restarts | Outcome |
+| --- | --- | --- | --- |
+| Persistent 429 (`rate_limit_error`, `Retry-After: 0`) | 2 per conversation, backoff gaps 0.53 s → 1.09 s | 1 | journal `failed`; workflow `completed`/null; exit 1 |
+| Connection reset (no HTTP response) | 2 per conversation, gaps 0.59 s → 1.21 s | 1 | same |
+| Persistent 529 (`overloaded_error`) | 2 per conversation, gaps 0.59 s → 1.06 s | 1 | same |
+| Spend-limit 429 (`service_spend_limit_reached`) | **0** — fails in <1 s, no backoff | 1 | same |
+
+The measured gaps confirm the recovered base ≈0.5 s with factor 2. Every
+retryable class behaves identically at the workflow level: request-level
+retries with backoff, then **one conversation restart from scratch**
+(re-executing tool side effects — the counter ran twice in every case), then
+a journaled `failed` entry, a workflow that *completes* with a `null` result,
+and CLI exit 1 with an `is_error` result. The spend-limit 429 skips
+request-level retries entirely — matching the benchmark's real-world
+observation that account usage-limit 429s fail jobs outright — but still
+gets the one conversation restart before final failure.
+
+### The primary layer is quiescent during execution
+
+In every captured timeline the controller conversation made exactly two API
+calls around a background workflow — the launch turn and the launch-receipt
+turn — and then **zero requests for the entire execution window**; the wait
+is host-side (bounded locally by the background-wait ceiling, or by a blocking
+`TaskOutput` call, which is also a local wait). Network errors during
+execution are therefore invisible at the primary layer: they are handled
+entirely inside the workflow's agent-call retry stack. The primary's exposure
+window is the **notification-delivery turn** after the workflow reaches a
+terminal state.
+
+The `notify-fault` control exercises exactly that window: the workflow
+completed (journal `launched, started, result`; state `completed` with the
+result persisted; side effect executed once), and then every
+notification-turn request was injected with a 429. The turn received the
+same request-level retry engine (three attempts, backoff gaps 0.64 s and
+1.20 s) and, on terminal failure, the CLI's final result became
+`API Error: Request rejected (429)` with exit code 1 — **despite the
+workflow having succeeded and its result being durably journaled**. The
+success is recoverable only from the workflow state/journal (or a session
+resume), not from the CLI's exit status or result event.
 
 Request-level retries resend the same conversation and do not replay tool
 results. Agent-level restarts (retry exhaustion, stall recovery) begin a new
@@ -189,16 +264,19 @@ the production recommendation in the evaluation plan.
 ## Evidence and reproduction
 
 - [Verified controls](claude-code-2.1.296-workflow-operations-controls.json):
-  twenty-three checked outcomes, including the three crash-resume cases.
-- Runners: `run_workflow_operations_experiments.py` (23 cases) and
-  `run_workflow_crash_resume_experiments.py` (crash-resume completion);
-  verifier: `verify_workflow_operations_controls.py`. See
+  twenty-eight checked outcomes, including the three crash-resume
+  completions, four network-fault cases and the notification-turn fault.
+- Runners: `run_workflow_operations_experiments.py` (23 cases),
+  `run_workflow_crash_resume_experiments.py` (crash-resume completion) and
+  `run_workflow_network_fault_experiments.py` (network faults); verifier:
+  `verify_workflow_operations_controls.py`. See
   [the tooling README](../README.md).
 - Immutable traces under `tmp/claude-code-binary-analysis/2.1.296/traces/`:
-  `workflow-operations-<case>-v1` for the original cases and
+  `workflow-operations-<case>-v1` for the original cases,
   `workflow-operations-crash-<case>-resume-v1` for the completed crash
-  controls. Each retains the runner, manifest with binary/runner hashes and
-  fixture provenance, per-phase command/env, API captures, journals, config
+  controls, and `workflow-network-<case>-v1` for the network faults. Each
+  retains the runner, manifest with binary/runner hashes and fixture
+  provenance, per-phase command/env, API captures, journals, config
   snapshots, stdout/stderr and debug logs.
 
 Every claim above is runtime-confirmed against the pinned binary except

@@ -139,7 +139,14 @@ CLI exit status alone does not establish that a background workflow succeeded.
 operational boundaries with the same mock-only approach: crash boundaries,
 journal truncation, competing resumptions, task stop, SIGTERM, the print
 background-wait ceiling, concurrency overrides (including nested workflows),
-budget gates, injected 429/500/broken-stream faults and stall recovery. Its
+budget gates, injected 429/500/broken-stream faults and stall recovery.
+`run_workflow_network_fault_experiments.py BINARY OUTPUT --case CASE
+[--max-retries N]` adds the network-fault taxonomy: persistent rate limits,
+connection resets with no HTTP response, spend-limit 429s and 529 overload,
+with per-request timing so retry backoff is measurable.
+`run_workflow_fanout_experiments.py BINARY OUTPUT` runs a result-driven
+fan-out control: one agent's structured list feeds a for-loop of per-item
+agent calls with result-derived prompts, verifying dynamic chaining. Its
 crash cases capture only the crash boundary; `run_workflow_crash_resume_experiments.py
 BINARY OUTPUT --case crash-during-agent|crash-before-result|crash-after-result`
 re-runs them with a fresh-process resume derived from the surviving journal.
@@ -154,6 +161,23 @@ python3 scripts/claude_binary_analysis/verify_workflow_operations_controls.py \
 The verifier checks journals, workflow states, fixture side-effect counters,
 late writes, injected faults and terminal results across the operations cases
 and the crash-resume completions.
+
+`run_auto_mode_experiments.py BINARY OUTPUT --case allow|block|default-mode-control`
+probes the auto-mode permission classifier with the same mock-only approach.
+The main conversation requests a Bash call writing outside the working
+directory (so it is not skipped by the acceptEdits rule); classifier requests
+are detected by their stop sequences and prompt markers and answered with a
+configured `<severity>` verdict. Captures retain full request bodies,
+including the classifier's system prompt and transcript packaging.
+
+```bash
+python3 scripts/claude_binary_analysis/verify_auto_mode_controls.py \
+  tmp/claude-code-binary-analysis/2.1.296/traces /tmp/auto-mode-controls.json
+```
+
+The verifier checks request roles and stages, classifier model and budgets,
+the system-prompt inventory (rule counts, severity boundary), fixture effects,
+denial messages and the debug-log skip/default-on evidence.
 
 `run_subagent_skill_experiments.py BINARY OUTPUT --case CASE` uses the same
 mock-only approach for skill discovery and other subagent information channels.

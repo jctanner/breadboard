@@ -1,0 +1,367 @@
+{
+ "schema_version": 1,
+ "binary_sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de",
+ "claims": [
+  {
+   "id": "auto-mode-ancillary-calls",
+   "claim": "Auto mode makes ancillary model calls: one classifier request per permission decision when allowed at stage 1, two when stage 2 confirms.",
+   "detail": "Captured in auto-mode-allow-v5 (3 requests) and auto-mode-block-v5 (4 requests); requests tagged querySource auto_mode in the bundle.",
+   "verdict": "runtime-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      120979187,
+      120979587
+     ]
+    ],
+    "anchors": [
+     "run_auto_mode_experiments.py"
+    ]
+   },
+   "runtime": {
+    "runs": [
+     "tmp/claude-code-binary-analysis/2.1.296/traces/auto-mode-allow-v5",
+     "tmp/claude-code-binary-analysis/2.1.296/traces/auto-mode-block-v5"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-default-on",
+   "claim": "Auto mode is enabled by default and entered without any proactivity flag in a fresh configuration.",
+   "detail": "auto-mode-default-mode-control-v3: canEnterAuto=true, mode=auto, classifier called, no --proactivity in argv; gate tengu_auto_mode_config defaults to enabled (bundle).",
+   "verdict": "runtime-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      125286727,
+      125287127
+     ]
+    ],
+    "anchors": [
+     "run_auto_mode_experiments.py"
+    ]
+   },
+   "runtime": {
+    "runs": [
+     "tmp/claude-code-binary-analysis/2.1.296/traces/auto-mode-default-mode-control-v3"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-server-classifier",
+   "claim": "The platform can classify server-side; with no server verdict the client classifies locally and stops sending classifier context.",
+   "detail": "Debug log: [server-classifier] ... (server_no_result); treating that as this deployment's answer.",
+   "verdict": "runtime-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      122526126,
+      122526526
+     ]
+    ],
+    "anchors": [
+     "run_auto_mode_experiments.py"
+    ]
+   },
+   "runtime": {
+    "runs": [
+     "tmp/claude-code-binary-analysis/2.1.296/traces/auto-mode-block-v5"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-skip-rule",
+   "claim": "The classifier is skipped for actions that would be allowed in acceptEdits mode.",
+   "detail": "auto-mode-allow-v1: two requests, no classifier call, debug line 'Skipping auto mode classifier for Bash: would be allowed in acceptEdits mode'.",
+   "verdict": "runtime-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      120342260,
+      120342660
+     ]
+    ],
+    "anchors": [
+     "run_auto_mode_experiments.py"
+    ]
+   },
+   "runtime": {
+    "runs": [
+     "tmp/claude-code-binary-analysis/2.1.296/traces/auto-mode-allow-v1"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-stage-shape",
+   "claim": "Stage 1 uses max_tokens 64 with stop_sequences ['</severity>']; stage 2 uses max_tokens 8192 without stop sequences; both are non-streaming on the same 139,988-character system prompt.",
+   "detail": "Captured request bodies in auto-mode-block-v5; system prompt SHA-256 de1040bdbdb68d8d4add210699c2913cccd02d2676e26ce54e510d32462d1eda.",
+   "verdict": "runtime-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      127576300,
+      127576700
+     ]
+    ],
+    "anchors": [
+     "run_auto_mode_experiments.py",
+     "mock_api_support.py"
+    ]
+   },
+   "runtime": {
+    "runs": [
+     "tmp/claude-code-binary-analysis/2.1.296/traces/auto-mode-allow-v5",
+     "tmp/claude-code-binary-analysis/2.1.296/traces/auto-mode-block-v5"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-model",
+   "claim": "The classifier runs on the Sonnet family: ANTHROPIC_DEFAULT_SONNET_MODEL override (sonnet-5-5/opus-5-5 rejected), else the catalog sonnet5 slot; unavailable for sonnet-4-5/4-6 sessions; [1m] suffix with 1M-context sessions.",
+   "detail": "Resolver near payload offset 120979187; observed claude-sonnet-5[1m] in captures.",
+   "verdict": "bundle-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      120979187,
+      120979587
+     ]
+    ],
+    "anchors": [
+     "run_auto_mode_experiments.py"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-output-contract",
+   "claim": "The verdict is <severity>N</severity> with N in 0-100 and 50 the allow/block boundary; stage 2 may add <category> and <thinking>.",
+   "detail": "Output Format section of the captured system prompt; behavior confirmed by verdict-shaping across v2-v5 runs.",
+   "verdict": "runtime-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      127576300,
+      127576700
+     ]
+    ],
+    "anchors": [
+     "run_auto_mode_experiments.py"
+    ]
+   },
+   "runtime": {
+    "runs": [
+     "tmp/claude-code-binary-analysis/2.1.296/traces/auto-mode-allow-v5",
+     "tmp/claude-code-binary-analysis/2.1.296/traces/auto-mode-block-v5"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-stage-division",
+   "claim": "Stage 1 grades harm only without user intent or ALLOW exceptions; stage 2 applies user intent and ALLOW exceptions with explicit-confirmation required to override blocks.",
+   "detail": "Verbatim stage suffixes captured in the classifier user messages.",
+   "verdict": "runtime-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      127576300,
+      127576700
+     ]
+    ],
+    "anchors": [
+     "run_auto_mode_experiments.py"
+    ]
+   },
+   "runtime": {
+    "runs": [
+     "tmp/claude-code-binary-analysis/2.1.296/traces/auto-mode-block-v5"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-rules",
+   "claim": "The system prompt embeds 1 HARD BLOCK rule (Data Exfiltration), 68 SOFT BLOCK rules and 17 ALLOW exceptions, plus a user-intent rule, circumvention catching and a CLAUDE.md slot.",
+   "detail": "Parsed from the captured system prompt; rule names extracted and counted by the verifier.",
+   "verdict": "runtime-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      122526126,
+      122526526
+     ],
+     [
+      14012998,
+      14013398
+     ]
+    ],
+    "anchors": [
+     "run_auto_mode_experiments.py",
+     "verify_auto_mode_controls.py"
+    ]
+   },
+   "runtime": {
+    "runs": [
+     "tmp/claude-code-binary-analysis/2.1.296/traces/auto-mode-block-v5"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-rule-trust",
+   "claim": "autoMode rules are honored only from user, flag and managed/policy settings; project and local settings are ignored as repo-controllable.",
+   "detail": "Warning text and settings-source list near payload offset 120342260.",
+   "verdict": "bundle-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      120342260,
+      120342660
+     ],
+     [
+      119777106,
+      119777506
+     ]
+    ],
+    "anchors": [
+     "run_plugin_experiments.py"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-billing",
+   "claim": "Classifier requests are billed to the user's account unless the gateway implements the classifier-billing protocol; through a custom base URL they bill as ordinary usage.",
+   "detail": "Session notice quoted verbatim from the probe run; links to code.claude.com/docs/en/auto-mode-classifier-billing.",
+   "verdict": "runtime-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      136676606,
+      136677006
+     ]
+    ],
+    "anchors": [
+     "run_auto_mode_experiments.py"
+    ]
+   },
+   "runtime": {
+    "runs": [
+     "tmp/claude-code-binary-analysis/2.1.296/traces/auto-mode-allow-v1"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-fail-open",
+   "claim": "A classifier that produces no verdict after retries results in a delivered-flagged allow, not a block.",
+   "detail": "No-verdict branch: 'Delivered with a note: the classifier could not review it'; observed indirectly before verdict formats matched (v2/v3 runs).",
+   "verdict": "bundle-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      127579000,
+      127579400
+     ]
+    ],
+    "anchors": [
+     "run_auto_mode_experiments.py"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-relay-tiny-calls",
+   "claim": "The eight tiny non-Opus relay generations in the S2 Opus archive are not classifier calls: they carry zero cache activity, unlike the classifier's ~35k-token cached system prompt.",
+   "detail": "Relay records 4babc489/5b3a24c3 et al.: 22 input / 1 output, no cache reads or writes; consistent with model-availability probes (CLAUDE_CODE_3P_PROBE_*).",
+   "verdict": "archive-observed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      120979187,
+      120979587
+     ]
+    ],
+    "anchors": [
+     "verify_auto_mode_controls.py"
+    ]
+   },
+   "archives": {
+    "paths": [
+     "var/run-data/strat-workflow/markov-run-79d3241a/20261012T021947729737Z/relay/requests.json"
+    ]
+   }
+  },
+  {
+   "id": "auto-mode-critique",
+   "claim": "A separate 'claude critique' subcommand makes its own LLM call to review custom auto-mode rules, with a --model override.",
+   "detail": "Command wiring near payload offset 136694376; critique prompt near 14012998.",
+   "verdict": "bundle-confirmed",
+   "binary": {
+    "version": "2.1.296",
+    "sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
+   },
+   "bundle": {
+    "offsets": [
+     [
+      136694376,
+      136694776
+     ],
+     [
+      14012998,
+      14013398
+     ]
+    ],
+    "anchors": [
+     "run_plugin_experiments.py"
+    ]
+   }
+  }
+ ]
+}

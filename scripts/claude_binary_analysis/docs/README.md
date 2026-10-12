@@ -15,6 +15,7 @@ must be revalidated before being applied to a different release.
 | 2.1.296 subagent isolation | [Child skill discovery reaches the primary context](claude-code-2.1.296-subagent-skill-isolation-analysis.md), with code proof, metadata/body distinction, and ten controls | [Skill discovery pseudocode](claude-code-2.1.296-subagent-skill-isolation-pseudocode.md) |
 | 2.1.296 workflows | [Workflow system](claude-code-2.1.296-workflow-analysis.md), including JavaScript capabilities, execution limits, scheduling, returns, failures, and resume | [Workflow pseudocode](claude-code-2.1.296-workflow-pseudocode.md) |
 | 2.1.296 workflow operations | [Recovery, cancellation, deadlines, budgets, concurrency, retries and replay](claude-code-2.1.296-workflow-operations.md), with crash-resume controls | Outcomes inline; see the report's evidence section |
+| 2.1.296 auto mode | [The permission classifier](claude-code-2.1.296-auto-mode-analysis.md): ancillary two-stage Sonnet calls, 140k-char rule prompt, severity verdicts, billing | [Claims](claude-code-2.1.296-auto-mode-claims.json), [verified controls](claude-code-2.1.296-auto-mode-controls.json) |
 | 2.1.214 plugins | [Plugin and skill pipeline](claude-code-2.1.214-plugin-analysis.md), including settings order, discovery, component ownership, and name collisions | [Plugin pseudocode](claude-code-2.1.214-plugin-pseudocode.md) |
 
 [Plugin skill discovery guide](claude-code-plugin-skill-discovery.md) provides
@@ -61,8 +62,16 @@ For **2.1.296 workflows**:
 For **2.1.296 workflow operations** (recovery, cancellation, limits, retries,
 replay):
 
-- [Twenty-three verified operations controls](claude-code-2.1.296-workflow-operations-controls.json),
-  including the three crash-resume completions
+- [Twenty-eight verified operations controls](claude-code-2.1.296-workflow-operations-controls.json),
+  including the three crash-resume completions, four network-fault cases
+  and the notification-turn fault
+
+For **2.1.296 auto mode** (permission classifier):
+
+- [Evidence-labeled claims](claude-code-2.1.296-auto-mode-claims.json)
+- [Five verified auto-mode controls](claude-code-2.1.296-auto-mode-controls.json)
+- Classifier system prompt (139,988 chars, SHA-256 `de1040bd…`) retained at
+  `tmp/claude-code-binary-analysis/2.1.296/reports/auto-mode-classifier-system-prompt.txt`
 
 For **2.1.214 plugins**:
 

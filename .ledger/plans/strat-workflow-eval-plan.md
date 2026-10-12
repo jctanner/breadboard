@@ -3,6 +3,10 @@
 Created 2026-10-09. Source: `eval-plan-workflow-vs-bash.md` in
 `2026_10_09_strat_creator_workflow_debate/`.
 
+Reader's report: [Claude Workflows and scripted pipelines](../notes/claude-workflows-vs-scripted-pipelines.md).
+It summarizes the execution layers, evidence limits, proposed testing budgets,
+and production recommendation. Proposed study levels do not authorize new runs.
+
 ## What we are trying to learn
 
 strat-creator turns approved RFEs into strategy documents in three steps:
@@ -3706,6 +3710,28 @@ These findings strengthen the existing recommendation (validated, persisted
 role contracts and external result validation) without changing it: the
 external runner's advantage is durability/control boundaries, not immunity to
 side-effect duplication, which both paths exhibit under restart conditions.
+
+### 2026-10-12: Network-fault taxonomy and the primary's exposure window
+
+The retry engine was then recovered from the bundle and confirmed with five
+further controls (persistent 429, connection reset, spend-limit 429, 529
+overload, notification-turn fault); see the
+[operations report](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-operations.md).
+Points that matter for benchmark interpretation:
+
+- **Spend/usage-limit 429s are classified non-retryable** and fail the
+  request immediately — the mechanistic explanation for this benchmark's
+  observed behavior that account usage-limit 429s fail jobs outright, while
+  ordinary 429/5xx/network faults retry with backoff (300 first-party / 10
+  third-party default retries, ~0.5 s exponential base) and then restart the
+  agent conversation once, re-executing tool side effects.
+- **The controller is quiescent while a background workflow executes**; its
+  next API call is the notification-delivery turn. If that turn fails
+  terminally, the CLI reports an API error with exit 1 *even though the
+  workflow completed and its result is durably journaled* — job exit status
+  alone can misreport workflow success, so benchmark evaluation should keep
+  reading the workflow state/journal (as the run-data archives already do)
+  rather than trusting the CLI result event.
 
 ### 2026-10-12: ANTHROPIC_LOG warning fixed for future jobs
 

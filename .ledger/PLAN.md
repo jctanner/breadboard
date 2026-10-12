@@ -2,6 +2,8 @@
 
 ## Current milestone
 
+- [Claude Workflows and scripted pipelines](notes/claude-workflows-vs-scripted-pipelines.md):
+  reader's report covering execution layers, test budgets/confidence, and S1/S2 recommendation.
 - [Fix invalid ANTHROPIC_LOG job setting](tasks/done/fix-anthropic-log-directory-warning.md):
   deployed; both launchers corrected, 18 tests and mock capture check pass.
 - [Claude Workflow production-gap investigation](notes/claude-workflow-production-gaps-handoff.md):

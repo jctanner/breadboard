@@ -390,6 +390,100 @@
       },
       "passed": true,
       "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-operations-stall-exhaust-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        10
+      ],
+      "case": "conn-reset",
+      "outcome": {
+        "conversation_restarts": 1,
+        "measured_backoff_gaps_s": [
+          0.59,
+          1.21
+        ],
+        "request_retries_per_conversation": 2,
+        "side_effect_executions": 2
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-network-conn-reset-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        10
+      ],
+      "case": "overloaded-529",
+      "outcome": {
+        "conversation_restarts": 1,
+        "measured_backoff_gaps_s": [
+          0.59,
+          1.06
+        ],
+        "request_retries_per_conversation": 2,
+        "side_effect_executions": 2
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-network-overloaded-529-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        10
+      ],
+      "case": "rate-limit-exhaust",
+      "outcome": {
+        "conversation_restarts": 1,
+        "measured_backoff_gaps_s": [
+          0.53,
+          1.09
+        ],
+        "request_retries_per_conversation": 2,
+        "side_effect_executions": 2
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-network-rate-limit-exhaust-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        6
+      ],
+      "case": "spend-limit-429",
+      "outcome": {
+        "conversation_restarts": 1,
+        "non_retryable": true,
+        "request_retries": 0,
+        "side_effect_executions": 2
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-network-spend-limit-429-v1"
+    },
+    {
+      "agent_max_concurrency": [
+        1
+      ],
+      "api_requests": [
+        7
+      ],
+      "case": "notify-fault",
+      "outcome": {
+        "cli_outcome": "API error, exit 1 despite completed workflow",
+        "notification_turn_retries": 2,
+        "result_persisted": true,
+        "workflow_status": "completed"
+      },
+      "passed": true,
+      "run": "../../tmp/claude-code-binary-analysis/2.1.296/traces/workflow-network-notify-fault-v2"
     }
   ],
   "schema_version": 1

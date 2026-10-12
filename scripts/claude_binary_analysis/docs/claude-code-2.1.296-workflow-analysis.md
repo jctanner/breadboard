@@ -256,6 +256,37 @@ then induced deliberate stalls, quota-style failures, crashes and cancellation
 at runtime and confirmed the counts, side-effect duplication and terminal
 states reported there.
 
+### Failure and recovery architecture
+
+Recovery is layered, and each layer fails differently (full policy and tables
+in the [operations report](claude-code-2.1.296-workflow-operations.md)):
+
+1. **Request-level retries** — transparent and side-effect safe: the same
+   conversation is resent, so tool results are not re-executed. Retryable:
+   socket errors without HTTP status (ECONNREFUSED/ECONNRESET/ETIMEDOUT/
+   EPIPE), 408, 409, SSE failures, ≥500, 404 (once, without streaming), 401
+   (via a two-use credential-renewal budget), 529 (a separate bucket with
+   fallback-model handling after three repeats), and ordinary 429s. **Not
+   retryable:** 429s carrying spend/usage-limit markers
+   (`service_spend_limit_reached`, `org_spend_cap_reached`, `out_of_credits`…)
+   — they fail the request immediately. Default budgets are 300 retries for
+   first-party auth and 10 for third-party/gateway (`CLAUDE_CODE_MAX_RETRIES`
+   clamped to 15 for non-first-party); delays are exponential (~0.5 s base,
+   factor 2, 32 s cap) with proportional jitter, `Retry-After` and
+   `anthropic-ratelimit-unified-reset` honored, and large-window 429s enter
+   a wakeable long wait of at least ten minutes.
+2. **Conversation restart** — when request retries exhaust, the agent
+   conversation is restarted from scratch once, re-executing its tool side
+   effects. Stall recovery is a separate path permitting five restarts.
+3. **Workflow outcome** — a terminally failed agent journals `failed` and the
+   workflow *completes* with a `null` result (or throws if uncaught in a
+   direct `await agent()`), with CLI exit 1 and an `is_error` result event.
+4. **The notification turn** — the controller is quiescent at the API level
+   during background execution; its next request delivers the terminal
+   notification. That turn uses the same retry engine, and its terminal
+   failure yields an API-error CLI result and exit 1 **even when the
+   workflow completed and its result is durably journaled**.
+
 An uncaught error fails the workflow. A caught branch error can leave the
 outer workflow completed with `null` slots and recorded failures. Runtime
 controls established both outcomes for the same missing structured result:
@@ -345,6 +376,41 @@ schema presence, or CLI exit status.
 
 ## Composition, lifecycle, and inactive branches
 
+Result-driven fan-out is ordinary JavaScript and is runtime-confirmed
+(`workflow-fanout-v1`, plus the `workflow-orgscan-v1` variant in which a
+clone agent first runs a script via its Bash tool and returns the checkout
+folder list, which then drives the per-repo scan agents): one `agent()` returns a schema-validated list, a
+`for...of` loop over `list.items` awaits one `agent()` per item with a
+result-derived prompt, and the script assembles the final value — the journal
+records the chained keys (`FANOUT_LIST` → `FANOUT_ITEM:alpha` → …), each
+derived from the prior key plus the result-dependent prompt. Because journal
+keys chain on prompt content, replay reuses the cached prefix and a changed
+early result naturally invalidates later cache entries. Fan-out through
+`parallel()`/`pipeline()` follows the same rules with bounded helper inputs
+(the 4,096-element crossing limit) and the shared concurrency cap; the
+1,000-agent counter includes cached calls. A terminally failed item call
+resolves to `null` on the direct-await path, so loops should check for it.
+
+A schema constrains the *type* of a result, never its *reference*: it can
+require `repos: [{name: string, path: string}]`, but it cannot require that
+those strings name directories that exist on disk. When a returned list
+drives further work, four failure modes apply with asymmetric
+detectability — invention, mutation and reordering are largely caught by
+consumers that touch the referenced reality (a scan agent told to read a
+hallucinated path finds nothing and fails), but **omission is silent**: an
+item the agent never reports never enters the fan-out, and nothing fails.
+`scanned: N, failed: 0` is not evidence the batch was complete. Two
+mitigations are available inside the script itself: a cardinality
+cross-check (demand a count from a second transcription or the script's own
+output and compare it to the list length in plain JS — an agent omitting
+entries must also falsify the count consistently), and moving the data path
+off the model boundary entirely (the script writes a manifest; agents read
+it from disk). The benchmark's production failures are precedents for the
+omission class: an agent returning its result as a JSON string inside
+`recorded` silently excluded that item from scoring/review, and reviewer
+scope drift mutated the "which item" parameter. See the evaluation plan's
+production recommendation for the external-validation conclusion.
+
 `workflow(name,args)` executes a child in a separate VM while sharing the
 parent agent hooks, concurrency/call caps, journal and budget. Runtime named
 child composition succeeded. Child `phase()` is suppressed in favor of a
@@ -352,7 +418,13 @@ child progress group; a child's attempt to call `workflow()` again rejects.
 The one-level nesting rule was inspected statically.
 
 Background tasks keep agent controllers, merge progress by type/index, emit
-SDK progress, save a final snapshot, and notify completion/failure. Individual
+SDK progress, save a final snapshot, and notify completion/failure. The
+controller conversation is quiescent at the API level while the background
+workflow executes; its next request is the notification-delivery turn, which
+uses the same retry engine and — on terminal failure — yields an API-error
+CLI result and exit 1 even when the workflow itself completed and its result
+is journaled (see the [operations controls](claude-code-2.1.296-workflow-operations.md)).
+Individual
 skip and retry use distinct abort reasons. Stop marks the task killed and
 signals its registered work. Interactive controls and cancellation races were
 not exercised; their control flow was recovered from the bundle.

@@ -17,6 +17,8 @@ from run_workflow_operations_experiments import parse_lines
 
 PINNED_BINARY_SHA256 = "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de"
 RESUME_CASES = {"crash-during-agent", "crash-before-result", "crash-after-result"}
+NETWORK_CASES = {"rate-limit-exhaust", "conn-reset", "spend-limit-429", "overloaded-529"}
+NOTIFY_CASE = "notify-fault"
 
 
 def journal_types(phase: dict) -> list:
@@ -207,7 +209,54 @@ def outcome(case: str, root: Path, phases: list[dict]) -> dict:
         assert types == ["launched"] + ["started"] * 6 + ["failed"], (case, types)
         assert p1["counter_lines"] == ["A"] * 6, case
         return {"stall_recovery_iterations": 5, "side_effect_executions": 6, "status": "failed"}
+    if case in NETWORK_CASES:
+        return check_network_fault(root, case)
+    if case == NOTIFY_CASE:
+        return check_notify_fault(root)
     raise AssertionError(f"unhandled case {case}")
+
+
+def check_notify_fault(root: Path) -> dict:
+    """Workflow completes; the notification-delivery turn then fails terminally."""
+    run = json.loads((root / "results.json").read_text())
+    assert run["returncode"] == 1, run["returncode"]
+    assert run["counter_lines"] == ["A"], run["counter_lines"]
+    assert journal_types(run) == ["launched", "started", "result"], journal_types(run)
+    state = run["workflow_states"][0]["state"]
+    assert state["status"] == "completed" and state.get("result") == {"marker": "OPS_RESULT_A", "context": "none"}, state
+    caps = [json.loads(p.read_text()) for p in sorted((root / "api-captures").glob("*.json"))]
+    roles = [(c["role"], bool(c["fault"])) for c in caps]
+    assert roles == [("controller", False), ("agent-A", False), ("controller", False), ("agent-A", False), ("controller", True), ("controller", True), ("controller", True)], roles
+    agent_final = caps[3]["started_monotonic"]
+    assert all(c["started_monotonic"] > agent_final for c in caps[4:])
+    finals = run["terminal_results"]
+    assert finals[-1]["is_error"] is True and "API Error" in str(finals[-1].get("result")), finals[-1]
+    return {"workflow_status": "completed", "result_persisted": True, "notification_turn_retries": 2, "cli_outcome": "API error, exit 1 despite completed workflow"}
+
+
+def check_network_fault(root: Path, case: str) -> dict:
+    run = json.loads((root / "results.json").read_text())
+    assert run["returncode"] == 1, (case, run["returncode"])
+    assert statuses(run) == ["completed"], (case, statuses(run))
+    state = run["workflow_states"][0]["state"]
+    assert state["status"] == "completed" and state.get("result") is None, (case, state)
+    types = journal_types(run)
+    assert types == ["launched", "started", "failed"], (case, types)
+    assert run["counter_lines"] == ["A", "A"], (case, run["counter_lines"])
+    assert result_event(run)["is_error"] is True, case
+    caps = [json.loads(p.read_text()) for p in sorted((root / "api-captures").glob("*.json"))]
+    assert caps, case
+    faulted = [c for c in caps if c.get("fault")]
+    clean_after = [c for c in caps if not c.get("fault") and c["started_monotonic"] > faulted[0]["started_monotonic"]]
+    if case == "spend-limit-429":
+        assert len(faulted) == 2 and len(caps) == 6, (case, len(faulted), len(caps))
+        gap = faulted[1]["started_monotonic"] - clean_after[0]["started_monotonic"]
+        assert gap < 1.0, (case, gap)
+        return {"request_retries": 0, "conversation_restarts": 1, "side_effect_executions": 2, "non_retryable": True}
+    assert len(faulted) == 6 and len(caps) == 10, (case, len(faulted), len(caps))
+    gaps = [faulted[i + 1]["started_monotonic"] - faulted[i]["started_monotonic"] for i in range(2)]
+    assert all(0.2 < g < 5.0 for g in gaps) and gaps[1] > gaps[0] * 1.5, (case, gaps)
+    return {"request_retries_per_conversation": 2, "conversation_restarts": 1, "side_effect_executions": 2, "measured_backoff_gaps_s": [round(g, 2) for g in gaps]}
 
 
 def main() -> None:
@@ -224,6 +273,16 @@ def main() -> None:
         phases = check_base(case, root, phase_count)
         result = outcome(case, root, phases)
         summary.append({"case": case, "passed": True, "run": str(root), "outcome": result, "api_requests": [p["api_requests"] for p in phases], "agent_max_concurrency": [p["max_active_agent_requests"] for p in phases]})
+    for case in sorted(NETWORK_CASES) + [NOTIFY_CASE]:
+        if case == NOTIFY_CASE:
+            root = args.traces / "workflow-network-notify-fault-v2"
+        else:
+            root = args.traces / f"workflow-network-{case}-v1"
+        manifest = json.loads((root / "manifest.json").read_text())
+        assert manifest["binary_sha256"] == PINNED_BINARY_SHA256, (case, manifest["binary_sha256"])
+        run = json.loads((root / "results.json").read_text())
+        result = check_notify_fault(root) if case == NOTIFY_CASE else check_network_fault(root, case)
+        summary.append({"case": case, "passed": True, "run": str(root), "outcome": result, "api_requests": [run["api_requests"]], "agent_max_concurrency": [1]})
     write_json(args.output, {"schema_version": 1, "binary_sha256": PINNED_BINARY_SHA256, "controls": summary})
     print(f"Verified {len(summary)} workflow operations controls")
 

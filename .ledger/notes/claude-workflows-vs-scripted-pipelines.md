@@ -81,9 +81,9 @@ conversations. Its agents still make uncertain internal decisions.
 | Agents still mediate effects/results; files can remain shared | The author must implement limits, cancellation and log separation |
 
 Both designs need log and shared-write discipline under concurrency. Separate
-conversations are not filesystem isolation. Sequential logs are easier to follow;
-the original author's intent is unverified. Matched-concurrency performance and
-parallel safety remain unmeasured in this strategy comparison. [1, 5]
+conversations are not filesystem isolation. Sequential execution was a deliberate
+choice (debuggability and log sanity), not a limitation. Matched-concurrency
+performance and parallel safety remain unmeasured in this strategy comparison. [1, 5]
 
 Returned lists can silently omit items; conversations can share files and skill
 metadata. Completeness and isolation need checks. [1, 5]
@@ -139,10 +139,10 @@ Levels 1–2 follow the existing structure; 3–4 are proposals, not run authori
 | Level | Runs | Token planning estimate | Purpose |
 | --- | --- | --- | --- |
 | 1: smoke, one RFE | One Haiku run per design per scenario | About 12 million per pair, using historical single-RFE usage | Check wiring; no quality claim |
-| 2: batch baseline, three RFEs | One Opus run per design | 25.2 million per pair, measured | Expose batch behavior |
+| 2: batch baseline, three RFEs | One Opus 4.6 run per design | 25.2 million per pair, measured | Expose batch behavior |
 | 2: fault and edge coverage | One control per case per design; repeat only to resolve a question | Zero provider tokens with mocks; live cases need separate budgets | Check failure handling and boundaries |
-| 3: comparison pilot | Ten Opus runs per design, over varied batches | About 252 million total | Measure cost/time variation and independent quality |
-| 4: reliability claim | 30, 60, or 300 representative runs per design | See below | Bound the failure rate |
+| 3: comparison pilot | Ten Opus 4.6 runs per design, over varied batches | About 252 million total | Measure cost/time variation and independent quality |
+| 4: reliability claim | 30, 60, or 300 representative Opus 4.6 runs per design | See below | Bound the failure rate |
 
 After smoke, prioritize missing results, wrong targets, empty batches, duplicates,
 failed writes, broken streams, quota limits, crashes, cancellation, and stale
@@ -153,6 +153,9 @@ should follow repairs and stronger checks, including the scope checks both fail.
 Repeating a known defect adds little.
 
 ### 7. The budget arithmetic
+
+Dollar figures throughout this report use **Claude Opus 4.6 (`claude-opus-4-6`)**
+API list prices. The Haiku smoke estimate above covers token usage only.
 
 One measured three-RFE pair used:
 
@@ -180,7 +183,7 @@ With zero failures, a simple approximate 95% upper bound is:
 For 60 clean runs, **3 ÷ 60 = 5%**. Zero observed failures does not establish
 zero risk. The table applies separately to each design.
 
-| Clean runs per design | Approximate upper failure rate | Tokens for both designs | API equivalent for both |
+| Clean runs per design | Approximate upper failure rate | Tokens for both designs | Opus 4.6 API equivalent for both |
 | --- | --- | --- | --- |
 | 10 | 30% | 252 million | $458 |
 | 30 | 10% | 755 million | $1,375 |
@@ -233,7 +236,7 @@ Each strategy has feasibility, testability, scope and architecture reviewers:
 | Benchmark result | Failed return check | Passed |
 | Reported total tokens | 12.95 million | 12.21 million |
 | Output tokens, including thinking | 216,778 | 264,161 |
-| API list-price equivalent | $21.55 | $24.28 |
+| Opus 4.6 API list-price equivalent | $21.55 | $24.28 |
 
 The Scripted Pipeline took **88.7 − 51.2 = 37.5 extra minutes** and cost
 **$2.73 more**, about 13%. Scoring/review spanned about 34 minutes in the parallel
@@ -243,8 +246,9 @@ assigning every minute to parallelism or claiming an inherent Workflow speedup. 
 
 The $2.73 gap does not isolate design, cache or content effects. Equal-concurrency
 cost is unmeasured. A [pre-registered retest](../plans/strat-workflow-matched-concurrency-retest.md)
-proposes one fresh sequential run per design on common infrastructure, pending
-paid-run authorization; this original table stays.
+proposes one fresh sequential run per design on common infrastructure, at roughly
+$46 API equivalent for the pair. It has not run; paid-run authorization is pending.
+This original table stays; matched-concurrency results will go in a separate table.
 
 One pair, retained files and differing harness/relay revisions limit performance
 claims, not the reproduced projection defect. Unequal 120-second relay failures

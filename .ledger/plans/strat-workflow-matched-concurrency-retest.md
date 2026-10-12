@@ -76,7 +76,8 @@ Before launch, set and verify both job cancellation and the Workflow background
 wait ceiling. Record partial spend, native state and any aborted run rather than
 silently replacing it with a success. Do not change a ceiling after seeing results.
 
-Planning estimate: the old pair used 25.16M reported tokens and $45.83 equivalent.
+Planning estimate: the old Claude Opus 4.6 (`claude-opus-4-6`) pair used
+25.16M reported tokens and $45.83 API list-price equivalent.
 That is an estimate for two new runs, not a hard spending limit; sequential cache
 expiration, generated content and retries can change it. Obtain the user's
 spending ceiling with launch authorization and stop through the external runner.

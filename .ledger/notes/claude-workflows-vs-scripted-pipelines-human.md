@@ -134,9 +134,9 @@ The short JavaScript execution guard is not a deadline for the whole job. Our
 local launch path had no Workflow token budget set; even a configured budget can
 be exceeded by the last agent before the next check. External limits still matter.
 
-These findings describe the tested release and configuration. Neither Fullsend
-deployment was validated here. Other wrappers or Claude releases need their own
-verification.
+These findings describe Claude Code 2.1.296 with the Workflow settings used in
+our benchmark and controlled tests. Neither Fullsend deployment was validated
+here. Other wrappers or Claude releases need their own verification.
 
 ## B. How much testing we need, and what it costs
 

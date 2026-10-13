@@ -7,6 +7,9 @@
   [Narrative version](notes/claude-workflows-vs-scripted-pipelines-human.md)
   follows the same evidence in a more conversational style
   ([rewrite task](tasks/done/claude-workflow-human-report.md)).
+  [Testing overview chart](tasks/done/strat-workflow-testing-overview-chart.md)
+  separates costs, recorded time and hypothetical failure-rate bounds, with
+  portable PNG/SVG exports.
   [Hardening evidence](../scripts/claude_binary_analysis/docs/claude-code-2.1.296-benchmark-hardening.md)
   verifies the installed-version reproduction and complete selected-report delivery;
   [hardening task](tasks/done/claude-workflow-report-hardening.md) records its checks.

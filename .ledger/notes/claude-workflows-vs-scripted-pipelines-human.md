@@ -143,6 +143,16 @@ own integration testing.
 
 ## B. How much testing we need, and what it costs
 
+Here is the plan at a glance. Level 4 is shown at 60 clean runs per design.
+Level 5 has a separate budget and can evaluate saved outputs from earlier levels.
+
+![Testing levels compared on three separate axes: Opus pipeline budget, recorded job hours, and hypothetical upper failure rates.](assets/strat-workflow-testing/overview.png)
+
+Solid points are recorded Opus references; dashed lines are projections or
+zero-failure scenarios. Unknown time and cost values are labeled. The level 1
+reference uses Opus; the proposed smoke tests still use Haiku.
+[SVG export](assets/strat-workflow-testing/overview.svg) · [Chart data](assets/strat-workflow-testing/data.json).
+
 ### 6. Start small, then test the things that can break
 
 We ran **level 1** with Haiku, Opus and GLM. For future smoke tests, I'd still

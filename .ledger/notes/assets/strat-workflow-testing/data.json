@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "model": "claude-opus-4-6",
+  "cost_basis": "Historical API list-price equivalents; both designs combined",
+  "budget_scope": "Per-level workload, not cumulative; additional content judging excluded",
+  "time_scope": "Sum of job durations for both designs; collection and quota waiting excluded",
+  "levels": [
+    {
+      "level": 1,
+      "name": "Smoke",
+      "rfes_per_run": 1,
+      "runs_per_design": 1,
+      "cost_usd": 14.18,
+      "cost_status": "historical_reference",
+      "job_hours": 0.98,
+      "time_status": "historical_mean_with_transport_interruptions",
+      "upper_failure_rate_percent": null,
+      "bound_status": "no_claim",
+      "notes": "Opus reference averaged over three completed pairs; future smoke policy uses Haiku."
+    },
+    {
+      "level": 2,
+      "name": "Batch baseline",
+      "rfes_per_run": 3,
+      "runs_per_design": 1,
+      "cost_usd": 45.83,
+      "cost_status": "observed_reference",
+      "job_hours": 2.3316666666666666,
+      "time_status": "observed_reference",
+      "upper_failure_rate_percent": null,
+      "bound_status": "no_claim",
+      "notes": "One completed three-RFE pair; reviewer delivery/scope defects remain."
+    },
+    {
+      "level": 3,
+      "name": "Comparison pilot",
+      "rfes_per_run": 10,
+      "runs_per_design": 10,
+      "cost_usd": 1530,
+      "cost_status": "linear_projection_from_rounded_153_usd_pair",
+      "job_hours": null,
+      "time_status": "unmeasured",
+      "upper_failure_rate_percent": 30,
+      "bound_status": "hypothetical_zero_failures",
+      "notes": "Projected full-size campaign; a stable repaired version and qualifying trials are required."
+    },
+    {
+      "level": 4,
+      "name": "Reliability",
+      "rfes_per_run": 10,
+      "runs_per_design": 60,
+      "cost_usd": 9180,
+      "cost_status": "linear_projection_from_rounded_153_usd_pair",
+      "job_hours": null,
+      "time_status": "unmeasured",
+      "upper_failure_rate_percent": 5,
+      "bound_status": "hypothetical_zero_failures",
+      "notes": "Illustrates the 60-run scenario, not every proposed level 4 campaign."
+    },
+    {
+      "level": 5,
+      "name": "Content judging",
+      "rfes_per_run": null,
+      "runs_per_design": null,
+      "cost_usd": null,
+      "cost_status": "judge_dependent_unmeasured",
+      "job_hours": null,
+      "time_status": "judge_dependent_unmeasured",
+      "upper_failure_rate_percent": null,
+      "bound_status": "different_quality_question",
+      "notes": "Can rejudge saved outputs from earlier levels; adds independent spend."
+    }
+  ],
+  "sources": [
+    "../../claude-workflows-vs-scripted-pipelines-human.md",
+    "../../../plans/strat-workflow-eval-plan.md"
+  ],
+  "references": {
+    "single_rfe_job_minutes_per_design": [27.0, 31.8],
+    "three_rfe_job_minutes_per_design": [51.2, 88.7],
+    "measured_three_rfe_pair_tokens_millions": 25.16,
+    "measured_three_rfe_pair_cost_usd": 45.83,
+    "rounded_projected_ten_rfe_pair_cost_usd": 153,
+    "failure_bound_method": "Approximate 95% upper failure-rate bound = 300 / clean runs, expressed as percent. Requires independent representative runs with zero failures."
+  }
+}

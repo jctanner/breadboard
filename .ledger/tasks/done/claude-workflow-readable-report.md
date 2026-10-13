@@ -20,7 +20,7 @@ budgets and confidence, and the production recommendation.
 
 Done 2026-10-12. The initial report had eleven numbered sections and approximately
 2,100 words including sources. It was subsequently replaced by the
-[human report](../../notes/claude-workflows-vs-scripted-pipelines-human.md);
+[human report](../../../var/benchmarks/strat-workflow/analysis.md);
 the user requested removal of the technical version to keep one maintained report.
 NIST/BMJ sources support the confidence discussion. No model runs, deployment,
 benchmark edits, commit or push authorized or performed for this report.

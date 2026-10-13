@@ -28,7 +28,7 @@ Done, 2026-10-12. User authorized source inspection and cloning if needed.
   cites implemented CLI delegation, collected-output scoring, judge models,
   repeated samples, provider usage and null-cost behavior. It distinguishes
   inspected capability from our unimplemented adapter.
-- [Human report](../../notes/claude-workflows-vs-scripted-pipelines-human.md)
+- [Human report](../../../var/benchmarks/strat-workflow/analysis.md)
   separates producer and content-judge budgets; benchmark insight 15 records
   framework findings. Existing production benchmark measurements are unchanged.
 - Content evaluation is now an explicit level 5 in the human report. Earlier

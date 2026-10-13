@@ -18,7 +18,7 @@ Done, 2026-10-12.
 
 ## Evidence and decisions
 
-- The [human report](../../notes/claude-workflows-vs-scripted-pipelines-human.md)
+- The [human report](../../../var/benchmarks/strat-workflow/analysis.md)
   is the only maintained comparison report. Its ten-RFE level 3/4 ladder and
   independent level 5 judge budget remain unchanged. The retired version is
   recoverable from git history; raw evidence and binary investigations remain.

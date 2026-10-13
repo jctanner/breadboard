@@ -11,6 +11,9 @@ MLflow, OTel, strace and API dumps. The plan, its pass criteria and all
 results so far are in
 [`.ledger/plans/strat-workflow-eval-plan.md`](../../../.ledger/plans/strat-workflow-eval-plan.md).
 
+Read [the analysis](analysis.md) for the findings, testing budgets and production
+recommendation.
+
 This directory is a Markov directory workflow. Markov runs on a runner pod.
 Its steps call the dashboard API, watch the job pods with `k8s_job_wait`,
 and run the checks. Every model call happens in the job pods.

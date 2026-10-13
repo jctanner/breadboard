@@ -3,13 +3,13 @@
 Created 2026-10-09. Source: `eval-plan-workflow-vs-bash.md` in
 `2026_10_09_strat_creator_workflow_debate/`.
 
-Reader's report: [Claude Workflows and scripted pipelines](../notes/claude-workflows-vs-scripted-pipelines-human.md).
+Reader's report: [Claude Workflows and scripted pipelines](../../var/benchmarks/strat-workflow/analysis.md).
 It summarizes the execution layers, evidence limits, proposed testing budgets,
 and production recommendation. Proposed study levels do not authorize new runs.
 
 Production coverage update, 2026-10-12: the user confirms a ten-RFE batch limit,
 roughly three RFEs on average, and a six-hour schedule. The
-[narrative report](../notes/claude-workflows-vs-scripted-pipelines-human.md)
+[narrative report](../../var/benchmarks/strat-workflow/analysis.md)
 now proposes ten-RFE batches for level 3 and full-size level 4 trials. Existing
 three-RFE measurements remain baselines. The production batch limit is not being
 reduced; ten-RFE cases have not run. Their budgets are provisional projections.

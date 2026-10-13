@@ -146,13 +146,13 @@ own integration testing.
 Here is the plan at a glance. Level 4 is shown at 60 clean runs per design.
 Level 5 has a separate budget and can evaluate saved outputs from earlier levels.
 
-![Testing levels compared on three separate axes: Opus pipeline budget, recorded and forecast job hours, and hypothetical upper failure rates.](assets/strat-workflow-testing/overview.png)
+![Testing levels compared on three separate axes: Opus pipeline budget, recorded and forecast job hours, and hypothetical upper failure rates.](../../../.ledger/notes/assets/strat-workflow-testing/overview.png)
 
 Solid points are recorded Opus references; dashed lines are projections or
 zero-failure scenarios. Time forecasts assume sequential benchmark jobs and
 linear growth from the three-RFE pair. Level 5's time and cost remain unknown.
 The level 1 reference uses Opus; the proposed smoke tests still use Haiku.
-[SVG export](assets/strat-workflow-testing/overview.svg) · [Chart data](assets/strat-workflow-testing/data.json).
+[SVG export](../../../.ledger/notes/assets/strat-workflow-testing/overview.svg) · [Chart data](../../../.ledger/notes/assets/strat-workflow-testing/data.json).
 
 ### 6. Start small, then test the things that can break
 
@@ -308,7 +308,7 @@ I'd use agent-eval-harness to score the saved strategies, while Markov and
 Breadboard keep running the pipeline jobs. We need an adapter to export the
 artifacts into the harness's case format. Track judge tokens and costs separately
 from pipeline spend, and leave unpriced calls marked as unknown. The
-[integration notes](strat-workflow-content-eval-harness-assessment.md) describe
+[integration notes](../../../.ledger/notes/strat-workflow-content-eval-harness-assessment.md) describe
 the artifact mapping and cost-accounting gaps.
 
 ### 10. Every change adds some validation work
@@ -487,11 +487,11 @@ existing execution structure; qualifying either integration remains separate wor
 
 These records contain the underlying evidence:
 
-- [Benchmark plan and run records](../plans/strat-workflow-eval-plan.md), including the [Workflow run](../tasks/done/strat-workflow-tier2-s1-opus-relay-fixed-repeat.md) and [scripted run](../tasks/done/strat-workflow-tier2-s2-opus-rate-limit-retry.md).
-- [Workflow runtime analysis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-analysis.md) and [conversation/file sharing](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-subagent-information-sharing.md).
-- [Reviewer handoff diagnosis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-specialist-handoff.md), [review provenance](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-review-provenance.md), and [fresh reproduction and delivery checks](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-benchmark-hardening.md).
-- [Restart, cancellation, retry and limit controls](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-operations.md) and [permission-classifier analysis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-auto-mode-analysis.md).
-- [Matched-concurrency retest plan](../plans/strat-workflow-matched-concurrency-retest.md), registered but not run.
-- [Content-evaluation framework assessment](strat-workflow-content-eval-harness-assessment.md), including separate judge budgets and source references.
+- [Benchmark plan and run records](../../../.ledger/plans/strat-workflow-eval-plan.md), including the [Workflow run](../../../.ledger/tasks/done/strat-workflow-tier2-s1-opus-relay-fixed-repeat.md) and [scripted run](../../../.ledger/tasks/done/strat-workflow-tier2-s2-opus-rate-limit-retry.md).
+- [Workflow runtime analysis](../../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-analysis.md) and [conversation/file sharing](../../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-subagent-information-sharing.md).
+- [Reviewer handoff diagnosis](../../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-specialist-handoff.md), [review provenance](../../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-review-provenance.md), and [fresh reproduction and delivery checks](../../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-benchmark-hardening.md).
+- [Restart, cancellation, retry and limit controls](../../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-operations.md) and [permission-classifier analysis](../../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-auto-mode-analysis.md).
+- [Matched-concurrency retest plan](../../../.ledger/plans/strat-workflow-matched-concurrency-retest.md), registered but not run.
+- [Content-evaluation framework assessment](../../../.ledger/notes/strat-workflow-content-eval-harness-assessment.md), including separate judge budgets and source references.
 - Architecture-context at `7d61f09`: [pipeline overview](https://github.com/opendatahub-io/architecture-context/blob/7d61f097a9220aeb1280837b66b532177ec558b6/README.md), [phase orchestration](https://github.com/opendatahub-io/architecture-context/blob/7d61f097a9220aeb1280837b66b532177ec558b6/lib/phases/orchestration.py), [rolling inventory](https://github.com/opendatahub-io/architecture-context/blob/7d61f097a9220aeb1280837b66b532177ec558b6/architecture/rhoai.next/component-map.json), [structured publication](https://github.com/opendatahub-io/architecture-context/blob/7d61f097a9220aeb1280837b66b532177ec558b6/lib/structured_component_publication.py) and [harness selection](https://github.com/opendatahub-io/architecture-context/blob/7d61f097a9220aeb1280837b66b532177ec558b6/docs/decisions/ADR-0017-selectable-agent-harness.md).
 - [NIST confidence-interval guidance](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm) and [the zero-event risk calculation](https://qualitysafety.bmj.com/content/early/2013/08/19/bmjqs-2013-002246?versioned=true).

@@ -2,7 +2,7 @@
 
 ## Goal
 
-Create .ledger/notes/claude-workflows-vs-scripted-pipelines-human.md in the user's
+Create var/benchmarks/strat-workflow/analysis.md in the user's
 direct, conversational style, with short sections suitable for Google Docs and
 eventual slides. Keep the original report intact.
 
@@ -21,7 +21,7 @@ Done, 2026-10-12. User requested a separate human-readable version.
 
 ## Evidence
 
-- [Narrative report](../../notes/claude-workflows-vs-scripted-pipelines-human.md):
+- [Narrative report](../../../var/benchmarks/strat-workflow/analysis.md):
   about 3,400 words across three chapters and thirteen short sections. Connected
   prose follows the user's direct conversational style, with three compact tables.
 - Preserves the recorded 51.2/88.7-minute comparison, 2/12 versus 12/12 delivery,
@@ -79,3 +79,12 @@ supersedes the initial requirement to preserve it. The human report is now the
 single maintained report; the initial version remains in git history. See the
 [consolidation task](claude-workflow-report-consolidation.md) for link updates
 and schedule provenance.
+
+## Report location
+
+At the user's request, moved the report to
+[var/benchmarks/strat-workflow/analysis.md](../../../var/benchmarks/strat-workflow/analysis.md).
+Report prose is unchanged; relative evidence/chart links, incoming links and the
+chart data's source reference are updated. The benchmark README links to the
+analysis. Resolved-link comparison confirms the moved report targets the same
+evidence and chart files. Local links and git diff --check pass; session log empty.

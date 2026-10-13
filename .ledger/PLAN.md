@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-- [Claude Workflows and scripted pipelines](notes/claude-workflows-vs-scripted-pipelines-human.md):
+- [Claude Workflows and scripted pipelines](../var/benchmarks/strat-workflow/analysis.md):
   the single maintained report covering execution layers, production-scale test
   budgets/confidence, the production recommendation, and architecture-context's
   entrypoint requirements

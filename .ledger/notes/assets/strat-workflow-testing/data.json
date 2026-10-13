@@ -72,17 +72,26 @@
     }
   ],
   "sources": [
-    "../../claude-workflows-vs-scripted-pipelines-human.md",
+    "../../../../var/benchmarks/strat-workflow/analysis.md",
     "../../../plans/strat-workflow-eval-plan.md"
   ],
   "references": {
-    "single_rfe_job_minutes_per_design": [27.0, 31.8],
-    "three_rfe_job_minutes_per_design": [51.2, 88.7],
+    "single_rfe_job_minutes_per_design": [
+      27.0,
+      31.8
+    ],
+    "three_rfe_job_minutes_per_design": [
+      51.2,
+      88.7
+    ],
     "measured_three_rfe_pair_tokens_millions": 25.16,
     "measured_three_rfe_pair_cost_usd": 45.83,
     "rounded_projected_ten_rfe_pair_cost_usd": 153,
     "time_forecast_assumption": "Scale the three-RFE pair's job durations by 10/3 and runs per design, preserving each design's observed scheduling. No measured ten-RFE runtime or uncertainty interval is available.",
-    "projected_ten_rfe_job_hours_per_design": [2.8444444444444446, 4.927777777777778],
+    "projected_ten_rfe_job_hours_per_design": [
+      2.8444444444444446,
+      4.927777777777778
+    ],
     "projected_ten_rfe_pair_job_hours": 7.772222222222222,
     "failure_bound_method": "Approximate 95% upper failure-rate bound = 300 / clean runs, expressed as percent. Requires independent representative runs with zero failures."
   }

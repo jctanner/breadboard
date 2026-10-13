@@ -410,6 +410,76 @@ and saved results. I'd revisit it for production after the deployed version pass
 delivery, scope, restart and limit tests. For our pipeline today, I'd keep model
 decisions in the work that needs judgment and ordinary code around it.
 
+## D. The next pipeline changes the entrypoint discussion
+
+### 14. Strat-creator is one application
+
+The objection to the entrypoint ADR is that Claude Workflows can handle
+strat-creator. Even if we repaired and qualified that implementation, it would
+answer a question about one application. The platform decision is broader:
+can a program own the control flow inside Fullsend's sandbox and call agents
+when the work needs them?
+
+The next workload is architecture-context. It builds architecture documents for
+OpenDataHub and RHOAI from many component repositories, across platform versions.
+It already has a Python pipeline, Go analysis tools and bounded parallel agent
+work. Moving it into Fullsend should preserve that structure.
+
+### 15. Architecture-context has more work for ordinary code
+
+The pipeline fetches repositories, parses manifests, discovers components, runs
+static analysis, generates component and platform documents, builds an index,
+and generates diagrams. Its inspected rolling inventory contains **120 component
+entries**. That is an inventory count; the selected components and phases
+determine how much work a particular run does.
+
+| Work | What owns it today |
+| --- | --- |
+| Fetch sources, select versions and parse manifests | Python and command-line tools |
+| Run static analysis and validate analyzer artifacts | Python launches the Go analyzer and checks its results |
+| Interpret components, aggregate architecture and generate diagrams | Agents, scheduled by Python with concurrency limits |
+| Build the version index | Ordinary code, with no agent or inference call |
+
+There is also an implemented structured publication path that checks source
+identity, hashes and consistency across analyzer data, the synthesis response,
+the accepted document and its Markdown rendering. Those checks belong in code;
+agents still have to get the architectural interpretation right. Implemented
+contracts do not by themselves establish production readiness for every route.
+
+If we added one model-mediated result transfer for every entry in a 120-component
+run, that would be **120 × 1 = 120 boundaries** to validate. Those transfers might
+share agents. We have not measured their cost or failure rate here. The concern
+is repeating an avoidable uncertainty across a much larger workload, then using
+those component results to build the platform document.
+
+### 16. An entrypoint would preserve the existing pipeline
+
+We have two possible ways to fit this into a Claude Workflow. We could rewrite
+the coordinator in Workflow JavaScript, putting routine commands and result
+transfers behind agents. Or a Workflow agent could launch the existing Python
+pipeline as one command. The second approach keeps Python in charge, but adds
+a model-mediated launch and completion boundary around it.
+
+An entrypoint lets Fullsend launch that same program directly inside its sandbox.
+It can be Python, bash or another executable. The program then chooses when to
+call an agent. Architecture-context already exposes Claude/Codex harness selection;
+we should be able to select workers, or run a deterministic phase, without
+requiring a Claude coordinator above them. Harness selection still needs
+validation for the phases and sandbox configuration we deploy.
+
+I'd keep entrypoint support as an optional execution path alongside agent-led
+Workflows. Fullsend would provide the sandbox, permissions and run lifecycle;
+the application would choose who coordinates its work. That gives us a way to
+reuse existing pipelines without making their ordinary operations depend on
+model decisions.
+
+We have not run an architecture-context comparison in these benchmarks. Its
+Fullsend integration needs its own checks for child execution, cancellation,
+logs and artifact collection, starting with a deterministic phase and a small
+component run. The strat-creator token and dollar estimates are not a budget
+for this project. The requirement for an entrypoint comes from the workload's
+existing execution structure; qualifying either integration remains separate work.
+
 ## Evidence behind this report
 
 These records contain the underlying evidence:
@@ -420,4 +490,5 @@ These records contain the underlying evidence:
 - [Restart, cancellation, retry and limit controls](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-operations.md) and [permission-classifier analysis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-auto-mode-analysis.md).
 - [Matched-concurrency retest plan](../plans/strat-workflow-matched-concurrency-retest.md), registered but not run.
 - [Content-evaluation framework assessment](strat-workflow-content-eval-harness-assessment.md), including separate judge budgets and source references.
+- Architecture-context at `7d61f09`: [pipeline overview](https://github.com/opendatahub-io/architecture-context/blob/7d61f097a9220aeb1280837b66b532177ec558b6/README.md), [phase orchestration](https://github.com/opendatahub-io/architecture-context/blob/7d61f097a9220aeb1280837b66b532177ec558b6/lib/phases/orchestration.py), [rolling inventory](https://github.com/opendatahub-io/architecture-context/blob/7d61f097a9220aeb1280837b66b532177ec558b6/architecture/rhoai.next/component-map.json), [structured publication](https://github.com/opendatahub-io/architecture-context/blob/7d61f097a9220aeb1280837b66b532177ec558b6/lib/structured_component_publication.py) and [harness selection](https://github.com/opendatahub-io/architecture-context/blob/7d61f097a9220aeb1280837b66b532177ec558b6/docs/decisions/ADR-0017-selectable-agent-harness.md).
 - [NIST confidence-interval guidance](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm) and [the zero-event risk calculation](https://qualitysafety.bmj.com/content/early/2013/08/19/bmjqs-2013-002246?versioned=true).

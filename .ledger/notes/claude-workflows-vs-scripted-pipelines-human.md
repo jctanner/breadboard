@@ -459,6 +459,9 @@ the coordinator in Workflow JavaScript, putting routine commands and result
 transfers behind agents. Or a Workflow agent could launch the existing Python
 pipeline as one command. The second approach keeps Python in charge, but adds
 a model-mediated launch and completion boundary around it.
+Section 3 shows why that boundary needs validation: only 2 of 12 expected
+reports arrived, while the missing assessments remained in transcripts and
+the parent received “Skill execution completed.”
 
 An entrypoint lets Fullsend launch that same program directly inside its sandbox.
 It can be Python, bash or another executable. The program then chooses when to

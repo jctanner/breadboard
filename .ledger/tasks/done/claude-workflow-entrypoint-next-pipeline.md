@@ -50,3 +50,10 @@ read. The checkout is clean; no component source is changed by this task.
 - Checked sections 1–16, all 16 local report links, five pinned source paths,
   inventory arithmetic and git diff --check. Component checkout unchanged;
   session log empty. No inference, deployment, commit or push.
+
+Editorial follow-up: added one sentence in section 16 connecting completion
+validation to section 3's observed 2/12 delivery and acknowledgement-only return
+despite completed assessments remaining in transcripts. This explains why a
+single boundary still needs validation; it does not assert that the untested
+whole-program wrapper has the identical nested Skill projection defect.
+git diff --check passes; session log remains empty.

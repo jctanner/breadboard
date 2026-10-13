@@ -18,6 +18,35 @@ This directory is a Markov directory workflow. Markov runs on a runner pod.
 Its steps call the dashboard API, watch the job pods with `k8s_job_wait`,
 and run the checks. Every model call happens in the job pods.
 
+## Workflow overview
+
+```mermaid
+flowchart TD
+    config["Markov run<br/>Select tier, tests, models and repeats"]
+    setup["Validate settings and idle jobs<br/>Verify earlier archives<br/>Optional wipe and GLM wiring check"]
+    seed["For each selected run: check archive guard<br/>Submit seed job through Breadboard API<br/>Reset Jira, seed RFEs and verify discovery"]
+    design{"Selected design"}
+    native["Kubernetes job: Native Workflow<br/>Create, refine and review"]
+    scripted["Kubernetes job: Scripted Pipeline<br/>Create, refine and review"]
+    check["Markov waits; stops unfinished jobs on timeout<br/>Checks Jira, artifacts, models and usage<br/>Saves eval-result.json"]
+    summary["Save benchmark summary<br/>summary.md and eval-results.json"]
+    archive["Host collector after the Markov run ends<br/>Archive and verify system evidence<br/>var/run-data/strat-workflow/"]
+
+    config --> setup --> seed --> design
+    design -->|workflow| native
+    design -->|bash| scripted
+    native --> check
+    scripted --> check
+    check -->|Next repeat, test or model| seed
+    check -->|All selected runs checked| summary
+    summary -.->|Collect on host| archive
+```
+
+Each test selects one design; benchmark selections run sequentially. Failed
+strategy jobs still reach the checks. A missing archive receipt stops the next
+reset. Host collection runs separately after Markov finishes or stops, and its
+verified receipt allows later resets.
+
 ## Running it from markovd
 
 1. Push the change to `main` on GitHub. Jobs clone their scripts from

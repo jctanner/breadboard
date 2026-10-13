@@ -12,6 +12,9 @@
   [Testing overview chart](tasks/done/strat-workflow-testing-overview-chart.md)
   separates costs, recorded/forecast time and hypothetical failure-rate bounds, with
   portable PNG/SVG exports.
+  [Benchmark workflow overview](../var/benchmarks/strat-workflow/README.md#workflow-overview)
+  diagrams setup, job alternatives, checks and host archival
+  ([task](tasks/done/strat-workflow-readme-diagram.md)).
   [Hardening evidence](../scripts/claude_binary_analysis/docs/claude-code-2.1.296-benchmark-hardening.md)
   verifies the installed-version reproduction and complete selected-report delivery;
   [hardening task](tasks/done/claude-workflow-report-hardening.md) records its checks.

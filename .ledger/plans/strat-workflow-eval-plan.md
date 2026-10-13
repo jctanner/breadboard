@@ -3882,8 +3882,12 @@ resolved a mechanism or exposed a confound. Original measurements remain intact.
     actual batch-size mix. Linear scaling of the measured three-RFE pair gives
     roughly 84M tokens / $153 per ten-RFE pair, or 840M / $1530 for ten pairs, using
     rounded estimates. These are unmeasured Opus 4.6 API-equivalent projections;
-    replace them with a full-size measurement before funding repeats. The
-    registered R1 three-RFE retest remains a narrow scheduling comparison, not
+    replace them with a full-size measurement before funding repeats. Applying
+    the same ticket/repeat scaling to the 139.9-minute paired job duration gives
+    about 78 active job hours for ten pairs and 466 for sixty pairs. This assumes
+    each design's observed scheduling and sequential benchmark jobs; quota waits,
+    collection and independent judging are additional. Full-size timing remains
+    unmeasured. The registered R1 three-RFE retest is a scheduling comparison, not
     ten-RFE qualification. No new fixture, pipeline change or paid run is made
     by this documentation update.
 

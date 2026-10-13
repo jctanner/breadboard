@@ -35,6 +35,7 @@ def render():
         "axes.titlesize": 13,
         "axes.labelsize": 11,
         "svg.fonttype": "none",
+        "svg.hashsalt": "strat-workflow-testing-overview",
     })
     fig, axes = plt.subplots(3, 1, figsize=(9, 10.3), sharex=True)
     fig.subplots_adjust(left=0.12, right=0.97, top=0.865, bottom=0.245, hspace=0.39)
@@ -63,7 +64,7 @@ def render():
                     ha="center", va="bottom" if offset >= 0 else "top", fontsize=11)
 
     cost, time, bound = axes
-    cost.set_title("Pipeline budget for each level", loc="left", pad=11)
+    cost.set_title(f"Pipeline budget for each level ({data['model']})", loc="left", pad=11)
     cost.set_ylabel("US dollars")
     cost.set_ylim(-500, 11000)
     cost.set_yticks([0, 3000, 6000, 9000])
@@ -80,17 +81,20 @@ def render():
     cost.text(5, 0.47, "Extra cost\nnot measured", ha="center", va="center",
               transform=cost.get_xaxis_transform(), color=muted, fontsize=10)
 
-    time.set_title("Recorded job time", loc="left", pad=11)
-    time.set_ylabel("Job hours")
-    time.set_ylim(-0.12, 3.05)
-    time.set_yticks([0, 1, 2, 3])
+    time.set_title("Recorded and forecast job time", loc="left", pad=11)
+    time.set_ylabel("Total job hours")
+    time.set_ylim(-24, 545)
+    time.set_yticks([0, 150, 300, 450])
+    time.plot([2, 3, 4], [levels[i]["job_hours"] for i in [2, 3, 4]],
+              color=projected, linestyle="--", linewidth=2)
+    time.scatter([3, 4], [levels[i]["job_hours"] for i in [3, 4]],
+                 edgecolors=projected, facecolors="white", s=55, linewidth=1.8, zorder=3)
     time.plot([1, 2], [levels[i]["job_hours"] for i in [1, 2]],
-              color=recorded, marker="o", linewidth=2, markersize=6)
+              color=recorded, marker="o", linewidth=2, markersize=6, zorder=4)
     label(time, 1, levels[1]["job_hours"], "0.98 h*")
     label(time, 2, levels[2]["job_hours"], "2.33 h")
     for i in [3, 4]:
-        time.text(i, 0.45, "Ten-RFE time\nnot measured", ha="center", va="center",
-                  transform=time.get_xaxis_transform(), color=muted, fontsize=10)
+        label(time, i, levels[i]["job_hours"], f"~{levels[i]['job_hours']:.0f} h")
     time.text(5, 0.45, "Depends\non judge", ha="center", va="center",
               transform=time.get_xaxis_transform(), color=muted, fontsize=10)
 
@@ -118,14 +122,17 @@ def render():
     bound.tick_params(axis="x", labelsize=10.5, pad=10)
     fig.text(0.12, 0.055,
              "L1/L2: one Opus pair each. *L1 averages historical jobs with transport interruptions.\n"
-             "L3/L4: ten RFEs per run; costs projected from the three-RFE reference.\n"
+             "L3/L4: ten RFEs per run; cost/time assume linear growth from the three-RFE pair.\n"
              "Failure bounds use the approximate 95% zero-failure method, per design.\n"
              "Budgets are not cumulative. Judge spend and quota waits are additional.\n"
              "L5 can evaluate earlier outputs without waiting for L4.",
              fontsize=9.5, linespacing=1.6, color=muted, va="bottom")
 
     fig.savefig(directory / "overview.png", dpi=240, facecolor="white")
-    fig.savefig(directory / "overview.svg", facecolor="white", metadata={"Date": None})
+    svg_path = directory / "overview.svg"
+    fig.savefig(svg_path, facecolor="white", metadata={"Date": None})
+    # Matplotlib adds trailing spaces to SVG paths; keep the tracked export clean.
+    svg_path.write_text("\n".join(line.rstrip() for line in svg_path.read_text().splitlines()) + "\n")
     plt.close(fig)
 
 

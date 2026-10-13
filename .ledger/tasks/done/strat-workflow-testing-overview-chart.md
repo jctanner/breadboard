@@ -44,3 +44,21 @@ Done, 2026-10-12. User requested a chart for Part B's overview.
   checks pass; git diff --check passes. Plotter executed successfully with the
   repository venv. Original report unchanged; session log empty; no paid run,
   deployment, commit or push.
+
+## Runtime forecast follow-up
+
+Added the user's requested forecast to the middle chart. Linear ticket-count
+and repeat scaling of the measured three-RFE pair gives about 78 job hours for
+level 3 and 466 for the 60-run level 4 example. Source JSON retains the unrounded
+calculations and original scheduling assumption. Projected time uses hollow
+markers and dashed lines; level 5 remains unknown. These are active job-hour
+totals for sequential benchmark jobs, excluding quota waits, collection and
+independent judging. Full ten-RFE runtime remains unmeasured.
+
+Validation: regenerated and visually checked the PNG; checked forecast arithmetic
+and SVG labels. The SVG export uses stable IDs and removes generated trailing
+whitespace. XML parsing and git diff --check pass.
+
+The cost graph title now names `claude-opus-4-6` explicitly, using the model
+field from the source JSON. Regenerated PNG/SVG exports and checked the label
+and layout; git diff --check passes.

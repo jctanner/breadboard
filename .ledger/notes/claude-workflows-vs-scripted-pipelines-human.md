@@ -146,11 +146,12 @@ own integration testing.
 Here is the plan at a glance. Level 4 is shown at 60 clean runs per design.
 Level 5 has a separate budget and can evaluate saved outputs from earlier levels.
 
-![Testing levels compared on three separate axes: Opus pipeline budget, recorded job hours, and hypothetical upper failure rates.](assets/strat-workflow-testing/overview.png)
+![Testing levels compared on three separate axes: Opus pipeline budget, recorded and forecast job hours, and hypothetical upper failure rates.](assets/strat-workflow-testing/overview.png)
 
 Solid points are recorded Opus references; dashed lines are projections or
-zero-failure scenarios. Unknown time and cost values are labeled. The level 1
-reference uses Opus; the proposed smoke tests still use Haiku.
+zero-failure scenarios. Time forecasts assume sequential benchmark jobs and
+linear growth from the three-RFE pair. Level 5's time and cost remain unknown.
+The level 1 reference uses Opus; the proposed smoke tests still use Haiku.
 [SVG export](assets/strat-workflow-testing/overview.svg) · [Chart data](assets/strat-workflow-testing/data.json).
 
 ### 6. Start small, then test the things that can break
@@ -224,8 +225,16 @@ repeats.
 
 Totals include input, cache writes, cache reads and output at different prices.
 The measured three-RFE pair's roughly 481,000 output tokens already include
-thinking. Fewer total tokens can still cost more. Runtime at ten RFEs also needs
-measurement, including whether jobs finish before the next six-hour window.
+thinking. Fewer total tokens can still cost more.
+
+For time, apply the same rough scaling to the recorded **2.33 job hours per
+three-RFE pair**: **2.33 × 10 ÷ 3 × 10 ≈ 78 hours** for level 3, or
+**2.33 × 10 ÷ 3 × 60 ≈ 466 hours** for the level 4 example. These totals assume
+benchmark jobs run one after another and preserve each design's original
+scheduling. Quota waits, collection and content judging add calendar time.
+The implied ten-RFE jobs are roughly 2.8 hours for the Workflow and 4.9 hours for
+the Scripted Pipeline. Full-size measurements need to check those forecasts
+and whether runs finish before the next six-hour window.
 
 Our historical three-repeat Opus campaign could not finish within the available
 Anthropic five-hour usage allowance. That account quota is separate from job

@@ -3,7 +3,7 @@
   "model": "claude-opus-4-6",
   "cost_basis": "Historical API list-price equivalents; both designs combined",
   "budget_scope": "Per-level workload, not cumulative; additional content judging excluded",
-  "time_scope": "Sum of job durations for both designs; collection and quota waiting excluded",
+  "time_scope": "Recorded or projected sum of job durations for both designs, run sequentially; collection, quota waiting and independent judging excluded",
   "levels": [
     {
       "level": 1,
@@ -38,8 +38,8 @@
       "runs_per_design": 10,
       "cost_usd": 1530,
       "cost_status": "linear_projection_from_rounded_153_usd_pair",
-      "job_hours": null,
-      "time_status": "unmeasured",
+      "job_hours": 77.72222222222223,
+      "time_status": "linear_projection_from_three_rfe_pair",
       "upper_failure_rate_percent": 30,
       "bound_status": "hypothetical_zero_failures",
       "notes": "Projected full-size campaign; a stable repaired version and qualifying trials are required."
@@ -51,8 +51,8 @@
       "runs_per_design": 60,
       "cost_usd": 9180,
       "cost_status": "linear_projection_from_rounded_153_usd_pair",
-      "job_hours": null,
-      "time_status": "unmeasured",
+      "job_hours": 466.3333333333333,
+      "time_status": "linear_projection_from_three_rfe_pair",
       "upper_failure_rate_percent": 5,
       "bound_status": "hypothetical_zero_failures",
       "notes": "Illustrates the 60-run scenario, not every proposed level 4 campaign."
@@ -81,6 +81,9 @@
     "measured_three_rfe_pair_tokens_millions": 25.16,
     "measured_three_rfe_pair_cost_usd": 45.83,
     "rounded_projected_ten_rfe_pair_cost_usd": 153,
+    "time_forecast_assumption": "Scale the three-RFE pair's job durations by 10/3 and runs per design, preserving each design's observed scheduling. No measured ten-RFE runtime or uncertainty interval is available.",
+    "projected_ten_rfe_job_hours_per_design": [2.8444444444444446, 4.927777777777778],
+    "projected_ten_rfe_pair_job_hours": 7.772222222222222,
     "failure_bound_method": "Approximate 95% upper failure-rate bound = 300 / clean runs, expressed as percent. Requires independent representative runs with zero failures."
   }
 }

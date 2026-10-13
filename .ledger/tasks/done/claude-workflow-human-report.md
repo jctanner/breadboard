@@ -71,3 +71,11 @@ Done, 2026-10-12. User requested a separate human-readable version.
 - Promoted content judging to its own level 5 section after level 4. It can
   evaluate saved outputs from earlier levels and is not dependent on completing
   a reliability campaign. Renumbered the remaining sections consistently.
+
+## Single-report follow-up
+
+The user subsequently requested removal of the technical version. That request
+supersedes the initial requirement to preserve it. The human report is now the
+single maintained report; the initial version remains in git history. See the
+[consolidation task](claude-workflow-report-consolidation.md) for link updates
+and schedule provenance.

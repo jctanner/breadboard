@@ -3,7 +3,7 @@
 Created 2026-10-09. Source: `eval-plan-workflow-vs-bash.md` in
 `2026_10_09_strat_creator_workflow_debate/`.
 
-Reader's report: [Claude Workflows and scripted pipelines](../notes/claude-workflows-vs-scripted-pipelines.md).
+Reader's report: [Claude Workflows and scripted pipelines](../notes/claude-workflows-vs-scripted-pipelines-human.md).
 It summarizes the execution layers, evidence limits, proposed testing budgets,
 and production recommendation. Proposed study levels do not authorize new runs.
 
@@ -18,6 +18,13 @@ They cover pipeline work only. Proposed level 5,
 adds a separate judge-model budget and can reuse frozen outputs from earlier
 levels without waiting for the level 4 reliability campaign. The framework
 inspection is complete; an artifact adapter and paid judging remain unrun.
+
+Schedule provenance: the 9 October source plan explicitly notes a three-hour
+README description and a six-hour CI comment, with the active schedule held in
+the GitLab UI. This report uses the user's six-hour production requirement; the
+live UI schedule was not captured by these benchmarks. Nominal 40-RFE daily
+capacity is not measured throughput. Verify the active schedule before rollout:
+the projected 4.9-hour sequential ten-RFE job exceeds a three-hour interval.
 
 2026-10-12 hardening: [fresh reproduction and reusable delivery checks](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-benchmark-hardening.md)
 are complete and privately archived. The installed binary is still 2.1.296;

@@ -188,10 +188,10 @@ cases test model behavior.
 Fix delivery and scope problems before funding a confidence study. Keep original
 versions as controls and name repairs separately.
 
-Our production pipeline accepts up to ten RFEs per run, every six hours. The
-average is around three, but that does not tell us the most common batch size or
-how often we reach ten. We need full ten-RFE tests before claiming readiness for
-that limit, alongside empty, one-RFE and three-RFE regression cases. A full batch
+The production requirements used here are up to ten RFEs per run, every six
+hours. The average is around three, but that does not tell us the most common
+batch size or how often we reach ten. We need full ten-RFE tests before claiming
+readiness for that limit, alongside empty, one-RFE and three-RFE regression cases. A full batch
 means **10 strategies × 4 reviewers = 40 expected reports**.
 
 We are keeping the production batch limit at ten. Reducing it to three would cut
@@ -235,6 +235,11 @@ scheduling. Quota waits, collection and content judging add calendar time.
 The implied ten-RFE jobs are roughly 2.8 hours for the Workflow and 4.9 hours for
 the Scripted Pipeline. Full-size measurements need to check those forecasts
 and whether runs finish before the next six-hour window.
+
+The earlier eval plan noted conflicting three-hour and six-hour descriptions of
+the GitLab schedule. We use the six-hour requirement here. Confirm the active
+schedule before rollout: at three hours, the 4.9-hour scripted forecast would
+overrun the next scheduled start.
 
 Our historical three-repeat Opus campaign could not finish within the available
 Anthropic five-hour usage allowance. That account quota is separate from job
@@ -407,8 +412,7 @@ decisions in the work that needs judgment and ordinary code around it.
 
 ## Evidence behind this report
 
-The [original report](claude-workflows-vs-scripted-pipelines.md) keeps the more
-compact technical presentation. These records contain the underlying evidence:
+These records contain the underlying evidence:
 
 - [Benchmark plan and run records](../plans/strat-workflow-eval-plan.md), including the [Workflow run](../tasks/done/strat-workflow-tier2-s1-opus-relay-fixed-repeat.md) and [scripted run](../tasks/done/strat-workflow-tier2-s2-opus-rate-limit-retry.md).
 - [Workflow runtime analysis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-analysis.md) and [conversation/file sharing](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-subagent-information-sharing.md).

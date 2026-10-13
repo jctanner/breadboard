@@ -2,11 +2,11 @@
 
 ## Current milestone
 
-- [Claude Workflows and scripted pipelines](notes/claude-workflows-vs-scripted-pipelines.md):
-  reader's report covering execution layers, test budgets/confidence, and S1/S2 recommendation.
-  [Narrative version](notes/claude-workflows-vs-scripted-pipelines-human.md)
-  follows the same evidence in a more conversational style
-  ([rewrite task](tasks/done/claude-workflow-human-report.md)).
+- [Claude Workflows and scripted pipelines](notes/claude-workflows-vs-scripted-pipelines-human.md):
+  the single maintained report covering execution layers, production-scale test
+  budgets/confidence, and the production recommendation
+  ([rewrite task](tasks/done/claude-workflow-human-report.md),
+  [consolidation](tasks/done/claude-workflow-report-consolidation.md)).
   [Testing overview chart](tasks/done/strat-workflow-testing-overview-chart.md)
   separates costs, recorded/forecast time and hypothetical failure-rate bounds, with
   portable PNG/SVG exports.

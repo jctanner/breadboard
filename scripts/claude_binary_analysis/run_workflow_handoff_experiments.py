@@ -90,6 +90,8 @@ def main() -> int:
     parser.add_argument("--completion", choices=["direct", "fork"], required=True)
     parser.add_argument("--mode", choices=["prose", "structured", "mixed", "earlier-prose"], required=True)
     parser.add_argument("--leaf-tools", choices=["inherit", "reader"], default="inherit")
+    parser.add_argument("--leaf-agent-file", type=Path, help="copy a real reviewer agent definition into the fixture")
+    parser.add_argument("--model", help="pin the primary, helpers and aliases, including mock requests")
     args = parser.parse_args()
     binary, output = args.binary.resolve(), args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -97,9 +99,13 @@ def main() -> int:
     fixtures.mkdir(); config.mkdir()
     skill = fixtures / ".claude/skills/handoff-fixture/SKILL.md"
     skill.parent.mkdir(parents=True)
-    agent = 'handoff-reader' if args.leaf_tools == 'reader' else 'general-purpose'
+    agent = args.leaf_agent_file.stem if args.leaf_agent_file else 'handoff-reader' if args.leaf_tools == 'reader' else 'general-purpose'
     skill.write_text(f"---\nname: handoff-fixture\ndescription: Authored specialist handoff fixture\ncontext: fork\nagent: {agent}\n---\n\n{SPECIALIST}\nAssess only target $ARGUMENTS. Return an assessment and explicit dissent.\n")
-    if args.leaf_tools == 'reader':
+    if args.leaf_agent_file:
+        definition = fixtures / '.claude/agents' / (agent + '.md')
+        definition.parent.mkdir(parents=True)
+        definition.write_bytes(args.leaf_agent_file.read_bytes())
+    elif args.leaf_tools == 'reader':
         definition = fixtures / '.claude/agents/handoff-reader.md'
         definition.parent.mkdir(parents=True)
         definition.write_text('---\nname: handoff-reader\ndescription: Narrow fixture specialist\ntools: Read\n---\nReturn the authored specialist assessment as text.\n')
@@ -115,6 +121,11 @@ def main() -> int:
     thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
     env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8", "CLAUDE_CONFIG_DIR": str(config), "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1", "DISABLE_AUTOUPDATER": "1", "ANTHROPIC_BASE_URL": f"http://127.0.0.1:{server.server_port}", "ANTHROPIC_API_KEY": "local-analysis-placeholder-not-a-credential"}
     argv = [str(binary), "--print", "--verbose", "--output-format", "stream-json", "--debug-file", str(output / "debug.log"), "--permission-mode", "bypassPermissions", "--max-turns", "6", RECEIVER if args.route == "cli" else "HANDOFF_CONTROLLER_PROMPT"]
+    if args.model:
+        argv[1:1] = ["--model", args.model]
+        env.update({key: args.model for key in ("ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL",
+            "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+            "ANTHROPIC_DEFAULT_FABLE_MODEL")})
     if args.schema and args.route == "cli": argv[1:1] = ["--json-schema", json.dumps(SCHEMA)]
     write_json(output / "command.json", {"argv": argv, "route": args.route, "schema": args.schema, "completion": args.completion, "mode": args.mode, "leaf_tools": args.leaf_tools, "binary_sha256": sha256(binary), "runner_sha256": sha256(Path(__file__)), "helper_sha256": sha256(Path(__file__).with_name("mock_api_support.py")), "fixture_repository": commit, "fixture_tree": tree_manifest(fixtures), "environment_keys": sorted(env), "inherited_values": ["PATH"]})
     for name in (Path(__file__).name, "mock_api_support.py"): (output / name).write_bytes(Path(__file__).with_name(name).read_bytes())

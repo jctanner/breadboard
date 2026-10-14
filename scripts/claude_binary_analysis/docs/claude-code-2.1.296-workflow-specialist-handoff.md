@@ -141,6 +141,11 @@ retry advice will be assessed separately in the remaining production controls.
 
 ## Reproduction
 
+Subsequent [S1 hardening controls](claude-code-2.1.296-workflow-hardening-controls.md)
+verify the configured-agent remedy in the actual repair and exercise reviewer
+scope and refinement receipts. Their separate GLM validation follows this
+original mock-only investigation.
+
 ```bash
 python3 scripts/claude_binary_analysis/run_workflow_handoff_experiments.py \
   tmp/claude-code-binary-analysis/2.1.296/input/claude \

@@ -51,6 +51,13 @@ does not establish semantic equivalence by itself.
 
 ## Runtime controls
 
+The [S1 hardening follow-up](docs/claude-code-2.1.296-workflow-hardening-controls.md)
+records actual configured-agent delivery, reviewer scope hooks, asynchronous
+assignment transcript timing, target-bound refinement schemas and
+StructuredOutput checkpoint hooks. `run_reviewer_scope_control.py` and
+`run_refine_receipt_control.py` test candidate repository code against the
+native binary with a loopback API and zero provider calls.
+
 The [subagent skill isolation investigation](docs/claude-code-2.1.296-subagent-skill-isolation-analysis.md)
 uses `run_subagent_skill_experiments.py BINARY OUTPUT --case CASE` to isolate
 nested-checkout discovery from a child's returned answer. Cases include

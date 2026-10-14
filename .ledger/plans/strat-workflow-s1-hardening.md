@@ -42,7 +42,7 @@ evidence; S2 is not a production candidate for this plan.
 | 5 | Delivery checker accepts status/errors as assessments | Acknowledgements, progress and errors fail the gate; valid targeted assessments pass | [Delivery gate, focused repair done](../tasks/done/s1-hardening-05-delivery-gate.md) |
 | 6 | CLI, Workflow and business completion disagree | Final outcome checks required results and persistent state, including null/failed branches and notification failures | [Outcome, focused repair done](../tasks/done/s1-hardening-06-outcome.md) |
 | 7 | Crash/restart can repeat side effects | Publication and other externally visible writes are idempotent or reconciled before repetition | [Recovery, focused repair done](../tasks/done/s1-hardening-07-recovery.md) |
-| 8 | Replay can reuse stale results | Reuse checks relevant input/source identity; changed inputs invalidate or explicitly reject cached work | [Freshness](../tasks/pending/s1-hardening-08-freshness.md) |
+| 8 | Replay can reuse stale results | Reuse checks relevant input/source identity; changed inputs invalidate or explicitly reject cached work | [Freshness, focused repair done](../tasks/done/s1-hardening-08-freshness.md) |
 | 9 | Budget/deadline boundaries need application policy | Defined limits, overshoot reporting and safe handling of quota exhaustion, timeout and cancellation | [Limits](../tasks/pending/s1-hardening-09-limits.md) |
 
 Ten-RFE qualification, shared-file isolation and independent content judging
@@ -176,6 +176,23 @@ verifies. Native Workflow replay, Fullsend/OpenShell and cross-host fencing are
 separate qualification; Jira labels are not atomic distributed leases.
 [Evidence, conservative stops and limits](../notes/s1-hardening-07-recovery.md).
 
+## Item 8: freshness before reuse
+
+Candidate `0e7e752` records a host freshness baseline and phase provenance.
+Same-run source, context, input or artifact changes stop reuse and writes while
+preserving work and mutation intent. Later-job review-only continuation needs
+matching provenance and live read-back; legacy/changed progress requires
+refinement. S1's launch hook rejects native journal replay.
+
+990 component tests pass, seven opt-in/unavailable-tool checks skipped. Three
+zero-provider native controls verify unchanged completion, source-change refusal
+and refusal of replay using a real completed journal. Local HTTP/host controls
+cover changed RFEs, staff input and verified later-job continuation. Complete
+private evidence verifies; failed fixtures remain recorded. Zero inference,
+no deployment or historical result rewrite. Fullsend/full-batch qualification
+and cross-host fencing remain separate.
+[Contract and evidence](../notes/s1-hardening-08-freshness.md).
+
 ## Evidence
 
 - [Maintained benchmark analysis](../../var/benchmarks/strat-workflow/analysis.md)
@@ -197,7 +214,8 @@ is complete on `30cf850`; item 4's focused composition repair is complete on
 `7cfcada` with the user's numeric-only decision policy. Item 5's deterministic
 benchmark checker repair is complete with offline real-capture replays;
 item 6's focused completion repair is complete on `4c32d21`; item 7's focused
-restart repair is complete on `80a11ed`; items 8–9 remain pending. Atomic
+restart repair is complete on `80a11ed`; item 8's focused freshness repair is
+complete on `0e7e752`; item 9 remains pending. Atomic
 cross-host ownership/fencing is recorded as a separate production gap.
 The diagnostic's revise/needs_attention=false result is
 tracked for items 4/6 and does not change the scope result. User authorized S1 repair work and

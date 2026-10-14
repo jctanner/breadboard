@@ -27,7 +27,9 @@
   [Restart recovery](tasks/done/s1-hardening-07-recovery.md) reconciles Jira writes,
   owner-bound cleanup and one immutable publication per run; isolated fault
   controls and 966 component tests pass with zero inference;
-  items 8–9 remain pending.
+  [Freshness](tasks/done/s1-hardening-08-freshness.md) checks inputs and provenance
+  before reuse/publication; 990 component tests and three native controls pass
+  with zero inference. Item 9 remains pending.
   Iterative live tests use GLM, one execution per case/revision;
   Haiku/Opus requires explicit approval and necessity.
 

@@ -280,3 +280,19 @@ clean. Root changes remain uncommitted and unrelated work preserved.
 Jira owner labels do not provide atomic distributed fencing; recorded that gap
 separately. Native Workflow replay and Fullsend/full-batch qualification remain
 separate; items 8–9 pending. See notes/s1-hardening-07-recovery.md.
+
+## 2026-10-14: S1 hardening item 8, freshness
+
+Locally pushed `0e7e752`: host source/context/input baseline, phase provenance,
+strict same-run freshness before reuse/writes and verified later-job continuation.
+Legacy/changed pushes require refinement. Actual plugin hook refuses native
+replay; the passing control uses a real completed journal. 990 component tests
+pass/seven skipped; three zero-provider native controls independently verify.
+Earlier fixture failures retained. Zero inference or deployed reset; numeric
+gate and historical benchmarks unchanged.
+
+Private 08-freshness archive verifies: 17,723 files/182,139,499 bytes, all 21
+authored API pairs, source, fixture state, native journals and logs. Strace was
+not enabled and no live model/MLflow job was created. Root control runner and
+records updated; root work remains uncommitted and unrelated changes preserved.
+Item 9 is pending. See notes/s1-hardening-08-freshness.md for contract and limits.

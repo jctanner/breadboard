@@ -93,3 +93,18 @@ R1 is [pre-registered](../../../.ledger/plans/strat-workflow-matched-concurrency
 but has not run. It proposes a fresh sequential Native Workflow/Scripted Pipeline
 pair on common pinned infrastructure. Neither matched-concurrency cost nor
 parallel-execution safety is established by R2/R3.
+
+## Follow-up: benchmark gate repair
+
+On 2026-10-14, S1 hardening item 5 replaced Breadboard's nonempty-return detector
+with a shared completed-assessment contract. It checks the requested section,
+role judgment, recommendation and explanatory content in the receiving channel.
+Errors, progress and completion markers fail; skips and exclusive scope are
+recorded separately. This is checker work, with no new Claude binary invocation.
+
+Read-only replay preserves original gate/pass values. It rejects both known
+false positives and accepts the real GLM repair reports (4/4 and 12/12).
+Completed Opus replays remain 2/12 for S1 and 12/12 for S2, matching the unchanged
+full-reference checker above. These counts still do not grade accuracy, final
+incorporation or exclusive scope.
+[Contract, tests and checksum-verified private evidence](../../../.ledger/notes/s1-hardening-05-delivery-gate.md).

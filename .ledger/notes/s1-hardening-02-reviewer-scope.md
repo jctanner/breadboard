@@ -212,7 +212,7 @@ needs_attention=false. That passes the shape-only VERDICT schema but contradicts
 the diagnostic decision instruction. Scope passes; final business consistency
 does not. The verifier reports these contradictions separately. This job does
 not score, compose or publish, so no production Jira-label claim follows.
-[Tracked for items 4/6](../bugs/open/strat-workflow-verdict-attention-disagree.md).
+[Tracked for items 4/6](../bugs/fixed/strat-workflow-verdict-attention-disagree.md).
 
 ## Final status
 

@@ -40,8 +40,8 @@ evidence; S2 is not a production candidate for this plan.
 | 3 | Refine receipt disagrees with completed persisted work | Valid target receipts and explicit reconciliation keep readiness consistent with saved progress | [Refine receipts, focused repair done](../tasks/done/s1-hardening-03-refine-receipts.md) |
 | 4 | Final review loses findings or dissent | Composition preserves role findings, source attribution and unresolved concerns under an explicit decision policy | [Composition, focused repair done](../tasks/done/s1-hardening-04-review-composition.md) |
 | 5 | Delivery checker accepts status/errors as assessments | Acknowledgements, progress and errors fail the gate; valid targeted assessments pass | [Delivery gate, focused repair done](../tasks/done/s1-hardening-05-delivery-gate.md) |
-| 6 | CLI, Workflow and business completion disagree | Final outcome checks required results and persistent state, including null/failed branches and notification failures | [Outcome, current](../tasks/current/s1-hardening-06-outcome.md) |
-| 7 | Crash/restart can repeat side effects | Publication and other externally visible writes are idempotent or reconciled before repetition | [Recovery](../tasks/pending/s1-hardening-07-recovery.md) |
+| 6 | CLI, Workflow and business completion disagree | Final outcome checks required results and persistent state, including null/failed branches and notification failures | [Outcome, focused repair done](../tasks/done/s1-hardening-06-outcome.md) |
+| 7 | Crash/restart can repeat side effects | Publication and other externally visible writes are idempotent or reconciled before repetition | [Recovery, focused repair done](../tasks/done/s1-hardening-07-recovery.md) |
 | 8 | Replay can reuse stale results | Reuse checks relevant input/source identity; changed inputs invalidate or explicitly reject cached work | [Freshness](../tasks/pending/s1-hardening-08-freshness.md) |
 | 9 | Budget/deadline boundaries need application policy | Defined limits, overshoot reporting and safe handling of quota exhaustion, timeout and cancellation | [Limits](../tasks/pending/s1-hardening-09-limits.md) |
 
@@ -141,6 +141,41 @@ checks remain skipped. Six original captures and the new private replay evidence
 verify. Zero inference tokens, no S1 source/numeric-policy change or deployment.
 [Contract, replays and qualification limits](../notes/s1-hardening-05-delivery-gate.md).
 
+## Item 6: final outcome
+
+Candidate `4c32d21` validates coverage, saved completion marks, actual artifacts
+and numeric review provenance before writing a hashed completion receipt. The
+final structured result and trusted host validation must match that record;
+invalid/null outcomes fail the Workflow. Native state/journal observation keeps
+work, runtime and reporting outcomes separate. Reporting recovery restores
+verified output and the same receipt without changing completed progress.
+
+941 component tests pass, seven opt-in live checks skipped. Three zero-provider
+native controls verify completion enforcement, missing work despite CLI zero,
+and a reporting error after completed work. One 57-second GLM fixture validates
+the final boundary, with five API pairs and one validation command. Complete
+live/system and control archives independently verify. Numeric policy, historical
+refs and Fullsend's entrypoint are unchanged. Native observation requires an
+exported state/journal; Fullsend/OpenShell and full production batches remain
+separate qualification. [Repair, evidence and limits](../notes/s1-hardening-06-final-outcome.md).
+
+## Item 7: restart recovery
+
+Candidate `80a11ed` adds durable mutation intent separate from the agent journal,
+conservative Jira read-back before repetition, clone-marker/link recovery,
+deterministic publication of a saved review, and owner-bound cleanup. A repeated
+preparation preserves recovery data. Host results use a sealed bundle, one
+immutable directory per run and repeatable summary timestamps; post-script
+retry leaves the remote commit unchanged.
+
+966 component tests pass, seven opt-in/unavailable-tool checks skipped. Twelve
+real HTTP commit-before-death/lost-response controls independently verify;
+local concurrent recovery, owned lock recovery and actual post-script retries
+pass. Zero provider calls or inference tokens. Complete private controls archive
+verifies. Native Workflow replay, Fullsend/OpenShell and cross-host fencing are
+separate qualification; Jira labels are not atomic distributed leases.
+[Evidence, conservative stops and limits](../notes/s1-hardening-07-recovery.md).
+
 ## Evidence
 
 - [Maintained benchmark analysis](../../var/benchmarks/strat-workflow/analysis.md)
@@ -161,7 +196,10 @@ frozen-source parity checked offline/native). Item 3's focused receipt repair
 is complete on `30cf850`; item 4's focused composition repair is complete on
 `7cfcada` with the user's numeric-only decision policy. Item 5's deterministic
 benchmark checker repair is complete with offline real-capture replays;
-item 6 is current; items 7–9 remain pending. The diagnostic's revise/needs_attention=false result is
+item 6's focused completion repair is complete on `4c32d21`; item 7's focused
+restart repair is complete on `80a11ed`; items 8–9 remain pending. Atomic
+cross-host ownership/fencing is recorded as a separate production gap.
+The diagnostic's revise/needs_attention=false result is
 tracked for items 4/6 and does not change the scope result. User authorized S1 repair work and
 single-execution GLM iterative tests; the earlier requests to keep benchmark
 implementations unchanged and ask before each exploratory run do not prevent

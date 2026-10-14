@@ -245,3 +245,38 @@ Private new evidence: 05-delivery-gate/controls/20261014T144916473604Z, 53 files
 1,890,673 bytes, independently checksum-verified. S1 source/numeric policy
 unchanged; checker is in the root working tree. Item 5 done; item 6 pending.
 See .ledger/notes/s1-hardening-05-delivery-gate.md for contract and limits.
+
+## 2026-10-14: S1 hardening item 6, final outcome
+
+Completed on local eval/s1-hardening at 4c32d21bb2687bda032e4e609ea68853f3fe24dc.
+Deterministic business validation saves a hashed completion receipt, checked at
+the final structured boundary and trusted host validation. Invalid/null outcomes
+fail the Workflow; native state/journal observation separates CLI/reporting
+failure from completed work. Reporting recovery restores the same receipt/output
+without changing progress. Numeric scores remain the sole approval gate.
+941 component tests pass, 7 opt-in tests skipped. Three zero-provider native
+controls pass, including a failed Workflow with CLI zero and completed work with
+reporting exit 1. One GLM final-step fixture completed in 57s, five API pairs,
+one validation command, independently verified; no Jira writes/reset or reviewer
+rerun. Complete live evidence and separate controls archives checksum-verify.
+See .ledger/notes/s1-hardening-06-final-outcome.md for archive roots and limits.
+No Fullsend entrypoint changes; actual Fullsend/OpenShell and whole-pipeline
+qualification remain separate. Items 7–9 remain pending.
+
+## 2026-10-14: S1 hardening item 7, publication recovery
+
+Locally pushed `80a11ed` on eval/s1-hardening: durable mutation intent and
+conservative Jira read-back, clone/link recovery, deterministic saved-review
+publication, owner-bound cleanup and preserved preparation, sealed results and
+one immutable run with repeatable summaries. Full suite 966 passed/seven skipped;
+real process-death/lost-response controls, local concurrency and post-script
+retries pass. Independent captured-HTTP replay verifies 12 parameter cases.
+Zero provider calls/tokens, no deployed resets or historical pin changes.
+
+Final control archive under var/run-data/strat-workflow-hardening/07-recovery
+verifies: 7,072 files, 81,379,029 bytes, with all available local HTTP/strace,
+fixture states, source revisions and test logs retained. Source credential scan
+clean. Root changes remain uncommitted and unrelated work preserved.
+Jira owner labels do not provide atomic distributed fencing; recorded that gap
+separately. Native Workflow replay and Fullsend/full-batch qualification remain
+separate; items 8–9 pending. See notes/s1-hardening-07-recovery.md.

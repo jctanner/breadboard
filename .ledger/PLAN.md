@@ -22,8 +22,12 @@
   8/8 authored reports in one GLM case; numeric scores remain the sole gate;
   [Delivery gate](tasks/done/s1-hardening-05-delivery-gate.md) rejects non-assessments
   and preserves historical results; real-capture replays pass with zero inference;
-  [Final outcome](tasks/current/s1-hardening-06-outcome.md) is current;
-  items 7–9 remain pending.
+  [Final outcome](tasks/done/s1-hardening-06-outcome.md) verifies saved completion
+  and separates reporting failure; three native controls and one GLM fixture pass;
+  [Restart recovery](tasks/done/s1-hardening-07-recovery.md) reconciles Jira writes,
+  owner-bound cleanup and one immutable publication per run; isolated fault
+  controls and 966 component tests pass with zero inference;
+  items 8–9 remain pending.
   Iterative live tests use GLM, one execution per case/revision;
   Haiku/Opus requires explicit approval and necessity.
 
@@ -203,6 +207,10 @@ Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 - [Jira TLS passthrough decision](decisions/ADR-0010-jira-sandbox-tls-passthrough.md).
 
 ## Open integration bugs
+
+- [Jira processing labels are not atomic leases](bugs/open/strat-jira-label-locks-not-atomic.md).
+  Owner-bound recovery/cleanup detects conflicts; cross-host fencing remains a
+  separate production qualification requirement.
 
 - [ANTHROPIC_LOG directory warning fixed](bugs/fixed/anthropic-log-directory-warning.md).
   Deferred cleanup; API capture verified working during S2.

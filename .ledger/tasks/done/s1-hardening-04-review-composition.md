@@ -28,4 +28,4 @@ qualification and content accuracy remain separate.
 
 Observed during item 2: all three diagnostic GLM receiver verdicts say revise
 while needs_attention=false. Scope delivery passes, business consistency does
-not. [Recorded issue](../../bugs/open/strat-workflow-verdict-attention-disagree.md).
+not. [Recorded issue](../../bugs/fixed/strat-workflow-verdict-attention-disagree.md).

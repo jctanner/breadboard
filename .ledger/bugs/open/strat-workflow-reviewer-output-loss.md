@@ -100,3 +100,21 @@ substantial architecture text arrives with a completeness limit. Some S1 Opus
 published sections have earlier scorer provenance. Thus expected handoff loss
 does not prove all findings were unavailable or the final prose fabricated.
 The issue remains open; no pipeline or target binary was modified.
+
+## 2026-10-13: configuration repair verified on the hardening branch
+
+Local `eval/s1-hardening` at `c49b43c` gives all four reviewer Skills an explicit
+Read/Grep/Glob agent, registered and included in Fullsend vendoring. The original
+S1 pin and native binary are unchanged. One control with the actual new agent
+definition reproduces correct report delivery while retaining the outer schema.
+
+One focused GLM test with the real four Skills on Claude 2.1.296 passes: each
+role launched once; all four substantive targeted bodies reach the receiver,
+all observed reviewer tools exclude StructuredOutput, and the Workflow produces
+its valid outer structured status. Fifty captured requests all use hosted GLM.
+Final archives and the independent delivery audit verify.
+
+[Evidence](../../notes/s1-hardening-01-reviewer-delivery.md) records source/model
+pins, body lengths and limitations. This repairs the tested configuration rather
+than changing Claude's generic Skill projection. Keep the baseline bug record:
+full pipeline/batch and Fullsend sandbox qualification of the candidate remain.

@@ -2,11 +2,11 @@
 
 ## Summary
 
-The benchmark's `reviewer_outputs_returned` detector treats nonempty tool
-result text as a returned review. This can accept a progress-only response
+The original benchmark's `reviewer_outputs_returned` detector treated nonempty tool
+result text as a returned review. It accepted a progress-only response
 or error string without an actual assessment. Keep the captured results;
-a future gate repair should distinguish assessment delivery from nonempty
-text and retain the original gate outcome for historical comparisons.
+the repair distinguishes completed assessments from nonempty text and retains
+the original gate outcome alongside historical replays.
 
 ## Evidence
 
@@ -33,6 +33,20 @@ The existing scope-drift bug tracks target mismatch separately.
 
 ## Impact and status
 
-Open. Evaluation overstates specialist delivery. S2's overall gate still
+Fixed in Breadboard's working tree on 2026-10-14, hardening item 5. The original
+evaluation overstated specialist delivery. S2's original overall gate still
 failed because strategy 3's reviews were never launched after the account
-rate-limit abort. No benchmark or S1/S2 source change made.
+rate-limit abort; that original record remains unchanged.
+
+`role-assessment-v1` now checks the assigned section, completed role judgment,
+recommendation and explanatory content in the actual receiving tool result.
+It rejects acknowledgements, progress/errors and incomplete scaffolding, records
+skips separately and rejects conflicting histories. Historical replay corrects
+the two reported false positives; completed real GLM/Opus reports pass.
+Scope exclusivity, final incorporation and accuracy stay separate.
+
+62 benchmark tests pass (six optional Markov checks skipped); nine independent
+reference-checker tests pass. Six complete original captures verify, and the
+new offline evidence capture verifies. No inference tokens spent, S1/S2 source
+change, deployment or reset. Future jobs must use the updated Breadboard checker.
+[Repair and private evidence](../../notes/s1-hardening-05-delivery-gate.md).

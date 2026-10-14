@@ -72,3 +72,17 @@ whole-batch assessment cannot be attributed to missing argument substitution
 in these captures. Directory-wide input availability and advisory prompt scope
 remain integration/model-behavior concerns; no harness fault or scope fix is
 established from those facts alone. No S1/S2 source or benchmark pin changed.
+
+## 2026-10-13: focused S1 repair
+
+Local eval/s1-hardening at 4102e7a requires one target and constrains reviewer
+tools/report targets through plugin hooks. A single GLM three-ticket scenario
+on 107e7af delivers 12/12 correctly targeted assessments without foreign input
+markers; full archive verifies. Final frozen-source parity passes offline/native
+controls (868 component tests, zero provider calls for native qualification).
+[Task](../../tasks/done/s1-hardening-02-reviewer-scope.md) and
+[evidence/limits](../../notes/s1-hardening-02-reviewer-scope.md).
+
+Historical benchmark implementations/pins and the S2 finding remain unchanged.
+Keep this baseline/integration bug open until full pipeline qualification; do
+not treat one focused repair check as a reliability or accuracy estimate.

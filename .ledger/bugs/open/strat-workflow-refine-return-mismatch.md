@@ -37,5 +37,16 @@ arbitrary nested JSON. Evaluate the intended repair before altering S1.
 
 ## Status
 
-Open. No design change, repair, resume, or model rerun performed.
-Detailed evidence is in the evaluation plan.
+Open for the original benchmark pin, which remains unchanged. Detailed
+historical evidence is in the evaluation plan.
+
+2026-10-14: focused repair verified on local `eval/s1-hardening`, candidate
+`30cf8506d5dbf5b9149971a799e1f3bf5700b7ab`. Assigned-key receipt schemas
+reject nested JSON/wrong targets. Completion marks validate saved artifacts;
+a fresh disk checkpoint reconciles readiness independently of agent receipts,
+and plugin hooks reject invented checkpoint results. Native controls exercise
+the original malformed-output class, missing completion and wrong targets
+with zero provider calls. One GLM two-ticket fixture recovers an injected
+legacy receipt without repeating work; full system/job archive verifies.
+This is not an unchanged historical-model rerun or Fullsend/full-batch
+qualification. [Repair and evidence](../../notes/s1-hardening-03-refine-receipts.md).

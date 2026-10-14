@@ -2,6 +2,38 @@
 
 ## Current milestone
 
+- [Disable Org Pulse scheduled refresh](tasks/done/disable-org-pulse-scheduled-refresh.md):
+  CronJob suspended live and in the deployment manifest; YAML validation and
+  live readback pass, with no active refresh jobs.
+
+- [GitHub emulator aggregate PR diffs](tasks/done/github-emulator-pr-diff.md):
+  implemented and deployed with `make host-rebuild-github`; 80 focused tests
+  pass, and PR #2 returns identical 43-file diffs through web/UI/API routes.
+
+- [Native Workflow production hardening](plans/strat-workflow-s1-hardening.md):
+  S1 is the selected path after custom entrypoints were rejected. Nine repairs
+  in priority order; [reviewer delivery](tasks/done/s1-hardening-01-reviewer-delivery.md)
+  is verified in one focused GLM run (4/4 reports).
+  [Reviewer scope](tasks/done/s1-hardening-02-reviewer-scope.md) is verified for
+  three targets (12/12 GLM reports); final frozen-source parity passes native controls.
+  [Refine receipts](tasks/done/s1-hardening-03-refine-receipts.md) is verified
+  offline/native and in one GLM two-ticket fixture.
+  [Review composition](tasks/done/s1-hardening-04-review-composition.md) preserves
+  8/8 authored reports in one GLM case; numeric scores remain the sole gate;
+  [Delivery gate](tasks/done/s1-hardening-05-delivery-gate.md) rejects non-assessments
+  and preserves historical results; real-capture replays pass with zero inference;
+  [Final outcome](tasks/current/s1-hardening-06-outcome.md) is current;
+  items 7–9 remain pending.
+  Iterative live tests use GLM, one execution per case/revision;
+  Haiku/Opus requires explicit approval and necessity.
+
+- [Model Relay telemetry rollover investigation](tasks/done/model-relay-telemetry-rollover.md):
+  fixed and deployed; overview totals cover all matching requests. Actual
+  32/128/256-stream stress and minute-crossing continuations passed, with zero
+  dropped requests/events or paid calls; all 4,859 deployed requests preserved
+  ([evidence](notes/model-relay-telemetry-rollover.md),
+  [fixed reporting bug](bugs/fixed/model-relay-telemetry-totals-follow-loaded-page.md)).
+
 - [Claude Workflows and scripted pipelines](../var/benchmarks/strat-workflow/analysis.md):
   the single maintained report covering execution layers, production-scale test
   budgets/confidence, the production recommendation, and architecture-context's
@@ -64,8 +96,8 @@
   completed/archived in 51.2 min; relay fix confirmed, reviewer-return gate still fails.
   [Single S2 Opus batch on the repaired relay](tasks/done/strat-workflow-tier2-s2-opus-pass.md):
   archived/analyzed; stopped at 55.7 min on account HTTP 429, one published review.
-  [Reviewer return gate false positives](bugs/open/strat-workflow-review-return-gate-accepts-status.md):
-  progress messages/errors can count as delivered assessments.
+  [Reviewer return gate false positives](bugs/fixed/strat-workflow-review-return-gate-accepts-status.md):
+  working-tree checker repaired; original results preserved beside new replays.
 - **New, divergent POC:** [Native Fullsend strategy agents](plans/fullsend-agent-led-strategy-poc.md).
   Checkout `checkouts.fullsend_agent_led_poc/jctanner.strat-creator`, branch
   `feat/fullsend-agent-led-strategy`; strat-single/strat-batch prompts on

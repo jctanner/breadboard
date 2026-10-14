@@ -3,6 +3,14 @@
 Created 2026-10-09. Source: `eval-plan-workflow-vs-bash.md` in
 `2026_10_09_strat_creator_workflow_debate/`.
 
+2026-10-13 direction change: custom entrypoints were rejected, so production
+work now targets [S1 hardening](strat-workflow-s1-hardening.md). Historical
+comparisons/pins remain intact. Nine repairs are ordered there; iterative live
+tests use GLM, one scenario execution per revision. Haiku/Opus requires explicit
+approval and necessity. [Item 1](../notes/s1-hardening-01-reviewer-delivery.md)
+is verified in one focused real-Skill scenario with all four assessments delivered;
+full pipeline/batch qualification remains separate.
+
 Reader's report: [Claude Workflows and scripted pipelines](../../var/benchmarks/strat-workflow/analysis.md).
 It summarizes the execution layers, evidence limits, proposed testing budgets,
 and production recommendation. Proposed study levels do not authorize new runs.

@@ -83,3 +83,21 @@ The `checkouts/model-relay` commit (`e80a2af`) is local and not pushed.
 Still to verify, as above, once the opus run finishes: drops stay 0 (or
 events only), and the relay's request count per job matches its API dumps.
 Close the bug then.
+
+## Supplemental local stress validation, 2026-10-13
+
+The separate [full-filter reporting fix](../fixed/model-relay-telemetry-totals-follow-loaded-page.md)
+has been implemented and deployed. Its tests reached actual 32, 128 and 256
+concurrent synthetic streams on one CPU, with 100,000 historical rows and live
+reporting readers. The new rollup writer exposed intermediate-event pressure at
+the old 1,024-write threshold. Raising that bounded threshold to 8,192 preserved
+all events in the final matrix; the request threshold remains 65,536.
+
+All 39,680 requests across the final matrix and minute-crossing continuations
+survived with zero dropped requests/events or storage errors. The continuation
+cases independently counted all 195,840 expected SQLite events per case, as well
+as raw request IDs and usage. This strengthens current writer evidence without
+recovering older missing records or substituting for the historical per-job API
+dump reconciliation requested above. No paid inference ran.
+
+[Detailed evidence](../../notes/model-relay-telemetry-rollover.md#fix-and-stress-validation-2026-10-13).

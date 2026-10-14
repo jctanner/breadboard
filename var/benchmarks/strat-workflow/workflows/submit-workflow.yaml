@@ -19,11 +19,13 @@ steps:
           mlflow_experiment: "{{ run.mlflow_experiment }}"
           strace: true
           extra_env:
-            STRAT_CREATOR_REF: "{{ arm.strat_creator_ref }}"
+            STRAT_CREATOR_REF: "{{ run.strat_creator_ref }}"
             STRAT_ARCHITECTURE_CONTEXT_PATH: "{{ architecture_context_path }}"
             STRAT_BG_WAIT_CEILING_MS: "{{ workflow_bg_wait_ceiling_ms }}"
             BATCH_SIZE: "{{ run.batch_size }}"
             BATCH_EXPECTED_KEYS: "{{ batch_expected_keys }}"
+            STRAT_TIMEOUT_MINUTES: "{{ test.timeout_minutes | default:90 }}"
+            STRAT_CAPTURE_NATIVE: "{% if test.capture_native %}1{% else %}0{% endif %}"
     register: job
 
   - name: submit_glm_job
@@ -43,11 +45,13 @@ steps:
           mlflow_experiment: "{{ run.mlflow_experiment }}"
           strace: true
           extra_env:
-            STRAT_CREATOR_REF: "{{ arm.strat_creator_ref }}"
+            STRAT_CREATOR_REF: "{{ run.strat_creator_ref }}"
             STRAT_ARCHITECTURE_CONTEXT_PATH: "{{ architecture_context_path }}"
             STRAT_BG_WAIT_CEILING_MS: "{{ workflow_bg_wait_ceiling_ms }}"
             BATCH_SIZE: "{{ run.batch_size }}"
             BATCH_EXPECTED_KEYS: "{{ batch_expected_keys }}"
+            STRAT_TIMEOUT_MINUTES: "{{ test.timeout_minutes | default:90 }}"
+            STRAT_CAPTURE_NATIVE: "{% if test.capture_native %}1{% else %}0{% endif %}"
             CLAUDE_CODE_SUBAGENT_MODEL: "{{ run.model }}"
             ANTHROPIC_DEFAULT_OPUS_MODEL: "{{ run.model }}"
             ANTHROPIC_DEFAULT_SONNET_MODEL: "{{ run.model }}"

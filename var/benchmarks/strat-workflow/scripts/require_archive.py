@@ -19,7 +19,8 @@ def check_archives(since):
     pending, archived = [], []
     for job in jobs:
         name = job["name"]
-        if not name.startswith(DESIGN_PREFIXES) or not job.get("created"):
+        hardening = (job.get("mlflow_experiment") or "").startswith("strat-workflow-hardening/")
+        if (not name.startswith(DESIGN_PREFIXES) and not hardening) or not job.get("created"):
             continue
         if datetime.fromisoformat(job["created"].replace("Z", "+00:00")) < cutoff:
             continue

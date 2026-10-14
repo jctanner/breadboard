@@ -59,10 +59,18 @@ def reviewer_bodies(keys, empty=False):
                          "input": {"skill": skill, "args": key}})
             results.append({"type": "tool_result", "tool_use_id": tool_id,
                             "content": f'Skill "{skill}" completed (forked execution).\n\nResult: '
-                                       + ("Skill execution completed" if empty else f"## Review of {key}\nApprove")})
+                                       + ("Skill execution completed" if empty else valid_report(key, check_run.REVIEWER_SKILLS[skill]))})
     response = {"type": "message", "content": uses}
     request = {"messages": [{"role": "assistant", "content": uses}, {"role": "user", "content": results}]}
     return [response, request, request]  # repeated history must not count as reruns
+
+
+def valid_report(key, role):
+    judgment = {"feasibility": "**Feasibility**: feasible",
+                "testability": "**Testability**: testable",
+                "scope": "**Scope assessment**: right-sized",
+                "architecture": "**Architecture assessment**: sound"}[role]
+    return f"### {key}: Routing timeouts\n{judgment}. The gateway owns cancellation and timeout handling.\n**Recommendation**: approve"
 
 
 class OutcomeTests(unittest.TestCase):
@@ -242,6 +250,11 @@ class WorkflowTests(unittest.TestCase):
                                     "captured_request.args.extra_env.STRAT_EFFORT == 'medium'"]
                             if workflow["name"] == "submit-workflow":
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_BG_WAIT_CEILING_MS == workflow_bg_wait_ceiling_ms")
+                                steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REF == run.strat_creator_ref")
+                                if overrides.get("tier", "").startswith("s1-hardening-"):
+                                    steps[-1]["that"] += [
+                                        "captured_request.args.extra_env.STRAT_TIMEOUT_MINUTES == 295",
+                                        "captured_request.args.extra_env.STRAT_CAPTURE_NATIVE == '1'"]
                     else:
                         steps.append(step)
                 # The fake eval used above needs summary fields, and checking
@@ -252,7 +265,8 @@ class WorkflowTests(unittest.TestCase):
                         '"arm":"{{ test.arm }}","variant":"{{ variant }}","repeat":{{ round }},'
                         '"pass":true,"job":"{{ job_name }}","mode":"{{ run.mode }}",'
                         '"batch_size":{{ run.batch_size }},"selector":"{{ rfe_key }}",'
-                        '"expected_keys":"{{ batch_expected_keys }}"}')
+                        '"expected_keys":"{{ batch_expected_keys }}",'
+                        '"strat_creator_ref":"{{ run.strat_creator_ref }}"}')
                 workflow["steps"] = steps
                 path.write_text(yaml.safe_dump(workflow, sort_keys=False))
             (root / "step_types" / "dashboard.yaml").unlink()
@@ -318,6 +332,21 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("failed its check", result.stderr)
         self.assertNotIn('step "submit_job"', result.stderr)
         self.assertIsNone(rows)
+
+    def test_hardened_three_ticket_tiers_pin_candidate_and_reject_other_designs(self):
+        pin = "0e7e752702727076818001d3a29208532b40dbab"
+        for variant in ("glm", "opus"):
+            settings = {"tier": "s1-hardening-" + variant, "variants": variant, "repeats": 1}
+            result, rows = self.simulate(settings)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(len(rows), 1)
+            self.assertEqual((rows[0]["test"], rows[0]["variant"], rows[0]["batch_size"]), ("S1", variant, 3))
+            self.assertEqual(rows[0]["strat_creator_ref"], pin)
+            for invalid in ({"only_tests": "S2"}, {"only_tests": "S1,S2"},
+                            {"repeats": 3}, {"variants": "haiku"}, {"wipe_at_start": True}):
+                result, rows = self.simulate({**settings, **invalid})
+                self.assertNotEqual(result.returncode, 0, result.stderr)
+                self.assertIsNone(rows)
 
     def test_tier_one_selection_and_defaults_survive(self):
         result, rows = self.simulate({"tier": "smoke", "only_tests": "S1,S2", "repeats": 1}, count=1)

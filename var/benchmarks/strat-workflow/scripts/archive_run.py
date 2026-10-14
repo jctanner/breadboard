@@ -2,6 +2,7 @@
 """Archive run evidence to host var/run-data and publish verified receipts.
 
   archive_run.py --run markov-run-02336f23
+  archive_run.py --job script-run-all-glm-5-3-... --root var/run-data/strat-workflow-hardening
   archive_run.py --verify var/run-data/strat-workflow/<run>/<capture>
 
 An active run needs --allow-running and always produces a provisional capture.
@@ -32,11 +33,25 @@ def terminal(info):
             and all(job["status"] in TERMINAL for job in info["jobs"].values()))
 
 
-def wait_for_terminal(collector, run_id, seconds):
+def stopped_job_record(path, identity):
+    """Explicit provenance for a stopped job whose dashboard stop deletes it."""
+    record = json.loads(path.read_text())
+    if (record.get("name") != identity or record.get("status") != "cancelled"
+            or record.get("stop", {}).get("response", {}).get("status") != "stopped"
+            or record.get("stop", {}).get("job_absent") is not True
+            or not record.get("created") or not record.get("script", {}).get("ref")):
+        raise ValueError("stopped job record lacks identity, source or cancellation evidence")
+    return {"run": {"run_id": identity, "status": "cancelled", "created_at": record["created"],
+                    "execution": "dashboard-direct", "source_commit": record["script"]["ref"]},
+            "workflow": {"kind": "dashboard-script-job", "script": record["script"]},
+            "jobs": {identity: record}}
+
+
+def wait_for_terminal(collector, run_id, seconds, mode="info"):
     """Bounded read-only polling for use by a detached host collector."""
     deadline = time.monotonic() + seconds
     while True:
-        info = json.loads(collector.remote("pipeline-dashboard", "info", run_id))
+        info = json.loads(collector.remote("pipeline-dashboard", mode, run_id))
         if terminal(info):
             return info
         remaining = deadline - time.monotonic()
@@ -201,10 +216,20 @@ class Collector:
         required = [paths[0]] if name.startswith("script-seed-") else paths
         self.tar("pipeline-dashboard", "files", [json.dumps(paths)], f"jobs/{name}/files.tar.gz", required)
         unpack_job(self.root, name)
-        self.resources(name, f"jobs/{name}/kubernetes")
+        self.resources(name, f"jobs/{name}/kubernetes", stopped=metadata.get("status") == "cancelled" and bool(metadata.get("stop")))
 
-    def resources(self, name, relative):
-        resource = json.loads(self.command(self.kubectl("get", "job", name, "-o", "json")))
+    def resources(self, name, relative, stopped=False):
+        raw = self.command(self.kubectl("get", "job", name, "--ignore-not-found=true", "-o", "json"))
+        if not raw.strip() and stopped:
+            self.save(relative + "/absence.json", {"job": name, "job_absent": True,
+                "observed_at": datetime.now(timezone.utc).isoformat(),
+                "reason": "dashboard stop deletes the job and pods; expired pod logs cannot be recovered"})
+            pods = json.loads(self.command(self.kubectl("get", "pods", "-l", "job-name=" + name, "-o", "json")))
+            self.save(relative + "/pods.json", scrub_k8s(pods))
+            if pods["items"]:
+                raise RuntimeError("stopped job still has pods; wait for cancellation before final capture")
+            return
+        resource = json.loads(raw)
         self.save(relative + "/job.json", scrub_k8s(resource))
         pods = json.loads(self.command(self.kubectl("get", "pods", "-l", "job-name=" + name, "-o", "json")))
         self.save(relative + "/pods.json", scrub_k8s(pods))
@@ -254,7 +279,8 @@ class Collector:
                 'p.parent.mkdir(parents=True,exist_ok=True); t=p.with_suffix(".tmp"); '
                 't.write_text(json.dumps(r,indent=2)+"\\n"); t.replace(p)')
         for name in info["jobs"]:
-            if not name.startswith(("script-run-workflow-", "script-strategy-entrypoint-")):
+            if (not name.startswith(("script-run-workflow-", "script-strategy-entrypoint-"))
+                    and not (info["jobs"][name].get("mlflow_experiment") or "").startswith("strat-workflow-hardening/")):
                 continue
             receipt = {"job": name, "run_id": info["run"]["run_id"], "archive": str(self.root.resolve()),
                        "verified": True, "final": True, "manifest_sha256": manifest_hash,
@@ -268,7 +294,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--run")
+    source.add_argument("--job", help="archive a directly submitted focused hardening test")
     source.add_argument("--verify", type=Path)
+    parser.add_argument("--job-record", type=Path, help="explicit cancelled-job provenance after dashboard stop deleted the job")
     parser.add_argument("--publish-receipts", action="store_true", help="publish receipts after verifying an existing final archive")
     parser.add_argument("--unpack", action="store_true", help="with --verify, expose job files and update manifest checksums")
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
@@ -277,10 +305,12 @@ def main(argv=None):
     parser.add_argument("--wait", type=int, default=0, metavar="SECONDS",
                         help="wait for terminal run/jobs before final collection; suitable for a detached host process")
     args = parser.parse_args(argv)
+    if args.job_record and (not args.job or args.wait):
+        parser.error("--job-record requires --job without --wait")
     if args.unpack and not args.verify:
         parser.error("--unpack requires --verify")
     if args.wait < 0 or (args.wait and args.verify):
-        parser.error("--wait requires --run and nonnegative seconds")
+        parser.error("--wait requires --run or --job and nonnegative seconds")
     os.umask(0o077)
     if args.verify:
         report = verify(args.verify)
@@ -293,21 +323,28 @@ def main(argv=None):
             report.update(verify(args.verify))
         if report["ok"] and args.publish_receipts:
             collector = Collector(args.verify, args.namespace)
-            info = {"run": json.loads((args.verify / "markov/run.json").read_text()),
+            manifest = json.loads((args.verify / "manifest.json").read_text())
+            run_path = "dashboard/run.json" if manifest.get("execution") == "dashboard-direct" else "markov/run.json"
+            info = {"run": json.loads((args.verify / run_path).read_text()),
                     "jobs": {name: json.loads((args.verify / "jobs" / name / "metadata.json").read_text())
                              for name in json.loads((args.verify / "manifest.json").read_text())["jobs"]}}
             collector.publish_receipts(info)
             report["receipts_published"] = True
         print(json.dumps(report))
         return 0 if report["ok"] else 1
-    if not re.fullmatch(r"markov-run-[a-z0-9-]+", args.run):
-        parser.error("invalid Markov run ID")
+    identity = args.run or args.job
+    if not re.fullmatch(r"script-[a-zA-Z0-9_-]+" if args.job else r"markov-run-[a-z0-9-]+", identity):
+        parser.error("invalid job/run ID")
+    mode = "job-info" if args.job else "info"
     started = datetime.now(timezone.utc)
-    root = args.root / args.run / started.strftime("%Y%m%dT%H%M%S%fZ")
+    root = args.root / identity / started.strftime("%Y%m%dT%H%M%S%fZ")
     # Resolve run identity before creating a local capture.
     collector = Collector(root, args.namespace)
-    info = (wait_for_terminal(collector, args.run, args.wait) if args.wait else
-            json.loads(collector.remote("pipeline-dashboard", "info", args.run)))
+    info = (stopped_job_record(args.job_record, identity) if args.job_record else
+            wait_for_terminal(collector, identity, args.wait, mode) if args.wait else
+            json.loads(collector.remote("pipeline-dashboard", mode, identity)))
+    if args.job_record and collector.command(collector.kubectl("get", "job", identity, "--ignore-not-found=true", "-o", "json")).strip():
+        parser.error("cancelled job still exists; cannot use a deleted-job record")
     is_terminal = terminal(info)
     if not is_terminal and not args.allow_running:
         parser.error("run/jobs still active; use --allow-running for a provisional capture")
@@ -315,21 +352,28 @@ def main(argv=None):
         parser.error("no benchmark jobs discovered; cannot establish capture scope")
     # The capture interval excludes time spent waiting for the run.
     started = datetime.now(timezone.utc)
-    root = args.root / args.run / started.strftime("%Y%m%dT%H%M%S%fZ")
+    root = args.root / identity / started.strftime("%Y%m%dT%H%M%S%fZ")
     collector.root = root
     root.mkdir(parents=True, exist_ok=False)
-    collector.save("markov/run.json", info["run"])
-    collector.save("markov/workflow.json", info["workflow"])
-    collector.source("pinned benchmark source", lambda: collector.command([
-        "git", "-C", str(BENCH.parents[2]), "archive", "--format=tar.gz",
-        info["run"].get("workflow_source_commit") or info["workflow"]["source_commit"],
-        "var/benchmarks/strat-workflow"], "context/benchmark-source.tar.gz"))
-    collector.source("Markov runner", lambda: collector.resources(args.run, "markov/kubernetes"))
+    if args.job:
+        collector.save("dashboard/run.json", info["run"])
+        collector.save("dashboard/test-source.json", info["workflow"])
+        if args.job_record:
+            collector.save("dashboard/cancellation-record.json", json.loads(args.job_record.read_text()))
+    else:
+        collector.save("markov/run.json", info["run"])
+        collector.save("markov/workflow.json", info["workflow"])
+        collector.source("pinned benchmark source", lambda: collector.command([
+            "git", "-C", str(BENCH.parents[2]), "archive", "--format=tar.gz",
+            info["run"].get("workflow_source_commit") or info["workflow"]["source_commit"],
+            "var/benchmarks/strat-workflow"], "context/benchmark-source.tar.gz"))
+        collector.source("Markov runner", lambda: collector.resources(args.run, "markov/kubernetes"))
     for name, job in info["jobs"].items():
         collector.source(name, lambda name=name, job=job: collector.job(name, job))
-    collector.source("benchmark results", lambda: collector.tar("pipeline-dashboard", "files", [json.dumps([
-        "/app/artifacts/benchmarks/strat-workflow/" + args.run])], "markov/results.tar.gz",
-        required=["/app/artifacts/benchmarks/strat-workflow/" + args.run] if info["run"]["status"] == "completed" else []))
+    if args.run:
+        collector.source("benchmark results", lambda: collector.tar("pipeline-dashboard", "files", [json.dumps([
+            "/app/artifacts/benchmarks/strat-workflow/" + args.run])], "markov/results.tar.gz",
+            required=["/app/artifacts/benchmarks/strat-workflow/" + args.run] if info["run"]["status"] == "completed" else []))
     collector.source("dashboard stored state", lambda: collector.tar("pipeline-dashboard", "files", [json.dumps([
         "/app/artifacts", "/app/logs", "/app/issues", "/app/workspace"])], "system-state/dashboard-files.tar.gz",
         required=["/app/artifacts", "/app/logs", "/app/issues", "/app/workspace"]))
@@ -347,19 +391,24 @@ def main(argv=None):
             "logs", "deploy/" + deployment, "--all-containers=true", "--timestamps", "--since-time=" + info["run"]["created_at"]),
             f"logs/{deployment}.log"))
     collector.source("relay telemetry", lambda: collector.relay(info["run"]["created_at"]))
-    collector.source("final run identity", lambda: collector.save("markov/run-at-capture-end.json", json.loads(
-        collector.remote("pipeline-dashboard", "info", args.run))["run"]))
+    collector.source("final run identity", lambda: collector.save(
+        "dashboard/run-at-capture-end.json" if args.job else "markov/run-at-capture-end.json", info["run"] if args.job_record else json.loads(
+        collector.remote("pipeline-dashboard", mode, identity))["run"]))
     files = manifest_files(root)
-    manifest = {"schema_version": 1, "run_id": args.run,
+    manifest = {"schema_version": 1, "run_id": identity,
+                "execution": "dashboard-direct" if args.job else "markov",
+                "candidate_source_commit": info["run"].get("source_commit"),
                 "workflow_source_commit": info["run"].get("workflow_source_commit") or info["workflow"].get("source_commit"),
                 "jobs": list(info["jobs"]), "started": started.isoformat(), "completed": datetime.now(timezone.utc).isoformat(),
                 "final": is_terminal, "complete": not collector.errors, "sources": collector.sources,
                 "errors": collector.errors, "files": files,
-                "scope": "per-run job files/logs and workflow; full retained dashboard volume data and shared-service database/file snapshots; service logs and relay telemetry since run start",
+                "scope": "per-run job files/logs and native workflow; full retained dashboard volume data and shared-service database/file snapshots; service logs and relay telemetry since run start",
                 "consistency": "SQLite online backups are individually consistent; services are captured over the recorded time interval",
                 "limitations": ["Historical Jira states already reset cannot be recovered from today's snapshot",
                                 "Kubernetes events/logs expired before capture cannot be reconstructed",
                                 "Symlinks in stored data are listed but not followed"]}
+    if args.job_record:
+        manifest["limitations"].append("Dashboard stop deleted job/pods before archival; retained files and available system evidence captured, pod resource/log absence recorded")
     collector.save("manifest.json", manifest)
     report = verify(root)
     if report["ok"]:

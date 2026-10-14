@@ -17,6 +17,50 @@ import require_archive
 
 
 class ArchiveTests(unittest.TestCase):
+    def test_deleted_job_requires_explicit_cancellation_evidence(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            path = Path(scratch) / "stopped.json"
+            record = {"name": "script-run-stopped", "created": "2026-10-14T00:30:34Z",
+                      "status": "cancelled", "script": {"ref": "candidate-commit"},
+                      "stop": {"response": {"status": "stopped"}, "job_absent": True}}
+            path.write_text(json.dumps(record))
+            info = archive_run.stopped_job_record(path, record["name"])
+            self.assertTrue(archive_run.terminal(info))
+            self.assertEqual(info["run"]["source_commit"], "candidate-commit")
+            record["stop"]["job_absent"] = False
+            path.write_text(json.dumps(record))
+            with self.assertRaises(ValueError):
+                archive_run.stopped_job_record(path, record["name"])
+
+    def test_cancelled_job_records_confirmed_absence_instead_of_inventing_logs(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            collector = archive_run.Collector(Path(scratch), "ai-pipeline")
+            with patch.object(collector, "command", side_effect=[b"", b'{"items":[]}']):
+                collector.resources("script-run-stopped", "jobs/script-run-stopped/kubernetes", stopped=True)
+            absence = json.loads((Path(scratch) / "jobs/script-run-stopped/kubernetes/absence.json").read_text())
+            self.assertTrue(absence["job_absent"])
+            self.assertFalse((Path(scratch) / "jobs/script-run-stopped/kubernetes/job.json").exists())
+
+    def test_direct_job_identity_preserves_source_and_does_not_invent_markov_run(self):
+        job = {"name": "script-run-focused", "created": "2026-10-13T22:00:00Z", "status": "failed",
+               "script": {"ref": "candidate-commit", "path": "tests/reviewer-delivery/run.sh"}}
+        with patch.object(archive_remote, "http", return_value=job):
+            info = archive_remote.job_info(job["name"])
+        self.assertEqual(info["run"]["run_id"], job["name"])
+        self.assertEqual(info["run"]["execution"], "dashboard-direct")
+        self.assertEqual(info["run"]["source_commit"], "candidate-commit")
+        self.assertTrue(archive_run.terminal(info))
+
+    def test_reset_gate_includes_focused_hardening_jobs(self):
+        jobs = [{"name": "script-run-focused", "created": "2026-10-13T22:00:00Z", "status": "completed",
+                 "mlflow_experiment": "strat-workflow-hardening/01-reviewer-delivery/glm"},
+                {"name": "script-run-other", "created": "2026-10-13T22:00:00Z", "status": "completed",
+                 "mlflow_experiment": None}]
+        with patch.object(require_archive, "dashboard", return_value=(200, jobs)), \
+                patch.object(require_archive, "read_file", return_value=None):
+            result = require_archive.check_archives("2026-10-11T00:00:00Z")
+        self.assertEqual([item["job"] for item in result["pending"]], ["script-run-focused"])
+
     def test_wait_requires_terminal_jobs_and_run(self):
         info = {"run": {"status": "running"}, "jobs": {"script-run-workflow-test": {"status": "running"}}}
         final = {"run": {"status": "completed"}, "jobs": {"script-run-workflow-test": {"status": "failed"}}}

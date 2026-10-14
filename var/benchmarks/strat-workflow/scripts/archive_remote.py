@@ -72,6 +72,15 @@ def jira_export():
     return {"captured_at": datetime.now(timezone.utc).isoformat(), "total": len(issues), "issues": issues}
 
 
+def job_info(name):
+    """A directly submitted test job, with its actual source and lifecycle."""
+    job = http("http://pipeline-dashboard.ai-pipeline.svc.cluster.local:5000/api/jobs/" + name)
+    return {"run": {"run_id": name, "status": job["status"], "created_at": job["created"],
+                    "execution": "dashboard-direct", "source_commit": (job.get("script") or {}).get("ref")},
+            "workflow": {"kind": "dashboard-script-job", "script": job.get("script")},
+            "jobs": {name: job}}
+
+
 def stream_paths(paths, database=None):
     """Online SQLite backup plus raw stored files; never follow symlinks."""
     with tempfile.TemporaryDirectory(prefix="strat-archive-") as scratch:
@@ -111,6 +120,8 @@ def main(argv):
     mode = argv[0]
     if mode == "info":
         print(json.dumps(info(argv[1])))
+    elif mode == "job-info":
+        print(json.dumps(job_info(argv[1])))
     elif mode == "jira":
         print(json.dumps(jira_export()))
     elif mode == "files":

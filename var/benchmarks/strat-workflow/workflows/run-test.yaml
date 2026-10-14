@@ -22,7 +22,7 @@ steps:
         scenario: "{{ test.scenario }}"
         mode: "{{ test.mode | default:'single' }}"
         batch_size: "{{ test.batch_size | default:1 }}"
-        strat_creator_ref: "{{ arm.strat_creator_ref }}"
+        strat_creator_ref: "{{ test.strat_creator_ref | default:arm.strat_creator_ref }}"
         breadboard_ref: "{{ bench_ref }}"
         markov_run_id: "{{ markov_run_id }}"
         mlflow_experiment: "strat-workflow-eval/{{ tier }}/{{ test.id }}/{{ variant }}"

@@ -14,6 +14,15 @@ results so far are in
 Read [the analysis](analysis.md) for the findings, testing budgets and production
 recommendation.
 
+The current production direction is [S1 hardening](../../../.ledger/plans/strat-workflow-s1-hardening.md)
+after custom entrypoints were rejected. Historical comparison pins stay unchanged.
+Iterative repair tests use GLM, one execution per case/revision. Focused dashboard
+jobs can be archived with `archive_run.py --job <name> --root
+var/run-data/strat-workflow-hardening`; this includes API dumps, strace, native
+state and available shared-system snapshots. Use `--wait <seconds>` to collect
+after completion. The collector records direct-job provenance and does not
+represent these jobs as Markov runs.
+
 This directory is a Markov directory workflow. Markov runs on a runner pod.
 Its steps call the dashboard API, watch the job pods with `k8s_job_wait`,
 and run the checks. Every model call happens in the job pods.
@@ -185,6 +194,24 @@ This is compatibility validation; a single run per design does not establish
 quality, runtime or cost equivalence. GLM prices/context limits are not inferred
 from Claude's fallback metadata. All evidence must be archived before S2's Jira
 reset, using the existing collector and receipt guard.
+
+## Hardened S1 three-ticket validation
+
+`s1-hardening-glm` and `s1-hardening-opus` run the same distinct three-RFE
+scenario on hardened S1 `0e7e752702727076818001d3a29208532b40dbab`. Historical
+tiers keep their original source pins. Each hardening tier permits only S1 and
+one matching-model run, with `wipe_at_start=false`. GLM uses medium effort;
+Opus uses high effort. Both use the native batch's 295-minute timeout and retain
+the native Workflow state/journal alongside API dumps and strace.
+
+Launch GLM first through markovd, with `only_tests=S1`, `variants=glm`,
+`repeats=1`, `job_timeout=18000`, and
+`workflow_bg_wait_ceiling_ms=17700000`. Archive and verify its final evidence.
+Only a passing GLM batch permits the separately authorized Opus run with
+`tier=s1-hardening-opus` and `variants=opus`; the workflow itself does not
+automatically advance to another model.
+
+[Authorization and checks](../../../.ledger/tasks/current/s1-hardening-three-rfe-glm-opus.md).
 
 ## First tier 2 batch
 
@@ -379,3 +406,90 @@ step replaced by local facts. They exercise both batch selections, guard
 failures, seed-size mismatches, and tier 1's original selection/defaults.
 They make no model calls and do not reset or write Jira. Without `MARKOV_BIN`,
 only the Python outcome/fixture tests run.
+
+### Assigned-ticket reviewer hardening
+
+The local S1 hardening branch has a focused scope repair: one GLM three-ticket
+scenario delivered 12/12 correctly targeted reports; plugin hooks blocked
+invalid input paths, and native fault controls blocked foreign reads and wrong
+report targets. Final frozen-source input parity was checked offline/native.
+Historical benchmark pins remain unchanged.
+[Source revisions, failed launcher attempt, verified archives and limits](../../../.ledger/notes/s1-hardening-02-reviewer-scope.md).
+The diagnostic also exposed inconsistent verdict/attention flags, tracked for
+the remaining business-outcome work.
+
+### Refinement receipt hardening
+
+The local branch now verifies refinement readiness from current-run progress
+and saved strategy files. Assigned-key schemas reject malformed receipts; a
+fresh checkpoint recovers completed work without repeating refinement. One
+GLM two-ticket fixture test recovered an injected nested-JSON receipt, while
+native fault controls rejected uncompleted targets and an invented checkpoint.
+[Repair, evidence and qualification limits](../../../.ledger/notes/s1-hardening-03-refine-receipts.md).
+
+### Review composition hardening
+
+Final reviews on the local branch preserve all four actual delivered reports
+with role/invocation attribution and source hashes. Numeric scores remain the
+sole approval gate; differing specialist recommendations remain explicit.
+One GLM two-ticket authored fixture preserved all 8/8 reports; native controls
+and host validation check sources and reject inconsistent attention flags.
+[Policy, repair and verified archives](../../../.ledger/notes/s1-hardening-04-review-composition.md).
+
+### Assessment delivery checker
+
+The benchmark delivery gate requires the assigned strategy's section, a
+completed role judgment and recommendation, and explanatory content. Status,
+error and completion text cannot stand in for a review. Architecture skips are
+reported separately and do not count toward four-assessment coverage. Exclusive
+scope, final incorporation and accuracy remain separate checks.
+[Contract, historical replays and limits](../../../.ledger/notes/s1-hardening-05-delivery-gate.md).
+
+Recompute delivery from one saved job without services or model calls:
+
+```bash
+.venv/bin/python var/benchmarks/strat-workflow/scripts/replay_delivery_gate.py \
+  var/run-data/strat-workflow/<run>/<capture>/jobs/<job> \
+  --output /tmp/new-delivery-replay.json
+```
+
+Exit 1 means the recomputed delivery contract failed; exit 2 means invalid
+input/output. The new file keeps original gate/pass values alongside recomputed
+results and input hashes. It cannot overwrite the original capture. For focused
+diagnostics with no `eval-result.json`, supply `--strategies <expected keys>` from
+the test's independently known inventory.
+
+### Final outcome hardening
+
+The local S1 branch validates actual input coverage, progress, required artifacts
+and numeric review provenance before saving a completion receipt. The final
+structured return and trusted host validation must match that receipt. A
+read-only native-state/journal check keeps work completion separate from CLI
+and reporting status. Reporting recovery restores verified output without
+repeating completed work. Three zero-provider native controls cover normal
+completion, post-completion reporting failure and missing work despite CLI zero;
+one focused GLM fixture checks the actual final boundary.
+[Repair, checks and archived evidence](../../../.ledger/notes/s1-hardening-06-final-outcome.md).
+
+### Restart and publication hardening
+
+The local S1 branch now keeps durable write intent separately from the agent
+journal, reconciles Jira mutations before repeating them, and binds lock cleanup
+to its original owner. Saved reviews and one immutable results run can finish
+publication after a crash. Isolated real HTTP/Git controls cover process death,
+lost responses, concurrent local recovery and actual post-script retries;
+966 component tests pass with zero inference. Jira label claims are not atomic
+distributed leases; native Workflow replay, deployed Fullsend/OpenShell and
+cross-host fencing remain separate qualification.
+[Repair and verified private evidence](../../../.ledger/notes/s1-hardening-07-recovery.md).
+
+### Freshness before reuse
+
+Current S1 preparation records source/context/input identity and phase
+provenance. Changed same-run inputs stop recovery and publication; verified
+later-job continuation can skip refinement/push, while legacy or changed
+provenance cannot. S1's loaded hook refuses native journal replay. 990 component
+tests and three native loopback controls pass with zero inference. Historical
+benchmarks are preserved; full batches, content quality and deployed
+Fullsend/OpenShell remain separate qualification.
+[Contract, failed fixtures and verified archive](../../../.ledger/notes/s1-hardening-08-freshness.md).

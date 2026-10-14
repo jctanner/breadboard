@@ -19,7 +19,7 @@ a pass"). For one new eligible RFE, as in the smoke tier:
   locks_released   no lock label left on the RFE or the strategy
 
 Batch runs additionally require one distinct strategy per seeded eligible
-RFE, all four reviewer roles to return text to their parent for each strategy,
+RFE, all four reviewer roles to return completed assessments to their parent for each strategy,
 and only the requested Haiku model in the response dumps. Reviewer return
 checks do not prove verbatim preservation in the published review.
 
@@ -37,6 +37,7 @@ import re
 import sys
 
 from benchlib import dashboard, emit, jira, list_dir, read_file
+from review_assessment import CONTRACT, classify
 
 LOCK_LABEL = "strat-creator-processing"
 REVIEW_PREFIX = re.compile(r"^\*?\[Strat Creator\]\*?\s+Strategy Review\s+[—-]\s+(\w+)\s+\(Score:\s*([\d.]+)/(\d+)\)")
@@ -136,10 +137,11 @@ def text_of(content) -> str:
 def reviewer_returns(bodies, strategies: list[str]) -> dict:
     """Join Skill launches and parent tool results by ID, deduplicating histories.
 
-    This tests whether the parent received review text. It does not establish
-    that every sentence of that text was preserved in the published comment.
+    Check the receiving user channel, with repeated histories deduplicated and
+    conflicts rejected. Scope exclusivity is reported separately and does not
+    change delivery. Neither final incorporation nor accuracy is checked here.
     """
-    launches, results, models = {}, {}, set()
+    launches, results, models, conflicts = {}, {}, set(), set()
     for body in bodies:
         if body.get("model"):
             models.add(body["model"])
@@ -151,29 +153,42 @@ def reviewer_returns(bodies, strategies: list[str]) -> dict:
             if not isinstance(content, list):
                 continue
             for block in content:
-                if block.get("type") == "tool_use" and block.get("name") == "Skill":
+                if message.get("role") == "assistant" and block.get("type") == "tool_use" and block.get("name") == "Skill":
                     args = block.get("input") or {}
                     skill = args.get("skill", "").split(":")[-1]
                     if skill in REVIEWER_SKILLS:
                         keys = re.findall(r"\bRHAISTRAT-\d+\b", args.get("args", ""))
-                        launches[block["id"]] = {"skill": skill, "role": REVIEWER_SKILLS[skill],
-                                                 "strategies": sorted(set(keys))}
-                elif block.get("type") == "tool_result":
+                        launch = {"skill": skill, "role": REVIEWER_SKILLS[skill], "strategies": sorted(set(keys))}
+                        if block["id"] in launches and launches[block["id"]] != launch:
+                            conflicts.add(block["id"])
+                        launches[block["id"]] = launch
+                elif message.get("role") == "user" and block.get("type") == "tool_result":
                     text = re.sub(r"<system-reminder>.*?</system-reminder>", "",
                                   text_of(block.get("content")), flags=re.S).strip()
-                    results[block["tool_use_id"]] = {"text": text, "error": bool(block.get("is_error"))}
+                    result = {"text": text, "error": bool(block.get("is_error"))}
+                    identity = block["tool_use_id"]
+                    if identity in results and results[identity] != result:
+                        conflicts.add(identity)
+                    results[identity] = result
     records = []
     for tool_id, launch in launches.items():
         result = results.get(tool_id)
         text = result["text"] if result else ""
         # Forked Skill results have an acknowledgement followed by Result:.
-        output = text.split("Result:", 1)[-1].strip()
-        returned = bool(result and not result["error"] and output
-                        and output != "Skill execution completed"
-                        and "completed (forked execution)" in text and "Result:" in text)
+        wrapper = re.match(r'^Skill "([^"\n]+)" completed \(forked execution\)\.\s*Result:\s*', text)
+        output = text[wrapper.end():].strip() if wrapper else text
+        key = launch["strategies"][0] if len(launch["strategies"]) == 1 else ""
+        assessment = classify(output, key, launch["role"], is_error=bool(result and result["error"]))
+        valid_boundary = bool(wrapper and wrapper[1].split(":")[-1] == launch["skill"] and key)
+        returned = bool(result and valid_boundary and tool_id not in conflicts and assessment["assessment_present"])
+        reason = ("missing receiving tool result" if result is None else
+                  "conflicting launch/result history" if tool_id in conflicts else
+                  "missing or mismatched single-target fork boundary" if not valid_boundary else assessment["reason"])
         records.append({"tool_use_id": tool_id, **launch, "answered": result is not None,
                         "returned": returned, "result_chars": len(output) if returned else 0,
-                        "result_head": output[:160]})
+                        "result_head": output[:160], "content_chars": len(output),
+                        "valid_fork_boundary": valid_boundary, "conflicting_history": tool_id in conflicts,
+                        "assessment": assessment, "delivery_reason": reason})
     by_strategy = {}
     for key in strategies:
         roles = {}
@@ -181,10 +196,13 @@ def reviewer_returns(bodies, strategies: list[str]) -> dict:
             calls = [record for record in records if record["strategies"] == [key] and record["role"] == role]
             roles[role] = {"launches": len(calls), "reruns": max(0, len(calls) - 1),
                            "empty_returns": sum(call["answered"] and not call["returned"] for call in calls),
+                           "invalid_returns": sum(call["answered"] and not call["returned"] for call in calls),
+                           "skipped": sum(call["assessment"]["classification"] == "skipped" for call in calls),
                            "returned": any(call["returned"] for call in calls)}
         by_strategy[key] = roles
     return check(bool(strategies) and all(role["returned"] for roles in by_strategy.values() for role in roles.values()),
-                 {"by_strategy": by_strategy, "launches": records, "models": sorted(models)})
+                 {"contract": CONTRACT, "by_strategy": by_strategy, "launches": records, "models": sorted(models),
+                  "limits": "Mechanical assessment delivery; exclusive scope, incorporation and accuracy are separate."})
 
 
 def api_bodies(job: str):

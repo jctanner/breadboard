@@ -90,6 +90,19 @@ finish() {
   cp -f "$STRAT_STATE_DIR"/run.json "$STRAT_STATE_DIR"/owned-rfe-ids.txt* "$OUT/state/" 2>/dev/null || true
   [ -d "$TARGET_REPO_DIR/tmp" ] && cp -R "$TARGET_REPO_DIR/tmp" "$OUT/repo-tmp" 2>/dev/null
   [ -d "$TARGET_REPO_DIR/artifacts" ] && cp -R "$TARGET_REPO_DIR/artifacts" "$OUT/repo-artifacts" 2>/dev/null
+  if [ "${STRAT_CAPTURE_NATIVE:-0}" = 1 ]; then
+    python3 - "$TARGET_REPO_DIR" "$OUT" <<'PY'
+import json, os, pathlib, shutil, subprocess, sys
+repo, out = map(pathlib.Path, sys.argv[1:])
+config = pathlib.Path(os.environ.get('CLAUDE_CONFIG_DIR', str(pathlib.Path.home() / '.claude')))
+slug = ''.join(char if char.isascii() and char.isalnum() else '-' for char in str(repo.resolve()))
+project = config / 'projects' / slug
+if project.is_dir():
+    shutil.copytree(project, out / 'native-projects' / slug, dirs_exist_ok=True)
+version = subprocess.run(['claude', '--version'], capture_output=True, text=True, timeout=15)
+(out / 'native-version.json').write_text(json.dumps({'version': version.stdout.strip(), 'exit': version.returncode, 'project_found': project.is_dir()}, indent=2) + '\n')
+PY
+  fi
   python3 - "$OUT/run-summary.json" <<EOF
 import json, pathlib, sys
 num = lambda v: int(v) if v else None

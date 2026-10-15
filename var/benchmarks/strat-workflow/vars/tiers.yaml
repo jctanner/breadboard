@@ -11,12 +11,13 @@ tiers:
       - id: S1
         arm: workflow
         variants: [glm]
-        scenario: batch-three-new-rfes
+        scenario: batch-ten-new-rfes
         mode: batch
-        batch_size: 3
+        batch_size: 10
         # Fullsend PR #85 / feat/s1-workflow-hardening, pinned for reproducibility.
         repo: https://github.com/jctanner-fullsend-ai/strat-creator.git
         strat_creator_ref: 6a05210215247b287bb0fb61ed02e423c9de8692
+        workflow_max_concurrent_agents: 10
         timeout_minutes: 295
         capture_native: true
   s1-hardening-opus:
@@ -27,13 +28,13 @@ tiers:
       - id: S1
         arm: workflow
         variants: [opus]
-        scenario: batch-three-new-rfes
+        scenario: batch-ten-new-rfes
         mode: batch
-        batch_size: 3
+        batch_size: 10
         # Same candidate as GLM; Opus still needs separate run authorization.
         repo: https://github.com/jctanner-fullsend-ai/strat-creator.git
         strat_creator_ref: 6a05210215247b287bb0fb61ed02e423c9de8692
-        workflow_max_concurrent_agents: 5
+        workflow_max_concurrent_agents: 10
         timeout_minutes: 295
         capture_native: true
   glm-smoke:

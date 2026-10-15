@@ -1,0 +1,51 @@
+# Fictional benchmark RFE. Concern: recovery of long-running training work.
+summary: Resume interrupted distributed training from a verified checkpoint
+description: |
+  h2. Problem Statement
+
+  A distributed training job can run for hours before a worker is evicted or a
+  node fails. Teams may already write checkpoints to project object storage,
+  but recovering the job requires finding a compatible checkpoint, constructing
+  another training request and checking whether the new job actually resumed.
+  Starting with the wrong checkpoint or silently starting from scratch wastes
+  accelerator time and makes experiment results difficult to reproduce.
+
+  h2. Desired Outcome
+
+  A training owner can explicitly resume an interrupted training run from its
+  latest verified checkpoint. The replacement run records its parent run and
+  checkpoint identity, restores the declared training state and makes progress
+  from the saved step visible to the owner. An incompatible or incomplete
+  checkpoint produces a clear error before expensive training begins.
+
+  h2. Acceptance Criteria
+
+  * A training owner can opt a supported distributed training job into checkpoint-based recovery and select a checkpoint storage connection
+  * Only fully committed checkpoints belonging to that training run are eligible; partial uploads are ignored and reported
+  * Recovery validates the declared model, optimizer, training configuration and dataset revision against checkpoint metadata
+  * A compatible replacement restores model and optimizer state and exposes the resumed step and parent-run identity
+  * An incompatible or missing checkpoint stops the recovery request with an actionable reason rather than silently starting from step zero
+  * Repeating the same recovery request does not create duplicate replacement jobs; an already-running source job cannot be resumed again
+  * Only users authorized for the source job and storage connection can request recovery, and credentials never appear in logs or status
+  * Existing training jobs without recovery configured continue to behave as before
+
+  h2. User Stories
+
+  * As a training owner, I want to recover useful work after a worker failure without reconstructing the job by hand.
+  * As a platform administrator, I want the source run, checkpoint and replacement job linked so I can investigate wasted accelerator time.
+
+  h2. Scope
+
+  This request concerns persisted training state and explicit recovery after an
+  interruption. It does not change notebook idle culling, queue admission policy
+  or model-serving rollout behavior. Automatic retry scheduling is outside this
+  first version.
+
+  h2. Technical Notes
+
+  Use the existing supported training controller and project storage mechanisms
+  where possible. The strategy must identify the supported trainer/runtime and
+  its checkpoint format from architecture context, define atomic checkpoint
+  publication and validate which state can actually be restored. Do not assume
+  every training framework uses the same checkpoint layout or supports changing
+  worker count during recovery.

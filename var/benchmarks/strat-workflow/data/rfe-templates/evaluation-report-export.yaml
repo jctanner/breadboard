@@ -1,0 +1,48 @@
+# Fictional benchmark RFE. Concern: portable results from completed evaluations.
+summary: Export completed language-model evaluations as portable comparison reports
+description: |
+  h2. Problem Statement
+
+  Model evaluators compare completed benchmark jobs by copying metric values
+  and configuration details from several screens and logs. Shared spreadsheets
+  often omit the dataset revision, number of evaluated examples or evaluation
+  settings. A reviewer then cannot reproduce the comparison or tell whether
+  two scores came from equivalent tests. A link to an in-cluster job also stops
+  being useful when that job is removed.
+
+  h2. Desired Outcome
+
+  An evaluator can select completed language-model evaluation jobs from one
+  project and export a durable comparison report. The report includes enough
+  model, dataset, configuration and metric provenance to explain the comparison
+  without requiring access to the original job's logs.
+
+  h2. Acceptance Criteria
+
+  * Authorized project users can export one or more completed supported evaluation jobs through both the dashboard and an API
+  * The export provides a versioned JSON document and a CSV metric table with stable column names and UTF-8 encoding
+  * Each result records the job identity, model identity or revision, dataset identity and revision, evaluation settings, completion time, metric name, value and evaluated sample count when available
+  * Metrics from different evaluation configurations remain distinguishable, and a missing value is represented explicitly rather than converted to zero
+  * Failed, cancelled or incomplete jobs are identified as such and never represented as complete successful evaluations
+  * Selecting inaccessible jobs fails without revealing their content; every exported job must pass the same project authorization checks as its normal result view
+  * Credentials, dataset records, prompts and individual model responses are excluded by default
+  * The saved report remains readable after the original job is deleted, without promising access to datasets or model artifacts that the report does not contain
+
+  h2. User Stories
+
+  * As a model evaluator, I want to share a reproducible comparison with reviewers who cannot browse my cluster.
+  * As a reviewer, I want to see which model and dataset revisions produced each score before approving a model change.
+
+  h2. Scope
+
+  This request exports existing evaluation results. It does not schedule new
+  evaluations, introduce a judging model, add production drift alerts or decide
+  whether a score is sufficient for deployment.
+
+  h2. Technical Notes
+
+  The strategy must identify the supported evaluation job type and actual result
+  storage from architecture context before choosing the export adapter. Define
+  the public report schema, handling of missing provenance and metric units,
+  and how access is checked when collecting results from backing storage. A
+  report must state unavailable metadata rather than inventing it.

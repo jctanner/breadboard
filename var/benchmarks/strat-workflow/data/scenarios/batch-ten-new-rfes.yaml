@@ -1,0 +1,36 @@
+# Full production batch: ten independent capabilities, no existing strategies.
+# The first three retain the smaller batch's subjects; seven add new subjects.
+description: Ten eligible new RFEs spanning workbenches, pipelines, features, serving, registry, queueing, monitoring, training, connections, and evaluation reports.
+reset: true
+expected_batch_size: 10
+rfes:
+  - id: workbench-exemption
+    template: workbench-cull-exemption
+    eligible: true
+  - id: pipeline-retention
+    template: dsp-retention
+    eligible: true
+  - id: feature-materialization
+    template: feast-scheduled-materialization
+    eligible: true
+  - id: canary-rollback
+    template: kserve-canary-rollback
+    eligible: true
+  - id: registry-archive-guard
+    template: registry-serving-guard
+    eligible: true
+  - id: queue-admission-visibility
+    template: kueue-admission-visibility
+    eligible: true
+  - id: drift-alerts
+    template: trustyai-drift-alerts
+    eligible: true
+  - id: training-checkpoint-recovery
+    template: training-checkpoint-recovery
+    eligible: true
+  - id: connection-credential-rotation
+    template: connection-credential-rotation
+    eligible: true
+  - id: evaluation-report-export
+    template: evaluation-report-export
+    eligible: true

@@ -203,23 +203,47 @@ quality, runtime or cost equivalence. GLM prices/context limits are not inferred
 from Claude's fallback metadata. All evidence must be archived before S2's Jira
 reset, using the existing collector and receipt guard.
 
-## Hardened S1 three-ticket validation
+## Hardened S1 ten-ticket validation
 
-`s1-hardening-glm` and `s1-hardening-opus` run the same distinct three-RFE
+`s1-hardening-glm` and `s1-hardening-opus` run the same distinct ten-RFE
 scenario from [Fullsend PR #85](https://github.com/fullsend-ai/strat-creator/pull/85).
 Both now clone `https://github.com/jctanner-fullsend-ai/strat-creator.git`,
 branch `feat/s1-workflow-hardening`, pinned at
 `6a05210215247b287bb0fb61ed02e423c9de8692`. The pin is the verified branch/PR
 head, rather than a moving branch lookup at job launch. Seeding and execution
 receive the same repository and commit; run/seed/evaluation metadata records it.
-The Opus tier explicitly sets
-`CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS=5`. This caps outer Workflow
+Both tiers explicitly set `BATCH_SIZE=10` and
+`CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS=10`. This caps outer Workflow
 agents; it does not change specialist Skill scheduling. Run metadata and the
 job summary record the requested cap; tiers without an override leave the
 native variable unset. Other tiers keep their original source pins. Each hardening tier permits only S1 and
 one matching-model run, with `wipe_at_start=false`. GLM uses medium effort;
 Opus uses high effort. Both use the native batch's 295-minute timeout and retain
 the native Workflow state/journal alongside API dumps and strace.
+
+The [ten-ticket scenario](data/scenarios/batch-ten-new-rfes.yaml) contains:
+
+| RFE subject | Capability |
+| --- | --- |
+| Workbench idle-culling exemption | Keep an explicitly exempted workbench running |
+| Pipeline artifact retention | Bound stored pipeline output growth |
+| Feature-store materialization | Keep online feature views current on a schedule |
+| Canary rollback | Restore serving traffic after a rollout regression |
+| Registry archive guard | Prevent archiving a version still in service |
+| Queue admission visibility | Explain why a workload is waiting |
+| Drift alerts | Notify owners of threshold crossings |
+| Training checkpoint recovery | Resume interrupted distributed training |
+| Connection credential rotation | Verify adoption of replacement storage credentials |
+| Evaluation report export | Share reproducible results from completed evaluations |
+
+The first seven reuse existing complete templates. The final three are new
+fictional RFEs with independent problems and acceptance criteria. Seeding uses
+the candidate's own discovery rules and must find exactly ten eligible keys.
+A complete batch expects ten separate strategies and forty role reports.
+Reviewer Skills retain their current serial dispatch within each ticket; this
+change raises concurrency across tickets. The reviewer-dispatch optimization
+remains deferred. The existing one- and three-ticket scenarios remain available
+through the historical smoke and tier-2 configurations.
 
 Launch GLM first through markovd, with `only_tests=S1`, `variants=glm`,
 `repeats=1`, `job_timeout=18000`, and
@@ -228,11 +252,12 @@ Only a passing GLM batch permits the separately authorized Opus run with
 `tier=s1-hardening-opus` and `variants=opus`; the workflow itself does not
 automatically advance to another model.
 
-The completed GLM/Opus pair used `0e7e752` for both models and the CPU-derived
-concurrency default, observed as two. Its recorded Breadboard source commit
-retains that original configuration. The next Opus run changes both source and
-concurrency, so it cannot isolate the effect of raising concurrency. Preparing
-this configuration does not launch or authorize another paid run.
+Earlier three-ticket runs used the CPU-derived cap of two or an explicit cap
+of five, with their exact source configurations retained in recorded commits
+and archives. This ten-ticket configuration changes batch size and concurrency
+together, so it cannot isolate the effect of either setting. Preparing this
+configuration does not launch or authorize another model run. The seed step
+creates the new emulator issues only when the next run starts.
 
 [Completed pair and checks](../../../.ledger/tasks/done/s1-hardening-three-rfe-glm-opus.md).
 

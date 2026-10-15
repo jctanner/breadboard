@@ -74,9 +74,9 @@ def valid_report(key, role):
 
 
 class OutcomeTests(unittest.TestCase):
-    def evaluate(self, issues):
+    def evaluate(self, issues, count=3):
         with patch.object(check_run, "jira", fake_jira(issues)):
-            return check_run.batch_jira_checks(seed(), 3)
+            return check_run.batch_jira_checks(seed(count), count)
 
     def test_complete_batch_and_single_compatibility(self):
         checks, facts = self.evaluate(jira_fixture())
@@ -92,6 +92,25 @@ class OutcomeTests(unittest.TestCase):
         issues["RHAIRFE-2"]["fields"]["issuelinks"] = issues["RHAIRFE-1"]["fields"]["issuelinks"]
         checks, _ = self.evaluate(issues)
         self.assertFalse(checks["batch_complete"]["ok"])
+
+    def test_full_batch_checks_tenth_ticket_and_all_forty_reports(self):
+        issues = jira_fixture(10)
+        checks, facts = self.evaluate(issues, count=10)
+        self.assertTrue(all(row["ok"] for row in checks.values()))
+        self.assertEqual(len(facts["items"]), 10)
+        keys = [f"RHAISTRAT-{i}" for i in range(1, 11)]
+        bodies = reviewer_bodies(keys)
+        returns = check_run.reviewer_returns(bodies, keys)
+        self.assertTrue(returns["ok"])
+        self.assertEqual(len(returns["detail"]["launches"]), 40)
+        # Repeated parent history must not conceal a missing fortieth report.
+        bodies[1]["messages"][1]["content"].pop()
+        self.assertFalse(check_run.reviewer_returns(bodies, keys)["ok"])
+        issues["RHAIRFE-10"]["fields"]["issuelinks"] = []
+        del issues["RHAISTRAT-10"]
+        checks, _ = self.evaluate(issues, count=10)
+        self.assertFalse(checks["batch_complete"]["ok"])
+        self.assertFalse(checks["steps_done"]["ok"])
 
     def test_missing_strategy_fails(self):
         issues = jira_fixture()
@@ -177,6 +196,21 @@ class OutcomeTests(unittest.TestCase):
         self.assertTrue(seed_scenario.discovery_problems(seed()["rfes"], ["RHAIRFE-1", "RHAIRFE-2", "RHAIRFE-9"]))
         self.assertEqual(len(seed_scenario.load_scenario("smoke-one-rfe")[0]["rfes"]), 1)
 
+    def test_ten_distinct_complete_rfes_and_exact_discovery(self):
+        scenario, templates = seed_scenario.load_scenario("batch-ten-new-rfes")
+        self.assertEqual(scenario["expected_batch_size"], 10)
+        self.assertEqual(len(scenario["rfes"]), 10)
+        self.assertTrue(all(rfe["eligible"] for rfe in scenario["rfes"]))
+        self.assertEqual(len(templates), 10)
+        self.assertEqual(len({t["summary"] for t in templates.values()}), 10)
+        self.assertEqual(len({t["description"] for t in templates.values()}), 10)
+        for template in templates.values():
+            for section in ("Problem Statement", "Desired Outcome", "Acceptance Criteria", "User Stories", "Technical Notes"):
+                self.assertIn("h2. " + section, template["description"])
+        fixture = seed(10)
+        self.assertEqual(seed_scenario.discovery_problems(fixture["rfes"], fixture["discovered"]), [])
+        self.assertTrue(seed_scenario.discovery_problems(fixture["rfes"], fixture["discovered"][:-1]))
+
     def test_opus_batch_model_gate_accepts_opus_and_rejects_haiku_helpers(self):
         run = {"id": "r1-S1-opus", "tier": "tier2-opus", "test": "S1", "arm": "workflow",
                "variant": "opus", "model": "claude-opus-4-6", "repeat": 1,
@@ -258,10 +292,9 @@ class WorkflowTests(unittest.TestCase):
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REF == run.strat_creator_ref")
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REPO == run.strat_creator_repo")
                                 steps[-1]["that"].append("captured_request.args.extra_env.CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS == run.workflow_max_concurrent_agents")
-                                if overrides.get("tier") == "s1-hardening-opus":
-                                    steps[-1]["that"].append("captured_request.args.extra_env.CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS == 5")
                                 if overrides.get("tier", "").startswith("s1-hardening-"):
                                     steps[-1]["that"] += [
+                                        "captured_request.args.extra_env.CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS == 10",
                                         "captured_request.args.extra_env.STRAT_TIMEOUT_MINUTES == 295",
                                         "captured_request.args.extra_env.STRAT_CAPTURE_NATIVE == '1'"]
                     else:
@@ -344,23 +377,32 @@ class WorkflowTests(unittest.TestCase):
         self.assertNotIn('step "submit_job"', result.stderr)
         self.assertIsNone(rows)
 
-    def test_hardened_three_ticket_tiers_pin_candidate_and_reject_other_designs(self):
+    def test_hardened_ten_ticket_tiers_pin_candidate_and_reject_other_designs(self):
         candidate = "6a05210215247b287bb0fb61ed02e423c9de8692"
         repository = "https://github.com/jctanner-fullsend-ai/strat-creator.git"
         for variant in ("glm", "opus"):
             settings = {"tier": "s1-hardening-" + variant, "variants": variant, "repeats": 1}
-            result, rows = self.simulate(settings)
+            result, rows = self.simulate(settings, count=10)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(len(rows), 1)
-            self.assertEqual((rows[0]["test"], rows[0]["variant"], rows[0]["batch_size"]), ("S1", variant, 3))
+            self.assertEqual((rows[0]["test"], rows[0]["variant"], rows[0]["batch_size"]), ("S1", variant, 10))
+            self.assertEqual(rows[0]["selector"], "batch-discover")
+            self.assertEqual(rows[0]["expected_keys"], " ".join(f"RHAIRFE-{i}" for i in range(10, 0, -1)))
             self.assertEqual(rows[0]["strat_creator_ref"], candidate)
             self.assertEqual(rows[0]["strat_creator_repo"], repository)
-            self.assertEqual(rows[0]["workflow_max_concurrent_agents"], "5" if variant == "opus" else "")
+            self.assertEqual(rows[0]["workflow_max_concurrent_agents"], "10")
             for invalid in ({"only_tests": "S2"}, {"only_tests": "S1,S2"},
                             {"repeats": 3}, {"variants": "haiku"}, {"wipe_at_start": True}):
-                result, rows = self.simulate({**settings, **invalid})
+                result, rows = self.simulate({**settings, **invalid}, count=10)
                 self.assertNotEqual(result.returncode, 0, result.stderr)
                 self.assertIsNone(rows)
+
+    def test_full_batch_rejects_nine_discovered_rfes_before_model_submission(self):
+        result, rows = self.simulate({"tier": "s1-hardening-glm", "variants": "glm"}, count=9)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("failed its check", result.stderr)
+        self.assertNotIn('step "submit_glm_job"', result.stderr)
+        self.assertIsNone(rows)
 
     def test_tier_one_selection_and_defaults_survive(self):
         result, rows = self.simulate({"tier": "smoke", "only_tests": "S1,S2", "repeats": 1}, count=1)

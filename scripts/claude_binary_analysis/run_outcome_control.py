@@ -76,8 +76,19 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(payload)
                 return
-            blocks = [{"type": "text", "text": "Completion control finished"}] if launched else [
-                tool("workflow", "Workflow", {"name": "outcome:outcome"})]
+            invocation = {"name": "outcome:outcome"}
+            if not launched and server.freshness_fault == "source":
+                (server.root / "scripts/freshness-changed.md").write_text("Authored changed source after preparation.\n")
+            if launched and completed and server.freshness_fault == "native-replay" and not server.replay_attempted:
+                states = [json.loads(p.read_text()) for p in (server.config / "projects").rglob("workflows/wf_*.json")]
+                prior = next(value for value in states if value.get("status") == "completed")
+                server.replay_attempted = True
+                blocks = [tool("workflow_replay", "Workflow", {"name": "outcome:outcome",
+                                "resumeFromRunId": prior["runId"]})]
+                category = "native-replay"
+            else:
+                blocks = [{"type": "text", "text": "Completion control finished"}] if launched else [
+                    tool("workflow", "Workflow", invocation)]
         with server.lock:
             server.count += 1
             number = server.count
@@ -93,6 +104,8 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--reporting-fault", action="store_true")
     parser.add_argument("--business-fault", action="store_true", help="remove one required report before validation")
+    parser.add_argument("--freshness-fault", choices=("source", "native-replay"),
+                        help="require the actual pre-launch hook to refuse changed source or native replay")
     args = parser.parse_args()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -120,6 +133,8 @@ def main():
     server.root, server.outcome, server.count, server.launched = root, outcome, 0, False
     server.config = config
     server.reporting_fault, server.attempts = args.reporting_fault, 0
+    server.freshness_fault = args.freshness_fault
+    server.replay_attempted = False
     server.lock = threading.Lock()
     server.capture = output / "api-dumps"
     server.capture.mkdir()
@@ -138,6 +153,7 @@ def main():
             "--plugin-dir", str(root / "tests/fixtures/outcome/plugin"), "/outcome:outcome"]
     write_json(output / "command.json", {"argv": argv, "binary_sha256": sha256(args.binary), "provider_calls": 0,
                                         "reporting_fault": args.reporting_fault, "business_fault": args.business_fault,
+                                        "freshness_fault": args.freshness_fault,
                                         "environment_keys": sorted(env)})
     shutil.copyfile(__file__, output / Path(__file__).name)
     try:
@@ -152,6 +168,25 @@ def main():
     (output / "stdout.jsonl").write_bytes(stdout)
     (output / "stderr.txt").write_bytes(stderr)
     shutil.copytree(config / "projects", output / "native-projects")
+    if args.freshness_fault:
+        requests = [json.loads(path.read_text()) for path in server.capture.glob("*.request.json")]
+        responses = [block for request in requests for message in request["messages"]
+                     if isinstance(message["content"], list) for block in message["content"]
+                     if block.get("type") == "tool_result" and block.get("tool_use_id") ==
+                     ("workflow_replay" if args.freshness_fault == "native-replay" else "workflow")]
+        refused = any(block.get("is_error") and "S1 freshness check refused launch" in json.dumps(block)
+                      for block in responses)
+        states = list((output / "native-projects").rglob("workflows/wf_*.json"))
+        if args.freshness_fault == "native-replay":
+            passed = refused and server.replay_attempted and len(states) == 1 and server.attempts == 2
+        else:
+            passed = refused and not states and server.attempts == 0 and not (root / "output/agent-result.json").exists()
+        verification = {"passed": passed, "freshness_fault": args.freshness_fault, "workflow_states": len(states),
+                        "requests": server.count, "provider_calls": 0, "cli_exit": code,
+                        "expected": "guard refuses requested launch/replay before executing its agents"}
+        write_json(output / "verification.json", verification)
+        print(json.dumps(verification))
+        return 0 if passed else 1
     if args.business_fault:
         states = list((output / "native-projects").rglob("workflows/wf_*.json"))
         path = next(p for p in states if json.loads(p.read_text()).get("workflowName") == "outcome")

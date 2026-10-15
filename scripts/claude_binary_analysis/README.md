@@ -55,6 +55,10 @@ The [S1 hardening follow-up](docs/claude-code-2.1.296-workflow-hardening-control
 records actual configured-agent delivery, reviewer scope hooks, asynchronous
 assignment transcript timing, target-bound refinement schemas and
 StructuredOutput checkpoint hooks and delivered-report composition.
+Final completion controls check saved validation receipts and distinguish native
+failure from a reporting error after completed work. `run_outcome_control.py`
+uses a loopback stub, with optional `--business-fault` or `--reporting-fault`;
+it makes zero provider calls.
 `run_reviewer_scope_control.py`, `run_refine_receipt_control.py` and
 `run_review_composition_control.py` test candidate repository code against the
 native binary with a loopback API and zero provider calls.

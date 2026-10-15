@@ -135,6 +135,55 @@ to check native state. Neither is a new Claude bug. Both attempts, the plain
 and mixed-output controls and their captures are retained privately.
 [Repair, policy and archival evidence](../../../.ledger/notes/s1-hardening-04-review-composition.md).
 
+## Final completion boundary: hardening item 6
+
+The new final step carries a deterministic business-completion receipt; a
+StructuredOutput command hook checks its identity/hash against actual saved
+results. A native zero-provider control denied an invented receipt hash, then
+accepted the correct return. Its state and matched journal preserve that receipt.
+
+Two fault controls exercise the distinction between work, runtime and reporting:
+
+| Injected condition | CLI exit | Workflow state | Application outcome |
+| --- | ---: | --- | --- |
+| Required role report missing despite saved success marks | 0 | failed | Rejected as incomplete/unverified |
+| API error injected only after Workflow state became completed | 1 | completed | Verified work completed; reporting failed/unconfirmed |
+
+The binary still permits CLI success while the Workflow fails. The application
+now checks the saved business record and native state/journal instead of treating
+that exit as proof. Post-completion reporting recovery restores the same receipt
+and output without changing progress or making provider calls. These are
+application checks on 2.1.296, not changes to Claude's runtime semantics.
+
+The controls retain their exact source snapshots; the early success/reporting
+cases precede the final canonical-result hash tightening. Final trusted checking
+still accepts their unchanged records. One GLM final-step fixture on `4c32d21`
+verifies the final helper/hook/structured/native boundary with both approve and
+revise outcomes. Numeric scores remain the sole approval gate.
+[Source, fault details, tests and private archives](../../../.ledger/notes/s1-hardening-06-final-outcome.md).
+
+## Freshness and native replay admission
+
+S1 candidate `0e7e752` adds a host input/source baseline, phase provenance and
+checks before application reuse and writes. Same-run changes refuse recovery;
+later-job reuse requires matching provenance and live read-back. Its loaded
+Workflow hook declines native `resumeFromRunId` replay. This is application
+policy; the binary's native memoization does not acquire file freshness checks.
+
+| Native control | Verified result | Authored API pairs |
+| --- | --- | ---: |
+| Unchanged completion | Final boundary and reporting recovery still verify | 6 |
+| Source changed after preparation | Hook refusal reaches controller; no Workflow launches | 2 |
+| Replay of a real completed run | Hook refuses replay; only original completed Workflow remains | 7 |
+
+Malformed parameters and a nonexistent journal are refused by tool/journal
+validation before reaching the hook. Those three earlier fixtures are retained
+and not counted as enforcement passes. The valid control completes a real run,
+then requests replay by name and actual run ID. All three passing outcomes
+independently verify from the private archive. Zero provider calls/inference;
+no Fullsend/OpenShell qualification.
+[Contract and exact evidence](../../../.ledger/notes/s1-hardening-08-freshness.md).
+
 ## Reproduction and retained evidence
 
 Use the corresponding pinned candidate checkout and a new output directory:
@@ -151,6 +200,10 @@ python3 scripts/claude_binary_analysis/run_refine_receipt_control.py \
 python3 scripts/claude_binary_analysis/run_review_composition_control.py \
   tmp/claude-code-binary-analysis/2.1.296/input/claude \
   /path/to/strat-creator-at-7cfcada /tmp/new-composition-control --mixed-begin-log
+
+python3 scripts/claude_binary_analysis/run_outcome_control.py \
+  tmp/claude-code-binary-analysis/2.1.296/input/claude \
+  /path/to/strat-creator-at-4c32d21 /tmp/new-outcome-control --reporting-fault
 ```
 
 The [scope runner](../run_reviewer_scope_control.py) and
@@ -161,6 +214,14 @@ verification results. The refinement control's first verifier read `state`
 instead of native `status`; its original and corrected results are both
 retained. That was a verifier error, not a Claude failure. Its final fixture
 uses the production Skill's fork boundary.
+
+The [outcome runner](../run_outcome_control.py) retains exact helper/fixture
+sources, loopback API bodies, hook audits, native state/journal and verification.
+Use a new output path; `--business-fault` tests missing work, while
+`--reporting-fault` tests failure after completion. These make zero provider calls.
+On the freshness candidate, `--freshness-fault source` checks refusal of a changed
+file; `--freshness-fault native-replay` completes a run and checks refusal of its
+real saved journal replay.
 
 Raw controls and each live job's API dumps, strace, transcripts and system
 snapshots are privately archived under

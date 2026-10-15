@@ -1,0 +1,24 @@
+# Test container for the workflow-engine POC (Phase 1).
+# Pattern from pi docs/containerization.md: the whole pi process runs in the
+# container with its own /root/.pi/agent state; the host ~/.pi is never
+# mounted. pi is pinned to the version under test (match the host: 1.1.0).
+FROM docker.io/library/node:24-bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends bash ca-certificates git ripgrep python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent@1.1.0
+
+# The extension tree is copied (not mounted) so the image is immutable
+# evidence; build with --build-arg TREE_HASH=<sha256 of the tree> to record
+# what was built.
+ARG TREE_HASH=unrecorded
+LABEL io.breadboard.workflow-engine-poc.tree-hash=${TREE_HASH}
+
+COPY workflow-engine /opt/poc/workflow-engine
+COPY test-child /opt/poc/test-child
+COPY check.py /opt/poc/check.py
+COPY relay-models.json /opt/poc/relay-models.json
+
+WORKDIR /workspace

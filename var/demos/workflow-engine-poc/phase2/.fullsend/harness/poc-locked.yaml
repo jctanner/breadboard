@@ -1,0 +1,18 @@
+---
+agent: agents/poc-locked.md
+model: workflow-engine/v1
+image: localhost/fullsend-sandbox-poc:v1
+policy: policies/base.yaml
+role: poc
+slug: workflow-engine-poc-locked
+plugins:
+  - plugins/workflow-engine
+env:
+  sandbox:
+    WORKFLOW_ITEMS: "alpha,beta,gamma"
+    FULLSEND_TOOL_ALLOWLIST: "workflow"
+timeout_minutes: 10
+security:
+  sandbox_hooks:
+    tool_allowlist_pretool:
+      enabled: true

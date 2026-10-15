@@ -1,0 +1,6 @@
+version: "1"
+agents:
+  - source: harness/poc.yaml
+  - source: harness/poc-blocked.yaml
+  - source: harness/poc-locked.yaml
+  - source: harness/poc-orgscan.yaml

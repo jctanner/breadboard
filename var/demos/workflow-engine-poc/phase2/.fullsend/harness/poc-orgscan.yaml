@@ -1,0 +1,14 @@
+---
+agent: agents/poc-orgscan.md
+model: workflow-engine/v1
+image: localhost/fullsend-sandbox-poc:v1
+policy: policies/base.yaml
+role: poc
+slug: workflow-engine-poc-orgscan
+plugins:
+  - plugins/workflow-engine
+env:
+  sandbox:
+    WORKFLOW_COMMAND: "run-org-scan"
+    WORKFLOW_INPUT: '{"org":"opendatahub-io"}' 
+timeout_minutes: 10

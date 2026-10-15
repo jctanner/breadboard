@@ -26,7 +26,11 @@
   }
   .btn-delete:hover { background: #dc2626; }
   #job-modal::backdrop { background: rgba(0,0,0,0.5); }
-  #job-modal { max-width: 80rem; width: calc(100% - 2rem); }
+  /* The page is 90vw wide; keep job details 10% narrower than the page. */
+  #job-modal { width: 81vw; max-width: calc(100% - 2rem); }
+  @media (max-width: 640px) {
+    #job-modal { width: calc(100% - 2rem); }
+  }
   .modal-log {
     background: #0a0a0a; color: #d4d4d4;
     padding: 1rem; border-radius: 8px;

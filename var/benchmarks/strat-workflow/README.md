@@ -198,8 +198,13 @@ reset, using the existing collector and receipt guard.
 ## Hardened S1 three-ticket validation
 
 `s1-hardening-glm` and `s1-hardening-opus` run the same distinct three-RFE
-scenario on hardened S1 `0e7e752702727076818001d3a29208532b40dbab`. Historical
-tiers keep their original source pins. Each hardening tier permits only S1 and
+scenario. GLM retains hardened S1 `0e7e752702727076818001d3a29208532b40dbab`.
+The next Opus configuration uses schema-fixed
+`f3508786a1e2200731b25dfeda7e01ef772d32ce` and explicitly sets
+`CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS=5`. This caps outer Workflow
+agents; it does not change specialist Skill scheduling. Run metadata and the
+job summary record the requested cap; tiers without an override leave the
+native variable unset. Other tiers keep their original source pins. Each hardening tier permits only S1 and
 one matching-model run, with `wipe_at_start=false`. GLM uses medium effort;
 Opus uses high effort. Both use the native batch's 295-minute timeout and retain
 the native Workflow state/journal alongside API dumps and strace.
@@ -211,7 +216,13 @@ Only a passing GLM batch permits the separately authorized Opus run with
 `tier=s1-hardening-opus` and `variants=opus`; the workflow itself does not
 automatically advance to another model.
 
-[Authorization and checks](../../../.ledger/tasks/current/s1-hardening-three-rfe-glm-opus.md).
+The completed GLM/Opus pair used `0e7e752` for both models and the CPU-derived
+concurrency default, observed as two. Its recorded Breadboard source commit
+retains that original configuration. The next Opus run changes both source and
+concurrency, so it cannot isolate the effect of raising concurrency. Preparing
+this configuration does not launch or authorize another paid run.
+
+[Completed pair and checks](../../../.ledger/tasks/done/s1-hardening-three-rfe-glm-opus.md).
 
 ## First tier 2 batch
 

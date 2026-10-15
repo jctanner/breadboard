@@ -301,6 +301,7 @@ def main(argv: list[str]) -> int:
         "mode": run.get("mode", "single"),
         "strat_creator_ref": run["strat_creator_ref"], "breadboard_ref": run["breadboard_ref"],
         "markov_run_id": run.get("markov_run_id"),
+        "workflow_max_concurrent_agents": run.get("workflow_max_concurrent_agents") or None,
         "script": job.get("script"), "mlflow_experiment": run["mlflow_experiment"],
         "job_status": job.get("status"), "wait_status": waited,
         "started": job.get("created"), "completed": job.get("completed"),

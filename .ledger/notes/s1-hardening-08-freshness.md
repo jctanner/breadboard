@@ -125,6 +125,8 @@ tracked; every external runtime setting or dependency is not attested.
 
 Content accuracy, full batches, Fullsend/OpenShell deployment, other Claude
 releases and throughput with the extra hashing/Jira reads remain unqualified.
-Numeric scores remain the sole approval gate. Item 9 is pending.
+Numeric scores remain the sole approval gate. Item 9 was subsequently
+[rejected as not a bug](../tasks/done/s1-hardening-09-limits.md) on 2026-10-14;
+no repair remains pending in the original list.
 
 [Plan](../plans/strat-workflow-s1-hardening.md).

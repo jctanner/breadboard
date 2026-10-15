@@ -28,7 +28,8 @@ tiers:
         scenario: batch-three-new-rfes
         mode: batch
         batch_size: 3
-        strat_creator_ref: 0e7e752702727076818001d3a29208532b40dbab
+        strat_creator_ref: f3508786a1e2200731b25dfeda7e01ef772d32ce
+        workflow_max_concurrent_agents: 5
         timeout_minutes: 295
         capture_native: true
   glm-smoke:

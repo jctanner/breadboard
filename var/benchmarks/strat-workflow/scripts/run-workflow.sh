@@ -26,6 +26,8 @@
 #   STRAT_DRY_RUN       1 for no Jira writes (default: real writes)
 #   STRAT_EFFORT        claude --effort (default high, as PR #83 declares)
 #   STRAT_TIMEOUT_MINUTES  default 90, as PR #83's strat-single declares
+#   CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS  optional explicit Workflow
+#                       agent cap; empty/unset uses Claude's CPU-derived default
 #   STRAT_BG_WAIT_CEILING_MS  how long claude -p waits for the background
 #                       Workflow after its last turn (default 30 minutes;
 #                       Claude Code's own default is 10)
@@ -58,6 +60,14 @@ export STRAT_DRY_RUN="${STRAT_DRY_RUN:-}"
 export STRAT_RUN_ID="${STRAT_RUN_ID:-${PIPELINE_JOB_NAME:-run-$$}}"
 TIMEOUT_MINUTES="${STRAT_TIMEOUT_MINUTES:-90}"
 WORKFLOW_COMMAND="/strat-pipeline:strat-pipeline"
+if [ -n "${CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS:-}" ]; then
+  if [[ ! "$CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS must be a positive integer" >&2
+    exit 2
+  fi
+else
+  unset CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS
+fi
 
 OUT="${JOB_ARTIFACT_DIR:?run under run_script.sh (JOB_ARTIFACT_DIR unset)}"
 WORK="${PIPELINE_TMP_DIR:-/tmp}/strat-workflow/${STRAT_RUN_ID}"
@@ -115,6 +125,7 @@ summary = {
     "launch": "claude -p --plugin-dir .fullsend/plugins/strat-pipeline $WORKFLOW_COMMAND",
     "model": "${ANTHROPIC_MODEL:-}",
     "effort": "${STRAT_EFFORT:-high}",
+    "workflow_max_concurrent_agents": num("${CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS:-}"),
     "bg_wait_ceiling_ms": int("${STRAT_BG_WAIT_CEILING_MS:-1800000}"),
     "dry_run": "$STRAT_DRY_RUN" in ("1", "true"),
     "job": "${PIPELINE_JOB_NAME:-}",

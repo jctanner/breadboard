@@ -7,9 +7,10 @@ evidence; S2 is not a production candidate for this plan.
 
 ## Working rules
 
-- Work through the nine items below in priority order, starting with report
+- Assess the nine original items below in priority order, starting with report
   delivery. Keep repairs separately identifiable and review results before
-  moving to the next item.
+  moving to the next item. Items 1–8 have focused repairs; item 9 was rejected
+  as not a bug.
 - Run each test scenario once per tested revision. No three-round campaigns or
   automatic whole-job reruns. A changed repair may receive a new single test;
   retain the failed attempt and explain the change.
@@ -43,7 +44,7 @@ evidence; S2 is not a production candidate for this plan.
 | 6 | CLI, Workflow and business completion disagree | Final outcome checks required results and persistent state, including null/failed branches and notification failures | [Outcome, focused repair done](../tasks/done/s1-hardening-06-outcome.md) |
 | 7 | Crash/restart can repeat side effects | Publication and other externally visible writes are idempotent or reconciled before repetition | [Recovery, focused repair done](../tasks/done/s1-hardening-07-recovery.md) |
 | 8 | Replay can reuse stale results | Reuse checks relevant input/source identity; changed inputs invalidate or explicitly reject cached work | [Freshness, focused repair done](../tasks/done/s1-hardening-08-freshness.md) |
-| 9 | Budget/deadline boundaries need application policy | Defined limits, overshoot reporting and safe handling of quota exhaustion, timeout and cancellation | [Limits](../tasks/pending/s1-hardening-09-limits.md) |
+| 9 | Proposed budget/deadline policy | Rejected as not a bug; existing Fullsend timeout covers either invocation, and additional limits are optional policy | [Limits, rejected](../tasks/done/s1-hardening-09-limits.md) |
 
 Ten-RFE qualification, shared-file isolation and independent content judging
 remain separate requirements after these repairs. They are not additional
@@ -193,6 +194,17 @@ no deployment or historical result rewrite. Fullsend/full-batch qualification
 and cross-host fencing remain separate.
 [Contract and evidence](../notes/s1-hardening-08-freshness.md).
 
+## Item 9: rejected as not a bug
+
+On 2026-10-14 the user rejected this item. Fullsend already applies its
+per-iteration timeout to the Claude invocation, whether it runs a Workflow or
+an ordinary agent. No additional Workflow-specific limit defect was demonstrated.
+A new spending cap or run-wide deadline would be an optional application policy.
+Interruption tests can qualify the existing completion/recovery work, but are
+not required repairs under this item. Native limit observations remain evidence;
+no implementation or new test run was performed for item 9.
+[Resolution](../tasks/done/s1-hardening-09-limits.md).
+
 ## Evidence
 
 - [Maintained benchmark analysis](../../var/benchmarks/strat-workflow/analysis.md)
@@ -202,6 +214,44 @@ and cross-host fencing remain separate.
 - [Runtime controls](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-operations.md)
 
 ## Status
+
+During the first integrated three-RFE GLM validation, live diagnosis found
+a [scorer-path integration bug](../bugs/open/strat-workflow-scorer-path-outside-composition-scope.md)
+not covered by the focused fixtures: Workflow scoring writes outside the
+repository while composition requires an in-repository input. This is a new
+concrete defect after the original repair review, not a reopening of rejected
+item 9. The operator left the job unchanged during diagnosis.
+[Interim duration analysis](../notes/s1-hardening-three-rfe-glm-live-duration.md).
+GLM subsequently passed all batch/completion/report-preservation checks in
+2h13m26s, and its final archive independently verified. The authorized conditional
+Opus run exposed another concrete integration gap: Anthropic rejects our
+[top-level oneOf schemas](../bugs/fixed/strat-workflow-anthropic-top-level-union-schema.md)
+before review begins. The job subsequently failed after about 73 minutes and
+its final archive independently verified. The primary edited both Workflow
+copies and local freshness baselines, then relaunched twice; the third Workflow
+completed, but trusted-host validation rejected the changed baseline. The
+benchmark also rejected two specialist handoffs. Deterministic Workflow control
+flow therefore did not enforce predictable job termination: the surrounding
+agent could change its program and continue. [Observed actions and terminal evidence](../bugs/open/s1-primary-edits-source-and-freshness-after-failure.md).
+Source/baseline protection and externally enforced stop/relaunch policy remain
+follow-up work. No additional paid run has been launched.
+
+The schema compatibility repair is now pushed on `eval/s1-hardening` at
+`f3508786a1e2200731b25dfeda7e01ef772d32ce`. Object-only schema roots plus explicit
+JavaScript consistency checks replace the top-level unions. Full suite:
+1,005 passed, seven skipped; native completion control and actual captured
+schema checks pass with zero provider calls. [Repair and evidence](../tasks/done/s1-hardening-anthropic-schema-compatibility.md).
+Live Anthropic qualification of this revision remains pending; existing
+benchmark pins and archives are unchanged. The source/baseline rewrite bug
+and scorer-path/formatting issues remain separate repairs.
+
+For the next Opus run, the user selected an explicit outer Workflow agent cap
+of five. The `s1-hardening-opus` configuration now pairs that setting with
+`f350878`; actual job environment, run metadata and summary wiring pass all 69
+offline benchmark tests. This three-ticket workload may only have three outer
+agents ready; specialist Skill scheduling is separate. Configuration is prepared
+locally for publication/import before the next authorized run; no new job.
+[Configuration and limits](../tasks/done/strat-workflow-next-opus-concurrency.md).
 
 Item 1's focused repair is complete: candidate `c49b43c` delivers all four real
 reviewer reports in one GLM scenario, retains the outer schema, and excludes
@@ -215,8 +265,11 @@ is complete on `30cf850`; item 4's focused composition repair is complete on
 benchmark checker repair is complete with offline real-capture replays;
 item 6's focused completion repair is complete on `4c32d21`; item 7's focused
 restart repair is complete on `80a11ed`; item 8's focused freshness repair is
-complete on `0e7e752`; item 9 remains pending. Atomic
-cross-host ownership/fencing is recorded as a separate production gap.
+complete on `0e7e752`; item 9 is closed as rejected, not implemented. The
+original nine-item repair review is closed: eight focused repairs and one
+rejected proposal, with no pending repair in this list. Atomic cross-host
+ownership/fencing and deployment/full-batch/content qualification remain
+separate production work.
 The diagnostic's revise/needs_attention=false result is
 tracked for items 4/6 and does not change the scope result. User authorized S1 repair work and
 single-execution GLM iterative tests; the earlier requests to keep benchmark

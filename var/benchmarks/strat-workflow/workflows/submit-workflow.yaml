@@ -26,6 +26,7 @@ steps:
             BATCH_EXPECTED_KEYS: "{{ batch_expected_keys }}"
             STRAT_TIMEOUT_MINUTES: "{{ test.timeout_minutes | default:90 }}"
             STRAT_CAPTURE_NATIVE: "{% if test.capture_native %}1{% else %}0{% endif %}"
+            CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS: "{{ run.workflow_max_concurrent_agents }}"
     register: job
 
   - name: submit_glm_job
@@ -52,6 +53,7 @@ steps:
             BATCH_EXPECTED_KEYS: "{{ batch_expected_keys }}"
             STRAT_TIMEOUT_MINUTES: "{{ test.timeout_minutes | default:90 }}"
             STRAT_CAPTURE_NATIVE: "{% if test.capture_native %}1{% else %}0{% endif %}"
+            CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS: "{{ run.workflow_max_concurrent_agents }}"
             CLAUDE_CODE_SUBAGENT_MODEL: "{{ run.model }}"
             ANTHROPIC_DEFAULT_OPUS_MODEL: "{{ run.model }}"
             ANTHROPIC_DEFAULT_SONNET_MODEL: "{{ run.model }}"

@@ -11,8 +11,23 @@
   pass, and PR #2 returns identical 43-file diffs through web/UI/API routes.
 
 - [Native Workflow production hardening](plans/strat-workflow-s1-hardening.md):
-  S1 is the selected path after custom entrypoints were rejected. Nine repairs
-  in priority order; [reviewer delivery](tasks/done/s1-hardening-01-reviewer-delivery.md)
+  [Three-RFE GLM then conditional Opus validation](tasks/done/s1-hardening-three-rfe-glm-opus.md)
+  is complete: GLM passed in 2h13m26s, Opus failed after about 73 minutes;
+  both final archives independently verify. The [duration diagnosis](notes/s1-hardening-three-rfe-glm-live-duration.md)
+  found a [scorer-path integration bug](bugs/open/strat-workflow-scorer-path-outside-composition-scope.md).
+  Opus exposed Anthropic schema rejection, then its primary
+  [edited source and freshness and relaunched](bugs/open/s1-primary-edits-source-and-freshness-after-failure.md).
+  Host validation refused the changed baseline; final output does not qualify
+  the original pin. The [schema repair](tasks/done/s1-hardening-anthropic-schema-compatibility.md)
+  is pushed at f350878: 1,005 tests and a zero-provider native control pass.
+  Source/baseline protection remains open; no new paid batch yet.
+  [Next Opus configuration](tasks/done/strat-workflow-next-opus-concurrency.md)
+  is prepared at schema-fixed f350878 with an explicit outer agent cap of five;
+  69 offline benchmark checks pass. The user has now authorized
+  [one Opus launch with cap five](tasks/current/s1-hardening-opus-concurrency5.md);
+  publish/import and archive checks precede its sole submission.
+  S1 is the selected path after custom entrypoints were rejected. Eight focused
+  repairs and one rejected proposal; [reviewer delivery](tasks/done/s1-hardening-01-reviewer-delivery.md)
   is verified in one focused GLM run (4/4 reports).
   [Reviewer scope](tasks/done/s1-hardening-02-reviewer-scope.md) is verified for
   three targets (12/12 GLM reports); final frozen-source parity passes native controls.
@@ -29,7 +44,9 @@
   controls and 966 component tests pass with zero inference;
   [Freshness](tasks/done/s1-hardening-08-freshness.md) checks inputs and provenance
   before reuse/publication; 990 component tests and three native controls pass
-  with zero inference. Item 9 remains pending.
+  with zero inference. [Item 9](tasks/done/s1-hardening-09-limits.md) is closed
+  as rejected, not a bug; no repair remains pending in the original list.
+  Deployment/full-batch/content qualification and cross-host fencing remain separate.
   Iterative live tests use GLM, one execution per case/revision;
   Haiku/Opus requires explicit approval and necessity.
 

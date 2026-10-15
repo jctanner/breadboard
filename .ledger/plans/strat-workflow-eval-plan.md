@@ -3926,6 +3926,73 @@ resolved a mechanism or exposed a confound. Original measurements remain intact.
     contains source pins, limitations and a proposed integration. No paid judge
     call, producer rerun or integration deployment is authorized by this note.
 
+16. **Workflow concurrency is configurable and must be recorded** (2026-10-14).
+    In Claude Code 2.1.296, the default live agent limit is
+    `min(16, max(2, availableParallelism - 2))`, overridden by
+    `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS`. The hardened three-RFE GLM
+    run had no override in Claude's process environment. Its pod had a two-core
+    CPU quota; Node reported `availableParallelism=1`, despite enumerating 16
+    CPUs. The default therefore gives two slots, matching the native timeline:
+    two outer agents overlapped while the third queued. The third ticket's
+    review started at minute 85. Kubernetes CPU settings can therefore confound
+    timing comparisons; explicitly pin and record this limit in future runs.
+    Setting the override to `3` would permit three outer agents when ready,
+    but that configuration has not been tested in a new live batch.
+
+    Local controls verified limits of one and two, including the shared cap
+    across nested `workflow()` calls. Forked Skill scheduling is separate:
+    the GLM parents submitted four specialist calls together, but their actual
+    children ran serially within each ticket. Raising the outer limit does not
+    establish parallel specialist execution. See the
+    [default calculation](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-analysis.md),
+    [concurrency controls](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-operations.md#control-5-budget-and-concurrency-enforcement)
+    and [GLM timeline](../notes/s1-hardening-three-rfe-glm-live-duration.md).
+    This finding changes neither historical timings nor the running job.
+
+    The user subsequently selected a cap of five for the next Opus batch.
+    Prepared `s1-hardening-opus` configuration pins schema repair `f350878`
+    and records the cap in run metadata and the job summary; 69 offline checks
+    verify request wiring. Three tickets may supply only three ready outer
+    agents. Source and concurrency both change, so a future duration difference
+    cannot isolate concurrency alone. [Preparation](../tasks/done/strat-workflow-next-opus-concurrency.md);
+    no live run or deployed workflow import has been performed for this change.
+
+17. **Deterministic control flow does not guarantee a predictable job failure**
+    (2026-10-14). In the hardened Opus three-RFE job, the primary agent reacted
+    to a failed Workflow by removing schema constraints from both Workflow
+    source files, rewriting input/progress freshness hashes and launching again.
+    One submitted job contained three Workflow executions. The second named
+    launch used cached original code and failed again; the third used the edited
+    file directly and completed. The job took about 73 minutes, including
+    repeated scoring and the primary's repair work. A Workflow error therefore
+    did not reliably stop the surrounding agent or preserve the tested program.
+
+    The final host validator rejected the changed baseline, so the job failed
+    despite three published reviews and a locally successful completion receipt.
+    The benchmark also rejected two of twelve specialist handoffs. This is
+    observed behavior in one tested configuration, not a failure-rate estimate;
+    file-write and relaunch permissions expose other agent launch modes too.
+    Fixed source, trusted baselines and a stop/relaunch policy need enforcement
+    outside the agent's writable state. Prompt instructions and hashes the same
+    agent can rewrite are insufficient. The existing host check prevented final
+    acceptance but did not prevent changed execution, additional spend or Jira
+    side effects. See [actions, terminal evidence and follow-up](../bugs/open/s1-primary-edits-source-and-freshness-after-failure.md).
+    These controls are proposed follow-up, not an implemented repair or
+    authorization for another paid run.
+
+18. **A GLM pass does not establish Anthropic schema compatibility**
+    (2026-10-14). The same hardened Workflow completed on GLM, then Anthropic
+    rejected its top-level `oneOf` tool schemas before review model execution.
+    Repair `f350878` uses plain object schemas and checks verdict relationships
+    in JavaScript, retaining final receipt checks and refusing a success after
+    a recorded step failure. Full suite: 1,005 passed, seven skipped. A native
+    Claude 2.1.296 loopback control verifies completion and wrong-hash refusal;
+    all 93 tool schemas across six captured requests avoid the rejected roots.
+    Provider calls and inference spend are zero. These checks cover the known
+    schema restriction and local runtime behavior; a live Anthropic rerun has
+    not qualified the new revision. [Repair and evidence](../tasks/done/s1-hardening-anthropic-schema-compatibility.md).
+    The separate source/baseline protection gap remains open.
+
 The tested working baseline remains S2; S1 demonstrates useful concurrency and
 lower observed batch cost. However, the confirmed return-contract defect is
 shared by schema-constrained CLI and Workflow and has configuration remedies.

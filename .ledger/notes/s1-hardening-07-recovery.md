@@ -134,7 +134,8 @@ this item. No exactly-once event delivery is claimed.
 
 The actual native Workflow replay path, Fullsend/OpenShell deployment,
 cross-host concurrency and full production batches remain separate
-qualification. Item 8 will address broader stale input/source reuse, and item 9
-will address limits and cancellation policy.
+qualification. Broader stale input/source reuse was subsequently addressed by
+item 8. On 2026-10-14 item 9's limits/cancellation proposal was
+[rejected as not a bug](../tasks/done/s1-hardening-09-limits.md).
 
 [Plan](../plans/strat-workflow-s1-hardening.md).

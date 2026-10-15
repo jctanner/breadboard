@@ -23,6 +23,7 @@ steps:
         mode: "{{ test.mode | default:'single' }}"
         batch_size: "{{ test.batch_size | default:1 }}"
         strat_creator_ref: "{{ test.strat_creator_ref | default:arm.strat_creator_ref }}"
+        workflow_max_concurrent_agents: "{{ test.workflow_max_concurrent_agents | default:'' }}"
         breadboard_ref: "{{ bench_ref }}"
         markov_run_id: "{{ markov_run_id }}"
         mlflow_experiment: "strat-workflow-eval/{{ tier }}/{{ test.id }}/{{ variant }}"

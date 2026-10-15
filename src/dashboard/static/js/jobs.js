@@ -374,7 +374,7 @@ if (K8S_AVAILABLE) {
 
       tbody.innerHTML = jobs.map(job => {
         const statusClass = 'status-' + job.status;
-        const duration = job.duration ? job.duration.toFixed(1) : '-';
+        const duration = job.duration != null ? job.duration.toFixed(1) : '-';
         const created = new Date(job.created).toLocaleString();
         const runner = job.runner || 'cli';
 

@@ -2,6 +2,10 @@
 
 ## Current milestone
 
+- [Failed dashboard job durations](bugs/fixed/dashboard-failed-job-duration.md):
+  fixed and deployed; all four failed jobs keep stable durations across live
+  refreshes, detail duration agrees, and 10 regression tests pass.
+
 - [Markovd scheduling and overnight Opus batch](tasks/done/markovd-scheduled-opus-run.md):
   one-time and recurring cron scheduling is implemented and deployed. Schedule #6
   launched one S1 three-RFE Opus batch at 2026-10-15 00:30 America/New_York.

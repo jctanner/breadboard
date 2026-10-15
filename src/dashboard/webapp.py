@@ -1111,11 +1111,7 @@ def create_app() -> Flask:
             for job in jobs:
                 job_status = orchestrator._get_job_status(job)
 
-                # Calculate duration
-                duration = None
-                if job.status.start_time:
-                    end_time = job.status.completion_time or datetime.now(job.status.start_time.tzinfo)
-                    duration = (end_time - job.status.start_time).total_seconds()
+                duration = orchestrator._get_job_duration(job)
 
                 results.append({
                     "name": job.metadata.name,
@@ -1356,10 +1352,7 @@ def create_app() -> Flask:
                 annotations = job.metadata.annotations or {}
                 labels = job.metadata.labels or {}
 
-                duration = None
-                if job.status.start_time:
-                    end_time = job.status.completion_time or datetime.now(job.status.start_time.tzinfo)
-                    duration = (end_time - job.status.start_time).total_seconds()
+                duration = orchestrator._get_job_duration(job)
 
                 results.append({
                     "name": job.metadata.name,

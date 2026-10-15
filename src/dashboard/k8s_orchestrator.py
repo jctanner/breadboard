@@ -119,13 +119,14 @@ class PipelineOrchestrator:
             raise
 
         status = self._get_job_status(job)
+        end_time = self._get_job_end_time(job)
 
         return {
             "name": job.metadata.name,
             "status": status,
             "created": job.metadata.creation_timestamp.isoformat() if job.metadata.creation_timestamp else None,
             "started": job.status.start_time.isoformat() if job.status.start_time else None,
-            "completed": job.status.completion_time.isoformat() if job.status.completion_time else None,
+            "completed": end_time.isoformat() if end_time else None,
             "succeeded": job.status.succeeded or 0,
             "failed": job.status.failed or 0,
             "phase": job.metadata.labels.get("phase"),
@@ -1077,13 +1078,44 @@ fi
 
         return result
 
+    @staticmethod
+    def _get_job_end_time(job: client.V1Job) -> datetime | None:
+        """Kubernetes only sets completion_time on successful Jobs."""
+        if job.status.completion_time:
+            return job.status.completion_time
+        terminal_times = [
+            condition.last_transition_time
+            for condition in job.status.conditions or []
+            if condition.type in ("Complete", "Failed")
+            and condition.status == "True"
+            and condition.last_transition_time is not None
+        ]
+        return max(terminal_times) if terminal_times else None
+
+    def _get_job_duration(self, job: client.V1Job) -> float | None:
+        if not job.status.start_time:
+            return None
+        end_time = self._get_job_end_time(job)
+        if end_time is None:
+            # Never turn a missing terminal timestamp into an ever-growing age.
+            if self._get_job_status(job) in ("completed", "failed"):
+                return None
+            end_time = datetime.now(job.status.start_time.tzinfo)
+        return (end_time - job.status.start_time).total_seconds()
+
     def _get_job_status(self, job: client.V1Job) -> str:
         """Determine job status from K8s Job object."""
+        for condition in job.status.conditions or []:
+            if condition.status == "True":
+                if condition.type == "Complete":
+                    return "completed"
+                if condition.type == "Failed":
+                    return "failed"
         if job.status.succeeded:
             return "completed"
-        elif job.status.failed:
-            return "failed"
         elif job.status.active:
             return "running"
+        elif job.status.failed:
+            return "failed"
         else:
             return "pending"

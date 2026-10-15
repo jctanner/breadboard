@@ -499,3 +499,13 @@ captures remain unchanged. Final verification and live receipt readback pass:
 3,599 files / 8,998,503,549 bytes; 569 browsable API dumps and 2,357 strace files.
 No model rerun or reset. Sixteen archive tests pass; full suite 72 tests, seven
 skipped. Task and archive bug moved to done/fixed; findings updated.
+
+## 2026-10-15: failed dashboard job duration
+
+Fixed the jobs/evals API fallback to current time for failed Kubernetes jobs.
+Use terminal condition timestamps for stable duration in the lists and detail
+modal; active retries keep running and unknown terminal times remain unknown.
+Ten regression tests, Python/JavaScript checks and diff checks pass. Rebuilt
+the dashboard and verified all four real failed job durations across automatic
+browser refreshes, including matching detail duration. See the
+[fixed bug](../bugs/fixed/dashboard-failed-job-duration.md).

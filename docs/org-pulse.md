@@ -52,7 +52,7 @@ in the `ai-pipeline` namespace:
 | frontend | nginx behind an OpenShift OAuth proxy sidecar, config rendered by an init container to inject a proxy secret | nginx alone; the config is a ConfigMap naming the backend Service, proxy secret empty |
 | backend | Express on 3001, identity from `X-Forwarded-Email` set by the proxy | the same image; without the header the backend uses the first `ADMIN_EMAILS` entry, upstream's own local-dev fallback, so every caller is `admin@breadboard.local`, which the role store is seeded with as admin |
 | database | an `ExternalName` Service to a managed MongoDB | a MongoDB pod (the image upstream's compose file uses) with a 2Gi PVC |
-| refresh | a 15-minute CronJob calling the admin refresh API | the same CronJob, addressed to the backend Service, without the proxy secret |
+| refresh | a 15-minute CronJob calling the admin refresh API | the same CronJob, suspended by default, addressed to the backend Service without the proxy secret |
 | chatbot | a Python service needing an LLM endpoint | left out |
 
 Routing follows every other service: a cert-manager Certificate in

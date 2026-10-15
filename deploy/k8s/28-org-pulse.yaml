@@ -447,9 +447,10 @@ spec:
             name: org-pulse-nginx
 ---
 # The refresh CronJob, as upstream ships it in its kustomize base, addressed
-# to the backend Service here and without the proxy secret. Every fifteen
-# minutes it asks the backend to sync module content and run every refresh
-# handler whose cadence is due, then waits for the run to finish.
+# to the backend Service here and without the proxy secret. Suspended by
+# default in Breadboard. When enabled, every fifteen minutes it asks the
+# backend to sync module content and run every refresh handler whose cadence
+# is due, then waits for the run to finish.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -460,6 +461,7 @@ metadata:
     component: sync-refresh
 spec:
   schedule: "*/15 * * * *"
+  suspend: true
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3

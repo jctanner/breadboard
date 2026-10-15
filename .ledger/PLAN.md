@@ -2,6 +2,16 @@
 
 ## Current milestone
 
+- [Markovd scheduling and overnight Opus batch](tasks/done/markovd-scheduled-opus-run.md):
+  one-time and recurring cron scheduling is implemented and deployed. Schedule #6
+  launched one S1 three-RFE Opus batch at 2026-10-15 00:30 America/New_York.
+  The job completed in 36m28s; all 12 reports reached their parents and were
+  preserved verbatim. The pinned benchmark rejects “Mostly sound” wording in
+  one assessment, rather than a missing return. Final archive independently
+  verifies 3,599 files / 9.00 GB, receipt published. Both incomplete captures
+  are retained; no model rerun or reset was needed for recovery.
+  [Results and audit](notes/s1-hardening-scheduled-opus-20261015.md).
+
 - [Disable Org Pulse scheduled refresh](tasks/done/disable-org-pulse-scheduled-refresh.md):
   CronJob suspended live and in the deployment manifest; YAML validation and
   live readback pass, with no active refresh jobs.
@@ -24,8 +34,13 @@
   [Next Opus configuration](tasks/done/strat-workflow-next-opus-concurrency.md)
   is prepared at schema-fixed f350878 with an explicit outer agent cap of five;
   69 offline benchmark checks pass. The user has now authorized
-  [one Opus launch with cap five](tasks/current/s1-hardening-opus-concurrency5.md);
-  publish/import and archive checks precede its sole submission.
+  [one Opus launch with cap five](tasks/done/s1-hardening-opus-concurrency5.md);
+  `markov-run-f286ae61` failed after 23m19s on upstream Anthropic OAuth HTTP 429
+  during reviews and result reporting. Exact source/cap/model/high effort were
+  verified in the actual process; the schema rejection did not recur. Its final
+  archive independently verifies: 2,898 files, 5.60 GB, no errors. No additional
+  iteration was scheduled at archive closure. The user has since authorized the
+  single overnight run in schedule #6 above.
   S1 is the selected path after custom entrypoints were rejected. Eight focused
   repairs and one rejected proposal; [reviewer delivery](tasks/done/s1-hardening-01-reviewer-delivery.md)
   is verified in one focused GLM run (4/4 reports).
@@ -222,11 +237,15 @@ Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 
 ## Resolved integration bugs
 
+- [Dashboard state archive timeout](bugs/fixed/strat-archive-dashboard-state-timeout.md):
+  fast Python-compatible gzip, configurable timeout, 16 focused tests and final
+  live recovery verification pass.
 - [Sandbox Jira connectivity](bugs/fixed/fullsend-sandbox-jira-connectivity.md) — fixed and verified by M4.2.
 - [Jira TLS passthrough decision](decisions/ADR-0010-jira-sandbox-tls-passthrough.md).
 
 ## Open integration bugs
 
+- [Qualified architecture judgment rejected by the benchmark](bugs/open/strat-review-gate-mostly-sound-false-negative.md).
 - [Jira processing labels are not atomic leases](bugs/open/strat-jira-label-locks-not-atomic.md).
   Owner-bound recovery/cleanup detects conflicts; cross-host fencing remains a
   separate production qualification requirement.

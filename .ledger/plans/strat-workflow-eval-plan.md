@@ -3993,7 +3993,63 @@ resolved a mechanism or exposed a confound. Original measurements remain intact.
     not qualified the new revision. [Repair and evidence](../tasks/done/s1-hardening-anthropic-schema-compatibility.md).
     The separate source/baseline protection gap remains open.
 
-The tested working baseline remains S2; S1 demonstrates useful concurrency and
+19. **An upstream limit can also prevent the structured failure report**
+    (2026-10-14 evening). Schema-fixed `f350878`, with outer concurrency cap
+    five, completed creation/refinement/push/scoring in the next three-RFE Opus
+    job. Three refinements overlapped. Anthropic OAuth then rejected all three
+    reviews with HTTP 429 account rate-limit errors; the final result agent was
+    rejected too, so it could not execute the deterministic result helper.
+    The job exited 1 after 23m19s with no agent-result.json or recorded complete
+    review. Host validation and benchmark checks correctly report failure.
+    Markov orchestration completion still contains that failed design result.
+
+    Relay logs independently confirm upstream rate_limit_error responses and
+    upstream request IDs. The inspected messages do not identify the exact
+    allowance/reset window or establish that raising concurrency caused it.
+    This run used one Workflow launch with no observed primary Edit/Write calls;
+    the previous schema rejection did not recur. The 23-minute interruption is
+    not a completed-runtime measurement or confirmation of the earlier ETA.
+    Pipeline completion/reporting still depends on a model call at the final
+    boundary, while the external archive collector can preserve evidence with
+    zero inference. [Failure and archive evidence](../tasks/done/s1-hardening-opus-concurrency5.md).
+    The final archive independently verifies at 02:53:34 UTC October 15:
+    2,898 files / 5.60 GB, complete/final with no archive errors. Configuration
+    checks confirm cap five and one native Workflow with its pinned script.
+    Collection plus verification took about 12m41s. No additional paid run is authorized.
+
+20. **A rejected assessment is not necessarily a missing return**
+    (2026-10-15). The scheduled schema-fixed/cap-five Opus batch completed all
+    three strategies in 36m28s, with all stage exits zero and matching native
+    completion/receipt/input hashes. The actual parent Skill results, producer
+    transcripts, provenance and final reviews verify all 12 reports verbatim.
+    Each report has its assigned ticket's heading. The pinned benchmark accepts
+    11/12 because one architecture judgment begins “Mostly sound”, outside the
+    checker's canonical vocabulary. Its 7,179-character result is present even
+    though the rejected-result metric says result_chars=0. The historical FAIL
+    remains intact; it must not be cited as a new handoff-loss incident.
+
+    Captured usage: 284 Opus calls, no API errors or 429s, 10.51M total tokens
+    and about $17.48 standard API-equivalent cost using the report's rates.
+    Output already includes thinking. One execution/source pin and all receipt
+    input hashes verify. This is operational delivery/preservation evidence,
+    not independent technical grading or a causal concurrency comparison.
+    [Detailed audit](../notes/s1-hardening-scheduled-opus-20261015.md);
+    [checker vocabulary issue](../bugs/open/strat-review-gate-mostly-sound-false-negative.md).
+
+21. **Archival limits must scale with retained data** (2026-10-15).
+    The overnight collector correctly refused a final receipt after its
+    dashboard-state tar stream exceeded 600 seconds. The source now retains
+    about 29 GiB. Per-job API/strace/native evidence and other source snapshots
+    were collected, but the manifest remained incomplete. Fast lossless gzip
+    and a configurable stream timeout address collection cost without reducing
+    scope; 16 focused archive tests pass, including Python 3.10/3.11 service
+    compatibility. The final recovery independently verifies 3,599 files /
+    9.00 GB with no source errors and a published receipt. Both incomplete
+    captures remain intact; reused/retried source intervals are recorded.
+
+The historical working comparison baseline remains S2; hardened S1 now also has
+one completed three-RFE Opus execution with independently preserved reports,
+subject to the pinned checker's vocabulary failure described above. S1 demonstrates useful concurrency and
 lower observed batch cost. However, the confirmed return-contract defect is
 shared by schema-constrained CLI and Workflow and has configuration remedies.
 Production choice should prioritize validated, persisted assessment contracts,

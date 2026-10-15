@@ -26,4 +26,9 @@ submitted Opus job receives cap five and the schema-fixed source. No network,
 Jira reset, provider request or deployed workflow import was used by these
 checks. Publish/sync this configuration before the next authorized launch.
 
+Subsequently published/imported as Breadboard `5ed4a28` and used for the user's
+separately authorized [single Opus run](s1-hardening-opus-concurrency5.md).
+Actual Claude process verifies cap five and f350878. That run failed on upstream
+HTTP 429; its complete final archive independently verifies.
+
 [Hardening plan](../../plans/strat-workflow-s1-hardening.md).

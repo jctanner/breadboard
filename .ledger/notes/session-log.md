@@ -296,3 +296,206 @@ authored API pairs, source, fixture state, native journals and logs. Strace was
 not enabled and no live model/MLflow job was created. Root control runner and
 records updated; root work remains uncommitted and unrelated changes preserved.
 Item 9 is pending. See notes/s1-hardening-08-freshness.md for contract and limits.
+
+## 2026-10-14: S1 hardening item 9 rejected
+
+User rejected the budget/deadline proposal as not a bug. Fullsend's existing
+per-iteration timeout surrounds either a Claude Workflow or ordinary agent
+invocation; additional spending caps and pacing are application policy, not a
+demonstrated Workflow-specific defect. Closed the task with an explicit rejected
+resolution and updated the plan/index: eight focused repairs, one rejected
+proposal, no pending repair in the original list. Existing native limit evidence
+is unchanged; deployment/full-batch/content qualification and cross-host fencing
+remain separate. No implementation, new model test, deployment or commit.
+
+## 2026-10-14: hardened S1 GLM batch launched through markovd
+
+User authorized one three-RFE GLM batch and one conditional Opus batch if GLM
+succeeds. Added separate hardening tiers pinned to 0e7e752, preserving historical
+tiers/pins, and native evidence capture. Published the benchmark helpers/gates
+and harness as Breadboard a4ca5d6; 69 offline tests pass with the current Markov
+binary, validation/syntax/credential checks pass. Synced/imported exact source
+in markovd and independently verified five earlier job archives before seeding.
+
+GLM run markov-run-cf0dfe9a started at 20:45:13 UTC; distinct three-RFE seed
+completed and model job script-run-workflow-all-glm-5-3-1014-204524-5924cf is
+running, GLM-only aliases/medium effort verified. Detached controller PID 2815513
+will archive/verify/check completion, native receipts and 12 preserved reports
+before its sole conditional Opus launch. Failures stop without paid reruns.
+Private evidence lives under var/run-data/strat-workflow-hardening/three-rfe-glm-opus.
+No Opus launch yet; final batch results pending. Unrelated changes preserved.
+
+## 2026-10-14: read-only diagnosis of long GLM batch
+
+User requested inspection without killing the job. At roughly 93 minutes all
+three strategies were pushed; two reviews completed and the third remained
+active. Found and recorded strat-workflow-scorer-path-outside-composition-scope:
+external /tmp scorer output fails repository-only composition input validation.
+GLM staged byte-identical inputs after 9m26s/13m39s/3m02s diagnostic intervals.
+Observed two outer agents, serial specialists despite batched calls, overlay
+reads and long successful output generation. One malformed scope report caused
+a replacement specialist call. Live tracked source diff was empty.
+
+Relay snapshot saved privately at diagnostics/20261014T222239233070Z: 414 GLM
+records, all completed HTTP 200, no recorded errors; generation median 11.384s,
+p95 113.333s. Job left running; no source, policy or conditional launch change.
+See notes/s1-hardening-three-rfe-glm-live-duration.md. Final gates remain pending.
+
+## 2026-10-14: GLM passed; conditional Opus exposes schema compatibility gap
+
+GLM completed at 22:58:50 UTC in 8,006s. All ten benchmark checks and controller
+checks pass: three strategies, 12 preserved reports, receipt/native journal,
+matching Jira state and released locks. Final private archive independently
+verified at 23:09:54: 6,662 files, 7,517,959,140 bytes, complete/final, no errors.
+GLM usage 5,014,392 input + 14,889,472 cache-read + 472,899 output, 435 API pairs.
+
+Controller launched the authorized Opus run markov-run-687db37c at 23:09:54,
+model job script-run-workflow-all-claude-opus-4-6-1014-231007-d5c565. By 23:30,
+three strategies pushed and scoring nearly complete, but two review agents
+failed immediately with HTTP400 rejecting top-level oneOf tool input schemas.
+Recorded strat-workflow-anthropic-top-level-union-schema; GLM acceptance did not
+establish Anthropic compatibility. Job left running; terminal archive pending.
+No live edits, kill or additional paid retry. Earlier GLM ETA was too optimistic.
+
+## 2026-10-14 evening: Opus primary self-repair discovered
+
+At 00:03–00:05 UTC October 15, Opus still ran. The benchmark primary, not the
+operator, removed oneOf in both Workflow files, rewrote input/progress source
+hashes and launched three Workflows. The last used scriptPath after a named
+launch picked up cached original code. Two ticket reviews were active, another
+queued. Host prepared input still differed from its modified sandbox copy.
+Recorded s1-primary-edits-source-and-freshness-after-failure: this cannot count
+as clean qualification of the original pin. Job remains untouched by operator;
+archive/terminal validation pending. User requested schema fix first afterwards;
+created pending repair task, with no new paid batch authorization. Reliable
+completion ETA is unavailable while the primary continues self-repair/relaunch.
+
+## 2026-10-14: archived GLM Gantt reconstruction
+
+Reconstructed exact outer intervals from final native progress and specialist
+transcripts. GLM job 133m26s, archival/verification about 11m. Third ticket
+review started at minute 85 and took 42m35s. First four reports returned after
+26m, but testability/scope were rejected for duplicate Recommendation lines;
+about 7m diagnosis + 6m replacement reviews preceded 4m finalization. Recorded
+the output-instruction/capture formatting gap. Updated the existing duration
+note; no new inference, run mutation or archive modification.
+
+## 2026-10-14: Workflow concurrency finding added to benchmark plan
+
+Added consolidated insight 16 to strat-workflow-eval-plan.md: CPU-derived
+default, explicit environment override, observed two-slot GLM scheduling and
+separate serial specialist Skill behavior. Linked binary controls and native
+timeline evidence. Future comparisons should pin/record concurrency; no live
+configuration change or additional inference.
+
+## 2026-10-14 evening: Opus terminal evidence and self-modification finding
+
+Reconstructed the Opus Gantt from its finalized capture: three native Workflow
+executions inside one approximately 73-minute job. The third completed after
+primary-agent source and freshness edits; host validation rejected the changed
+baseline, and benchmark delivery checks rejected two specialist results. Final
+archive verification passed. Added consolidated benchmark insight 17 and updated
+the hardening plan/bug: deterministic control flow does not enforce predictable
+job failure when the surrounding agent can edit and relaunch its program.
+External enforcement remains proposed; no repair, paid rerun or archive mutation.
+
+## 2026-10-14 evening: Anthropic Workflow schema compatibility fixed
+
+Committed/pushed f3508786a1e2200731b25dfeda7e01ef772d32ce to local
+eval/s1-hardening; remote SHA read back. Removed unsupported top-level unions
+from both Workflow copies, added exact verdict consistency checks and refusal
+of a claimed completion after recorded failure. Numeric policy and existing
+saved-completion verification remain intact; no new hook/script/agent call.
+
+Eight new regression failures reproduced before repair; focused 88 pass and
+full make test passes 1,005 with seven skipped (266.30s). Ruff, parity, diff and
+staged credential scans pass. One native 2.1.296 loopback control passes with
+zero provider calls, valid completion and wrong-hash refusal; 93 emitted tool
+schemas across six authored requests have supported object roots. Evidence is
+under var/run-data/strat-workflow-hardening/schema-compatibility/20261014/native-completion.
+
+Moved schema task/bug to done/fixed and closed the completed batch task with
+its Opus failure/verified archive. Updated index and findings. The Git push
+needed the cluster's public CA and existing emulator development credential;
+neither credential nor runtime capture was committed. No paid rerun, historical
+pin update, live-source adoption or source/baseline protection fix.
+
+## 2026-10-14 evening: next Opus concurrency set to five
+
+Prepared s1-hardening-opus with component f350878 and explicit native Workflow
+agent cap five. Markov job environment and run metadata carry the setting;
+wrapper summary records it and empty settings leave other native defaults unset.
+All 69 offline benchmark tests, current Markov validation, shell syntax and diff
+checks pass. Three tickets may only supply three ready outer agents; Skill
+scheduling is separate. Historical captures and other tier pins remain intact.
+No paid run, Jira reset or deployed import; publication/sync accompanies the next
+authorized launch. Recorded source/concurrency confound in the plan findings.
+
+## 2026-10-14 evening: authorized Opus concurrency-five batch launched
+
+Published/synced/imported Breadboard 5ed4a28494bcbb0d3fed31cbe985bca16fc49cc0.
+Scoped staged credential/path checks passed; unrelated changes and this log
+were excluded from the commit. Five previous model-job archives independently
+verify before reseeding. One POST at 02:16:52 UTC October 15 launched
+markov-run-f286ae61; model job script-run-workflow-all-claude-opus-4-6-1015-021705-c4354c.
+Actual Claude process/checkout verifies Opus, high effort, source f350878 and
+native cap five. Native Read has started. Controller PID 3178553 will archive
+and independently verify terminal evidence under strat-workflow-hardening/
+opus-concurrency5, then check completion, preserved reports and source/launch
+integrity. No additional paid iteration; final result pending.
+
+## 2026-10-14 evening: Opus concurrency-five run aborted by HTTP 429
+
+Read-only diagnosis confirms model container exit 1 at 02:40:24 UTC October 15,
+23m19s after creation. Native wf_06d4a5cf-be3 completed create/refine/push/score,
+but all three reviews and the final result agent received upstream account
+rate-limit 429s. No completed review or agent-result.json. Relay confirms
+Anthropic/claude-oauth rate_limit_error with upstream IDs; inspected logs do not
+establish the window/reset or concurrency causation. One Workflow launch and
+no primary Edit/Write calls observed; schema rejection did not recur.
+Recorded consolidated finding 19. Markov reports its failed design result and
+the detached collector is active; final manifest verification pending. No retry.
+
+## 2026-10-14 evening: Opus concurrency-five archive complete
+
+Controller independently verified the final capture at 02:53:34 UTC October 15.
+Manifest complete/final, errors=[], 2,898 files and 5,601,760,759 bytes. API dumps,
+strace, native traces, logs and system snapshots are present; final receipt
+published. Collection/verification took about 12m41s. Configuration verifies
+f350878, cap five, one native Workflow and a script matching the pin. Controller
+stopped on the expected benchmark failures after successful archival. Moved the
+completed run task to done and updated index/findings. No paid retry.
+
+## 2026-10-15: markovd schedules and authorized overnight Opus
+
+Implemented backend and frontend one-time/cron scheduling in markovd on
+feat/run-scheduling. Durable PostgreSQL claims, frozen definitions/inputs,
+IANA zones, pause/resume/delete and conservative launch recovery. Go race suite,
+64-worker claim test, isolated PostgreSQL recovery/payload tests, frontend
+build/tests, deployed restart and browser checks pass without model calls.
+Fixed the editor loading race found during verification.
+
+User selected 00:30 America/New_York, October 15, with reset padding. Saved
+schedule #6 at 04:30 UTC: one S1 three-RFE Opus pass, cap five, f350878 and
+Breadboard 5ed4a28. Previous final captures reverified before queuing. Detached
+archive observer PID 3302018 stores evidence under private
+var/run-data/strat-workflow-hardening/opus-scheduled-20261015-0030; no paid retry.
+
+## 2026-10-15 morning: scheduled Opus closure
+
+Schedule #6 fired once; model job completed 04:30:12–05:06:40 UTC (36m28s).
+All stage exits and final receipt/input hashes verify. Exactly one native
+Workflow matches f350878. All 12 reports verify against actual Skill receiving
+channels, producer transcripts, provenance hashes and final published reviews.
+The pinned benchmark rejects one report's “Mostly sound” judgment; this is a
+vocabulary mismatch, not handoff loss. Result remains unchanged; issue recorded.
+284 Opus calls, no API errors/429s, 10.51M usage tokens, about $17.48 at the
+report's standard API-equivalent rates. Independent content judging not run.
+
+Overnight archival timed out on the 29 GiB retained dashboard source. Repaired
+stream timeout/compression, including Python 3.10/3.11 compatibility, and recovered
+a separate final capture with explicit source intervals. Both incomplete
+captures remain unchanged. Final verification and live receipt readback pass:
+3,599 files / 8,998,503,549 bytes; 569 browsable API dumps and 2,357 strace files.
+No model rerun or reset. Sixteen archive tests pass; full suite 72 tests, seven
+skipped. Task and archive bug moved to done/fixed; findings updated.

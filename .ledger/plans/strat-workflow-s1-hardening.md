@@ -253,6 +253,53 @@ agents ready; specialist Skill scheduling is separate. Configuration is prepared
 locally for publication/import before the next authorized run; no new job.
 [Configuration and limits](../tasks/done/strat-workflow-next-opus-concurrency.md).
 
+The user subsequently authorized that one Opus run. Published/imported
+Breadboard `5ed4a28`; five prior archives independently verified before seeding.
+`markov-run-f286ae61` launched at 2026-10-15T02:16:52Z, with model job
+`script-run-workflow-all-claude-opus-4-6-1015-021705-c4354c`. Actual Claude process
+and checkout verify f350878, Opus, high effort and cap five. Native progress has
+entered Read; final result pending. Detached archival/verification is active.
+[Launch evidence](../tasks/done/s1-hardening-opus-concurrency5.md).
+
+The job subsequently failed after 23m19s on Anthropic OAuth HTTP 429 account
+rate-limit rejections. Creation/refinement/push/scoring completed; all three
+reviews and the final result agent failed, leaving no completed review or
+agent-result.json. The schema rejection did not recur. One Workflow launch,
+no primary Edit/Write calls observed. Relay logs confirm upstream rate errors;
+the exact allowance/reset window and concurrency causation are unestablished.
+The final archive independently verified at 02:53:34Z: 2,898 files and
+5,601,760,759 bytes, complete/final with no archive errors. Native configuration
+checks verify cap five, the pinned script and exactly one Workflow. The
+controller stops on failed benchmark checks after successful archival. No paid retry.
+
+The user subsequently authorized one overnight Opus batch after their reset,
+at 2026-10-15 00:30 America/New_York (04:30 UTC). Markovd schedule #6 freezes
+the same f350878/cap-five/three-RFE configuration and Breadboard 5ed4a28, one
+iteration. A read-only observer will archive and independently verify the
+outcome before applying benchmark gates. No paid retry is permitted.
+[Schedule and observer](../tasks/done/markovd-scheduled-opus-run.md).
+
+That scheduled run has now completed: model job 00:30:12–01:06:40 New York,
+36m28s, one native Workflow (34m19s), f350878/cap five and stored script matching
+the pin. All stage exits are zero, the completion receipt and every input hash
+agree, and all three strategies have one recorded review and released locks.
+Actual Skill receiving channels, producer transcripts, report provenance and
+published reviews independently verify all 12 report bodies, verbatim.
+
+The pinned benchmark remains FAIL on one vocabulary mismatch: RHAISTRAT-3's
+architecture report says “Mostly sound” and is rejected by the canonical
+judgment regex. Its actual 7,179-character return is present; result_chars=0
+is the classifier's rejected-result projection, not transport loss. The other
+nine checks pass. No provider errors/429s occurred in 284 captured calls.
+Usage is 10.51M tokens, about $17.48 at the report's standard Opus API-equivalent
+rates, not an OAuth charge. This establishes one successful business execution
+and preserved delivery, without turning the pinned evaluation green or claiming
+independent content accuracy. [Audit and archive recovery](../notes/s1-hardening-scheduled-opus-20261015.md).
+The overnight archive timed out on 29 GiB of retained dashboard state. Recovery
+now independently verifies: 3,599 files / 9.00 GB, complete/final, errors=[],
+with a published checksum-backed receipt. Both incomplete captures are retained;
+later source intervals are explicit. No model work or reset was repeated.
+
 Item 1's focused repair is complete: candidate `c49b43c` delivers all four real
 reviewer reports in one GLM scenario, retains the outer schema, and excludes
 StructuredOutput from all observed reviewer requests. Final system/job evidence

@@ -23,6 +23,23 @@ state and available shared-system snapshots. Use `--wait <seconds>` to collect
 after completion. The collector records direct-job provenance and does not
 represent these jobs as Markov runs.
 
+The `s1-mixed-glm` tier runs one GLM iteration at batch limit ten and agent
+concurrency ten. It seeds 18 RFEs and 11 STRATs: fresh work, existing drafts,
+two genuinely pushed review-only strategies, missing provenance, cleared and
+uncleared human gates, active/closed work and a foreign claim. The human-sign-off
+gate runs after discovery's cap, so this fixture selects ten, acquires nine and
+defers one actionable RFE. Its pre-inference guard checks that exact outcome.
+Earlier all-new scenarios and Tier 1 retain their original pins and behavior.
+
+The mixed job saves before/after Jira inventories, exact prepared resume points,
+provenance and per-ticket checks. After successful cleanup it prepares once more
+against unchanged Jira, without Claude: completed work must stay excluded,
+the deferred RFE remains available and the foreign claim stays intact. These
+reports and the model job's native/API/syscall evidence use the normal archive.
+Run the optional local emulator test without inference using
+`STRAT_CREATOR_CHECKOUT=<checkout> <checkout>/.venv/bin/python -m unittest discover
+-s var/benchmarks/strat-workflow/tests -p test_mixed_state.py -v`.
+
 This directory is a Markov directory workflow. Markov runs on a runner pod.
 Its steps call the dashboard API, watch the job pods with `k8s_job_wait`,
 and run the checks. Every model call happens in the job pods.

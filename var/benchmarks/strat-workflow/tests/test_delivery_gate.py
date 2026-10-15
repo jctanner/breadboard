@@ -13,6 +13,30 @@ KEY = "RHAISTRAT-1"
 
 
 class AssessmentTests(unittest.TestCase):
+    def test_repeated_agreeing_decisions_preserve_completed_assessment(self):
+        for role in check_run.REVIEWER_SKILLS.values():
+            for verdict in ("approve", "revise", "reject"):
+                with self.subTest(role=role, verdict=verdict):
+                    report = valid_report(KEY, role).replace("Recommendation**: approve", f"Recommendation**: {verdict}")
+                    report += f"\n**Recommendation**: {verdict.upper()}\n**Recommendation**: {verdict}"
+                    result = classify(report, KEY, role)
+                    self.assertTrue(result["assessment_present"])
+                    self.assertEqual(result["recommendation"], verdict)
+
+    def test_conflicting_or_unfinished_companion_decisions_remain_incomplete(self):
+        for other in ("revise", "reject", "", "pending", "<approve / revise / reject>", "approve or reject"):
+            with self.subTest(other=other):
+                report = valid_report(KEY, "feasibility") + f"\n**Recommendation**: {other}"
+                self.assertFalse(classify(report, KEY, "feasibility")["assessment_present"])
+
+    def test_repeated_architecture_skip_does_not_claim_an_assessment(self):
+        report = (f"### {KEY}: Architecture review skipped\n"
+                  "**Architecture assessment**: no architecture context available\n"
+                  "**Recommendation**: skipped\n**Recommendation**: skipped")
+        result = classify(report, KEY, "architecture")
+        self.assertEqual(result["classification"], "skipped")
+        self.assertFalse(result["assessment_present"])
+
     def test_short_completed_reports_for_every_role(self):
         for role in check_run.REVIEWER_SKILLS.values():
             report = valid_report(KEY, role)
@@ -102,6 +126,18 @@ class AssessmentTests(unittest.TestCase):
 
 
 class ReceivingChannelTests(unittest.TestCase):
+    def test_agreeing_repeats_do_not_invalidate_delivered_roles_or_change_launch_counts(self):
+        bodies = reviewer_bodies([KEY])
+        for result in bodies[1]["messages"][1]["content"]:
+            result["content"] += "\n**Recommendation**: approve"
+        gate = check_run.reviewer_returns(bodies, [KEY])
+        self.assertTrue(gate["ok"])
+        self.assertEqual(len(gate["detail"]["launches"]), 4)
+        for role in gate["detail"]["by_strategy"][KEY].values():
+            self.assertTrue(role["returned"])
+            self.assertEqual(role["launches"], 1)
+            self.assertEqual(role["reruns"], 0)
+
     def test_status_rejected_with_reason_and_unchanged_launch_accounting(self):
         bodies = reviewer_bodies([KEY])
         results = bodies[1]["messages"][1]["content"]

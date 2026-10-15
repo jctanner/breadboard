@@ -113,6 +113,9 @@ def main() -> int:
     args = parser.parse_args()
 
     scenario, templates = load_scenario(args.scenario)
+    if scenario.get("kind") == "mixed-state-v1":
+        from mixed_state import seed
+        return seed(args, scenario, templates)
 
     server = os.environ["JIRA_SERVER"].rstrip("/")
     if urlparse(server).hostname not in EMULATOR_HOSTS:

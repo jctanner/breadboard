@@ -124,6 +124,29 @@ def batch_jira_checks(seed: dict, expected_count: int) -> tuple[dict, dict]:
     return checks, {"rfes": keys, "batch_size": expected_count, "strategies": sorted(set(strategies)), "items": items}
 
 
+def mixed_jira_checks(seed, job):
+    """Check the manifest's work set, existing identities and immutable controls."""
+    from mixed_state import assess, normalize
+    base = f"/app/artifacts/scripts/{job}"
+    prepared = json.loads(read_file(base + "/state/run.json") or "{}")
+    progress = json.loads(read_file(base + "/repo-tmp/strat-progress.json") or "{}")
+    repeat = json.loads(read_file(base + "/mixed-repeat.json") or "{}")
+    guard = json.loads(read_file(base + "/mixed-preflight.json") or "{}")
+    keys = [row["key"] for row in jira(
+        "/rest/api/2/search?jql=project%20in%20(RHAIRFE,RHAISTRAT)&fields=key&maxResults=200")["issues"]]
+    after = {key: normalize(jira(f"/rest/api/3/issue/{key}")) for key in keys}
+    result = assess(seed, after, prepared, progress)
+    checks = {"mixed_" + name: check(ok, result["items"] if name == "per_ticket_completion" else name)
+              for name, ok in result["checks"].items()}
+    checks["mixed_preflight"] = check(guard.get("ok"), guard.get("checks", "missing preflight report"))
+    checks["mixed_repeat"] = check(repeat.get("ok") and repeat.get("model_invocations") == 0,
+                                    repeat.get("checks", "missing repeat report"))
+    return checks, {"rfes": seed["expected_acquired_keys"], "batch_size": len(seed["discovered"]),
+                    "acquired_count": len(seed["expected_acquired_keys"]),
+                    "deferred_keys": seed["deferred_keys"], "strategies": result["strategies"],
+                    "items": result["items"]}
+
+
 REVIEWER_SKILLS = {f"strategy-{role}-review": role for role in
                    ("feasibility", "testability", "scope", "architecture")}
 
@@ -313,7 +336,10 @@ def main(argv: list[str]) -> int:
     try:
         if run.get("mode") == "batch":
             seed = json.loads(argv[4])
-            jira_result, facts = batch_jira_checks(seed, int(run["batch_size"]))
+            if seed.get("kind") == "mixed-state-v1":
+                jira_result, facts = mixed_jira_checks(seed, job_name)
+            else:
+                jira_result, facts = batch_jira_checks(seed, int(run["batch_size"]))
         else:
             jira_result, facts = jira_checks(rfe_key)
         checks.update(jira_result)

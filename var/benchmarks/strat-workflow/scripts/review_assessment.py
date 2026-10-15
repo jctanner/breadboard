@@ -81,14 +81,19 @@ def classify(report, key, role, *, is_error=False):
         values.setdefault(field[1].lower(), []).append(
             section[field.start(2):fields[i + 1].start() if i + 1 < len(fields) else len(section)].strip())
     recommendations = values.get("recommendation", [])
-    if len(recommendations) != 1:
+    if not recommendations:
         return finish("incomplete", "missing or ambiguous completed recommendation")
-    recommendation = re.match(r"(approve|revise|reject|skipped)\b", recommendations[0], re.I)
-    if not recommendation or PLACEHOLDER.search(recommendations[0]) or re.match(
-            r"\s*(?:/|or\b)\s*(?:approve|revise|reject|skipped)\b",
-            recommendations[0][recommendation.end():], re.I):
-        return finish("incomplete", "recommendation is not a completed decision")
-    result["recommendation"] = recommendation[1].lower()
+    decisions = set()
+    for value in recommendations:
+        recommendation = re.match(r"(approve|revise|reject|skipped)\b", value, re.I)
+        if not recommendation or PLACEHOLDER.search(value) or re.match(
+                r"\s*(?:/|or\b)\s*(?:approve|revise|reject|skipped)\b",
+                value[recommendation.end():], re.I):
+            return finish("incomplete", "recommendation is not a completed decision")
+        decisions.add(recommendation[1].lower())
+    if len(decisions) != 1:
+        return finish("incomplete", "missing or ambiguous completed recommendation")
+    result["recommendation"] = next(iter(decisions))
     label, outcomes = FIELDS[role]
     judgments = values.get(label.lower(), [])
     if result["recommendation"] == "skipped":

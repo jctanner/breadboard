@@ -1,0 +1,133 @@
+description: Mixed fresh, imported, review-only, stale and human-gated work; ten discovery slots, with the late human gate measured explicitly.
+reset: true
+kind: mixed-state-v1
+batch_size: 10
+expected_acquired: 9
+expected_initial_issues: 29
+# Review fixtures come first so the real host helpers can prepare/push them
+# before the remaining RFEs exist. No model is invoked to build fixtures.
+rfes:
+  - id: verified-drift
+    template: trustyai-drift-alerts
+    eligible: true
+    action: review
+    strat:
+      state: verified-push
+      strategy: |
+        ### Technical Approach
+        Keep threshold configuration beside the scheduled TrustyAI metric request.
+        Extend validation with optional threshold, comparison and severity fields.
+        Existing requests remain valid and generate no alert rules. Use the
+        controller that owns scheduled metrics to reconcile a namespaced
+        PrometheusRule for each configured threshold and remove it when the
+        request is deleted. Select metrics by namespace, model and metric name.
+        Reconcile idempotently and use owner references where supported.
+
+        ### Security and Ownership
+        Require existing project permissions to modify metric requests. Limit
+        rule-writing RBAC to the project namespace and use the cluster's alerting
+        stack. Do not provision another notification service or credentials.
+        Alert annotations include project, model, metric, measured value,
+        threshold and the dashboard link. Administrators own cluster routing.
+
+        ### Delivery and Validation
+        First add schema validation and default compatibility tests. Then add
+        rule lifecycle reconciliation and scoped RBAC. Test threshold crossing,
+        recovery, missing/stale data at lower severity, controller retries,
+        request deletion and isolation between two projects. A metric without
+        a threshold must retain its current behavior. Confirm monitoring-stack
+        availability and supported rule ownership before enabling the feature.
+  - id: verified-training
+    template: training-checkpoint-recovery
+    eligible: true
+    action: review
+    strat:
+      state: verified-push
+      strategy: |
+        ### Technical Approach
+        Add an explicit opt-in recovery policy to the training job submission
+        path. Store checkpoint location, compatible trainer configuration and
+        generation metadata in the existing project storage. Only resume a
+        checkpoint whose framework, topology and training configuration match
+        the requested job. Record the checkpoint selected and recovery attempt
+        in status. Keep ordinary jobs and retries unchanged by default.
+
+        ### Recovery and Safety
+        The job controller distinguishes infrastructure interruption from an
+        application failure. Infrastructure recovery has a bounded retry count
+        and backoff. Application failures remain visible and require a new
+        submission. Publish checkpoints atomically, reject partial generations
+        and retain previous complete generations until replacement succeeds.
+        Reuse project storage credentials and namespace-scoped access.
+
+        ### Delivery and Validation
+        Implement metadata validation and status fields, then opt-in controller
+        reconciliation and UI status. Test worker eviction, controller restart,
+        a corrupt or incompatible checkpoint, missing storage credentials,
+        exhausted retries and a nonrecoverable application error. Verify that
+        resumption preserves progress without starting two active training
+        jobs, and that disabled recovery leaves the current job path intact.
+  - {id: fresh-workbench, template: workbench-cull-exemption, eligible: true, action: create}
+  - {id: fresh-pipelines, template: dsp-retention, eligible: true, action: create}
+  - {id: fresh-features, template: feast-scheduled-materialization, eligible: true, action: create}
+  - {id: fresh-serving, template: kserve-canary-rollback, eligible: true, action: create}
+  - id: import-registry
+    template: registry-serving-guard
+    eligible: true
+    action: refine
+    strat: {state: draft, status: Draft}
+  - id: import-queue
+    template: kueue-admission-visibility
+    eligible: true
+    action: refine
+    strat: {state: draft, status: Refinement}
+  - id: stale-connections
+    template: connection-credential-rotation
+    eligible: true
+    action: refine
+    strat: {state: missing-proof}
+  - id: human-cleared-evaluations
+    template: evaluation-report-export
+    eligible: true
+    action: refine
+    strat: {state: human-cleared}
+  - id: approved-control
+    template: registry-serving-guard
+    eligible: true
+    action: untouched
+    strat: {state: approved, labels: [strat-creator-rubric-pass]}
+  - id: attention-control
+    template: kueue-admission-visibility
+    eligible: true
+    action: untouched
+    strat: {state: attention, labels: [strat-creator-needs-attention]}
+  - id: human-signoff-control
+    template: workbench-cull-exemption
+    eligible: true
+    action: late-skip
+    strat: {state: signed-off, labels: [strat-creator-human-sign-off]}
+  - id: active-control
+    template: kserve-canary-rollback
+    eligible: true
+    action: untouched
+    strat: {state: active, status: In Progress}
+  - id: closed-control
+    template: dsp-retention
+    eligible: true
+    action: untouched
+    strat: {state: closed, status: Closed}
+  - id: missing-quality-control
+    template: feast-scheduled-materialization
+    eligible: false
+    action: untouched
+    labels: [strat-creator-3.6]
+  - id: missing-release-control
+    template: training-checkpoint-recovery
+    eligible: false
+    action: untouched
+    labels: [rfe-creator-autofix-rubric-pass]
+  - id: foreign-owner-control
+    template: connection-credential-rotation
+    eligible: false
+    action: untouched
+    labels: [strat-creator-3.6, rfe-creator-autofix-rubric-pass, strat-creator-processing, strat-creator-owner-foreign-fixture]

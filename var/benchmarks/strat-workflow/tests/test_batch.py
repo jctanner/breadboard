@@ -292,6 +292,10 @@ class WorkflowTests(unittest.TestCase):
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REF == run.strat_creator_ref")
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REPO == run.strat_creator_repo")
                                 steps[-1]["that"].append("captured_request.args.extra_env.CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS == run.workflow_max_concurrent_agents")
+                                if overrides.get("tier") == "s1-mixed-glm":
+                                    steps[-1]["that"].append("captured_request.args.extra_env.STRAT_MIXED_SEED_JSON == '/app/artifacts/scripts/offline-seed/seed.json'")
+                                else:
+                                    steps[-1]["that"].append("not captured_request.args.extra_env.STRAT_MIXED_SEED_JSON")
                                 if overrides.get("tier", "").startswith("s1-hardening-"):
                                     steps[-1]["that"] += [
                                         "captured_request.args.extra_env.CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS == 10",
@@ -403,6 +407,20 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("failed its check", result.stderr)
         self.assertNotIn('step "submit_glm_job"', result.stderr)
         self.assertIsNone(rows)
+
+    def test_mixed_tier_is_one_glm_run_with_explicit_fixture_handoff(self):
+        settings = {"tier": "s1-mixed-glm", "variants": "glm", "repeats": 1}
+        result, rows = self.simulate(settings, count=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["strat_creator_ref"], "fbc335bedb4a4eb97265da89d36bc29009a41fde")
+        self.assertEqual(rows[0]["batch_size"], 10)
+        self.assertEqual(rows[0]["workflow_max_concurrent_agents"], "10")
+        for invalid in ({"only_tests": "S2"}, {"only_tests": "S1,S2"}, {"repeats": 3},
+                        {"variants": "opus"}, {"wipe_at_start": True}):
+            result, rows = self.simulate({**settings, **invalid}, count=10)
+            self.assertNotEqual(result.returncode, 0, result.stderr)
+            self.assertIsNone(rows)
 
     def test_tier_one_selection_and_defaults_survive(self):
         result, rows = self.simulate({"tier": "smoke", "only_tests": "S1,S2", "repeats": 1}, count=1)

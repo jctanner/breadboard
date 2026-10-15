@@ -37,6 +37,7 @@
 # when it failed, else the checker's, else the post step's.
 
 set -uo pipefail
+BENCH_SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 RFE_KEY="${1:-}"
 if [ "$#" != 1 ]; then
@@ -95,6 +96,13 @@ finish() {
     echo "=== release locks ==="
     bash "$SHARED/release-locks.sh" "$STRAT_STATE_DIR"
     RELEASE_RC=$?
+  fi
+  if [ -n "${STRAT_MIXED_SEED_JSON:-}" ] && [ "$PRE_RC" = 0 ]; then
+    echo "=== mixed-state checks and model-free repeat preparation ==="
+    python3 "$BENCH_SCRIPTS/mixed_state.py" finish "$STRAT_MIXED_SEED_JSON" \
+      "$TARGET_REPO_DIR" "$STRAT_STATE_DIR" "$OUT" "$rc"
+    local mixed_rc=$?
+    if [ "$rc" = 0 ] && [ "$mixed_rc" != 0 ]; then rc=$mixed_rc; fi
   fi
   mkdir -p "$OUT/state"
   cp -f "$STRAT_STATE_DIR"/run.json "$STRAT_STATE_DIR"/owned-rfe-ids.txt* "$OUT/state/" 2>/dev/null || true
@@ -155,6 +163,11 @@ if [ "$(git -C "$TARGET_REPO_DIR" rev-parse HEAD)" != "$STRAT_CREATOR_REF" ]; th
   exit 1
 fi
 
+if [ -n "${STRAT_MIXED_SEED_JSON:-}" ]; then
+  export STRAT_PREVIOUS_PROGRESS
+  STRAT_PREVIOUS_PROGRESS="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["previous_progress_path"])' "$STRAT_MIXED_SEED_JSON")" || exit 1
+fi
+
 echo "=== pre-strategy.sh (prepare, lock $RFE_KEY) ==="
 (cd "$TARGET_REPO_DIR" && bash .fullsend/shared/pre-strategy.sh)
 PRE_RC=$?
@@ -164,6 +177,12 @@ if [ "$PRE_RC" = 78 ]; then
 elif [ "$PRE_RC" != 0 ]; then
   echo "ERROR: pre-strategy.sh failed ($PRE_RC)" >&2
   exit "$PRE_RC"
+fi
+
+if [ -n "${STRAT_MIXED_SEED_JSON:-}" ]; then
+  echo "=== verify mixed-state acquisition and resume points before inference ==="
+  python3 "$BENCH_SCRIPTS/mixed_state.py" guard "$STRAT_MIXED_SEED_JSON" \
+    "$TARGET_REPO_DIR" "$STRAT_STATE_DIR" "$OUT" || exit 1
 fi
 
 echo "=== workflow: claude -p $WORKFLOW_COMMAND ==="

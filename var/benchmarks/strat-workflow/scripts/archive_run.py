@@ -149,8 +149,11 @@ def scrub_k8s(value):
 
 
 class Collector:
-    def __init__(self, root, namespace):
+    def __init__(self, root, namespace, stream_timeout=1800):
         self.root, self.namespace = root, namespace
+        if stream_timeout <= 0:
+            raise ValueError("stream_timeout must be positive")
+        self.stream_timeout = stream_timeout
         self.errors, self.sources = [], []
 
     def kubectl(self, *args):
@@ -161,7 +164,7 @@ class Collector:
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             with target.open("wb") as output:
-                result = subprocess.run(args, input=input, stdout=output, stderr=subprocess.PIPE, timeout=600)
+                result = subprocess.run(args, input=input, stdout=output, stderr=subprocess.PIPE, timeout=self.stream_timeout)
         else:
             result = subprocess.run(args, input=input, capture_output=True, timeout=120)
         if result.returncode:
@@ -301,10 +304,14 @@ def main(argv=None):
     parser.add_argument("--unpack", action="store_true", help="with --verify, expose job files and update manifest checksums")
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     parser.add_argument("--namespace", default="ai-pipeline")
+    parser.add_argument("--stream-timeout", type=int, default=1800, metavar="SECONDS",
+                        help="timeout per streamed source (default: 1800); large retained dashboard volumes may need longer")
     parser.add_argument("--allow-running", action="store_true")
     parser.add_argument("--wait", type=int, default=0, metavar="SECONDS",
                         help="wait for terminal run/jobs before final collection; suitable for a detached host process")
     args = parser.parse_args(argv)
+    if args.stream_timeout <= 0:
+        parser.error("--stream-timeout must be positive")
     if args.job_record and (not args.job or args.wait):
         parser.error("--job-record requires --job without --wait")
     if args.unpack and not args.verify:
@@ -339,7 +346,7 @@ def main(argv=None):
     started = datetime.now(timezone.utc)
     root = args.root / identity / started.strftime("%Y%m%dT%H%M%S%fZ")
     # Resolve run identity before creating a local capture.
-    collector = Collector(root, args.namespace)
+    collector = Collector(root, args.namespace, stream_timeout=args.stream_timeout)
     info = (stopped_job_record(args.job_record, identity) if args.job_record else
             wait_for_terminal(collector, identity, args.wait, mode) if args.wait else
             json.loads(collector.remote("pipeline-dashboard", mode, identity)))
@@ -401,6 +408,7 @@ def main(argv=None):
                 "workflow_source_commit": info["run"].get("workflow_source_commit") or info["workflow"].get("source_commit"),
                 "jobs": list(info["jobs"]), "started": started.isoformat(), "completed": datetime.now(timezone.utc).isoformat(),
                 "final": is_terminal, "complete": not collector.errors, "sources": collector.sources,
+                "stream_timeout_seconds": args.stream_timeout,
                 "errors": collector.errors, "files": files,
                 "scope": "per-run job files/logs and native workflow; full retained dashboard volume data and shared-service database/file snapshots; service logs and relay telemetry since run start",
                 "consistency": "SQLite online backups are individually consistent; services are captured over the recorded time interval",

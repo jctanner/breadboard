@@ -17,6 +17,48 @@ import require_archive
 
 
 class ArchiveTests(unittest.TestCase):
+    def test_stream_timeout_is_configurable_and_small_reads_remain_bounded(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            collector = archive_run.Collector(Path(scratch), "ai-pipeline", stream_timeout=2400)
+            with patch.object(archive_run.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, b"ok", b"")) as run:
+                collector.command(["test"], "large.tar.gz")
+                self.assertEqual(run.call_args.kwargs["timeout"], 2400)
+                collector.command(["test"])
+                self.assertEqual(run.call_args.kwargs["timeout"], 120)
+            with self.assertRaises(ValueError):
+                archive_run.Collector(Path(scratch), "ai-pipeline", stream_timeout=0)
+
+    def test_fast_stream_preserves_file_bytes_and_completion_inventory(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            source = root / "evidence.bin"
+            data = b"unchanged binary evidence\x00\xff" * 1000
+            source.write_bytes(data)
+            capture = root / "capture.tar.gz"
+            with capture.open("wb") as output:
+                subprocess.run([sys.executable, str(SCRIPTS / "archive_remote.py"), "files", json.dumps([str(source)])], stdout=output, check=True)
+            with tarfile.open(capture) as archive:
+                self.assertEqual(archive.extractfile(str(source).lstrip("/")).read(), data)
+                inventory = json.load(archive.extractfile("capture-inventory.json"))
+                self.assertTrue(inventory["paths"][str(source)])
+
+    def test_stream_does_not_require_new_tarfile_compression_options(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as scratch:
+            path = Path(scratch) / "evidence.txt"
+            path.write_text("old Python compatibility")
+            output = io.BytesIO()
+            real_open = tarfile.open
+            def old_python_open(*args, **kwargs):
+                self.assertNotIn("compresslevel", kwargs)
+                self.assertEqual(kwargs["mode"], "w|")
+                return real_open(*args, **kwargs)
+            with patch.object(archive_remote.sys, "stdout", SimpleNamespace(buffer=output)), \
+                    patch.object(archive_remote.tarfile, "open", side_effect=old_python_open):
+                archive_remote.stream_paths([str(path)])
+            with real_open(fileobj=io.BytesIO(output.getvalue()), mode="r:gz") as archive:
+                self.assertEqual(archive.extractfile(str(path).lstrip("/")).read(), b"old Python compatibility")
+
     def test_deleted_job_requires_explicit_cancellation_evidence(self):
         with tempfile.TemporaryDirectory() as scratch:
             path = Path(scratch) / "stopped.json"

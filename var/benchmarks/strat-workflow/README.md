@@ -100,6 +100,14 @@ For an authorized run, a detached host collector can use `--run <id>
 then verifies and publishes receipts. Waiting has a deadline; a failed run
 is also archived. The capture timestamps describe collection after the wait.
 
+Streamed sources have a 30-minute timeout by default; `--stream-timeout 2400`
+allows 40 minutes per source for large retained volumes. The manifest records
+this setting. Fast lossless gzip preserves the same files and completion
+inventory. A timeout still makes the capture incomplete and prevents a final
+receipt. Retry collection into a new capture after resolving the cause; retain
+the earlier incomplete capture and distinguish later shared-service state from
+the original post-run snapshot.
+
 The local `var/run-data` is a symlink to `/data/breadboard`. Both the symlink
 and generated evidence are gitignored; collector code and documentation are
 tracked. Capture directories/files are private to the collecting user.

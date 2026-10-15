@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 import base64
 import io
+import gzip
 import json
 import os
 from pathlib import Path
@@ -94,7 +95,13 @@ def stream_paths(paths, database=None):
                 source.backup(target, pages=256)
                 assert target.execute("PRAGMA quick_check").fetchone()[0] == "ok"
         inventory = {"captured_at": datetime.now(timezone.utc).isoformat(), "paths": {}, "symlinks_skipped": []}
-        with tarfile.open(fileobj=sys.stdout.buffer, mode="w|gz", dereference=False) as archive:
+        # The retained dashboard volume can be tens of GiB. Fast lossless gzip
+        # avoids spending the collection window on compression; capture scope
+        # and the completion inventory remain unchanged.
+        # Keep compression outside tarfile: streaming-mode compresslevel is
+        # unsupported by Python 3.10/3.11 in MLflow/Observatory containers.
+        with gzip.GzipFile(fileobj=sys.stdout.buffer, mode="wb", compresslevel=1) as compressed, \
+                tarfile.open(fileobj=compressed, mode="w|", dereference=False) as archive:
             if db_copy:
                 archive.add(db_copy, arcname="database.sqlite")
             for name in paths:

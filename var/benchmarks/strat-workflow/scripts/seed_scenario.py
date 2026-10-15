@@ -14,6 +14,8 @@ strat-creator commit under test, not from this script:
 Runs anywhere with JIRA_SERVER, JIRA_USER and JIRA_TOKEN for the emulator,
 normally as a dashboard script job (the job already has them and trusts the
 emulator CA). It refuses any server that isn't the Jira emulator.
+STRAT_CREATOR_REPO or --strat-creator-repo selects the source repository;
+the historical GitHub emulator remains the default.
 
     seed_scenario.py --scenario smoke-one-rfe --strat-creator-ref <sha>
     seed_scenario.py --scenario smoke-one-rfe --strat-creator /path/to/checkout
@@ -37,15 +39,15 @@ import yaml
 
 BENCH = Path(__file__).resolve().parents[1]
 EMULATOR_HOSTS = {"jira.local", "jira-emulator.ai-pipeline.svc.cluster.local"}
-STRAT_CREATOR_REPO = "https://github.local/opendatahub-io/strat-creator.git"
+DEFAULT_STRAT_CREATOR_REPO = "https://github.local/opendatahub-io/strat-creator.git"
 BENCH_LABEL = "strat-workflow-eval"
 RELEASE_LABEL = "strat-creator-3.6"  # matches the rhoai-3.6-ea.2 architecture snapshot
 EXTRA_ELIGIBLE_LABELS = ["rfe-creator-feasibility-pass"]
 
 
-def clone_strat_creator(ref: str, dest: Path) -> Path:
+def clone_strat_creator(ref: str, dest: Path, repo: str = DEFAULT_STRAT_CREATOR_REPO) -> Path:
     subprocess.run(["git", "init", "-q", str(dest)], check=True)
-    subprocess.run(["git", "-C", str(dest), "fetch", "-q", "--depth", "1", STRAT_CREATOR_REPO, ref], check=True)
+    subprocess.run(["git", "-C", str(dest), "fetch", "-q", "--depth", "1", repo, ref], check=True)
     subprocess.run(["git", "-C", str(dest), "-c", "advice.detachedHead=false", "checkout", "-q", "FETCH_HEAD"], check=True)
     head = subprocess.check_output(["git", "-C", str(dest), "rev-parse", "HEAD"], text=True).strip()
     if head != ref:
@@ -102,7 +104,9 @@ def main() -> int:
     parser.add_argument("--scenario", required=True)
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--strat-creator", type=Path, help="existing strat-creator checkout")
-    source.add_argument("--strat-creator-ref", help="40-character commit to clone from the GitHub emulator")
+    source.add_argument("--strat-creator-ref", help="40-character commit to clone from the selected repository")
+    parser.add_argument("--strat-creator-repo", default=os.environ.get("STRAT_CREATOR_REPO") or DEFAULT_STRAT_CREATOR_REPO,
+                        help="repository to clone (default: STRAT_CREATOR_REPO, then the GitHub emulator)")
     parser.add_argument("--no-reset", action="store_true", help="seed without resetting Jira first")
     parser.add_argument("--dry-run", action="store_true",
                         help="check connectivity and print the planned issues; no reset, no writes")
@@ -122,7 +126,7 @@ def main() -> int:
             ref = subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True).strip()
         else:
             ref = args.strat_creator_ref
-            checkout = clone_strat_creator(ref, Path(tmp) / "strat-creator")
+            checkout = clone_strat_creator(ref, Path(tmp) / "strat-creator", args.strat_creator_repo)
         settings = yaml.safe_load((checkout / "config" / "pipeline-settings.yaml").read_text())
         sys.path.insert(0, str(checkout / "scripts"))
         jira_utils = load_module("jira_utils", checkout / "scripts" / "jira_utils.py")
@@ -219,6 +223,7 @@ def main() -> int:
         "description": scenario.get("description", ""),
         "server": server,
         "reset": reset,
+        "strat_creator_repo": args.strat_creator_repo if not args.strat_creator else None,
         "strat_creator_ref": ref,
         "eligible_labels": eligible_labels,
         "discovery_jql": discovery_jql,

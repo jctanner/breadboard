@@ -214,7 +214,8 @@ class WorkflowTests(unittest.TestCase):
                         if name in ("list_running_jobs", "list_pending_jobs"):
                             facts = {step["register"]: {"body": []}}
                         elif name == "submit_seed":
-                            facts = {"seed_job": {"body": {"job_name": "offline-seed"}}}
+                            facts = {"seed_job": {"body": {"job_name": "offline-seed"}},
+                                     "captured_seed_request": step["params"]["body"]}
                         elif name == "read_seed_report":
                             facts = {"seed_file": {"body": {"content": json.dumps(seed(count))}}}
                         elif name in ("submit_job", "submit_glm_job"):
@@ -235,6 +236,10 @@ class WorkflowTests(unittest.TestCase):
                     if facts is not None:
                         steps.append({"name": name, "type": "set_fact", "vars": facts,
                                       **({"when": step["when"]} if "when" in step else {})})
+                        if name == "submit_seed":
+                            steps.append({"name": "verify_seed_source", "type": "assert", "that": [
+                                "captured_seed_request.script.args.3 == run.strat_creator_ref",
+                                "captured_seed_request.args.extra_env.STRAT_CREATOR_REPO == run.strat_creator_repo"]})
                         if name in ("submit_job", "submit_glm_job"):
                             steps.append({"name": "verify_request_" + name, "type": "assert", "that": [
                                 "captured_request.script.args.0 == rfe_key",
@@ -251,6 +256,7 @@ class WorkflowTests(unittest.TestCase):
                             if workflow["name"] == "submit-workflow":
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_BG_WAIT_CEILING_MS == workflow_bg_wait_ceiling_ms")
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REF == run.strat_creator_ref")
+                                steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REPO == run.strat_creator_repo")
                                 steps[-1]["that"].append("captured_request.args.extra_env.CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS == run.workflow_max_concurrent_agents")
                                 if overrides.get("tier") == "s1-hardening-opus":
                                     steps[-1]["that"].append("captured_request.args.extra_env.CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS == 5")
@@ -269,6 +275,7 @@ class WorkflowTests(unittest.TestCase):
                         '"pass":true,"job":"{{ job_name }}","mode":"{{ run.mode }}",'
                         '"batch_size":{{ run.batch_size }},"selector":"{{ rfe_key }}",'
                         '"expected_keys":"{{ batch_expected_keys }}",'
+                        '"strat_creator_repo":"{{ run.strat_creator_repo }}",'
                         '"strat_creator_ref":"{{ run.strat_creator_ref }}",'
                         '"workflow_max_concurrent_agents":"{{ run.workflow_max_concurrent_agents }}"}')
                 workflow["steps"] = steps
@@ -338,15 +345,16 @@ class WorkflowTests(unittest.TestCase):
         self.assertIsNone(rows)
 
     def test_hardened_three_ticket_tiers_pin_candidate_and_reject_other_designs(self):
-        pins = {"glm": "0e7e752702727076818001d3a29208532b40dbab",
-                "opus": "f3508786a1e2200731b25dfeda7e01ef772d32ce"}
+        candidate = "6a05210215247b287bb0fb61ed02e423c9de8692"
+        repository = "https://github.com/jctanner-fullsend-ai/strat-creator.git"
         for variant in ("glm", "opus"):
             settings = {"tier": "s1-hardening-" + variant, "variants": variant, "repeats": 1}
             result, rows = self.simulate(settings)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(len(rows), 1)
             self.assertEqual((rows[0]["test"], rows[0]["variant"], rows[0]["batch_size"]), ("S1", variant, 3))
-            self.assertEqual(rows[0]["strat_creator_ref"], pins[variant])
+            self.assertEqual(rows[0]["strat_creator_ref"], candidate)
+            self.assertEqual(rows[0]["strat_creator_repo"], repository)
             self.assertEqual(rows[0]["workflow_max_concurrent_agents"], "5" if variant == "opus" else "")
             for invalid in ({"only_tests": "S2"}, {"only_tests": "S1,S2"},
                             {"repeats": 3}, {"variants": "haiku"}, {"wipe_at_start": True}):
@@ -359,6 +367,9 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual([row["test"] for row in rows], ["S1", "S2"])
         self.assertTrue(all(row["selector"] == "RHAIRFE-1" and row["batch_size"] == 1 for row in rows))
+        self.assertTrue(all(row["strat_creator_repo"].startswith("https://github.local/") for row in rows))
+        self.assertEqual(rows[0]["strat_creator_ref"], "1bd7f1718c7ed10f2900691c0e9eaea2b8e48e43")
+        self.assertEqual(rows[1]["strat_creator_ref"], "0287b838d2bc59a2569cf2dd971aad7ad2d76dad")
         result, rows = self.simulate({"tier": "smoke", "only_tests": ""}, count=1)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len(rows), 12)

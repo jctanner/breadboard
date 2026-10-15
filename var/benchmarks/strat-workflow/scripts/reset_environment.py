@@ -65,6 +65,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--scenario", required=True)
     parser.add_argument("--strat-creator-ref", required=True, help="strat-creator commit under test")
+    parser.add_argument("--strat-creator-repo", default=os.environ.get("STRAT_CREATOR_REPO") or "https://github.local/opendatahub-io/strat-creator.git",
+                        help="source repository for the seed job")
     parser.add_argument("--breadboard-ref", required=True, help="pushed Breadboard commit to run the seed from")
     parser.add_argument("--dashboard", default="https://dashboard.local")
     parser.add_argument("--ca", help="CA bundle for the dashboard's TLS certificate")
@@ -78,7 +80,8 @@ def main() -> int:
             raise SystemExit(f"--{name.replace('_', '-')} must be a full 40-character commit")
 
     client = httpx.Client(base_url=args.dashboard.rstrip("/"), verify=args.ca or True, timeout=120)
-    summary = {"scenario": args.scenario, "strat_creator_ref": args.strat_creator_ref,
+    summary = {"scenario": args.scenario, "strat_creator_repo": args.strat_creator_repo,
+               "strat_creator_ref": args.strat_creator_ref,
                "breadboard_ref": args.breadboard_ref, "steps": {}}
     ok = True
 
@@ -126,7 +129,8 @@ def main() -> int:
                 "repo": BREADBOARD_REPO,
                 "ref": args.breadboard_ref,
                 "path": SEED_SCRIPT,
-                "args": ["--scenario", args.scenario, "--strat-creator-ref", args.strat_creator_ref],
+                "args": ["--scenario", args.scenario, "--strat-creator-ref", args.strat_creator_ref,
+                         "--strat-creator-repo", args.strat_creator_repo],
             },
             "args": {"model": "claude-haiku-5-5", "mlflow": False, "otel": False, "api_dump": False},
         }).json()

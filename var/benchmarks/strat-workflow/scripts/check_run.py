@@ -299,6 +299,7 @@ def main(argv: list[str]) -> int:
         "variant": run["variant"], "model": run["model"], "repeat": run["repeat"],
         "scenario": run["scenario"], "rfe": rfe_key, "job": job_name,
         "mode": run.get("mode", "single"),
+        "strat_creator_repo": run.get("strat_creator_repo"),
         "strat_creator_ref": run["strat_creator_ref"], "breadboard_ref": run["breadboard_ref"],
         "markov_run_id": run.get("markov_run_id"),
         "workflow_max_concurrent_agents": run.get("workflow_max_concurrent_agents") or None,

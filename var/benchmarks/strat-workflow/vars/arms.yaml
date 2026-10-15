@@ -10,6 +10,7 @@ arms:
     description: Claude Workflow (strat-creator PR #83), run by scripts/run-workflow.sh
     # eval/pr-83: PR #83 (6b78355) plus the fetch-architecture-context.sh fix
     strat_creator_ref: 1bd7f1718c7ed10f2900691c0e9eaea2b8e48e43
+    repo: https://github.local/opendatahub-io/strat-creator.git
   bash:
     description: bash entrypoint (strat-creator PR #80), .fullsend/scripts/strategy-entrypoint.sh
     # eval/pr-80: PR #80 plus the STRAT_MODEL, STRAT_ARCHITECTURE_CONTEXT_PATH and

@@ -22,6 +22,7 @@ steps:
         scenario: "{{ test.scenario }}"
         mode: "{{ test.mode | default:'single' }}"
         batch_size: "{{ test.batch_size | default:1 }}"
+        strat_creator_repo: "{{ test.repo | default:arm.repo }}"
         strat_creator_ref: "{{ test.strat_creator_ref | default:arm.strat_creator_ref }}"
         workflow_max_concurrent_agents: "{{ test.workflow_max_concurrent_agents | default:'' }}"
         breadboard_ref: "{{ bench_ref }}"
@@ -55,6 +56,7 @@ steps:
           api_dump: false
           extra_env:
             STRAT_ARCHIVE_REQUIRED_SINCE: "{{ archive_required_since }}"
+            STRAT_CREATOR_REPO: "{{ run.strat_creator_repo }}"
     register: seed_job
 
   - name: wait_for_seed

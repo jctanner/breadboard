@@ -206,9 +206,13 @@ reset, using the existing collector and receipt guard.
 ## Hardened S1 three-ticket validation
 
 `s1-hardening-glm` and `s1-hardening-opus` run the same distinct three-RFE
-scenario. GLM retains hardened S1 `0e7e752702727076818001d3a29208532b40dbab`.
-The next Opus configuration uses schema-fixed
-`f3508786a1e2200731b25dfeda7e01ef772d32ce` and explicitly sets
+scenario from [Fullsend PR #85](https://github.com/fullsend-ai/strat-creator/pull/85).
+Both now clone `https://github.com/jctanner-fullsend-ai/strat-creator.git`,
+branch `feat/s1-workflow-hardening`, pinned at
+`6a05210215247b287bb0fb61ed02e423c9de8692`. The pin is the verified branch/PR
+head, rather than a moving branch lookup at job launch. Seeding and execution
+receive the same repository and commit; run/seed/evaluation metadata records it.
+The Opus tier explicitly sets
 `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS=5`. This caps outer Workflow
 agents; it does not change specialist Skill scheduling. Run metadata and the
 job summary record the requested cap; tiers without an override leave the

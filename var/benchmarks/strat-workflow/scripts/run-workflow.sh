@@ -121,6 +121,7 @@ summary = {
     "arm": "workflow",
     "rfe": "$RFE_KEY",
     "mode": "$STRAT_MODE",
+    "strat_creator_repo": "$STRAT_CREATOR_REPO",
     "strat_creator_ref": "$STRAT_CREATOR_REF",
     "launch": "claude -p --plugin-dir .fullsend/plugins/strat-pipeline $WORKFLOW_COMMAND",
     "model": "${ANTHROPIC_MODEL:-}",

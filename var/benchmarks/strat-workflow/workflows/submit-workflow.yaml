@@ -19,6 +19,7 @@ steps:
           mlflow_experiment: "{{ run.mlflow_experiment }}"
           strace: true
           extra_env:
+            STRAT_CREATOR_REPO: "{{ run.strat_creator_repo }}"
             STRAT_CREATOR_REF: "{{ run.strat_creator_ref }}"
             STRAT_ARCHITECTURE_CONTEXT_PATH: "{{ architecture_context_path }}"
             STRAT_BG_WAIT_CEILING_MS: "{{ workflow_bg_wait_ceiling_ms }}"
@@ -46,6 +47,7 @@ steps:
           mlflow_experiment: "{{ run.mlflow_experiment }}"
           strace: true
           extra_env:
+            STRAT_CREATOR_REPO: "{{ run.strat_creator_repo }}"
             STRAT_CREATOR_REF: "{{ run.strat_creator_ref }}"
             STRAT_ARCHITECTURE_CONTEXT_PATH: "{{ architecture_context_path }}"
             STRAT_BG_WAIT_CEILING_MS: "{{ workflow_bg_wait_ceiling_ms }}"

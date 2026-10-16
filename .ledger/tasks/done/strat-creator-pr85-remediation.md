@@ -56,6 +56,10 @@ var/run-data/strat-workflow-hardening/pr85-review-remediation-20261016/. No
 paid model smoke or Fullsend/OpenShell deployment was rerun. Historical eval
 results and source pins remain unchanged.
 
-[Historical DCO signoffs](../pending/strat-creator-pr85-historical-dco.md) remain
+[Historical DCO signoffs](strat-creator-pr85-historical-dco.md) remain
 a separate process decision. The new commit is signed off; no force push or
 certification for another author has been performed.
+
+Signoff follow-up: the user subsequently authorized the history repair. The
+same source tree now heads the PR as 18cdf46; DCO passes. The full old/new
+mapping and backup reference are in the completed historical-DCO task.

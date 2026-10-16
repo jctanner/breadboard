@@ -3,7 +3,7 @@
 ## Current milestone
 
 - [PR 85 remediation](tasks/done/strat-creator-pr85-remediation.md): pushed fixes f941955, 21 original threads addressed, native/default checks passed; no paid inference.
-- [PR 85 historical DCO](tasks/pending/strat-creator-pr85-historical-dco.md): 15 older unsigned commits; history/author certification requires a separate decision.
+- [PR 85 historical DCO](tasks/done/strat-creator-pr85-historical-dco.md): completed at 18cdf46; DCO passes, author/date/tree identity preserved, old history backed up.
 
 - [Mixed-state S1 batch](plans/strat-workflow-mixed-state-batch.md):
   29-record fixture implemented; real local-emulator preparation, reimport and

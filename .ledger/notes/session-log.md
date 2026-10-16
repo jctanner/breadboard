@@ -851,3 +851,14 @@ zero-provider native control cases pass. Benchmark checker 97 tests/one skip;
 result changed. Full control/test archive in var/run-data/strat-workflow-hardening/
 pr85-review-remediation-20261016. Four source bugs moved to fixed. Historical
 DCO failures (15 old commits) remain a separate pending decision; no force push.
+
+## 2026-10-16: PR 85 historical signoffs repaired
+
+User authorized the signoff history rewrite and leased force push. Added the
+15 missing trailers under the original committer identity, preserving every
+author/date/tree and gsun's existing commits/merge. f941955 is backed up locally
+and on the fork at backup/pr85-before-dco-20261016-f941955. New PR head 18cdf46;
+all 24 non-merge commits have matching signoffs. Every rewritten tree and final
+source tree equal the originals. GitHub DCO passes. No paid or local model run.
+Full mapping/verification retained with the existing PR 85 remediation archive.
+CI passed on Python 3.11/3.12 plus lint/Unicode; all 21 threads remain resolved.

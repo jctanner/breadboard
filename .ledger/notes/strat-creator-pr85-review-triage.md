@@ -135,3 +135,7 @@ Published remediation: f941955, with signed-off commit, 1,067 passing tests in
 each required target (five/six optional skips), twenty follow-up responses and
 all 21 original inline threads resolved. The remaining DCO history issue is
 tracked separately. See [completed remediation](../tasks/done/strat-creator-pr85-remediation.md).
+
+Historical DCO follow-up completed with user authorization: 15 signoffs added,
+authors/dates/trees preserved, old tip backed up on the fork, feature branch
+updated by exact force-with-lease to 18cdf46. GitHub DCO passes.

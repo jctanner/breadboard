@@ -119,3 +119,6 @@ var/conformance/
 # Local scratch: Playwright MCP captures and prototype checkouts
 .playwright-mcp/
 checkouts.fullsend_prototype/
+
+# Local Google service-account credential; never publish.
+/strat-creator-evals-key.json

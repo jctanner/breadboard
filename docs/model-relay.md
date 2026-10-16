@@ -73,6 +73,9 @@ nothing; only workload-key exchange works.
   projects to it; the account login runs inside the pod and needs only a
   pasted authorization code for Anthropic OAuth. EnMaaS accounts instead use
   **Set token** to store a personal API token privately on the relay.
+  Google Vertex accounts use **Vertex credentials** for their upstream Google
+  Cloud project, region and secret service-account JSON. The key stays in a
+  private file on the relay volume; Google access tokens refresh automatically.
 - `/config/keys.json` is `{ "keys": [] }` and `/config/models.json` is `{}`;
   projects, client keys and model grants are managed in the console and
   persist in SQLite.
@@ -82,12 +85,15 @@ nothing; only workload-key exchange works.
   delete the Secret and redeploy to change it.
 - The relay needs egress to Anthropic's login, token and inference endpoints
   for Anthropic accounts, or `https://api.enmaas.devshift.net` for EnMaaS.
+  Vertex needs `oauth2.googleapis.com` and the selected Google AI Platform
+  endpoint (`aiplatform.googleapis.com` for `global`).
 
 The console's **Models** controls manage each upstream's enabled inventory.
 The Projects **Routing** column and editor select a default account plus exact
 model overrides, or explicit routes only with no default. The built-in
 `vertex-shim-local` project sends `rits/zai-org/glm-5-3` to `enmaas-personal`
-and defaults other models to `tanner-jc-personal`. Clients retain their existing
+and defaults Claude models to `vertex-strat-evals`, using its independently
+configured Google Cloud project and region. Clients retain their existing
 credentials and select the desired model; the relay chooses its account.
 Unavailable destinations fail without falling back to another account.
 Projects can inherit that inventory or set an explicit allowlist and blocks;

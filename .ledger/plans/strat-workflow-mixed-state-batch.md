@@ -239,3 +239,15 @@ positive/negative report replays before any further paid test.
 Final archive independently verified, receipts published: 11,940 files /
 22,344,722,063 bytes, complete/final with no source errors. No replacement run.
 [Audit](../notes/s1-mixed-state-opus-20261016.md).
+
+## Cross-ticket follow-up
+
+No contamination detected in the Opus scope/identity/copying inspection. All
+36 reports identify only their assigned ticket; 511 reviewer scope audit events
+show no cross-ticket reads attempted or allowed. The 37 denials concern the
+correct ticket under the wrong local/ path. Nine processed subjects are unique.
+The apparent duplicates come from seed construction: eight excluded/skipped
+controls reuse subjects from the actionable/deferred pool. These are baseline
+fixture duplicates, not new clones created by agents, and all controls stayed
+unchanged. Use unique control subjects in a future fixture for clarity.
+[Detailed evidence](../notes/s1-mixed-state-opus-20261016.md).

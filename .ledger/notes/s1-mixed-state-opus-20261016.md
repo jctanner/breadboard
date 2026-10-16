@@ -78,3 +78,75 @@ API dumps, strace, native journals, artifacts, Jira and service/system captures.
 Independent verification passed and final receipts were published at terminal
 collection. launch-context/result.json and archive-verification.json retain
 that verification. Observer finished at 14:53:30 UTC.
+
+## Cross-ticket contamination check
+
+The user noticed apparent duplicates. The seed itself reused eight subjects
+for excluded/human-skipped controls: 18 RFEs draw on ten subject templates.
+All nine acquired RFEs have distinct templates/subjects. These duplicate
+subjects predate model work and were created by fixture setup, not inferred
+from the resulting strategies. Examples: registry RFE 7/11 (STRAT 3/7),
+queue RFE 8/12 (STRAT 4/8), workbench RFE 3/13 (STRAT 12/9 after creation).
+Their control states are approved, needs-attention and human-signed-off,
+respectively; the control issues remained unchanged.
+
+All 36 role reports have exactly one assigned target heading, no other ticket
+IDs anywhere in the report, and no conflicting recorded launch/result history.
+Review-scope logs contain 511 events from 36 reviewer agents: 474 allowed and
+37 denied. Matching agent assignments against every tool path finds no
+cross-ticket read attempts. Every denial is a Read of the correct ticket
+under local/ rather than its authorized artifacts/ path. No allowed tool path
+contains a different strategy/RFE key.
+
+All nine strategy frontmatters match their expected source RFE/title and have
+distinct content hashes. A supplementary ten-word-sequence comparison over
+task bodies found the highest pairwise Jaccard similarity was 3.69%; this is
+a copying screen, not a semantic quality score. Shared templates and platform
+context can legitimately repeat. No cross-ticket contamination was detected
+by these checks; this does not establish the factual accuracy of every claim.
+A future fixture can give the controls unique subjects too, making visual
+inspection clearer and avoiding confusion with agent-created duplicates.
+
+## Recorded Gantt chart
+
+Timings come from native workflow agent startedAt/durationMs and saved job
+metadata. Per-ticket bars show refinement, score and review agents; batch
+creation/import and push are shown once above. New York time (EDT).
+
+```text
+Opus 4.6 | 2026-10-16 | New York time
+Job: 09:50:17 -> 10:35:31 (45m14s)
+Workflow: 09:51:22 -> 10:32:31 (41m10s)
+
+Minutes from job start    0    5    10   15   20   25   30   35   40   45
+                          |----|----|----|----|----|----|----|----|----|-
+Setup / launch            H.............................................
+Read prepared input       .I............................................  00:23
+Create / import (batch)   .CCCCCCCCCCCC.................................  11:36
+Refine 7 + verify         .............RRRRRRR..........................  07:16
+Push 7                    ....................PPP.......................  02:18
+Score 9                   .......................SSS....................  03:31
+Review 9                  .........................VVVVVVVVVVVVVVVV.....  16:04
+Write validated result    .........................................F....  01:34
+Reporting / host finish   ..........................................HHH.
+
+Per ticket (RFE -> STRAT)
+Minutes                   0    5    10   15   20   25   30   35   40   45
+ 1 -> 1                   .......................SSVVVVVVVVVVVVVVV......  review-only
+10 -> 6                   .............RRRRRR....SSSVVVVVVVVVVVVVV......  existing / refine
+ 2 -> 2                   .......................SSVVVVVVVVVVVVV........  review-only
+ 3 -> 12                  .............RRRRRR....SSVVVVVVVVVVVVVVV......  fresh
+ 4 -> 13                  .............RRRRR.....SSSVVVVVVVVVVVVVVV.....  fresh
+ 5 -> 14                  .............RRRRRR....SSVVVVVVVVVVVVVV.......  fresh
+ 6 -> 15                  .............RRRRRRR...SSSVVVVVVVVVVVVVVV.....  fresh
+ 7 -> 3                   .............RRRRR.....SSVVVVVVVVVVVVVV.......  existing / refine
+ 8 -> 4                   .............RRRRR.....SSVVVVVVVVVVVVVVV......  existing / refine
+
+C=create/import  R=refine  P=push  S=score  V=review
+I=read input  F=write result  H=host/primary overhead
+One character ~= one minute; bars rounded. Dots mean no plotted step.
+```
+
+The batch limit was ten; nine tickets acquired because human-signed-off
+RFE 13 was skipped. Archive collection/independent verification finished at
+10:53:30 New York time, outside this job/workflow timeline.

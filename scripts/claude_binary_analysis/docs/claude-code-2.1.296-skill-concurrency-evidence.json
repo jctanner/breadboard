@@ -1,0 +1,276 @@
+{
+  "binary_version": "2.1.296",
+  "binary_sha256": "24972e3bc859fab2b46ed4c1e51f7d6130f06d3bd550811a114640de3370d0de",
+  "payload_sha256": "32a4df7685c914cf66238ffa9b1ea3ae1b164688039364d660c4506f68fb8e2f",
+  "ranges": [
+    {
+      "name": "tool-defaults",
+      "start": 122693871,
+      "end_exclusive": 122694036,
+      "bytes": 165,
+      "sha256": "ddd00a737bd092155188354bf905ca7986f35e4e2837ccff3b13096926338e08"
+    },
+    {
+      "name": "tool-constructor-Kt",
+      "start": 122694110,
+      "end_exclusive": 122696794,
+      "bytes": 2684,
+      "sha256": "b87a7edb8281587c8e569f38f303e907ff0d5be74a028a16b1419e313e8208e9"
+    },
+    {
+      "name": "skill-tool-definition",
+      "start": 134630887,
+      "end_exclusive": 134638071,
+      "bytes": 7184,
+      "sha256": "e0efb119486aed352ef8f5dca9a17711cba1c4860785897c4e39240345d54384"
+    },
+    {
+      "name": "nonstream-grouping-ja",
+      "start": 134328848,
+      "end_exclusive": 134329157,
+      "bytes": 309,
+      "sha256": "dd93b23f21ea756531173cfb130b111eebe8dea309352a664d87fccd59004b88"
+    },
+    {
+      "name": "streaming-tool-eligibility",
+      "start": 135008369,
+      "end_exclusive": 135008498,
+      "bytes": 129,
+      "sha256": "1cb08aa77b1adcaf4190c4305ce732c682a1ba2119633ba4962d7a0e681b0f5b"
+    }
+  ],
+  "schema_version": 1,
+  "recorded_date": "2026-10-15",
+  "runner": "scripts/claude_binary_analysis/run_skill_concurrency_control.py",
+  "runner_sha256": "1fe6a2e33e80440ce84c8cae672c517ed4a89c19384bd7c6379a50e15ed7fe88",
+  "controls": [
+    {
+      "layout": "same-receiver",
+      "evidence_path": "tmp/claude-code-binary-analysis/2.1.296/traces/skill-concurrency-same-receiver-v2",
+      "outcome": {
+        "exit": 0,
+        "layout": "same-receiver",
+        "leaf_requests": 4,
+        "max_concurrent_leaf_requests": 1,
+        "passed": true,
+        "real_provider_calls": 0,
+        "requests": 9,
+        "returned_skills": 4
+      },
+      "fixture_head": "cb5db34abdc6b452fd342832d825db3a7b842a28",
+      "fixture_tree": "9d2ecd7c61f23b27cecb4e6ccb4d377d35b6b833",
+      "files": [
+        {
+          "path": "command.json",
+          "sha256": "5cc7234f6c4eef30189fe4b5fe6f8df613ae267d66f6028fe26b58a2ba2ec1bf"
+        },
+        {
+          "path": "events.json",
+          "sha256": "abdeb7a5f0518a7021c1bc4b58d730c71125f2904c5aa89c3a4c137113a249df"
+        },
+        {
+          "path": "results.json",
+          "sha256": "5f0957eedf4883c19795c1b09012f0224147168a5c90de4a07ac3fb222426a50"
+        },
+        {
+          "path": "stdout.jsonl",
+          "sha256": "c3cc339d42bea5a74ecb35b36b7635f913dee6aa7a35cbe020a2b86332d99e63"
+        },
+        {
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner-source/run_skill_concurrency_control.py",
+          "sha256": "19b3cd0f8f8304f11f3cdb3cfe98ad7cd826e66b2df4ec8dde850c2da36d7f58"
+        }
+      ],
+      "runner_sha256": "19b3cd0f8f8304f11f3cdb3cfe98ad7cd826e66b2df4ec8dde850c2da36d7f58",
+      "route": "workflow"
+    },
+    {
+      "layout": "separate-receivers",
+      "evidence_path": "tmp/claude-code-binary-analysis/2.1.296/traces/skill-concurrency-separate-receivers-v1",
+      "outcome": {
+        "exit": 0,
+        "layout": "separate-receivers",
+        "leaf_requests": 4,
+        "max_concurrent_leaf_requests": 4,
+        "passed": true,
+        "real_provider_calls": 0,
+        "requests": 15,
+        "returned_skills": 4
+      },
+      "fixture_head": "cb5db34abdc6b452fd342832d825db3a7b842a28",
+      "fixture_tree": "9d2ecd7c61f23b27cecb4e6ccb4d377d35b6b833",
+      "files": [
+        {
+          "path": "command.json",
+          "sha256": "66a0758cdd4d4bca3b86255252c5b412ec5e85fc4fde7363c62f8bf6d9b38168"
+        },
+        {
+          "path": "events.json",
+          "sha256": "62331d05a965addc393beae80ab28ebbbef24d324fae5b6c62b42a96882f3174"
+        },
+        {
+          "path": "results.json",
+          "sha256": "818467b221504ad51e2211eed5fd52110fe1306e9a26883582e15997f4e0f42a"
+        },
+        {
+          "path": "stdout.jsonl",
+          "sha256": "83f721d1c66f5fb4562de0e324728f98642ddced5f847ca3caf7a9e930e758f9"
+        },
+        {
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner-source/run_skill_concurrency_control.py",
+          "sha256": "19b3cd0f8f8304f11f3cdb3cfe98ad7cd826e66b2df4ec8dde850c2da36d7f58"
+        }
+      ],
+      "runner_sha256": "19b3cd0f8f8304f11f3cdb3cfe98ad7cd826e66b2df4ec8dde850c2da36d7f58",
+      "route": "workflow"
+    },
+    {
+      "layout": "same-receiver",
+      "route": "cli",
+      "evidence_path": "tmp/claude-code-binary-analysis/2.1.296/traces/skill-concurrency-plain-cli-v1",
+      "outcome": {
+        "exit": 0,
+        "layout": "same-receiver",
+        "leaf_requests": 4,
+        "max_concurrent_leaf_requests": 1,
+        "passed": true,
+        "real_provider_calls": 0,
+        "receiver_prompt_seen": true,
+        "requests": 6,
+        "returned_skills": 4,
+        "route": "cli"
+      },
+      "runner_sha256": "1fe6a2e33e80440ce84c8cae672c517ed4a89c19384bd7c6379a50e15ed7fe88",
+      "fixture_head": "3654b44c720f6cfe13c5bc777a22d35609b28251",
+      "fixture_tree": "2b67b45ab263815e47ae06d4de36c4b156568a5c",
+      "files": [
+        {
+          "path": "command.json",
+          "sha256": "d7a736e38398bb7a09286df2b34a0d03f78cdbef50f0d292cef71cbf0bc6f661"
+        },
+        {
+          "path": "events.json",
+          "sha256": "420df051a7be998baa69230f83b6b09476c02422a2dec8ab37afd9528d36fab6"
+        },
+        {
+          "path": "results.json",
+          "sha256": "3b5e1480c5d0329f8d3a6774647c2b952795c3607b1579a0f60a15953dd550d0"
+        },
+        {
+          "path": "stdout.jsonl",
+          "sha256": "9b720be26bda0dfccf1c08520ef5c47a1fed2d1fd0ce21f5f417ae8c9a7f0ad2"
+        },
+        {
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "runner-source/run_skill_concurrency_control.py",
+          "sha256": "1fe6a2e33e80440ce84c8cae672c517ed4a89c19384bd7c6379a50e15ed7fe88"
+        }
+      ]
+    }
+  ],
+  "real_provider_calls": 0,
+  "scope": "Local exact-binary controls; production job reports same release and exhibits matching serialization. Production executable hash was not independently captured.",
+  "scripted_pipeline_archive": {
+    "provenance_path": "scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-s2-opus-provenance.json",
+    "sha256": "3e3eed5a04903c9e11dd1dc5b5f9dc6f5ca63d6bbcb0b54efb1b0d429f3b700f",
+    "job": "var/run-data/strat-workflow/markov-run-79d3241a/20261012T021947729737Z/jobs/script-strategy-entrypoint-all-claude-opus-4-1012-005035-b81781",
+    "calls": [
+      {
+        "target": "RHAISTRAT-1",
+        "role": "feasibility",
+        "launch_message_id": "msg_011CfwTUq6q6HxHMAWrUdF9R",
+        "first_child_response": "2026-10-12T01:14:55.038Z",
+        "last_child_response": "2026-10-12T01:17:20.503Z"
+      },
+      {
+        "target": "RHAISTRAT-1",
+        "role": "testability",
+        "launch_message_id": "msg_011CfwTUq6q6HxHMAWrUdF9R",
+        "first_child_response": "2026-10-12T01:17:28.096Z",
+        "last_child_response": "2026-10-12T01:20:09.424Z"
+      },
+      {
+        "target": "RHAISTRAT-1",
+        "role": "scope",
+        "launch_message_id": "msg_011CfwTUq6q6HxHMAWrUdF9R",
+        "first_child_response": "2026-10-12T01:20:15.577Z",
+        "last_child_response": "2026-10-12T01:22:18.024Z"
+      },
+      {
+        "target": "RHAISTRAT-1",
+        "role": "architecture",
+        "launch_message_id": "msg_011CfwTUq6q6HxHMAWrUdF9R",
+        "first_child_response": "2026-10-12T01:22:26.316Z",
+        "last_child_response": "2026-10-12T01:25:45.772Z"
+      },
+      {
+        "target": "RHAISTRAT-2",
+        "role": "feasibility",
+        "launch_message_id": "msg_011CfwUrroVmnrDSvw8hEfr8",
+        "first_child_response": "2026-10-12T01:33:02.362Z",
+        "last_child_response": "2026-10-12T01:36:12.273Z"
+      },
+      {
+        "target": "RHAISTRAT-2",
+        "role": "testability",
+        "launch_message_id": "msg_011CfwUrroVmnrDSvw8hEfr8",
+        "first_child_response": "2026-10-12T01:36:18.966Z",
+        "last_child_response": "2026-10-12T01:38:24.760Z"
+      },
+      {
+        "target": "RHAISTRAT-2",
+        "role": "scope",
+        "launch_message_id": "msg_011CfwUrroVmnrDSvw8hEfr8",
+        "first_child_response": "2026-10-12T01:38:32.350Z",
+        "last_child_response": "2026-10-12T01:40:43.188Z"
+      },
+      {
+        "target": "RHAISTRAT-2",
+        "role": "architecture",
+        "launch_message_id": "msg_011CfwUrroVmnrDSvw8hEfr8",
+        "first_child_response": "2026-10-12T01:40:53.308Z",
+        "last_child_response": "2026-10-12T01:48:38.212Z"
+      },
+      {
+        "target": "RHAISTRAT-3",
+        "role": "feasibility",
+        "launch_message_id": "msg_011CfwWgdUWtz3XMpjATxvNa",
+        "first_child_response": "2026-10-12T01:56:57.705Z",
+        "last_child_response": "2026-10-12T01:59:48.514Z"
+      },
+      {
+        "target": "RHAISTRAT-3",
+        "role": "testability",
+        "launch_message_id": "msg_011CfwWgdUWtz3XMpjATxvNa",
+        "first_child_response": "2026-10-12T01:59:57.325Z",
+        "last_child_response": "2026-10-12T02:02:51.806Z"
+      },
+      {
+        "target": "RHAISTRAT-3",
+        "role": "scope",
+        "launch_message_id": "msg_011CfwWgdUWtz3XMpjATxvNa",
+        "first_child_response": "2026-10-12T02:02:59.740Z",
+        "last_child_response": "2026-10-12T02:04:38.729Z"
+      },
+      {
+        "target": "RHAISTRAT-3",
+        "role": "architecture",
+        "launch_message_id": "msg_011CfwWgdUWtz3XMpjATxvNa",
+        "first_child_response": "2026-10-12T02:04:49.803Z",
+        "last_child_response": "2026-10-12T02:16:29.745Z"
+      }
+    ],
+    "interpretation": "Each ticket launches four Skills in one response; recorded child response ranges occur in role order without interleaving. Response timestamps alone are not full request intervals. Plain-CLI native control independently confirms serialization."
+  }
+}

@@ -14,6 +14,7 @@ the [source hashes](claude-code-2.1.296-benchmark-hardening-evidence.json) retai
 
 | Target | Findings | Reconstructed control flow |
 | --- | --- | --- |
+| 2.1.296 Skill concurrency | [Four requested Skills execute serially within one agent](claude-code-2.1.296-skill-concurrency.md), including plain CLI execution with Workflows disabled; separate Workflow callers overlap | Tool defaults and dispatcher rule, three native controls; [exact evidence](claude-code-2.1.296-skill-concurrency-evidence.json) |
 | 2.1.296 production gaps, priorities 1–2 | [Nested specialist return diagnosis](claude-code-2.1.296-workflow-specialist-handoff.md), twenty-one controls and a configured-agent workaround; [real-run provenance](claude-code-2.1.296-workflow-review-provenance.md), thirty-two archived calls | Exact return-path pseudocode in the handoff report |
 | 2.1.296 S1 hardening controls | [Delivery, scope, refinement receipts, composition and final completion](claude-code-2.1.296-workflow-hardening-controls.md), including transcript timing, structured-completion enforcement, Skill hook payloads and post-completion reporting faults | Native executable controls; application checks distinguished from Claude runtime behavior |
 | 2.1.296 skill variables | [All prompt placeholders, resolution sources and expansion stages](claude-code-2.1.296-skill-variable-expansion.md), with nine controls and frontmatter/hook distinctions | Ordered pipeline pseudocode in the report |

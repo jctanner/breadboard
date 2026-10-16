@@ -125,6 +125,13 @@ follow API response order (`started B` precedes `result A` although A
 responded first) — the journal is an ordered log of engine transitions, not a
 response chronology. Replay of that journal reused every result.
 
+Forked Skill execution has a separate restriction: the Skill tool inherits
+`isConcurrencySafe=false`, so four Skill calls from one agent serialize even
+when requested in the same response. Two additional native loopback controls
+confirm one active child request from one caller versus four active requests
+from four Workflow callers at cap five. The outer cap does not override tool
+eligibility. [Dispatch rule and controls](claude-code-2.1.296-skill-concurrency.md).
+
 ## Control 6: retries and incomplete streams
 
 With `CLAUDE_CODE_MAX_RETRIES=1` and a single injected fault after the

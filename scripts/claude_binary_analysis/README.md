@@ -51,6 +51,14 @@ does not establish semantic equivalence by itself.
 
 ## Runtime controls
 
+The [Skill concurrency investigation](docs/claude-code-2.1.296-skill-concurrency.md)
+uses `run_skill_concurrency_control.py BINARY OUTPUT --layout same-receiver`
+or `--layout separate-receivers` to distinguish one agent's serial Skill tool
+queue from actual overlap across Workflow callers. Both arrangements use a
+loopback mock API, a fresh configuration directory and zero provider calls.
+Add `--route cli --layout same-receiver` to test the same Skill calls through
+a plain slash-command invocation with Workflows disabled.
+
 The [S1 hardening follow-up](docs/claude-code-2.1.296-workflow-hardening-controls.md)
 records actual configured-agent delivery, reviewer scope hooks, asynchronous
 assignment transcript timing, target-bound refinement schemas and

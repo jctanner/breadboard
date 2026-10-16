@@ -17,3 +17,12 @@ Keep the pinned result unchanged. A future repair should explicitly decide
 whether to enforce canonical producer wording or accept supported qualified
 judgments, with negative tests for unfinished/ambiguous assessments. Do not
 silently weaken the checker to turn the historical run green.
+
+## Mixed-state Opus recurrence
+
+Run markov-run-5d3327ed rejects RHAISTRAT-3 architecture (5,819 characters):
+“Mostly sound; one incorrect assumption and one under-documented dependency
+require revision.” Its delivered report, provenance and composed review match.
+Replacing only Mostly sound with Sound in memory makes the classifier pass.
+Recommendation revise is explicit; no missing handoff. Historical eval retained.
+[Audit](../../notes/s1-mixed-state-opus-20261016.md).

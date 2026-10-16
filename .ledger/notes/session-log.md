@@ -509,3 +509,297 @@ Ten regression tests, Python/JavaScript checks and diff checks pass. Rebuilt
 the dashboard and verified all four real failed job durations across automatic
 browser refreshes, including matching detail duration. See the
 [fixed bug](../bugs/fixed/dashboard-failed-job-duration.md).
+
+## 2026-10-15: S1 hardening on the Fullsend fork
+
+Created local feat/s1-workflow-hardening in
+checkouts.tmp/jctanner-fullsend-ai/strat-creator, from origin/main b396172.
+Merged exact fullsend-ai PR #83 head 6b78355 (eight original Wayne Sun commits),
+retaining the newer release-3.8 config and type-descriptor additions. The only
+merge conflict was Makefile; both lint/type validation and Workflow targets
+remain. Replayed all twelve follow-ups through tested source f350878, without
+conflicts. All 88 S1 follow-up paths match the historical source exactly.
+
+Full make test: 1,005 passed, seven skipped; type descriptor validation, focused
+review-score tests and full-branch diff checks pass. Tip 6a05210 is a one-line
+inherited-whitespace cleanup. New branch clean and committed locally; original
+S1 checkout/main unchanged. No model run, deployment, public PR or push.
+Source mapping and validation are in the completed port task.
+
+## 2026-10-15: Rewire Markov to Fullsend PR #85
+
+Verified the fork branch and upstream PR #85 both at 6a05210. Both current S1
+hardening tiers now clone the public fork at that exact commit. Seeding and
+native execution share the source selection; seed/run/evaluation metadata
+records it, with historical A/B source pins retained. All 72 offline benchmark
+checks pass using a current Markov build. Cluster source fetch and a read-only
+seed dry run pass. Published benchmark code as Breadboard 5493469 and synced
+project 1; read back the existing workflow and verified its source commit and
+candidate pins. No model run or reset. Other pending Breadboard changes remain
+unstaged. See tasks/done/strat-workflow-fullsend-source.md.
+
+## 2026-10-15: One-ticket S1 integration smoke on Vertex
+
+Launched one authorized Markov run, markov-run-d7043ace, with a run-only
+one-ticket batch configuration, new fork pin 6a05210 and claude-opus-4-6.
+Offline execution verifies effective batch size one and the batch-discover
+launcher. Four previous retained model archives independently verified first.
+The seed completed and model job 171835-332613 is running. Actual Claude PID
+142 verifies the correct source, model aliases, cap five and one locked RFE.
+Vertex requests return HTTP 200 with google-service-account authentication.
+Observer PID 4112002 will archive and verify terminal evidence; no paid retry.
+Context: var/run-data/strat-workflow-hardening/fullsend-vertex-opus-one-rfe-20261015/.
+
+## 2026-10-15: Fullsend/Vertex smoke results
+
+Markov run d7043ace and model job 171835-332613 completed, 27m54s; native
+Workflow 26m17s. One strategy approved 7/8, every stage exit zero. Audited the
+completion receipt and input hashes, exact stored script, all four producer
+transcripts, actual Skill receiving channels and verbatim published reports.
+All agree. Primary launched one Workflow and read its result, with no rewrite.
+
+All 108 API responses match Vertex relay message IDs: HTTP 200, complete usage,
+no errors. API/relay totals agree at 3,743,001 tokens including cache. Eight
+separate token-count calls also succeeded. Numeric-only approval preserves
+testability's revise recommendation as configured.
+
+Strict benchmark rejects feasibility formatting alone. The detailed numbered
+findings are swallowed into unrecognized parser fields; adding a Findings
+heading only in memory makes the report pass. Recorded a new checker bug and
+updated the hardening plan. Historical FAIL and artifacts remain unchanged.
+Collection has finished and published a receipt; the observer's independent
+verification is pending at this update. No model work was repeated.
+
+Final observer verification then passed with no problems: 1,612 files /
+6,357,233,437 bytes, complete/final, errors=[], receipt published. API dumps,
+strace and shared system evidence are included. Preserved audit scripts/results
+and exact relay correlation in launch-context; moved the smoke task to done.
+
+## 2026-10-15: One-ticket latency compared with three-ticket batch
+
+Compared native phases and actual reviewer transcripts against the verified
+overnight run. Job time falls 36m28s to 27m54s while tokens fall 10.51M to 3.74M.
+Three-ticket refinement/scoring/review overlap, so elapsed duration does not
+scale with ticket count. Found another bottleneck: all four reviewer Skills are
+requested in one API response but run serially within each ticket. The one-ticket
+reviewer interval takes 8m49s; longest reviewer 2m50s. Recorded timings and a
+performance bug; exact runtime serialization cause remains unverified. No
+model inference or source changes were needed for the diagnosis.
+
+## 2026-10-15: Confirm Skill serialization in Claude's dispatcher
+
+Exact 2.1.296 binary inspection resolves the reviewer serialization cause:
+generic tools default isConcurrencySafe=false, Skill does not override it, and
+both streaming/nonstreaming dispatch paths serialize unsafe calls. Added a
+credential-free native loopback control. Four Skills from one Workflow caller
+reach concurrency one; one Skill from each of four callers reaches concurrency
+four. Both return all four Skills and exit zero, with no real provider calls.
+Saved a maintained binary-analysis report and compact source/control hashes;
+updated the performance bug, timing note and hardening plan. The pipeline
+implementation and historical benchmark results remain unchanged.
+
+## 2026-10-15: Confirm the same serialization before Workflows
+
+Extended the isolated concurrency control with a real plain claude -p
+slash-command route and Workflows disabled. The authored prompt is loaded,
+four Skills return, maximum child concurrency is one, exit zero; no provider
+calls. Checked the historical S2 Opus launch/first/last response hashes: each
+ticket's four Skills are requested in one response and child responses occur
+in role order. Updated the maintained binary report, compact evidence, shared
+performance bug and hardening plan. Preserved exact runners for prior controls.
+
+## 2026-10-15: Defer reviewer concurrency optimization
+
+The user put reviewer concurrency on the backburner given approximately six
+minutes of ideal single-ticket savings. Recorded the decision in the hardening
+plan, open performance finding and index. Full ten-ticket simultaneous review
+would require 40 reviewer workers; implementation also needs multi-caller
+capture/receipt validation and explicit partial-failure/recovery handling.
+Existing pipeline dispatch stays in place. Evidence is retained, with no
+concurrency implementation or qualification run planned until revisited.
+
+## 2026-10-15: Prepare ten-ticket S1 with concurrency ten
+
+Updated both current S1 hardening tiers to batch-ten-new-rfes, batch size ten,
+Workflow cap ten and one iteration. Added three complete fictional RFE templates
+for training checkpoint recovery, storage connection credential rotation and
+evaluation report export; combined with seven existing distinct capabilities.
+Reviewer dispatch stays unchanged and deferred. Historical smaller tests remain.
+
+All 75 benchmark tests pass with actual offline Markov execution, including the
+ten-key environment/source wiring, missing-tenth rejection and forty-report
+coverage checks. Markov validation and diff checks pass. Published only the seven
+required benchmark files as 0359a9a after staged-file and credential-pattern
+checks; unrelated pending changes remain unstaged.
+
+Synced Markovd project 1, imported workflow 744 and verified all 64 files against
+the pushed commit. Live read-only seed dry run confirms ten distinct eligible
+planned RFEs. No model run, reset or live issue creation. Completed task records
+the source pin and next GLM launch settings; terminal archival guards remain.
+
+## 2026-10-15: Launch ten-ticket S1 GLM at concurrency ten
+
+User authorized the prepared batch. Exact offline variables and all 64 imported
+files verify source 0359a9a / candidate 6a05210. All five prior retained model
+archives independently reverified before seeding; no active jobs/conflicting
+schedules. GLM's enmaas-personal route and managed API-token readiness pass.
+
+One POST launched markov-run-d72c2f57 at 19:10:43 UTC. Ten distinct RFEs seeded
+and discovered; model job script-run-workflow-all-glm-5-3-1015-191057-721118 is
+running. Observer PID 33397 will archive/independently verify terminal evidence
+under var/run-data/strat-workflow-hardening/fullsend-glm-ten-rfe-c10-20261015/.
+No automatic paid retry or Opus continuation. Actual process settings pending
+startup inspection; all launch and preflight evidence retained privately.
+
+Startup verification subsequently passed: clean 6a05210 source, ten acquired
+RFEs, batch mode/size ten, cap ten, medium effort and GLM for primary, helpers
+and all aliases. Relay confirms successful generation through enmaas-personal.
+The model job is running and the detached observer remains attached.
+
+## 2026-10-15: Accept repeated agreeing reviewer verdicts
+
+User authorized ignoring duplicate Recommendation lines when the verdict agrees.
+Updated both identical helper copies in the Fullsend strat-creator fork and the
+independent Breadboard benchmark classifier. Original report bytes/hashes and
+numeric-only gating remain intact. Missing, blank, malformed and conflicting
+values remain failures; architecture-only skip remains enforced.
+
+Validation: 47 focused composition tests; make test-unit 575 passed / five
+skipped; make test 1,033 passed / seven skipped (265.78s); all 79 benchmark
+tests pass with offline Markov execution. Ruff and both diff checks pass.
+Both unchanged formerly blocked reports pass the plugin/host helpers and
+benchmark classifier; all forty archived reports pass the live parser.
+No inference, retry/resume, artifact edits or historical result changes.
+Changes are local only; no commits/pushes or Markov source-pin update. Fix task
+and bug moved to done/fixed; the independent numbered-findings issue stays open.
+
+## 2026-10-15: Correct ten-ticket run to Opus
+
+User explicitly selected “Stop GLM, archive, then run Opus.” Dashboard stop
+deleted the GLM workload and Markov runner; Markovd's stale running status was
+reconciled through its cancel endpoint. No model process signal was sent by
+the guarded stop helper before those deletions. Replaced the read-only
+observer with a deleted-job recovery collector. Shared workflow stream,
+stderr, 95 API dump files and 678 syscall trace files survive. Pod-local native
+transcripts/worktree and pod logs do not; archival records the gap explicitly.
+
+Prepared an exact one-iteration Opus launch on the same ten-RFE scenario,
+source/candidate and cap ten. Offline Markov execution passes without model
+calls. Waiting for the stopped GLM archive to verify before resetting Jira or
+launching Opus. No automatic model retry is authorized.
+
+The GLM recovery capture completed and independently verified 894 files /
+6,123,261,163 bytes, no capture-source errors, receipt published. It explicitly
+discloses lost native/pod-local evidence. All five earlier retained model
+archives were also independently checked before seeding the next run.
+
+One POST launched Opus run markov-run-fbc62d49 at 19:38:50 UTC. Actual Claude
+PID 145 verifies clean 6a05210 source, all ten acquired RFE keys, cap ten, high
+effort and Opus primary/helpers/aliases. Initial telemetry: nine Opus streaming
+calls, all HTTP 200 through vertex-strat-evals. Model job
+script-run-workflow-all-claude-opus-4-6-1015-193904-1a3da4 is running. Observer
+65418 will collect and independently verify terminal evidence, with no model
+retry. Private evidence root: fullsend-vertex-opus-ten-rfe-c10-20261015 under
+var/run-data/strat-workflow-hardening/.
+
+## 2026-10-15: Diagnose and archive the ten-ticket Opus failure
+
+markov-run-fbc62d49's model job exited 1 after 51m24s. Native Workflow failed
+after 44m47s; outer CLI exited 0. All ten strategies created/refined/pushed and
+scored, all forty reviewer reports delivered. The live capture parser rejected
+two reports with repeated identical revise recommendation lines (RHAISTRAT-3
+feasibility, RHAISTRAT-7 testability). Missing composition inputs prevented
+publication and review recording for those two; eight final reviews completed.
+Completion guards rejected partial work. Reproduced both failures offline and
+confirmed removing only a duplicate identical line in memory makes each pass;
+saved evidence and FAIL unchanged. Recorded a new bug and plan findings.
+
+All ten claims released, confirmed by release record and Jira snapshot. Relay
+has one 502; all role reports still returned and terminal failures identify the
+parser. Three other feasibility reports trigger the existing external checker
+false negative despite being captured/composed. No model retry or resume.
+
+Final archive: fullsend-vertex-opus-ten-rfe-c10-20261015/markov-run-fbc62d49/
+20261015T203122658615Z under var/run-data/strat-workflow-hardening. Independently
+verified 10,935 files / 20,472,635,632 bytes, no capture-source errors, receipt
+published. Includes native data, 1,898 API body files and 7,392 syscall traces.
+Run task moved to done; audit saved as s1-fullsend-opus-ten-rfe-20261015.md.
+
+## 2026-10-15: Design mixed-state S1 batch
+
+Verified discovery, STRAT/RFE status and label gates, host resume selection and
+freshness requirements in the current Fullsend fork. Draft scenario plan covers
+fresh creation, import/refinement, verified review-only recovery, stale/missing
+provenance fallback and ignored controls across roughly 20–30 Jira records.
+The existing all-new seed/checker needs extension. Record discovery, acquired
+and skipped sets separately: human-sign-off is currently gated after the batch
+cap. Plan no-reset, no-model preparation replay to check ordinary repeat safety.
+No fixture seed, Jira reset, paid run, commit/push or Markov sync performed.
+Plan: plans/strat-workflow-mixed-state-batch.md.
+
+## 2026-10-15: mixed-state S1 implementation and GLM launch
+
+Published the agreeing-recommendation parser fix as strat-creator fbc335b.
+Added the separate mixed-state tier, 29-issue manifest, genuine push provenance,
+pre-inference guard, immutable-control/per-ticket checks and a model-free repeat
+preparation. 89 offline benchmark tests pass; the separate real local-emulator
+suite passes eight tests including recovery reimport. Ruff, shell syntax and
+diff checks pass. Earlier retained archives and cancelled GLM evidence were
+independently reverified before reset.
+
+Breadboard a75c72b pushed and synced. One authorized GLM run launched:
+markov-run-eaf92e4d, job script-run-workflow-all-glm-5-3-1015-231702-8b0253.
+Live guard and primary process confirm candidate fbc335b, GLM 5.3/medium,
+cap ten, ten discovered/nine acquired: four create, three refine, two review.
+Human-signed-off RFE 13 skips after discovery cap; RFE 9 remains deferred.
+Initial GLM requests succeed through enmaas-personal. Observer PID 330749
+will archive and independently verify under
+var/run-data/strat-workflow-hardening/fullsend-glm-mixed-state-c10-20261015.
+No paid retry or Opus continuation. Completion and archival results pending.
+
+## 2026-10-16: stopped mixed-state GLM after native failure
+
+User requested stop. SIGTERM sent to the verified primary at 01:18:49Z,
+without deleting the pod. Claude exit 143, host validation one, lock release
+zero; all nine owned keys released. Job restart disabled. Native transcripts,
+API dumps, syscall traces and run artifacts retained; automatic collector
+started terminal archival at 01:20:37Z. Final verification pending.
+
+First native Workflow failed after 106m02s on the two review-only task statuses.
+The primary subsequently invoked a second native Workflow inside the same job;
+that also failed. Last result reports a review input/provenance mismatch, and
+the two saved task statuses at shutdown are Refined. Recorded the import versus
+completion-status contract bug; transcript analysis is still needed for the
+precise parent repair sequence. No new host job or Opus run was submitted.
+
+The finish checker passed its Jira/control/clone/ownership checks but skipped
+the live repeat after failure. Markov's independent check did not start: its
+306,233-byte seed argument exceeded the exec argument limit. Both defects are
+under bugs/open/ and the mixed-state plan records these findings. Original
+failure is retained. Archive destination and observer remain in the execution task.
+
+## 2026-10-16: mixed-state repair and one authorized Opus pass
+
+Published strat-creator f5691f7: verified review-only imports restore Refined
+before review hashes; duplicate push skipped; failed-receipt relaunch blocked.
+Full suite 1,041 passed / six skipped. Published Breadboard a2aec3c: seed JSON
+via stdin, native-failure monitor in new mixed Opus tier, skipped repeat remains
+a failure. Benchmark suite 96 passed with one optional skipped, separate local
+Jira suite nine passed, no inference. Prior captures independently verified.
+Launched only markov-run-5d3327ed at 13:49:39Z, exact Opus 4.6, batch cap ten
+and concurrency ten. Detached observer PID 1194342 retains terminal evidence
+under var/run-data/strat-workflow-hardening/fullsend-vertex-opus-mixed-state-c10-20261016.
+Live process verification passed: candidate clean, Opus/all aliases pinned,
+high effort, cap ten, monitor enabled, nine expected resume points; successful
+Vertex responses observed. Job script-run-workflow-all-claude-opus-4-6-1016-135017-13fd26.
+Result pending; no replacement model job.
+
+## 2026-10-16: mixed Opus result verified
+
+markov-run-5d3327ed completed. Pipeline exit zero; model job 45m14s, native
+Workflow 41m09.550s. All nine tickets and model-free repeat passed; seven
+approve/two revise. All 36 role reports delivered, hash-matched and composed.
+Pinned benchmark remains failed on three formatting false negatives; recorded
+repeated-judgment bug and recurrences without changing stored results.
+Final archive independently verified: 11,940 files / 22,344,722,063 bytes,
+receipts published. Task moved done; plan and audit updated. No new model run.

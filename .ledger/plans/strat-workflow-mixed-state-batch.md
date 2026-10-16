@@ -1,7 +1,7 @@
 # Mixed-state S1 batch: fresh work, recovery and repeat safety
 
-Status: failed GLM run archived and independently verified; repairs and one
-explicitly authorized Opus pass are in progress.
+Status: failed GLM run archived and independently verified; repairs are published and one
+explicitly authorized Opus pass completed (markov-run-5d3327ed).
 The user requested a batch limit of ten against
 roughly 20–30 Jira issues containing RFEs and STRATs in mixed states. The
 gating rules are available in the current Fullsend fork. The agreeing-verdict
@@ -11,7 +11,7 @@ a75c72b is pushed/synced. Run markov-run-eaf92e4d launched at 23:16:30Z on
 Live pre-inference guard and actual process verification confirm all expected
 resume points, nine acquired keys and GLM routing; no source changes at launch.
 [GLM execution](../tasks/done/s1-mixed-state-glm.md).
-[Repair and Opus task](../tasks/current/s1-mixed-state-repair-opus.md).
+[Repair and Opus task](../tasks/done/s1-mixed-state-repair-opus.md).
 
 ## First mixed-run findings
 
@@ -210,3 +210,32 @@ Candidate f5691f7 is pushed to the Fullsend fork. Full component suite:
 passes all nine separately against the committed candidate. Ruff, shell syntax
 and diff checks pass. No model calls were used in these regressions. The
 s1-mixed-opus tier authorizes exactly one Opus 4.6 pass after these checks.
+
+The fixed mixed Opus pass launched at 2026-10-16T13:49:39Z as
+markov-run-5d3327ed, Breadboard a2aec3c, candidate f5691f7. One iteration,
+cap ten and concurrency ten, expected nine acquired. Archive root:
+var/run-data/strat-workflow-hardening/fullsend-vertex-opus-mixed-state-c10-20261016.
+Detached archive observer PID 1194342; no automatic replacement run. This
+launch record preceded the terminal findings below. See the repair task for
+live verification and final evidence.
+
+## Opus terminal findings
+
+Pipeline succeeded in 45m14s job time (41m09.550s native Workflow). All nine
+acquired tickets completed: four fresh, three refine, two review-only. The
+restored review-only status passed without late metadata changes or duplicate
+pushes. Seven approve, two revise. All controls, prior effects, owned-lock
+release and the zero-model repeat passed. Deferred RFE 9 remains available;
+human-signed-off RFE 13 remains skipped.
+
+The separate pinned benchmark remains failed solely on reviewer_outputs_returned:
+three formatting false negatives among 36 reports. Independent API return,
+provenance-hash and composed-review inspection verifies all 36 were delivered
+and preserved. Numbered findings and Mostly sound recur; repeated consistent
+Testability fields expose another checker assumption. Read-only diagnostic
+replays isolate all three. Preserve the historical result; fix with offline
+positive/negative report replays before any further paid test.
+
+Final archive independently verified, receipts published: 11,940 files /
+22,344,722,063 bytes, complete/final with no source errors. No replacement run.
+[Audit](../notes/s1-mixed-state-opus-20261016.md).

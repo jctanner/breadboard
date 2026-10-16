@@ -2,6 +2,72 @@
 
 ## Current milestone
 
+- [Mixed-state S1 batch](plans/strat-workflow-mixed-state-batch.md):
+  29-record fixture implemented; real local-emulator preparation, reimport and
+  repeat checks pass without inference. Ten candidates produce nine acquired
+  (four fresh, three refine, two review-only) and one deferred. Source a75c72b
+  pushed/synced; GLM run markov-run-eaf92e4d failed and was stopped on request.
+  Nine reviews recorded; review-only import/status contract and oversized
+  checker argument exposed. All nine claims released; final archive independently
+  verified, 17,077 files / 23.30 GB. [GLM result](tasks/done/s1-mixed-state-glm.md).
+  [Repair and one authorized Opus pass](tasks/done/s1-mixed-state-repair-opus.md):
+  f5691f7 published; 1,041 component tests pass, 96 benchmark checks plus nine
+  local-emulator tests. Opus markov-run-5d3327ed completed all nine tickets and the model-free repeat
+  in 45m14s job time. All 36 reports delivered; pinned eval rejects three for
+  format. Final archive independently verified, 11,940 files / 22.34 GB.
+  [Audit](notes/s1-mixed-state-opus-20261016.md).
+
+- [Accept repeated agreeing reviewer recommendations](tasks/done/strat-review-agreeing-recommendations.md):
+  published as fbc335b in the Fullsend fork and aligned in the benchmark; report
+  bytes/hashes preserved, invalid/conflicting verdicts rejected. Full suite:
+  1,033 passed / seven skipped; 79 benchmark tests pass; both failed reports
+  replay unchanged. Mixed-state tier pins the fix; historical pins stay intact.
+
+- [Ten-ticket S1 Opus run at cap ten](tasks/done/s1-ten-ticket-opus-c10.md):
+  markov-run-fbc62d49 failed after 51m24s: 10 strategies created/refined/pushed,
+  40 role reports delivered, 38 captured, eight final reviews published.
+  Duplicate identical recommendations blocked two captures. Completion guard
+  caught partial work; all ten claims released. Archive independently verified:
+  10,935 files / 20.47 GB, receipt published. No rerun.
+  [Audit](notes/s1-fullsend-opus-ten-rfe-20261015.md).
+- [Repeated identical recommendation capture fix](bugs/fixed/strat-review-duplicate-recommendation-capture.md):
+  published parser and aligned checker accept agreeing repeats and reject
+  conflicts; originals and historical FAIL preserved.
+- [Stopped ten-ticket GLM run](tasks/done/s1-ten-ticket-glm-c10.md):
+  markov-run-d72c2f57 cancelled. Retained API dumps, syscall traces and workflow
+  stream archived and verified: 894 files / 6.12 GB, receipt published.
+  Deleted pod-local/native data loss is disclosed.
+
+- [Ten-ticket S1 batch and concurrency ten](tasks/done/strat-workflow-ten-ticket-config.md):
+  both current hardening tiers updated, ten distinct RFE fixtures ready (three
+  newly added), 75 tests pass. Source 0359a9a pushed and synced to Markovd;
+  all 64 imported files match and read-only seed validation passes. No model
+  run or Jira reset. Reviewer dispatch remains deferred and unchanged.
+
+- [One-ticket Fullsend S1 / Vertex Opus smoke](tasks/done/s1-fullsend-vertex-opus-smoke.md):
+  `markov-run-d7043ace` completed in 27m54s, approve 7/8; all four reports
+  delivered and preserved. All 108 Opus responses match successful real Vertex
+  records, 3.74M tokens. Strict evaluation rejects feasibility section formatting;
+  no missing handoff. Final archive independently verified: 1,612 files / 6.36 GB,
+  complete/final, no archive errors, receipt published.
+  [Audit](notes/s1-fullsend-vertex-opus-smoke-20261015.md).
+
+- [Use the Fullsend S1 source in Markov](tasks/done/strat-workflow-fullsend-source.md):
+  PR #85 / `feat/s1-workflow-hardening` pinned at `6a05210` for both hardening
+  tiers. Breadboard `5493469` pushed and synced into Markovd; 72 offline checks,
+  cluster clone and read-only seed validation pass. No model job launched.
+
+- [Model Relay Vertex upstream](tasks/done/model-relay-vertex-upstream.md):
+  implemented and deployed; 43 tests and browser checks pass. Google OAuth
+  verified, built-in default routes through the new Vertex account and GLM
+  retains its EnMaaS override. Key ignored/private; no model inference spent.
+
+- [Port S1 hardening onto the Fullsend fork](tasks/done/strat-creator-fullsend-s1-port.md):
+  local feature branch `feat/s1-workflow-hardening` in the user's
+  jctanner-fullsend-ai checkout, tip 6a05210. Exact PR #83 commits precede all
+  twelve local follow-ups; newer main changes remain intact. Full tests:
+  1,005 passed, seven skipped; type validation and diff checks pass. No paid run.
+
 - [Failed dashboard job durations](bugs/fixed/dashboard-failed-job-duration.md):
   fixed and deployed; all four failed jobs keep stable durations across live
   refreshes, detail duration agrees, and 10 regression tests pass.
@@ -249,7 +315,13 @@ Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 
 ## Open integration bugs
 
+- [Consistent repeated role judgment rejected](bugs/open/strat-review-gate-repeated-judgment-false-negative.md).
+
 - [Qualified architecture judgment rejected by the benchmark](bugs/open/strat-review-gate-mostly-sound-false-negative.md).
+- [Delivered numbered feasibility findings rejected by the benchmark](bugs/open/strat-review-gate-numbered-findings-false-negative.md).
+- [Reviewer Skill serialization](bugs/open/strat-reviewer-skills-serialized.md):
+  deferred by the user; about six minutes of ideal single-ticket savings does
+  not currently justify the concurrency, provenance and recovery changes.
 - [Jira processing labels are not atomic leases](bugs/open/strat-jira-label-locks-not-atomic.md).
   Owner-bound recovery/cleanup detects conflicts; cross-host fencing remains a
   separate production qualification requirement.

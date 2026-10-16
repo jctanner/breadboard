@@ -49,7 +49,7 @@ Each recovered by copying the result to repository `tmp/strat-assess/<KEY>/`,
 verifying equal hashes, then retrying begin. The rejected-to-success intervals
 were 9m26s, 13m39s and 3m02s. `git diff --stat` on the live target was empty.
 
-[Open bug, reproduction and proposed repair](../bugs/open/strat-workflow-scorer-path-outside-composition-scope.md).
+[Open bug, reproduction and proposed repair](../bugs/fixed/strat-workflow-scorer-path-outside-composition-scope.md).
 The initial scope report for RHAISTRAT-2 was also rejected by composition for
 two Recommendation lines. Its parent launched one replacement scope Skill,
 which returned a captured report. This is an extra specialist call inside the

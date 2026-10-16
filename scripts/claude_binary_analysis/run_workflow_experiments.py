@@ -64,6 +64,10 @@ class Handler(BaseHTTPRequestHandler):
                 blocks = [{"type": "tool_use", "id": "tool_fixture_structured", "name": "StructuredOutput", "input": {"ok": True, "marker": "structured"}}] if not results else [{"type": "text", "text": "fixture done"}]
             else:
                 blocks = [{"type": "text", "text": "WORKFLOW_FIXTURE_FINAL_TEXT"}]
+        elif server.blocking_hook_timeout and any(
+                c.get("tool_use_id") == "tool_fixture_workflow" and c.get("is_error") for c in results) \
+                and not any(c.get("tool_use_id") == "tool_fixture_workflow_retry" for c in results):
+            blocks = [{"type": "tool_use", "id": "tool_fixture_workflow_retry", "name": "Workflow", "input": server.input}]
         elif resume_input is not None:
             blocks = [{"type": "tool_use", "id": f"tool_fixture_resume_{server.resume_round}", "name": "Workflow", "input": resume_input}]
         elif server.input is not None and not results:
@@ -137,6 +141,8 @@ def main() -> int:
     parser.add_argument("--text-only-agents", action="store_true", help="Return prose even when StructuredOutput is offered")
     parser.add_argument("--named-fixtures", choices=["valid", "invalid-project"], help="Create competing user/project .js workflows")
     parser.add_argument("--timeout", type=int, default=60)
+    parser.add_argument("--blocking-hook-timeout", action="store_true",
+                        help="time out the first Workflow pre-hook and verify it blocks execution")
     args = parser.parse_args()
     binary = args.binary.resolve()
     output = args.output.resolve()
@@ -154,6 +160,17 @@ def main() -> int:
             (directory / "ignored.ts").write_text('export const meta={name:"typescript-only",description:"Extension fixture"};return 1;')
     provenance = commit_fixture_repository(fixtures)
     settings = json.loads(args.settings.read_text()) if args.settings else {"enableWorkflows": True}
+    if args.blocking_hook_timeout:
+        import shlex
+        probe = output / "timeout-hook.py"
+        probe.write_text("import json,sys,time\nfrom pathlib import Path\n"
+            f"log=Path({str(output / 'timeout-events.jsonl')!r})\n"
+            "first=not log.exists()\n"
+            "with log.open('a') as stream: stream.write(json.dumps(json.load(sys.stdin))+'\\n')\n"
+            "if first: time.sleep(3)\n")
+        settings["hooks"] = {"PreToolUse": [{"matcher": "Workflow", "hooks": [{
+            "type": "command", "command": "python3 " + shlex.quote(str(probe)),
+            "timeout": 1, "onFailure": "block"}]}]}
     write_json(config / "settings.json", settings)
     api_output = output / "api-captures"
     api_output.mkdir()
@@ -167,6 +184,7 @@ def main() -> int:
     server.resume_round = 0
     server.seen_notifications = set()
     server.text_only_agents = args.text_only_agents
+    server.blocking_hook_timeout = args.blocking_hook_timeout
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     env = {
@@ -181,6 +199,10 @@ def main() -> int:
         "NO_COLOR": "1",
     }
     argv = [str(binary), "--print", "--verbose", "--output-format", "stream-json", "--debug-file", str(output / "debug.log"), "--permission-mode", "bypassPermissions", "--max-turns", "8", "Use a workflow to run the supplied local fixture and wait for its completion."]
+    if args.blocking_hook_timeout:
+        argv[1:1] = ["--model", "rits/zai-org/glm-5-3"]
+        env.update({k: "rits/zai-org/glm-5-3" for k in ("ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL",
+            "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL")})
     write_json(output / "command.json", {"argv": argv, "binary_sha256": sha256(binary), "fixture_repository": provenance, "fixture_tree": tree_manifest(fixtures), "initial_config_tree": tree_manifest(config), "settings": settings, "input": server.input, "controls": {"resume": args.resume_controls, "named_fixtures": args.named_fixtures, "text_only_agents": args.text_only_agents}, "environment_keys": sorted(env), "inherited_values": ["PATH"]})
     started = time.monotonic()
     try:
@@ -195,9 +217,21 @@ def main() -> int:
     (output / "stdout.jsonl").write_bytes(stdout)
     (output / "stderr.txt").write_bytes(stderr)
     result = {"case": args.case, "returncode": code, "duration_seconds": time.monotonic() - started, "api_requests": server.captures, "agent_requests": server.agent_requests, "binary_sha256": sha256(binary)}
+    if args.blocking_hook_timeout:
+        # The receiving result, rather than a log line alone, must deny the call.
+        events = [json.loads(line) for line in stdout.decode().splitlines() if line.startswith("{")]
+        denied = [b for event in events if event.get("type") == "user"
+                  for b in event.get("message", {}).get("content", [])
+                  if isinstance(b, dict) and b.get("tool_use_id") == "tool_fixture_workflow" and b.get("is_error")]
+        states = [json.loads(p.read_text()) for p in (config / "projects").rglob("workflows/wf_*.json")]
+        denied = [b for b in denied if "hook" in str(b.get("content", "")).lower() and "tim" in str(b.get("content", "")).lower()]
+        result["passed"] = bool(denied) and len(states) == 1 and states[0].get("status") == "completed"
+        result["denied_timeout_calls"] = len(denied)
+        result["workflow_states"] = len(states)
+        result["provider_calls"] = 0
     write_json(output / "results.json", result)
     print(json.dumps(result))
-    return 1 if code else 0
+    return 1 if code or result.get("passed") is False else 0
 
 
 if __name__ == "__main__":

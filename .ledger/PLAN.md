@@ -2,6 +2,9 @@
 
 ## Current milestone
 
+- [PR 85 remediation](tasks/done/strat-creator-pr85-remediation.md): pushed fixes f941955, 21 original threads addressed, native/default checks passed; no paid inference.
+- [PR 85 historical DCO](tasks/pending/strat-creator-pr85-historical-dco.md): 15 older unsigned commits; history/author certification requires a separate decision.
+
 - [Mixed-state S1 batch](plans/strat-workflow-mixed-state-batch.md):
   29-record fixture implemented; real local-emulator preparation, reimport and
   repeat checks pass without inference. Ten candidates produce nine acquired
@@ -94,7 +97,7 @@
   [Three-RFE GLM then conditional Opus validation](tasks/done/s1-hardening-three-rfe-glm-opus.md)
   is complete: GLM passed in 2h13m26s, Opus failed after about 73 minutes;
   both final archives independently verify. The [duration diagnosis](notes/s1-hardening-three-rfe-glm-live-duration.md)
-  found a [scorer-path integration bug](bugs/open/strat-workflow-scorer-path-outside-composition-scope.md).
+  found a [scorer-path integration bug](bugs/fixed/strat-workflow-scorer-path-outside-composition-scope.md).
   Opus exposed Anthropic schema rejection, then its primary
   [edited source and freshness and relaunched](bugs/open/s1-primary-edits-source-and-freshness-after-failure.md).
   Host validation refused the changed baseline; final output does not qualify
@@ -314,6 +317,11 @@ Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 - [Jira TLS passthrough decision](decisions/ADR-0010-jira-sandbox-tls-passthrough.md).
 
 ## Open integration bugs
+
+- [PR 85 review triage](notes/strat-creator-pr85-review-triage.md): scorer-path workarounds and two timed-out guards found inside the successful mixed Opus run; schema/no-runtime-evidence claims distinguished from valid remaining defects.
+- [StructuredOutput hook timeouts](bugs/fixed/strat-structured-output-hooks-timeout-fail-open.md).
+- [Scorer shell preflight unavailable](bugs/fixed/strat-scorer-recovery-preflight-has-no-shell.md).
+- [Review-only round-trip fingerprint](bugs/fixed/strat-review-only-roundtrip-fingerprint.md).
 
 - [Consistent repeated role judgment rejected](bugs/open/strat-review-gate-repeated-judgment-false-negative.md).
 

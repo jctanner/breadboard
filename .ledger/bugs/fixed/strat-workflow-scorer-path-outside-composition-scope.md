@@ -55,3 +55,15 @@ run's evidence and pin before any later repair or retest.
 
 [Live diagnosis](../../notes/s1-hardening-three-rfe-glm-live-duration.md).
 [Batch task](../../tasks/done/s1-hardening-three-rfe-glm-opus.md).
+
+## Mixed Opus recurrence, 2026-10-16
+
+At f5691f7, all nine review callers in markov-run-5d3327ed encountered this
+error (twelve rejected begin calls total). All staged score results under the
+repository and retried successfully. The operational pass does not dismiss
+this defect. [PR triage](../../notes/strat-creator-pr85-review-triage.md).
+
+## Fixed in source, 2026-10-16
+
+strat-creator commit f941955 on feat/s1-workflow-hardening. Scorer and interactive review directories now live under repository tmp/strat-assess; matching Workflow path checks and the actual native composition control pass without staging an outside-repository file.
+No paid model batch was rerun for this remediation; historical evidence is unchanged.

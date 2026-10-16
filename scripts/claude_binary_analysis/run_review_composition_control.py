@@ -13,6 +13,7 @@ import subprocess
 import threading
 
 from mock_api_support import respond
+from hook_control_support import observed_settings
 from run_plugin_experiments import commit_fixture_repository, sha256, write_json
 
 MODEL = "rits/zai-org/glm-5-3"
@@ -86,7 +87,7 @@ class Handler(BaseHTTPRequestHandler):
                     verdict = {"key": key, "recommendation": "approve" if key == "STRAT-9501" else "revise",
                                "needs_attention": key == "STRAT-9502"}
                     if attempt == 0:
-                        verdict = {"key": key, "recommendation": "revise", "needs_attention": False}
+                        verdict = {**verdict, "key": "STRAT-9999"}  # violate the assigned-key schema once
                     blocks = [tool(key + "_output_" + str(attempt), "StructuredOutput", verdict)]
             category = "receiver"
         else:
@@ -118,7 +119,7 @@ def main():
     root.mkdir(); config.mkdir()
     for relative in ("scripts", "workflows", ".fullsend/plugins/strat-pipeline", "tests/review-composition",
                      "tests/fixtures/review-composition", ".claude/skills/strategy-review", ".claude/agents"):
-        shutil.copytree(args.candidate / relative, root / relative, symlinks=True,
+        shutil.copytree(args.candidate / relative, root / relative, symlinks=False,
                         ignore=shutil.ignore_patterns("__pycache__"))
     setup = subprocess.run(["python3", "tests/review-composition/fixture.py", "setup"], cwd=root, capture_output=True)
     (output / "setup.stdout").write_bytes(setup.stdout)
@@ -128,7 +129,7 @@ def main():
     spec = importlib.util.spec_from_file_location("authored_composition", root / "tests/review-composition/fixture.py")
     fixture = importlib.util.module_from_spec(spec); spec.loader.exec_module(fixture)
     repository = commit_fixture_repository(root)
-    write_json(config / "settings.json", {"enableWorkflows": True, "effortLevel": "medium"})
+    write_json(config / "settings.json", observed_settings(output, {"enableWorkflows": True, "effortLevel": "medium"}))
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     server.root, server.fixture, server.count, server.launched = root, fixture, 0, False
     server.mixed_begin_log = args.mixed_begin_log
@@ -139,6 +140,7 @@ def main():
            "DISABLE_AUTOUPDATER": "1", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
            "ANTHROPIC_API_KEY": "local-analysis-placeholder-not-a-credential",
            "ANTHROPIC_BASE_URL": f"http://127.0.0.1:{server.server_port}"}
+    env["CLAUDE_BIN"] = str(args.binary.resolve())
     env.update({name: MODEL for name in ("ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL",
                "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL", "ANTHROPIC_DEFAULT_FABLE_MODEL")})
     argv = [str(args.binary.resolve()), "--print", "--verbose", "--output-format", "stream-json", "--model", MODEL,
@@ -151,6 +153,7 @@ def main():
                "provider_calls": 0, "inherited_values": ["PATH"], "environment_keys": sorted(env)})
     shutil.copy2(__file__, output / Path(__file__).name)
     shutil.copy2(Path(__file__).with_name("mock_api_support.py"), output / "mock_api_support.py")
+    shutil.copy2(Path(__file__).with_name("hook_control_support.py"), output / "hook_control_support.py")
     try:
         process = subprocess.run(argv, cwd=root, env=env, capture_output=True, timeout=150)
         code, stdout, stderr = process.returncode, process.stdout, process.stderr

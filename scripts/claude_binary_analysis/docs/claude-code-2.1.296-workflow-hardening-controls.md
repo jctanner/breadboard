@@ -229,3 +229,44 @@ snapshots are privately archived under
 repair records. No new binary source carving was needed for these controls.
 Other Claude releases, Fullsend/OpenShell execution, full production batches,
 strategy quality and statistical reliability remain unqualified here.
+
+## PR 85 qualification, 2026-10-16
+
+The mixed Opus archive showed two critical hook processes killed at their
+ten-second budgets while execution continued. Successful business completion
+did not establish that those hooks enforced their checks. The repair keeps live
+Jira verification in longer-running command helpers and the trusted host, and
+uses local evidence in the short hooks. Pre/PostToolUse commands now specify
+`onFailure: block`; this failure policy is supported by the qualified runtime.
+It does not apply to Stop/SubagentStop timeouts.
+
+A forced-timeout control against the same unmodified 2.1.296 binary timed out
+the first Workflow pre-hook at one second. Its receiving tool result was an
+error, no first Workflow executed, and a later permitted launch produced the
+only native Workflow state. Five loopback requests, one agent request, zero
+provider calls. The runner requires a hook/timeout error and one completed
+state, so an unrelated script-validation error cannot count as a pass.
+
+The actual refinement control again rejected the invented readiness snapshot
+and kept two completed targets ready and two incomplete targets blocked. The
+composition control preserved eight reports across two targets, with numeric
+approve/revise outcomes. That control's first faulty receipt violates its
+assigned-key schema; cross-field verdict consistency is separately tested by
+the production JavaScript checks under Node. A schema-valid inconsistent
+verdict is not claimed to be rejected automatically by Claude.
+
+Native completion controls rejected an invented hash, failed a run missing a
+required role report, and recognized completed work despite an injected final
+reporting error (`retry_work: false`). Sanitized real PreToolUse Workflow and
+StructuredOutput, PostToolUse forked Skill, and SubagentStop events are checked
+in with the component tests. They retain actual field names and authored text;
+only workspace path prefixes change. Scope failure re-entry is bounded by the
+adapter's `stop_hook_active` handling and covered by exception-path tests.
+
+The harness image now pins Fullsend 0.47.1's multi-architecture index
+`sha256:2fc886b02c280ccf11f317662d182a56cefa6f9299ca9cbd54e780fced743ca7`.
+Published OCI build history and the tagged Containerfile both specify Claude
+Code 2.1.296 and a build-time version assertion. The component checks that
+version before work. These are native and metadata controls, not a claim that
+the full pipeline was rerun inside Fullsend/OpenShell. No paid model run was
+launched for this remediation.

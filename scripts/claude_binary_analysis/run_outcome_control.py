@@ -14,6 +14,7 @@ import subprocess
 import threading
 
 from mock_api_support import respond
+from hook_control_support import observed_settings
 from run_plugin_experiments import sha256, write_json
 
 MODEL = "rits/zai-org/glm-5-3"
@@ -128,7 +129,7 @@ def main():
     fixture = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(fixture)
     import strat_pipeline_outcome as outcome
-    write_json(config / "settings.json", {"enableWorkflows": True, "effortLevel": "medium"})
+    write_json(config / "settings.json", observed_settings(output, {"enableWorkflows": True, "effortLevel": "medium"}))
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     server.root, server.outcome, server.count, server.launched = root, outcome, 0, False
     server.config = config
@@ -145,6 +146,7 @@ def main():
            "FULLSEND_OUTPUT_DIR": str(root / "output"),
            "ANTHROPIC_API_KEY": "local-analysis-placeholder-not-a-credential",
            "ANTHROPIC_BASE_URL": f"http://127.0.0.1:{server.server_port}"}
+    env["CLAUDE_BIN"] = str(args.binary.resolve())
     env.update({name: MODEL for name in ("ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL",
                "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL", "ANTHROPIC_DEFAULT_FABLE_MODEL")})
     argv = [str(args.binary.resolve()), "--print", "--verbose", "--output-format", "stream-json", "--model", MODEL,
@@ -156,6 +158,7 @@ def main():
                                         "freshness_fault": args.freshness_fault,
                                         "environment_keys": sorted(env)})
     shutil.copyfile(__file__, output / Path(__file__).name)
+    shutil.copy2(Path(__file__).with_name("hook_control_support.py"), output / "hook_control_support.py")
     try:
         process = subprocess.run(argv, cwd=root, env=env, capture_output=True, timeout=150)
         code, stdout, stderr = process.returncode, process.stdout, process.stderr

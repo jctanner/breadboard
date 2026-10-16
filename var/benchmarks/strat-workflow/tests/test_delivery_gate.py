@@ -13,6 +13,24 @@ KEY = "RHAISTRAT-1"
 
 
 class AssessmentTests(unittest.TestCase):
+    def test_numbered_explanations_and_consistent_role_repeats(self):
+        for role, label, judgment in (
+                ("feasibility", "Feasibility", "feasible"),
+                ("architecture", "Architecture assessment", "Mostly sound"),
+                ("testability", "Testability", "Partially testable")):
+            report = (f"### {KEY}: Timeouts\n**{label}**: {judgment}\n"
+                      "1. The gateway already owns cancellation for this route.\n"
+                      f"**{label}**: {judgment.upper()}\n**Recommendation**: revise")
+            self.assertTrue(classify(report, KEY, role)["assessment_present"])
+            for conflict in ("pending", "<TODO>", "untestable", "infeasible", "conflicts with platform"):
+                changed = report + f"\n**{label}**: {conflict}"
+                self.assertFalse(classify(changed, KEY, role)["assessment_present"])
+            for unfinished in ("I will write the assessment after reading the files.",
+                               "TODO explain the cancellation and error behavior here.",
+                               "Review is pending while I gather more background."):
+                changed = report.replace("The gateway already owns cancellation for this route.", unfinished)
+                self.assertFalse(classify(changed, KEY, role)["assessment_present"])
+
     def test_repeated_agreeing_decisions_preserve_completed_assessment(self):
         for role in check_run.REVIEWER_SKILLS.values():
             for verdict in ("approve", "revise", "reject"):

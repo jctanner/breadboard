@@ -12,7 +12,7 @@ FIELDS = {
     "feasibility": ("Feasibility", r"feasible|infeasible|needs revision"),
     "testability": ("Testability", r"(?:(?:partially|largely|mostly|fully) )?testable|untestable"),
     "scope": ("Scope assessment", r"right[- ]sized|too large|too small|unbounded"),
-    "architecture": ("Architecture assessment", r"sound|concerns identified|conflicts with platform"),
+    "architecture": ("Architecture assessment", r"(?:(?:mostly|largely) )?sound|concerns identified|conflicts with platform"),
 }
 SUPPORT = {
     "feasibility": ("Effort estimate", "RFE alignment", "Key concerns"),
@@ -25,6 +25,7 @@ FIELD = re.compile(r"^\s*(?:\*\*)?([A-Za-z][A-Za-z /-]*?)(?:\*\*)?"
 PLACEHOLDER = re.compile(r"^\s*(?:<[^>\n]+>|(?:TODO|TBD|placeholder|lorem ipsum)\b)", re.I)
 FINDINGS = re.compile(r"^(?:\*\*(?:Detailed findings|Findings|Rationale)\*\*|"
                       r"#{1,6}\s+(?:Detailed findings|Findings|Rationale))\s*:?\s*$", re.M | re.I)
+NUMBERED_FINDINGS = re.compile(r"^\s*\d+[.)]\s+(.+)$", re.M)
 STATUS = re.compile(
     r"^(?:skill execution completed|review_scope_error:|(?:api |connection |upstream )?error\b|"
     r"(?:i(?:'ve| have) |we(?:'ve| have) )?(?:launched|started)\b|"
@@ -101,13 +102,21 @@ def classify(report, key, role, *, is_error=False):
                 r"no architecture context available\b", judgments[0], re.I):
             return finish("skipped", "architecture context unavailable; no assessment claimed")
         return finish("incomplete", "unsupported role skip")
-    if len(judgments) != 1 or not re.match(r"(?:" + outcomes + r")\b", judgments[0], re.I):
+    if not judgments:
         return finish("incomplete", "missing or unfinished assigned-role judgment")
-    if PLACEHOLDER.search(judgments[0]):
-        return finish("incomplete", "assigned-role judgment contains a template placeholder")
+    normalized = set()
+    for value in judgments:
+        judgment = re.match(r"(?:" + outcomes + r")\b", value, re.I)
+        if (not judgment or PLACEHOLDER.search(value) or re.match(
+                r"\s*(?:/|or\b)\s*(?:" + outcomes + r")\b", value[judgment.end():], re.I)):
+            return finish("incomplete", "missing or unfinished assigned-role judgment")
+        normalized.add(judgment[0].lower().replace("-", " "))
+    if len(normalized) != 1:
+        return finish("incomplete", "conflicting assigned-role judgments")
     explanations = [judgments[0], *(value for name in SUPPORT[role]
                                    for value in values.get(name.lower(), []))]
     explanations.extend(section[heading.end():] for heading in FINDINGS.finditer(section))
+    explanations.extend(heading[1] for heading in NUMBERED_FINDINGS.finditer(section))
     if not any(_explains(value) for value in explanations):
         return finish("incomplete", "no explanatory role content beyond verdict/status/boilerplate")
     return finish("assessment", "assigned-role judgment, recommendation and explanation present")

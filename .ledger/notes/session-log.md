@@ -803,3 +803,51 @@ Pinned benchmark remains failed on three formatting false negatives; recorded
 repeated-judgment bug and recurrences without changing stored results.
 Final archive independently verified: 11,940 files / 22,344,722,063 bytes,
 receipts published. Task moved done; plan and audit updated. No new model run.
+
+Cross-ticket audit follow-up: all nine acquired subjects unique; eight control
+subjects were duplicated by the seed fixture. All 36 reviewer report targets
+and 511 scope events inspected; no cross-ticket read attempts. 37 denied Reads
+were correct tickets under local/ instead of artifacts/. No contamination
+detected by scope/identity/copying checks; findings saved in plan/run audit.
+
+## 2026-10-16: PR 85 comments export
+
+Added scripts/fetch_pr_comments.py. Read-only GitHub export uses GITHUB_TOKEN
+from .env.github, follows pagination for conversation comments, reviews and
+inline comments/replies, and includes visible pending-review comments. Saved
+/tmp/strat-creator-pr85-comments.txt: 26 entries (3 regular, 2 review summaries,
+21 inline), each with ID, author, URL and UTC date; updates and review/file/reply
+metadata included where supplied. Verified IDs/dates, pagination and token
+absence. Compile, Ruff and diff checks pass. No comments posted or source push.
+
+## 2026-10-16: PR 85 evidence-based comment assessment
+
+Triage of all 21 inline comments saved in notes/strat-creator-pr85-review-triage.md.
+Rebut schema-no-source claim with retained actual Opus 400 errors; correct claim
+that hook shapes have no runtime observations while retaining fixture/version
+requests. Most other findings remain valid or untested by a successful batch.
+Mixed Opus traces confirm nine scorer-path workarounds, all nine scorers unable
+to run their shell preflight, and two critical StructuredOutput hooks killed
+at roughly ten seconds with execution continuing. Host validation still passed.
+Model-free probes reproduce Markdown proof drift, CRLF verification rejection
+and empty extraction without output. Created three bugs, updated known scorer
+path bug, run audit/plans/index. No model calls, component source edits, PR
+responses or dismissals. Historical outcomes and archived data unchanged.
+
+## 2026-10-16: PR 85 remediation completed
+
+Signed-off f941955 pushed to strat-creator feature branch. Rejected unsupported
+schema/evidence/universal-import claims, retained and fixed valid findings.
+All 21 original inline threads addressed and resolved with evidence, PR body
+updated and installer-owned config removed. Fixed scorer path/preflight/recovery,
+short-hook network/timeout handling and runtime pinning, terminal failure and
+failure handoff, semantic imports/live reused-push checks, ADF comparison, partial
+publication cleanup, skip/dry-run output, CRLF bytes, stop-hook re-entry and test
+isolation/fixtures/parity/coverage.
+
+make test-unit 1067 passed/5 skipped; make test 1067 passed/6 skipped. Seven
+zero-provider native control cases pass. Benchmark checker 97 tests/one skip;
+36/36 retained mixed-run reports accepted in separate replay. No historical
+result changed. Full control/test archive in var/run-data/strat-workflow-hardening/
+pr85-review-remediation-20261016. Four source bugs moved to fixed. Historical
+DCO failures (15 old commits) remain a separate pending decision; no force push.

@@ -216,7 +216,7 @@ no implementation or new test run was performed for item 9.
 ## Status
 
 During the first integrated three-RFE GLM validation, live diagnosis found
-a [scorer-path integration bug](../bugs/open/strat-workflow-scorer-path-outside-composition-scope.md)
+a [scorer-path integration bug](../bugs/fixed/strat-workflow-scorer-path-outside-composition-scope.md)
 not covered by the focused fixtures: Workflow scoring writes outside the
 repository while composition requires an in-repository input. This is a new
 concrete defect after the original repair review, not a reopening of rejected
@@ -526,3 +526,16 @@ checks. A no-reset discovery/preparation repeat can test the finished state
 without a second model invocation. The current late human-sign-off gate can
 reduce acquired work below the discovery batch cap; record that explicitly.
 [Scenario design](strat-workflow-mixed-state-batch.md). No Jira/model action yet.
+
+## PR 85 follow-up qualification, 2026-10-16
+
+Deeper review of the same successful mixed Opus run confirms all nine reviewers
+worked around the known scorer-path defect by staging files inside the repo.
+All nine scorers lacked Bash for their required recovery preflight. Strace also
+shows the refinement StructuredOutput guard and final completion guard killed
+by Claude after about ten seconds, with execution continuing. Host completion
+validation still passed. Operational completion therefore does not establish
+that every guard ran or that only benchmark-parser defects remain. A complex
+Markdown round-trip probe also confirms a review-only fingerprint coverage gap.
+These are open defects/qualification gaps; no new model run or source repair.
+[Review disposition and exact evidence](../notes/strat-creator-pr85-review-triage.md).

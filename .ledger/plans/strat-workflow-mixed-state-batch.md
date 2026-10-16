@@ -251,3 +251,16 @@ controls reuse subjects from the actionable/deferred pool. These are baseline
 fixture duplicates, not new clones created by agents, and all controls stayed
 unchanged. Use unique control subjects in a future fixture for clarity.
 [Detailed evidence](../notes/s1-mixed-state-opus-20261016.md).
+
+## PR 85 follow-up qualification, 2026-10-16
+
+Deeper review of the same successful mixed Opus run confirms all nine reviewers
+worked around the known scorer-path defect by staging files inside the repo.
+All nine scorers lacked Bash for their required recovery preflight. Strace also
+shows the refinement StructuredOutput guard and final completion guard killed
+by Claude after about ten seconds, with execution continuing. Host completion
+validation still passed. Operational completion therefore does not establish
+that every guard ran or that only benchmark-parser defects remain. A complex
+Markdown round-trip probe also confirms a review-only fingerprint coverage gap.
+These are open defects/qualification gaps; no new model run or source repair.
+[Review disposition and exact evidence](../notes/strat-creator-pr85-review-triage.md).

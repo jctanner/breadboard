@@ -28,6 +28,7 @@ steps:
             STRAT_MIXED_SEED_JSON: "{% if run.scenario == 'batch-mixed-state' %}/app/artifacts/scripts/{{ seed_job.body.job_name }}/seed.json{% endif %}"
             STRAT_TIMEOUT_MINUTES: "{{ test.timeout_minutes | default:90 }}"
             STRAT_CAPTURE_NATIVE: "{% if test.capture_native %}1{% else %}0{% endif %}"
+            STRAT_STOP_ON_WORKFLOW_FAILURE: "{% if test.stop_on_workflow_failure %}1{% else %}0{% endif %}"
             CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS: "{{ run.workflow_max_concurrent_agents }}"
     register: job
 
@@ -57,6 +58,7 @@ steps:
             STRAT_MIXED_SEED_JSON: "{% if run.scenario == 'batch-mixed-state' %}/app/artifacts/scripts/{{ seed_job.body.job_name }}/seed.json{% endif %}"
             STRAT_TIMEOUT_MINUTES: "{{ test.timeout_minutes | default:90 }}"
             STRAT_CAPTURE_NATIVE: "{% if test.capture_native %}1{% else %}0{% endif %}"
+            STRAT_STOP_ON_WORKFLOW_FAILURE: "{% if test.stop_on_workflow_failure %}1{% else %}0{% endif %}"
             CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS: "{{ run.workflow_max_concurrent_agents }}"
             CLAUDE_CODE_SUBAGENT_MODEL: "{{ run.model }}"
             ANTHROPIC_DEFAULT_OPUS_MODEL: "{{ run.model }}"

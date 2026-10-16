@@ -129,7 +129,8 @@ steps:
     type: bench_script
     params:
       path: check_run.py
-      args: ["{{ run | to_json }}", "{{ job_name }}", "{{ rfe_key }}", "{{ run_job.status }}", "{{ seed | to_json }}"]
+      args: ["{{ run | to_json }}", "{{ job_name }}", "{{ rfe_key }}", "{{ run_job.status }}", "-"]
+      stdin: "{{ seed | to_json }}"
     register: eval
 
   - name: load_eval_result

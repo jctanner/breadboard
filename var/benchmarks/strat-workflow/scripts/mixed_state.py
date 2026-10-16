@@ -427,6 +427,7 @@ def main(argv):
         result["ok"] = result["repeat"]["ok"]
     else:
         result["repeat"] = {"ok": False, "skipped": "original run or mixed-state checks failed; no repeat claims taken"}
+        result["ok"] = False
     write(out / "mixed-state-result.json", result)
     print(json.dumps(result))
     return 0 if result["ok"] else 1

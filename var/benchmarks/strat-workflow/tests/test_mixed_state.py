@@ -217,9 +217,13 @@ class LocalEmulatorTests(unittest.TestCase):
                                 str(raw), str(task)], target, os.environ.copy(), log)
                             mixed.command([sys.executable, "scripts/frontmatter.py", "set", str(task),
                                 f"strat_id={key}", f"source_rfe={row['key']}", f"jira_key={key}",
-                                f"title={row['summary']}", "priority=Major", "status=Refined"], target, os.environ.copy(), log)
+                                f"title={row['summary']}", "priority=Major", "status=Draft"], target, os.environ.copy(), log)
                     mixed.command([sys.executable, "scripts/strat_pipeline_state.py", "record-create"],
                                   target, os.environ.copy(), log)
+                    for row in report["rfes"][:2]:
+                        value = subprocess.check_output([sys.executable, str(target / "scripts/frontmatter.py"),
+                            "read", str(target / f"artifacts/strat-tasks/{row['strat_key']}.md")], cwd=target, text=True)
+                        self.assertEqual(json.loads(value)["status"], "Refined")
                     mixed.command([sys.executable, "scripts/strat_pipeline_state.py", "read"],
                                   target, os.environ.copy(), log)
                     mixed.command(["bash", str(state / "strat-creator/.fullsend/shared/release-locks.sh"), str(state)],

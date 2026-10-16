@@ -31,6 +31,14 @@ gate runs after discovery's cap, so this fixture selects ten, acquires nine and
 defers one actionable RFE. Its pre-inference guard checks that exact outcome.
 Earlier all-new scenarios and Tier 1 retain their original pins and behavior.
 
+The separately authorized `s1-mixed-opus` tier uses the same fixture with
+`claude-opus-4-6`, one iteration and cap ten. Its wrapper ends the primary
+invocation on a failed native Workflow, then performs normal validation,
+lock release and evidence capture. It records the native failure in
+`workflow-failure-stop.json`; it does not launch repair work. Other tiers keep
+their original monitor settings. Rich seed reports reach the independent
+checker through stdin so their size cannot exceed an exec argument limit.
+
 The mixed job saves before/after Jira inventories, exact prepared resume points,
 provenance and per-ticket checks. After successful cleanup it prepares once more
 against unchanged Jira, without Claude: completed work must stay excluded,

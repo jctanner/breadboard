@@ -3,6 +3,9 @@
 
     check_run.py '<run json>' <job name> <RFE key|batch-discover> <wait status> ['<seed json>']
 
+Use - as the seed argument to stream its JSON through stdin. Markov uses this
+form so rich-text fixture reports do not exceed the exec argument limit.
+
 The run JSON is the run-test workflow's `run` fact; the wait status is what
 Markov's job_wait saw (completed, failed, or running at the timeout).
 
@@ -335,7 +338,9 @@ def main(argv: list[str]) -> int:
                                 {"job_status": job.get("status"), "wait_status": waited})}
     try:
         if run.get("mode") == "batch":
-            seed = json.loads(argv[4])
+            # Large rich-text inventories exceed Linux's per-argument limit.
+            # Keep legacy direct callers working; Markov streams its seed.
+            seed = json.load(sys.stdin) if argv[4] == "-" else json.loads(argv[4])
             if seed.get("kind") == "mixed-state-v1":
                 jira_result, facts = mixed_jira_checks(seed, job_name)
             else:

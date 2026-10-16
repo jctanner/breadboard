@@ -135,6 +135,7 @@ summary = {
     "model": "${ANTHROPIC_MODEL:-}",
     "effort": "${STRAT_EFFORT:-high}",
     "workflow_max_concurrent_agents": num("${CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS:-}"),
+    "stop_on_workflow_failure": "${STRAT_STOP_ON_WORKFLOW_FAILURE:-0}" == "1",
     "bg_wait_ceiling_ms": int("${STRAT_BG_WAIT_CEILING_MS:-1800000}"),
     "dry_run": "$STRAT_DRY_RUN" in ("1", "true"),
     "job": "${PIPELINE_JOB_NAME:-}",
@@ -196,7 +197,13 @@ echo "output: $RUN_OUT/stream.jsonl (stderr: $RUN_OUT/claude-stderr.log)"
   # 10 minutes by default; a strategy run takes 10-20 minutes.
   export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS="${STRAT_BG_WAIT_CEILING_MS:-1800000}"
   # Raw output, unprocessed, to files and to the job log at the same time.
-  timeout "$((TIMEOUT_MINUTES * 60))" claude --print --verbose --output-format stream-json \
+  if [ "${STRAT_STOP_ON_WORKFLOW_FAILURE:-0}" = 1 ]; then
+    command_prefix=(python3 "$BENCH_SCRIPTS/watch_workflow.py" --repository "$TARGET_REPO_DIR"
+      --report "$OUT/workflow-failure-stop.json" --timeout "$((TIMEOUT_MINUTES * 60))" --)
+  else
+    command_prefix=(timeout "$((TIMEOUT_MINUTES * 60))")
+  fi
+  "${command_prefix[@]}" claude --print --verbose --output-format stream-json \
     ${ANTHROPIC_MODEL:+--model "$ANTHROPIC_MODEL"} --effort "${STRAT_EFFORT:-high}" \
     --plugin-dir "$TARGET_REPO_DIR/.fullsend/plugins/strat-pipeline" \
     --dangerously-skip-permissions "$WORKFLOW_COMMAND" \

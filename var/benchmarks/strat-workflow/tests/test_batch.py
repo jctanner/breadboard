@@ -74,6 +74,22 @@ def valid_report(key, role):
 
 
 class OutcomeTests(unittest.TestCase):
+    def test_large_seed_reaches_checker_through_stdin(self):
+        payload = {**seed(), "rich_text_fixture": "x" * 350000}
+        run = {"id": "r1", "tier": "s1-mixed-opus", "test": "S1", "arm": "workflow",
+               "variant": "opus", "model": "claude-opus-4-6", "repeat": 1,
+               "scenario": "batch-mixed-state", "mode": "batch", "batch_size": 10,
+               "strat_creator_ref": "a" * 40, "breadboard_ref": "b" * 40, "mlflow_experiment": "test"}
+        with patch("sys.stdin", io.StringIO(json.dumps(payload))), patch("sys.stdout", io.StringIO()) as output, \
+                patch.object(check_run, "dashboard", return_value=(200, {"status": "completed"})), \
+                patch.object(check_run, "batch_jira_checks", return_value=({}, {"strategies": []})) as received, \
+                patch.object(check_run, "reviewer_returns", return_value={"ok": True, "detail": {}}), \
+                patch.object(check_run, "api_bodies", return_value=[]), \
+                patch.object(check_run, "api_usage", return_value={"by_model": {"claude-opus-4-6": {}}}):
+            self.assertEqual(check_run.main([json.dumps(run), "job", "batch-discover", "completed", "-"]), 0)
+            self.assertTrue(json.loads(output.getvalue())["pass"])
+        self.assertEqual(received.call_args.args[0], payload)
+
     def evaluate(self, issues, count=3):
         with patch.object(check_run, "jira", fake_jira(issues)):
             return check_run.batch_jira_checks(seed(count), count)
@@ -232,7 +248,7 @@ class OutcomeTests(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get("MARKOV_BIN"), "set MARKOV_BIN for offline orchestration checks")
 class WorkflowTests(unittest.TestCase):
-    def simulate(self, overrides, count=3):
+    def simulate(self, overrides, count=3, large_seed=False):
         with tempfile.TemporaryDirectory() as scratch:
             root = Path(scratch) / "benchmark"
             shutil.copytree(BENCH, root)
@@ -251,7 +267,10 @@ class WorkflowTests(unittest.TestCase):
                             facts = {"seed_job": {"body": {"job_name": "offline-seed"}},
                                      "captured_seed_request": step["params"]["body"]}
                         elif name == "read_seed_report":
-                            facts = {"seed_file": {"body": {"content": json.dumps(seed(count))}}}
+                            seed_value = seed(count)
+                            if large_seed:
+                                seed_value["rich_text_fixture"] = "x" * 350000
+                            facts = {"seed_file": {"body": {"content": json.dumps(seed_value)}}}
                         elif name in ("submit_job", "submit_glm_job"):
                             facts = {"job": {"body": {"job_name": "offline-" + workflow["name"]}},
                                      "captured_request": step["params"]["body"]}
@@ -262,7 +281,15 @@ class WorkflowTests(unittest.TestCase):
                     elif step.get("type") == "job_wait":
                         facts = {step.get("register", "seed_wait"): {"status": "completed", "failed": False}}
                     elif name == "check":
-                        facts = {"eval": {"stdout": "{{ run | to_json }}"}}
+                        if large_seed:
+                            step["params"].pop("path")
+                            step["params"]["content"] = (
+                                "import json,sys; payload=json.load(sys.stdin); "
+                                "assert sys.argv[5]=='-'; assert len(payload['rich_text_fixture'])==350000; "
+                                "print(json.dumps({'run':'r1-S1-opus','tier':'s1-mixed-opus',"
+                                "'test':'S1','arm':'workflow','variant':'opus','repeat':1,'pass':True,'job':'offline'}))")
+                        else:
+                            facts = {"eval": {"stdout": "{{ run | to_json }}"}}
                     elif name.startswith("require_archives_before_"):
                         facts = {"offline_archive_gate": True}
                     elif name == "wipe":
@@ -292,10 +319,12 @@ class WorkflowTests(unittest.TestCase):
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REF == run.strat_creator_ref")
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REPO == run.strat_creator_repo")
                                 steps[-1]["that"].append("captured_request.args.extra_env.CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS == run.workflow_max_concurrent_agents")
-                                if overrides.get("tier") == "s1-mixed-glm":
+                                if overrides.get("tier") in ("s1-mixed-glm", "s1-mixed-opus"):
                                     steps[-1]["that"].append("captured_request.args.extra_env.STRAT_MIXED_SEED_JSON == '/app/artifacts/scripts/offline-seed/seed.json'")
                                 else:
                                     steps[-1]["that"].append("not captured_request.args.extra_env.STRAT_MIXED_SEED_JSON")
+                                if overrides.get("tier") == "s1-mixed-opus":
+                                    steps[-1]["that"].append("captured_request.args.extra_env.STRAT_STOP_ON_WORKFLOW_FAILURE == '1'")
                                 if overrides.get("tier", "").startswith("s1-hardening-"):
                                     steps[-1]["that"] += [
                                         "captured_request.args.extra_env.CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS == 10",
@@ -305,7 +334,7 @@ class WorkflowTests(unittest.TestCase):
                         steps.append(step)
                 # The fake eval used above needs summary fields, and checking
                 # real arguments/seed shape happens before this stub.
-                if workflow["name"] == "run-test":
+                if workflow["name"] == "run-test" and not large_seed:
                     steps[next(i for i, s in enumerate(steps) if s["name"] == "check")]["vars"]["eval"]["stdout"] = (
                         '{"run":"{{ run.id }}","tier":"{{ tier }}","test":"{{ test.id }}",'
                         '"arm":"{{ test.arm }}","variant":"{{ variant }}","repeat":{{ round }},'
@@ -418,6 +447,17 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(rows[0]["workflow_max_concurrent_agents"], "10")
         for invalid in ({"only_tests": "S2"}, {"only_tests": "S1,S2"}, {"repeats": 3},
                         {"variants": "opus"}, {"wipe_at_start": True}):
+            result, rows = self.simulate({**settings, **invalid}, count=10)
+            self.assertNotEqual(result.returncode, 0, result.stderr)
+            self.assertIsNone(rows)
+
+    def test_mixed_opus_is_one_selected_run_and_streams_large_seed_to_real_executor(self):
+        settings = {"tier": "s1-mixed-opus", "variants": "opus", "repeats": 1}
+        result, rows = self.simulate(settings, count=10, large_seed=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["variant"], "opus")
+        for invalid in ({"only_tests": "S2"}, {"variants": "glm"}, {"repeats": 3}):
             result, rows = self.simulate({**settings, **invalid}, count=10)
             self.assertNotEqual(result.returncode, 0, result.stderr)
             self.assertIsNone(rows)

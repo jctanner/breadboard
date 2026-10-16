@@ -1,18 +1,85 @@
 # Mixed-state S1 batch: fresh work, recovery and repeat safety
 
-Status: implementation and offline validation. The user requested a batch limit of ten against
+Status: failed GLM run archived and independently verified; repairs and one
+explicitly authorized Opus pass are in progress.
+The user requested a batch limit of ten against
 roughly 20–30 Jira issues containing RFEs and STRATs in mixed states. The
 gating rules are available in the current Fullsend fork. The agreeing-verdict
-fix is published as fbc335bedb4a4eb97265da89d36bc29009a41fde. No mixed-state
-model run has been launched yet. [Execution task](../tasks/current/s1-mixed-state-glm.md).
+fix is published as fbc335bedb4a4eb97265da89d36bc29009a41fde. Breadboard
+a75c72b is pushed/synced. Run markov-run-eaf92e4d launched at 23:16:30Z on
+2026-10-15; the live seed completed and model job 231702-8b0253 was submitted.
+Live pre-inference guard and actual process verification confirm all expected
+resume points, nine acquired keys and GLM routing; no source changes at launch.
+[GLM execution](../tasks/done/s1-mixed-state-glm.md).
+[Repair and Opus task](../tasks/current/s1-mixed-state-repair-opus.md).
+
+## First mixed-run findings
+
+The host acquired the expected nine RFEs. All nine reviews were recorded,
+seven strategies refined/pushed and four new STRATs created. The finish checker
+found controls/deferred work and existing effects preserved, with run-owned
+claims released and the foreign claim intact. It skipped the live repeat after
+the failed invocation; do not count this as a passed repeat experiment.
+
+The first native Workflow failed after 106m02s because review-only imports
+were not marked Refined. Import instructions set Draft, whereas final business
+validation requires Refined/Reviewed even when the host selects review-only.
+The local reimport test used Refined and therefore missed this boundary.
+[Bug](../bugs/fixed/strat-review-only-import-status-contract.md).
+
+The primary agent stayed active and attempted a repair. The transcript shows
+frontmatter.py changing the two task statuses to Refined at 01:12:57Z, followed
+by a second Workflow invocation at 01:13:10Z. That invocation also failed,
+because review composition hashes the whole task file, including status.
+Freshness's separate semantic strategy hash excludes status; checking only that
+hash did not establish that the existing reviews remained valid. Reverting
+only the status in memory restores both original recorded review-input hashes.
+No archived file was changed. One host launch does not limit the primary agent
+to one native Workflow invocation or guarantee exit after native failure.
+The first Workflow consumed 106m02s, followed by roughly 14m39s of parent
+diagnosis/repair before the stop. This repair sequence changed artifacts;
+no pipeline-source edits are shown in the primary's post-failure tool calls.
+
+The user requested stopping; SIGTERM at 01:18:49Z ended Claude with exit 143.
+All nine owned locks released successfully; native transcripts and logs were
+saved without deleting the pod. Markov then failed before its independent
+checker could start: the rich seed report was 306,233 bytes, passed as one
+argument. [Benchmark bug](../bugs/fixed/strat-mixed-seed-exceeds-exec-argument-limit.md).
+The final GLM capture is independently verified with receipts published:
+17,077 files / 23.30 GB. No repair or fresh model job was launched in response
+to the stop request; the subsequent user instruction authorizes repair and Opus.
+
+## Repair before the Opus pass
+
+record-create restores Refined for Draft review-only imports only when their
+canonical strategy matches host-verified earlier push proof. It runs before
+scoring/review snapshots and refuses promotion after a review has begun.
+The batch push helper excludes these imports even though they now carry
+Refined; their previous push remains reused. Completion validation and both
+hash contracts stay strict. The real-emulator regression covers Draft import,
+status restoration, no duplicate push, composed review and final completion.
+
+The runner streams the rich seed report through stdin; a real offline Markov
+executor check sends 350 KB and exercises the checker input contract. Legacy
+direct JSON arguments remain accepted for small manual calls.
+
+A failed business receipt prevents automatic Skill/Workflow relaunch in that
+prepared run. The new mixed Opus tier also supervises native runtime status:
+the first failed strat-pipeline journal terminates the primary process group,
+then the normal shell validator, lock cleanup and capture run. Successful
+Workflow completion keeps the ordinary CLI exit path. This process supervisor
+is a benchmark-wrapper control, not a new claim about Fullsend runner behavior.
+Local fake-process checks cover failure termination, ordinary success, CLI
+failure, timeout and stale journals without inference. Earlier tiers keep their
+existing source pins and monitor settings.
 
 ## Source of truth
 
 Read the tested fork's config/pipeline-settings.yaml, scripts/list-rfe-ids.py,
 scripts/jira_utils.py, .fullsend/shared/prepare_run.py,
 scripts/strat_freshness.py and the three strategy Skills. Preserve the existing
-S1 workflow and its batch cap of ten. The new tier pins the published
-agreeing-recommendation fix. Historical pins remain unchanged.
+S1 workflow and its batch cap of ten. The new Opus tier pins f5691f7, including the review-only restoration and
+push exclusion. The earlier GLM tier retains fbc335b. Historical pins remain unchanged.
 
 The existing seed_scenario.py creates new RFEs only. Its all-new batch checker
 also assumes every seed RFE produces a new STRAT and a final review. Extend
@@ -134,3 +201,12 @@ only the deferred RFE may be acquired, and release must leave Jira unchanged.
 Validation: 89 offline benchmark tests pass, one optional integration skipped;
 the separate local-emulator suite passes eight tests, including actual
 preparation, push, review-only reimport and repeat cleanup. No inference used.
+
+## Repair validation, 2026-10-16
+
+Candidate f5691f7 is pushed to the Fullsend fork. Full component suite:
+1,041 passed, six skipped; focused recovery suite 57 passed. Benchmark suite:
+96 tests, OK with one optional integration skipped; that real local Jira suite
+passes all nine separately against the committed candidate. Ruff, shell syntax
+and diff checks pass. No model calls were used in these regressions. The
+s1-mixed-opus tier authorizes exactly one Opus 4.6 pass after these checks.

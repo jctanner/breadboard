@@ -3,6 +3,23 @@
 # (vars/models.yaml). Repeats run in rounds, all tests once and then again,
 # so the designs alternate.
 tiers:
+  s1-mixed-opus:
+    single_test: true
+    variant: opus
+    repeats: 1
+    tests:
+      - id: S1
+        arm: workflow
+        variants: [opus]
+        scenario: batch-mixed-state
+        mode: batch
+        batch_size: 10
+        repo: https://github.com/jctanner-fullsend-ai/strat-creator.git
+        strat_creator_ref: f5691f7e01b392be6b177356dbf204918a1b42af
+        workflow_max_concurrent_agents: 10
+        timeout_minutes: 295
+        capture_native: true
+        stop_on_workflow_failure: true
   s1-mixed-glm:
     single_test: true
     variant: glm

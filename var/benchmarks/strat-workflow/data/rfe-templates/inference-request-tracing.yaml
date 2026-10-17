@@ -1,0 +1,40 @@
+# Fictional benchmark RFE. Capability: sampled inference request tracing.
+summary: Trace an inference request from its ingress through the serving runtime
+description: |
+  h2. Problem Statement
+
+  An inference endpoint's aggregate latency cannot show whether one slow request
+  waited at ingress, in a runtime queue or during model execution. Operators
+  correlate timestamps from separate logs by hand, which becomes unreliable
+  when requests stream responses or are retried.
+
+  h2. Desired Outcome
+
+  A serving owner can enable sampled OpenTelemetry traces that connect ingress
+  and supported runtime stages for one inference request, including streaming
+  completion and client cancellation.
+
+  h2. Acceptance Criteria
+
+  * Propagate supported trace context across ingress and the serving runtime, assigning distinct spans to retries
+  * Expose routing, runtime queue and execution durations when the relevant component can measure them; identify unavailable stages
+  * Represent streaming first-response time, final completion and cancellation without recording prompts or generated content
+  * Make sampling and exporter destination configurable with bounded buffering when the collector is unavailable
+  * Restrict trace access by project and exclude credentials and sensitive request headers
+  * Test a slow runtime, retried request, cancelled stream and unavailable collector while inference continues to function
+
+  h2. User Stories
+
+  * As a serving operator, I want to locate the stage responsible for a slow production inference request.
+
+  h2. Scope
+
+  This request instruments the path of individual serving requests. It does
+  not implement canary rollback, production drift alerts, historical GPU billing
+  or pipeline execution tracing.
+
+  h2. Technical Notes
+
+  Identify the deployed ingress and supported runtime instrumentation before
+  defining spans. State where transport or runtime boundaries prevent complete
+  propagation. Avoid promising latency measurements that cannot be observed.

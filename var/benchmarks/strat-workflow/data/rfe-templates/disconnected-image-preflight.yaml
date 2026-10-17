@@ -1,0 +1,40 @@
+# Fictional benchmark RFE. Capability: disconnected installation readiness.
+summary: Check mirrored component images before a disconnected platform installation
+description: |
+  h2. Problem Statement
+
+  Administrators installing OpenShift AI without internet access discover missing
+  component images only after workloads enter ImagePullBackOff. The release's
+  operator, operand and optional component images may have been mirrored by
+  different teams. Retrying installation does not identify the incomplete set.
+
+  h2. Desired Outcome
+
+  Before installing a chosen platform release, an administrator can check its
+  required image digests against the configured disconnected registry and obtain
+  a complete missing-image report without creating platform workloads.
+
+  h2. Acceptance Criteria
+
+  * Accept a release identity, enabled component list and mirror configuration; enumerate both operator and operand image digests
+  * Check manifests using the configured registry authentication and trust bundle without pulling image layers
+  * Distinguish missing manifests, denied access and unreachable registries; include the affected component and digest
+  * Produce human-readable output and a versioned JSON result, with a nonzero exit when required images cannot be verified
+  * Perform no installation, cluster configuration change or mirror upload; exclude credentials from output
+  * A test fixture with one missing optional-component image fails only when that component is selected
+
+  h2. User Stories
+
+  * As a disconnected-cluster administrator, I want to repair an incomplete mirror before starting installation.
+
+  h2. Scope
+
+  This is a read-only installer readiness command. Building images, notebook
+  sessions, model signatures, runtime request tracing and platform upgrades are
+  separate capabilities and do not satisfy this request.
+
+  h2. Technical Notes
+
+  Identify the release image inventory and supported mirror mechanisms from
+  architecture context. Resolve digest mappings rather than assuming image tags
+  are immutable. Define how component selection affects the inventory.

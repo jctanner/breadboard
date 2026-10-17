@@ -230,6 +230,33 @@ reset, using the existing collector and receipt guard.
 
 ## Hardened S1 ten-ticket validation
 
+The current post-review retest is `s1-pr85-distinct-ten-opus`, pinned at
+`2a4b7c94b93a2d43bc25fe701e225e5738e226af`, the checkpoint performance repair
+that passed the subsequent one-RFE Opus smoke. It uses
+[batch-ten-distinct-v2](data/scenarios/batch-ten-distinct-v2.yaml): ten entirely
+new fictional requests, with no reused historical RFE templates. Each request
+has its own problem, acceptance criteria and explicit scope.
+
+| Subject | Independent deliverable |
+| --- | --- |
+| Disconnected installation | Check mirror image completeness before installation |
+| GPU showback | Attribute historical reserved GPU hours and cost to projects |
+| Collaborative notebooks | Synchronize authorized users editing one notebook |
+| Pipeline approval | Hold a task for an auditable human decision |
+| Model signatures | Verify artifact origin when registering a model version |
+| Inference tracing | Follow a sampled request through ingress and runtime |
+| Dataset licensing | Reject training inputs that violate project license policy |
+| Training placement | Enforce requested accelerator/CPU locality |
+| Fairness audit | Compare offline classifier error rates across groups |
+| Historical feature joins | Prevent future-data leakage in training datasets |
+
+This tier permits one S1 Opus iteration with batch size ten and Workflow
+concurrency ten. Native capture, failure monitoring and strace are enabled;
+global telemetry is retained. Seeding must discover exactly ten RFEs; a passing
+batch requires ten separate strategies and forty delivered role assessments.
+The source pin, fixture and budget belong to this tier; earlier tiers below
+remain historical configurations. No reviewer dispatch change is included.
+
 `s1-hardening-glm` and `s1-hardening-opus` run the same distinct ten-RFE
 scenario from [Fullsend PR #85](https://github.com/fullsend-ai/strat-creator/pull/85).
 Both now clone `https://github.com/jctanner-fullsend-ai/strat-creator.git`,

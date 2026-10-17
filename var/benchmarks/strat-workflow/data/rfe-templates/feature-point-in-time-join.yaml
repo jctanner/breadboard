@@ -1,0 +1,40 @@
+# Fictional benchmark RFE. Capability: historical offline training joins.
+summary: Build training datasets with point-in-time-correct historical feature joins
+description: |
+  h2. Problem Statement
+
+  Training datasets joined against today's feature values can accidentally
+  include information recorded after the event being predicted. The resulting
+  evaluation looks strong but cannot be reproduced when serving predictions
+  without access to future information.
+
+  h2. Desired Outcome
+
+  A feature-store user can join an entity dataset and its event timestamps to
+  versioned offline feature history, selecting only values that were available
+  at the relevant time and recording the join configuration.
+
+  h2. Acceptance Criteria
+
+  * Require entity keys and event timestamps and identify the selected feature views and offline source revisions
+  * Select the most recent eligible feature value at or before each entity event time, respecting the feature view's freshness policy
+  * Define event-time versus availability-time handling for late-arriving records and document which sources support it
+  * Preserve entity row identity and represent unavailable or expired feature values explicitly rather than reading future values
+  * Record feature definitions, source revisions and join parameters for reproducibility; enforce access to every source
+  * Test future-data leakage, late arrival, duplicate timestamps, expired values and entity rows without feature history
+
+  h2. User Stories
+
+  * As a model developer, I want historical training examples that contain only information available when each prediction would have been made.
+
+  h2. Scope
+
+  The deliverable is an offline historical join. It does not schedule online
+  feature materialization, enforce dataset licenses, recover training jobs or
+  calculate fairness metrics.
+
+  h2. Technical Notes
+
+  Identify the supported Feast offline store and timestamp semantics from
+  architecture context. Specify tie-breaking and timezone handling. Distinguish
+  an event-time-only guarantee from the stronger availability-time guarantee.

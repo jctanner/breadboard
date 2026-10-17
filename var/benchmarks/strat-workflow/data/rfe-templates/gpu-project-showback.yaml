@@ -1,0 +1,39 @@
+# Fictional benchmark RFE. Capability: historical GPU cost attribution.
+summary: Attribute reserved GPU hours and estimated cost to individual projects
+description: |
+  h2. Problem Statement
+
+  Platform owners see cluster GPU utilization but cannot explain which projects
+  reserved accelerator capacity during a billing period. Current namespace
+  totals disappear when workloads are deleted, and utilization percentages do
+  not reveal the cost of allocated but idle GPUs.
+
+  h2. Desired Outcome
+
+  An administrator can view daily reserved GPU hours and estimated cost by
+  project and accelerator type, using an explicit rate card and durable usage
+  history. This supports internal showback rather than invoicing.
+
+  h2. Acceptance Criteria
+
+  * Count allocated GPU time from workload lifetime and requested device quantity, separately from measured utilization
+  * Support administrator-defined hourly rates per accelerator type with effective dates and declared currency
+  * Preserve attribution after workload deletion and avoid double counting collector restarts or overlapping samples
+  * Display daily project totals and export CSV; mark collection gaps and unsupported shared-device accounting explicitly
+  * Limit project users to their own project data while administrators can compare projects
+  * Tests account for a two-GPU allocation lasting thirty minutes as one GPU hour and apply the rate effective during that interval
+
+  h2. User Stories
+
+  * As a platform owner, I want a defensible explanation of each project's reserved accelerator cost.
+
+  h2. Scope
+
+  This request produces historical financial attribution. It does not change
+  training placement, queue admission, GPU allocation policy or workload limits.
+
+  h2. Technical Notes
+
+  Identify available allocation metrics, workload identities and durable storage
+  before choosing collectors. Define timezone, rounding and missing-data rules.
+  An estimate must not be presented as a cloud-provider bill.

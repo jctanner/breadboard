@@ -1,0 +1,40 @@
+# Fictional benchmark RFE. Capability: offline fairness assessment by group.
+summary: Compare classification error rates across protected groups in an offline audit
+description: |
+  h2. Problem Statement
+
+  A classifier can have an acceptable overall error rate while producing much
+  worse outcomes for one protected group. Evaluators currently write separate
+  notebooks to compute group metrics, often omitting sample counts or treating
+  undefined rates as zero.
+
+  h2. Desired Outcome
+
+  An authorized evaluator can run a reproducible offline fairness audit over
+  labelled predictions and approved group columns, with per-group confusion
+  counts, error rates and explicit small-sample warnings.
+
+  h2. Acceptance Criteria
+
+  * Accept a fixed labelled-prediction dataset revision and explicit approved group definitions for binary classification
+  * Compute per-group confusion counts, false-positive and false-negative rates, sample counts and differences against a declared reference group
+  * Mark zero denominators as undefined and flag groups below a configurable minimum sample size
+  * Record dataset revision, metric definitions, threshold and group configuration so the audit can be repeated
+  * Restrict input and result access; do not expose row-level protected attributes in the aggregate result
+  * Test unequal group errors, equal group errors, a missing label and a group with no positive examples
+
+  h2. User Stories
+
+  * As a responsible-AI reviewer, I want to inspect group-level errors rather than approve a classifier from its overall accuracy alone.
+
+  h2. Scope
+
+  This is offline fairness measurement. It does not implement production drift
+  alerts, export language-model benchmark comparisons, retrain a model or make
+  a legal determination about discrimination.
+
+  h2. Technical Notes
+
+  Identify supported TrustyAI or evaluation components and dataset access paths.
+  Specify the exact rate formulas and avoid claiming that one fairness metric
+  establishes equitable behavior for every use case.

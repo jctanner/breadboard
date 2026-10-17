@@ -1,0 +1,40 @@
+# Fictional benchmark RFE. Capability: accelerator locality for training.
+summary: Request NUMA-aligned accelerator placement for distributed training workers
+description: |
+  h2. Problem Statement
+
+  Training workers receive enough GPUs but can still cross slow host interconnects
+  when accelerators and CPUs are placed across NUMA domains. Users cannot express
+  their locality requirement or distinguish unsatisfied locality from a broken
+  training launch.
+
+  h2. Desired Outcome
+
+  A supported training workload can request a documented accelerator locality
+  policy, and administrators can expose node capabilities that support it.
+  Placement either satisfies the requested policy or reports why it cannot.
+
+  h2. Acceptance Criteria
+
+  * Provide opt-in preferred and required locality policies for a supported distributed trainer
+  * Translate supported requests into the cluster's actual topology-aware scheduling and device-allocation mechanisms
+  * A required policy must never silently fall back to unsuitable placement; a preferred fallback must be visible
+  * Report assigned accelerator and CPU locality without exposing unrelated tenants' device details
+  * Preserve existing resource quotas and admission rules, and leave workloads without a locality request unchanged
+  * Test suitable nodes, insufficient local devices, heterogeneous nodes and node loss before placement completes
+
+  h2. User Stories
+
+  * As a training owner, I want workers placed on compatible local devices so interconnect overhead does not dominate training.
+
+  h2. Scope
+
+  The deliverable is placement semantics and topology integration. It does not
+  implement checkpoint recovery, GPU showback, queue-position explanations or
+  automatic changes to model training code.
+
+  h2. Technical Notes
+
+  Identify which supported trainer, scheduler and device plugin can enforce the
+  requested locality. Separate pod scheduling from device allocation, and state
+  unsupported hardware combinations rather than assuming labels are sufficient.

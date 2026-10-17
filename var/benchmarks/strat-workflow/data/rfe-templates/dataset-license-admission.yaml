@@ -1,0 +1,40 @@
+# Fictional benchmark RFE. Capability: dataset license policy at job admission.
+summary: Enforce project dataset license policy before starting training jobs
+description: |
+  h2. Problem Statement
+
+  A training job can consume a dataset revision whose license is incompatible
+  with the project's intended use. Reviewers discover the issue after expensive
+  training, and the data connection's authorization says nothing about permitted
+  use of the data itself.
+
+  h2. Desired Outcome
+
+  Administrators can configure a project's accepted dataset licenses. Supported
+  training submissions declare immutable dataset revisions and are admitted
+  only when every declared revision satisfies the configured policy.
+
+  h2. Acceptance Criteria
+
+  * Define dataset revision metadata containing a license identifier and provenance, separate from storage credentials
+  * Evaluate all declared dataset revisions against the project's allowed-license policy before creating training workers
+  * Reject unknown, missing or denied license metadata with a reason identifying the offending dataset revision
+  * Only authorized administrators may change policy or grant an audited exception; ordinary submitters cannot bypass the gate
+  * Bind each decision to dataset revision and policy version so a later policy edit cannot silently change the historical record
+  * Test allowed, denied and missing licenses, a mixed-license input set and an unauthorized exception attempt
+
+  h2. User Stories
+
+  * As a data-governance owner, I want a known license violation rejected before the training run consumes resources.
+
+  h2. Scope
+
+  This is automated dataset-use admission. It does not add a human pipeline
+  approval task, verify model signatures, manage connection secrets or inspect
+  the legal meaning of arbitrary license text.
+
+  h2. Technical Notes
+
+  Identify a supported dataset metadata source and training submission boundary.
+  State coverage limits for undeclared reads inside arbitrary user code. The
+  first version enforces explicit identifiers, not legal conclusions from an LLM.

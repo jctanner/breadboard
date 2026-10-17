@@ -1,0 +1,36 @@
+# Fresh fictional requests. None reuse a template from the earlier benchmarks.
+# Distinctness is based on the capability and acceptance criteria, not the title.
+description: Ten new independent RFEs covering disconnected installation, cost attribution, collaborative notebooks, approval tasks, artifact trust, request tracing, dataset licensing, training placement, fairness audits, and historical feature joins.
+reset: true
+expected_batch_size: 10
+rfes:
+  - id: disconnected-image-preflight
+    template: disconnected-image-preflight
+    eligible: true
+  - id: gpu-project-showback
+    template: gpu-project-showback
+    eligible: true
+  - id: notebook-live-collaboration
+    template: notebook-live-collaboration
+    eligible: true
+  - id: pipeline-human-approval
+    template: pipeline-human-approval
+    eligible: true
+  - id: registry-signature-verification
+    template: registry-signature-verification
+    eligible: true
+  - id: inference-request-tracing
+    template: inference-request-tracing
+    eligible: true
+  - id: dataset-license-admission
+    template: dataset-license-admission
+    eligible: true
+  - id: training-topology-placement
+    template: training-topology-placement
+    eligible: true
+  - id: fairness-slice-audit
+    template: fairness-slice-audit
+    eligible: true
+  - id: feature-point-in-time-join
+    template: feature-point-in-time-join
+    eligible: true

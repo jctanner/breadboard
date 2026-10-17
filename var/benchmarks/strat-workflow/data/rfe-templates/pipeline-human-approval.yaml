@@ -1,0 +1,40 @@
+# Fictional benchmark RFE. Capability: a durable human approval task.
+summary: Pause a pipeline task until an authorized human approves or rejects it
+description: |
+  h2. Problem Statement
+
+  A pipeline can move a trained candidate into a sensitive downstream step
+  before a release owner has inspected its evidence. Teams currently stop the
+  run manually and start another run after approval, losing the original task
+  dependencies and making the approval difficult to audit.
+
+  h2. Desired Outcome
+
+  Pipeline authors can insert an approval task that holds downstream work until
+  an authorized approver records a decision. Waiting should not reserve an
+  accelerator or require a running user session.
+
+  h2. Acceptance Criteria
+
+  * Define an approval task with an approver group, evidence links and an expiration time
+  * Persist pending, approved, rejected and expired states across controller restarts
+  * Permit only authorized approvers to decide; record identity, decision, reason and timestamp
+  * Approval releases dependent tasks exactly once; rejection, cancellation or expiration prevents them from starting
+  * Replayed API decisions are idempotent and conflicting decisions cannot replace the first accepted decision
+  * Test restart while waiting, duplicate approval delivery, denied access and expiration without a user logged in
+
+  h2. User Stories
+
+  * As a release owner, I want an auditable decision inside the original pipeline before sensitive downstream work starts.
+
+  h2. Scope
+
+  This is a pipeline execution-state feature. It does not implement dataset
+  license enforcement, retain pipeline artifacts, judge model quality or add
+  automatic promotion policies.
+
+  h2. Technical Notes
+
+  Identify the supported pipeline engine's extension points before choosing an
+  implementation. Define how engine state, dashboard actions and authorization
+  agree without a polling container holding compute resources.

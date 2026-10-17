@@ -1,0 +1,39 @@
+# Fictional benchmark RFE. Capability: cryptographic model artifact trust.
+summary: Verify model artifact signatures when registering a model version
+description: |
+  h2. Problem Statement
+
+  A registered model version can point to an artifact whose origin has not been
+  verified. A descriptive author field or checksum alone does not establish
+  that a trusted producer signed the exact model bytes being registered.
+
+  h2. Desired Outcome
+
+  Model Registry can verify a supported detached signature over an immutable
+  artifact digest and record the verification result and signer identity on
+  the model version. A project may require verification for new registrations.
+
+  h2. Acceptance Criteria
+
+  * Bind verification to the artifact's immutable digest and the exact signature material, not only its mutable storage URL
+  * Support a documented signature format and administrator-managed trust roots or signer policy
+  * Distinguish verified, invalid, unsigned and unverifiable results, including actionable failure reasons
+  * Reject a new registration when its project requires verification and its artifact does not satisfy policy
+  * Changing an artifact digest invalidates its prior verification; trust-policy changes retain the policy identity used for older results
+  * Test a valid signer, altered artifact bytes, an untrusted signer and unavailable artifact storage without exposing credentials
+
+  h2. User Stories
+
+  * As a model consumer, I want to know which trusted producer signed the exact artifact I am selecting.
+
+  h2. Scope
+
+  This is model registration trust verification. It does not check container
+  mirror completeness, block archiving deployed versions, rotate storage
+  credentials or change model-serving rollout policy.
+
+  h2. Technical Notes
+
+  Identify registry metadata and artifact access paths from architecture context.
+  Define supported packaging and canonical digest computation; do not assume
+  an arbitrary object-storage model already has an OCI signature layout.

@@ -1,0 +1,39 @@
+# Fictional benchmark RFE. Capability: concurrent notebook document editing.
+summary: Allow authorized project members to edit the same notebook together
+description: |
+  h2. Problem Statement
+
+  Two data scientists reviewing an experiment must share a screen or exchange
+  notebook copies. Opening the same file independently risks overwriting cells
+  and obscures who is currently changing an experiment.
+
+  h2. Desired Outcome
+
+  A workbench owner can enable real-time collaboration for a supported notebook
+  image. Authorized project collaborators see shared cell edits and participant
+  presence in the same running workbench.
+
+  h2. Acceptance Criteria
+
+  * Make collaboration opt-in and identify the supported notebook server and image requirements
+  * Authorize each collaborator through existing project access, without sharing the owner's login credentials
+  * Synchronize simultaneous cell edits and participant presence without silently overwriting either user's changes
+  * Define shared kernel execution behavior and warn users that collaborators can execute code with the workbench's permissions
+  * Reject new connections and terminate existing collaboration sessions when the relevant access is revoked
+  * Test two concurrent editors, reconnect after a network interruption and an unauthorized user's denied connection
+
+  h2. User Stories
+
+  * As a data scientist, I want to pair on an experiment with a colleague while keeping one notebook history.
+
+  h2. Scope
+
+  The deliverable is collaborative document editing and session access. It does
+  not alter notebook idle culling, build images, add billing views or implement
+  a general-purpose chat service.
+
+  h2. Technical Notes
+
+  Determine whether the shipped notebook server supports a collaboration
+  extension and which proxy/authentication path it uses. Cover websocket
+  authorization, persistence and shared-kernel security in the strategy.

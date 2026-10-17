@@ -28,7 +28,7 @@ steps:
     msg: "Single-run tier needs only_tests=S1 (or S2 after review), repeats=1, variants={{ tiers[tier].variant }}, and wipe_at_start=false; it never sweeps both designs"
 
   - name: check_hardening_selection
-    when: "tier == 's1-hardening-glm' or tier == 's1-hardening-opus' or tier == 's1-mixed-glm' or tier == 's1-mixed-opus' or tier == 's1-pr85-distinct-ten-opus'"
+    when: "tier == 's1-hardening-glm' or tier == 's1-hardening-opus' or tier == 's1-mixed-glm' or tier == 's1-mixed-opus' or tier == 's1-pr85-distinct-ten-opus' or tier == 's1-pr85-completion-fixed-opus'"
     type: assert
     that:
       - "only_tests == 'S1'"

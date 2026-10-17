@@ -230,7 +230,16 @@ reset, using the existing collector and receipt guard.
 
 ## Hardened S1 ten-ticket validation
 
-The current post-review retest is `s1-pr85-distinct-ten-opus`, pinned at
+The completion-hook retest is `s1-pr85-completion-fixed-opus`, pinned at
+`6ed858b2294a29457153a90f187a801022c21e8b`. It resets Jira and recreates the
+same ten distinct requests from `batch-ten-distinct-v2`, with the same Opus
+model, high effort, batch size/concurrency ten, native capture and failure
+monitoring. It permits one iteration. The previous run's failed verdict and
+source pin remain in `s1-pr85-distinct-ten-opus`; all archives must verify
+before reseeding. The repaired completion hook passed a model-free full-batch
+traced replay; this tier tests its integration with the actual Workflow.
+
+The preceding post-review test is `s1-pr85-distinct-ten-opus`, pinned at
 `2a4b7c94b93a2d43bc25fe701e225e5738e226af`, the checkpoint performance repair
 that passed the subsequent one-RFE Opus smoke. It uses
 [batch-ten-distinct-v2](data/scenarios/batch-ten-distinct-v2.yaml): ten entirely

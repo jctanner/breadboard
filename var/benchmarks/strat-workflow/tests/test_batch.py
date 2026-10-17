@@ -344,7 +344,7 @@ class WorkflowTests(unittest.TestCase):
                                     steps[-1]["that"].append("not captured_request.args.extra_env.STRAT_MIXED_SEED_JSON")
                                 if overrides.get("tier") == "s1-mixed-opus":
                                     steps[-1]["that"].append("captured_request.args.extra_env.STRAT_STOP_ON_WORKFLOW_FAILURE == '1'")
-                                if overrides.get("tier") == "s1-pr85-distinct-ten-opus":
+                                if overrides.get("tier") in ("s1-pr85-distinct-ten-opus", "s1-pr85-completion-fixed-opus"):
                                     steps[-1]["that"] += [
                                         "captured_request.args.extra_env.STRAT_STOP_ON_WORKFLOW_FAILURE == '1'",
                                         "captured_request.args.extra_env.STRAT_CAPTURE_NATIVE == '1'",
@@ -463,25 +463,29 @@ class WorkflowTests(unittest.TestCase):
         self.assertIsNone(rows)
 
     def test_checkpoint_fixed_ten_ticket_batch_is_one_opus_run_with_exact_discovery(self):
-        settings = {"tier": "s1-pr85-distinct-ten-opus", "variants": "opus", "repeats": 1}
-        result, rows = self.simulate(settings, count=10)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(len(rows), 1)
-        row = rows[0]
-        self.assertEqual((row["test"], row["variant"], row["batch_size"]), ("S1", "opus", 10))
-        self.assertEqual(row["selector"], "batch-discover")
-        self.assertEqual(row["expected_keys"], " ".join(f"RHAIRFE-{i}" for i in range(10, 0, -1)))
-        self.assertEqual(row["strat_creator_ref"], "2a4b7c94b93a2d43bc25fe701e225e5738e226af")
-        self.assertEqual(row["workflow_max_concurrent_agents"], "10")
-        for invalid in ({"only_tests": "S2"}, {"variants": "glm"}, {"repeats": 2}, {"wipe_at_start": True}):
-            result, rows = self.simulate({**settings, **invalid}, count=10)
+        for tier, candidate in (
+            ("s1-pr85-distinct-ten-opus", "2a4b7c94b93a2d43bc25fe701e225e5738e226af"),
+            ("s1-pr85-completion-fixed-opus", "6ed858b2294a29457153a90f187a801022c21e8b"),
+        ):
+            settings = {"tier": tier, "variants": "opus", "repeats": 1}
+            result, rows = self.simulate(settings, count=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(len(rows), 1)
+            row = rows[0]
+            self.assertEqual((row["test"], row["variant"], row["batch_size"]), ("S1", "opus", 10))
+            self.assertEqual(row["selector"], "batch-discover")
+            self.assertEqual(row["expected_keys"], " ".join(f"RHAIRFE-{i}" for i in range(10, 0, -1)))
+            self.assertEqual(row["strat_creator_ref"], candidate)
+            self.assertEqual(row["workflow_max_concurrent_agents"], "10")
+            for invalid in ({"only_tests": "S2"}, {"variants": "glm"}, {"repeats": 2}, {"wipe_at_start": True}):
+                result, rows = self.simulate({**settings, **invalid}, count=10)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIsNone(rows)
+            result, rows = self.simulate(settings, count=9)
             self.assertNotEqual(result.returncode, 0)
+            self.assertIn("failed its check", result.stderr)
+            self.assertNotIn('step "submit_job"', result.stderr)
             self.assertIsNone(rows)
-        result, rows = self.simulate(settings, count=9)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("failed its check", result.stderr)
-        self.assertNotIn('step "submit_job"', result.stderr)
-        self.assertIsNone(rows)
 
     def test_mixed_tier_is_one_glm_run_with_explicit_fixture_handoff(self):
         settings = {"tier": "s1-mixed-glm", "variants": "glm", "repeats": 1}

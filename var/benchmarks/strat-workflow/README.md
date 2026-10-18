@@ -582,6 +582,13 @@ judgments and conflicting decisions still fail. The prefix does not count as
 an explanation. This revises the offline checker only; historical results and
 source pins retain their original contract and verdicts.
 
+`role-assessment-v3` additionally accepts scope judgments beginning with
+"The capability is", "Capability is", "The scope is" or "Scope is". It removes
+only that bounded subject before checking the existing completed verdict and
+explanatory content. Negated, pending, ambiguous or conflicting judgments still
+fail, and the subject supplies no rationale. This fixes the Opus 5.5 mixed-batch
+format false negative without changing its saved report or historical FAIL.
+
 Recompute delivery from one saved job without services or model calls:
 
 ```bash

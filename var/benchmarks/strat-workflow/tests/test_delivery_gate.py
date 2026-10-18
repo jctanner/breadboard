@@ -20,6 +20,39 @@ def numbered_report(findings):
 
 
 class AssessmentTests(unittest.TestCase):
+    def test_scope_subject_preserves_canonical_completed_judgments(self):
+        for subject in ("The capability is", "Capability is", "The scope is", "Scope is"):
+            for verdict in ("right-sized", "too large", "too small", "unbounded"):
+                with self.subTest(subject=subject, verdict=verdict):
+                    report = valid_report(KEY, "scope").replace("right-sized.", f"{subject} {verdict}.")
+                    self.assertTrue(classify(report, KEY, "scope")["assessment_present"])
+
+    def test_scope_subject_does_not_supply_a_missing_explanation(self):
+        for verdict in ("right-sized", "too large", "unbounded"):
+            report = (f"### {KEY}: Gateway cancellation\n"
+                      f"**Scope assessment**: The capability is {verdict}\n"
+                      "**Recommendation**: revise")
+            with self.subTest(verdict=verdict):
+                self.assertFalse(classify(report, KEY, "scope")["assessment_present"])
+
+    def test_scope_subject_does_not_accept_negation_templates_or_search_for_a_verdict(self):
+        for judgment in ("The capability is not right-sized", "The capability is pending",
+                         "The scope is TODO", "The capability is <right-sized / too large>",
+                         "The capability is right-sized or too large", "The scope is too small / unbounded",
+                         "The capability might be right-sized", "Architecture is right-sized",
+                         "We have not decided whether the capability is right-sized"):
+            report = valid_report(KEY, "scope").replace("right-sized.", judgment + ".")
+            with self.subTest(judgment=judgment):
+                self.assertFalse(classify(report, KEY, "scope")["assessment_present"])
+
+    def test_repeated_scope_judgments_normalize_subject_and_reject_conflicts(self):
+        report = valid_report(KEY, "scope").replace("right-sized.", "The capability is right-sized.")
+        report += "\n**Scope assessment**: right-sized"
+        self.assertTrue(classify(report, KEY, "scope")["assessment_present"])
+        for other in ("The scope is too large", "pending", "The capability is not right-sized"):
+            with self.subTest(other=other):
+                self.assertFalse(classify(report + f"\n**Scope assessment**: {other}", KEY, "scope")["assessment_present"])
+
     def test_markdown_numbered_findings_use_the_body_not_only_the_title(self):
         for heading in ("#### 1. Cancellation race", "## 2) Cancellation race"):
             with self.subTest(heading=heading):
@@ -197,6 +230,28 @@ class AssessmentTests(unittest.TestCase):
 
 
 class ReceivingChannelTests(unittest.TestCase):
+    def test_scope_subject_still_requires_valid_assigned_receiving_result(self):
+        bodies = reviewer_bodies([KEY])
+        report = valid_report(KEY, "scope").replace("right-sized.", "The capability is right-sized but loosely bounded.")
+        scope_result = bodies[1]["messages"][1]["content"][2]
+        self.assertTrue(scope_result["tool_use_id"].endswith("strategy-scope-review"))
+        wrapper = scope_result["content"].split("Result:", 1)[0] + "Result: "
+        scope_result["content"] = wrapper + report
+        self.assertTrue(check_run.reviewer_returns(bodies, [KEY])["ok"])
+        for failure in ("wrong_target", "tool_error", "missing_boundary", "status"):
+            changed = copy.deepcopy(bodies)
+            result = changed[1]["messages"][1]["content"][2]
+            if failure == "wrong_target":
+                result["content"] = wrapper + report.replace(KEY, "RHAISTRAT-2")
+            elif failure == "tool_error":
+                result["is_error"] = True
+            elif failure == "missing_boundary":
+                result["content"] = report
+            else:
+                result["content"] = wrapper + "Review is pending while I collect the scope findings."
+            with self.subTest(failure=failure):
+                self.assertFalse(check_run.reviewer_returns(changed, [KEY])["ok"])
+
     def test_observed_markdown_formats_pass_only_through_a_matching_receiving_channel(self):
         bodies = reviewer_bodies([KEY])
         results = bodies[1]["messages"][1]["content"]

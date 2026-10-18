@@ -6,7 +6,7 @@ that the explanation is accurate or that the whole report stayed in scope.
 """
 import re
 
-CONTRACT = "role-assessment-v2"
+CONTRACT = "role-assessment-v3"
 TARGET_HEADING = re.compile(r"^#{1,6}\s+((?:RHAISTRAT|STRAT)-\d+):[^\n]*", re.M)
 FIELDS = {
     "feasibility": ("Feasibility", r"feasible|infeasible|needs revision"),
@@ -29,6 +29,7 @@ NUMBERED_FINDINGS = re.compile(r"^\s*\d+[.)]\s+(.+)$", re.M)
 MARKDOWN_HEADING = re.compile(r"^#{1,6}[ \t]+(.+)")
 FENCE = re.compile(r"^[ \t]*(`{3,}|~{3,})(.*)$")
 ARCHITECTURE_SUBJECT = re.compile(r"^(?:core )?architecture is\s+", re.I)
+SCOPE_SUBJECT = re.compile(r"^(?:the )?(?:capability|scope) is\s+", re.I)
 STATUS = re.compile(
     r"^(?:skill execution completed|review_scope_error:|(?:api |connection |upstream )?error\b|"
     r"(?:i(?:'ve| have) |we(?:'ve| have) )?(?:launched|started)\b|"
@@ -133,6 +134,8 @@ def classify(report, key, role, *, is_error=False):
     if role == "architecture":
         # A grammatical subject does not change the verdict or supply rationale.
         judgments = [ARCHITECTURE_SUBJECT.sub("", value) for value in judgments]
+    elif role == "scope":
+        judgments = [SCOPE_SUBJECT.sub("", value) for value in judgments]
     normalized = set()
     for value in judgments:
         judgment = re.match(r"(?:" + outcomes + r")\b", value, re.I)

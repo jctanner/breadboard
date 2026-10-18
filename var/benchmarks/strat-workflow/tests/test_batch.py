@@ -338,11 +338,11 @@ class WorkflowTests(unittest.TestCase):
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REF == run.strat_creator_ref")
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REPO == run.strat_creator_repo")
                                 steps[-1]["that"].append("captured_request.args.extra_env.CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS == run.workflow_max_concurrent_agents")
-                                if overrides.get("tier") in ("s1-mixed-glm", "s1-mixed-opus", "s1-pr85-mixed-ten-opus"):
+                                if overrides.get("tier") in ("s1-mixed-glm", "s1-mixed-opus", "s1-pr85-mixed-ten-opus", "s1-pr85-mixed-ten-opus55"):
                                     steps[-1]["that"].append("captured_request.args.extra_env.STRAT_MIXED_SEED_JSON == '/app/artifacts/scripts/offline-seed/seed.json'")
                                 else:
                                     steps[-1]["that"].append("not captured_request.args.extra_env.STRAT_MIXED_SEED_JSON")
-                                if overrides.get("tier") in ("s1-mixed-opus", "s1-pr85-mixed-ten-opus"):
+                                if overrides.get("tier") in ("s1-mixed-opus", "s1-pr85-mixed-ten-opus", "s1-pr85-mixed-ten-opus55"):
                                     steps[-1]["that"].append("captured_request.args.extra_env.STRAT_STOP_ON_WORKFLOW_FAILURE == '1'")
                                 if overrides.get("tier") in ("s1-pr85-distinct-ten-opus", "s1-pr85-completion-fixed-opus"):
                                     steps[-1]["that"] += [
@@ -363,6 +363,7 @@ class WorkflowTests(unittest.TestCase):
                     steps[next(i for i, s in enumerate(steps) if s["name"] == "check")]["vars"]["eval"]["stdout"] = (
                         '{"run":"{{ run.id }}","tier":"{{ tier }}","test":"{{ test.id }}",'
                         '"arm":"{{ test.arm }}","variant":"{{ variant }}","repeat":{{ round }},'
+                        '"model":"{{ run.model }}",'
                         '"pass":true,"job":"{{ job_name }}","mode":"{{ run.mode }}",'
                         '"batch_size":{{ run.batch_size }},"selector":"{{ rfe_key }}",'
                         '"expected_keys":"{{ batch_expected_keys }}",'
@@ -525,6 +526,30 @@ class WorkflowTests(unittest.TestCase):
             result, rows = self.simulate({**settings, **invalid}, count=10)
             self.assertNotEqual(result.returncode, 0)
             self.assertIsNone(rows)
+
+    def test_mixed_opus55_uses_new_model_without_changing_candidate_or_fixture(self):
+        settings = {"tier": "s1-pr85-mixed-ten-opus55", "variants": "opus55", "repeats": 1}
+        result, rows = self.simulate(settings, count=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertEqual((row["test"], row["variant"], row["model"], row["batch_size"]),
+                         ("S1", "opus55", "claude-opus-5-5", 10))
+        self.assertEqual(row["strat_creator_ref"], "6ed858b2294a29457153a90f187a801022c21e8b")
+        self.assertEqual(row["workflow_max_concurrent_agents"], "10")
+        for invalid in ({"only_tests": "S2"}, {"variants": "opus"}, {"variants": "glm"},
+                        {"repeats": 2}, {"wipe_at_start": True}):
+            result, rows = self.simulate({**settings, **invalid}, count=10)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIsNone(rows)
+        result, rows = self.simulate(settings, count=9)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIsNone(rows)
+        tiers = yaml.safe_load((BENCH / "vars/tiers.yaml").read_text())["tiers"]
+        original = copy.deepcopy(tiers["s1-pr85-mixed-ten-opus"])
+        original["variant"] = "opus55"
+        original["tests"][0]["variants"] = ["opus55"]
+        self.assertEqual(tiers[settings["tier"]], original)
 
     def test_tier_one_selection_and_defaults_survive(self):
         result, rows = self.simulate({"tier": "smoke", "only_tests": "S1,S2", "repeats": 1}, count=1)

@@ -230,6 +230,14 @@ reset, using the existing collector and receipt guard.
 
 ## Hardened S1 ten-ticket validation
 
+`s1-pr85-mixed-ten-opus55` repeats the mixed-state case below with the exact
+model `claude-opus-5-5` (variant `opus55`). It keeps the same source pin, fixture,
+high effort, cap ten, native capture and failure monitoring, and permits one S1
+iteration. Other model selections, S2, repeats and artifact wipes are rejected.
+The normal job setup pins the primary, helper agents and model aliases to the
+requested full model ID. Verify the Vertex upstream permits Opus 5.5 before
+seeding, and retain the Opus 4.6 run/configuration for comparison.
+
 The new `s1-pr85-mixed-ten-opus` tier pins the same completion-hook repair
 `6ed858b2294a29457153a90f187a801022c21e8b` and uses the current checker. It
 seeds 29 issues with eighteen distinct RFE subjects: four fresh, four requiring

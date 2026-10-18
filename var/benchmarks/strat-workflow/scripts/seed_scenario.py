@@ -76,6 +76,10 @@ def load_scenario(name: str) -> tuple[dict, dict]:
     for template in templates.values():
         if not template.get("summary") or not template.get("description"):
             raise SystemExit("each RFE template needs a summary and full description")
+    if scenario.get("require_distinct_templates"):
+        for field in ("summary", "description"):
+            if len({templates[row["template"]][field] for row in rfes}) != len(rfes):
+                raise SystemExit(f"all scenario RFEs, including controls, need distinct {field} values")
     if scenario.get("expected_batch_size"):
         count = scenario["expected_batch_size"]
         if len(rfes) != count or not all(rfe.get("eligible") for rfe in rfes):

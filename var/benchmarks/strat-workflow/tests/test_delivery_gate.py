@@ -12,7 +12,60 @@ from test_batch import reviewer_bodies, valid_report
 KEY = "RHAISTRAT-1"
 
 
+def numbered_report(findings):
+    return (f"### {KEY}: Gateway cancellation\n**Feasibility**: needs revision\n"
+            "**Effort estimate**: optimistic\n**RFE alignment**: delivers\n"
+            "**Key concerns**: listed below\n**Prior review status**: unchanged\n\n"
+            + findings + "\n**Recommendation**: revise")
+
+
 class AssessmentTests(unittest.TestCase):
+    def test_markdown_numbered_findings_use_the_body_not_only_the_title(self):
+        for heading in ("#### 1. Cancellation race", "## 2) Cancellation race"):
+            with self.subTest(heading=heading):
+                report = numbered_report(heading + "\n\nThe gateway must resolve cancellation racing with the final response.")
+                self.assertTrue(classify(report, KEY, "feasibility")["assessment_present"])
+
+    def test_numbered_headings_do_not_turn_scaffolding_into_explanations(self):
+        for findings in (
+                "#### 1. The gateway needs a documented cancellation race outcome",
+                "#### 1. Cancellation race\nTODO explain the cancellation and completion behavior here.",
+                "#### 1. Cancellation race\nReview is pending while I gather more background.",
+                "#### 1. Cancellation race\n> The gateway must resolve cancellation racing with the final response.",
+                "#### 1. Cancellation race\n| The gateway must resolve cancellation racing with the final response. |",
+                "```markdown\n#### 1. Cancellation race\nThe gateway must resolve cancellation racing with the final response.\n```",
+                "#### 1. Cancellation race\n~~~text\nThe gateway must resolve cancellation racing with the final response.\n~~~",
+                "#### 1. Cancellation race\nTBD\n#### Unrelated background\nThe gateway already owns cancellation and timeout handling."):
+            with self.subTest(findings=findings):
+                self.assertFalse(classify(numbered_report(findings), KEY, "feasibility")["assessment_present"])
+
+    def test_numbered_findings_cannot_borrow_another_tickets_explanation(self):
+        report = numbered_report("#### 1. Cancellation race\nTBD")
+        report += "\n" + valid_report("RHAISTRAT-2", "feasibility")
+        self.assertFalse(classify(report, KEY, "feasibility")["assessment_present"])
+
+    def test_explicit_architecture_subject_preserves_completed_judgment(self):
+        report = (f"### {KEY}: Gateway cancellation\n"
+                  "**Architecture assessment**: Core architecture is sound with two unresolved validation items\n"
+                  "**Cross-component risks**: Gateway ownership already defines where cancellation must be implemented.\n"
+                  "**Recommendation**: approve")
+        self.assertTrue(classify(report, KEY, "architecture")["assessment_present"])
+        repeated = report + "\n**Architecture assessment**: sound"
+        self.assertTrue(classify(repeated, KEY, "architecture")["assessment_present"])
+
+    def test_architecture_subject_is_not_explanation_or_permission_to_search_for_sound(self):
+        for judgment in ("Core architecture is sound", "Core architecture is mostly sound"):
+            report = f"### {KEY}: Gateway cancellation\n**Architecture assessment**: {judgment}\n**Recommendation**: approve"
+            with self.subTest(judgment=judgment):
+                self.assertFalse(classify(report, KEY, "architecture")["assessment_present"])
+        for judgment in ("Core architecture is not sound", "Core architecture is pending",
+                         "Core architecture is <sound / concerns identified>",
+                         "Core architecture is sound or concerns identified",
+                         "We have not decided whether the core architecture is sound"):
+            report = valid_report(KEY, "architecture").replace("sound.", judgment + ".")
+            with self.subTest(judgment=judgment):
+                self.assertFalse(classify(report, KEY, "architecture")["assessment_present"])
+
     def test_numbered_explanations_and_consistent_role_repeats(self):
         for role, label, judgment in (
                 ("feasibility", "Feasibility", "feasible"),
@@ -144,6 +197,21 @@ class AssessmentTests(unittest.TestCase):
 
 
 class ReceivingChannelTests(unittest.TestCase):
+    def test_observed_markdown_formats_pass_only_through_a_matching_receiving_channel(self):
+        bodies = reviewer_bodies([KEY])
+        results = bodies[1]["messages"][1]["content"]
+        reports = {
+            "feasibility": numbered_report("#### 1. Cancellation race\nThe gateway must resolve cancellation racing with the final response."),
+            "architecture": valid_report(KEY, "architecture").replace("sound.", "Core architecture is sound."),
+        }
+        for result in results:
+            for role, report in reports.items():
+                if result["tool_use_id"].endswith(f"strategy-{role}-review"):
+                    result["content"] = result["content"].split("Result:", 1)[0] + "Result: " + report
+        self.assertTrue(check_run.reviewer_returns(bodies, [KEY])["ok"])
+        results[0]["is_error"] = True
+        self.assertFalse(check_run.reviewer_returns(bodies, [KEY])["ok"])
+
     def test_agreeing_repeats_do_not_invalidate_delivered_roles_or_change_launch_counts(self):
         bodies = reviewer_bodies([KEY])
         for result in bodies[1]["messages"][1]["content"]:

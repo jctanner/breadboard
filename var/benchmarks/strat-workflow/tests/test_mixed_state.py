@@ -17,8 +17,8 @@ import mixed_state as mixed
 import seed_scenario
 
 
-def authored_case():
-    scenario, _ = seed_scenario.load_scenario("batch-mixed-state")
+def authored_case(scenario_name="batch-mixed-state"):
+    scenario, _ = seed_scenario.load_scenario(scenario_name)
     rows, before = [], {}
 
     def issue(labels=None):
@@ -46,7 +46,7 @@ def authored_case():
             "discovered_in_order": selected, "discovered": sorted(selected),
             "expected_acquired_keys": acquired, "expected_resume_points": points,
             "expected_preparation_skips": [k for k in selected if k not in acquired],
-            "deferred_keys": [k for k in pool if k not in selected]}
+            "deferred_keys": [k for k in pool if k not in selected and by_key[k]["action"] != "late-skip"]}
     prepared = {"freshness": {"contract": "strat-freshness-v1"}, "input_keys": selected,
                 "acquired_keys": acquired, "resume_points": points,
                 "skipped": [{"key": k} for k in seed["expected_preparation_skips"]],
@@ -69,6 +69,24 @@ def authored_case():
 
 
 class MixedTests(unittest.TestCase):
+    def test_full_mixed_fixture_has_ten_acquisitions_and_unique_controls(self):
+        scenario, templates = seed_scenario.load_scenario("batch-mixed-ten-distinct-v2")
+        mixed.validate(scenario)
+        self.assertEqual(len(templates), 18)
+        for field in ("summary", "description"):
+            self.assertEqual(len({t[field] for t in templates.values()}), 18)
+        seed, after, prepared, progress = authored_case("batch-mixed-ten-distinct-v2")
+        self.assertEqual(seed["expected_preparation_skips"], [])
+        self.assertEqual(seed["deferred_keys"], [])
+        self.assertEqual(seed["discovered_in_order"], ["RHAIRFE-1", *[f"RHAIRFE-{i}" for i in range(11, 19)], "RHAIRFE-2"])
+        points = list(seed["expected_resume_points"].values())
+        self.assertEqual({action: points.count(action) for action in set(points)}, {"create": 4, "refine": 4, "review": 2})
+        self.assertTrue(mixed.assess(seed, after, prepared, progress)["ok"])
+        bad = copy.deepcopy(scenario)
+        bad["rfes"][2]["template"] = bad["rfes"][3]["template"]
+        with self.assertRaisesRegex(ValueError, "controls"):
+            mixed.validate(bad)
+
     def test_inventory_and_distinct_work(self):
         scenario, templates = seed_scenario.load_scenario("batch-mixed-state")
         mixed.validate(scenario)
@@ -167,6 +185,12 @@ class MixedTests(unittest.TestCase):
 @unittest.skipUnless(os.environ.get("STRAT_CREATOR_CHECKOUT"), "optional local emulator integration; no model calls")
 class LocalEmulatorTests(unittest.TestCase):
     def test_real_seed_prepare_guard_and_repeat(self):
+        self.run_scenario("batch-mixed-state")
+
+    def test_full_ten_acquired_with_real_proof_and_no_work_repeat(self):
+        self.run_scenario("batch-mixed-ten-distinct-v2")
+
+    def run_scenario(self, scenario_name):
         source = Path(os.environ["STRAT_CREATOR_CHECKOUT"]).resolve()
         spec = importlib.util.spec_from_file_location("mixed_test_jira_fixtures", source / "tests/conftest.py")
         fixtures = importlib.util.module_from_spec(spec)
@@ -185,8 +209,8 @@ class LocalEmulatorTests(unittest.TestCase):
                        "STRAT_ARCHITECTURE_CONTEXT_PATH": str(source / "tests/fixtures/workflow-smoke/architecture-context"),
                        "TARGET_REPO_DIR": str(target), "STRAT_STATE_DIR": str(state), "STRAT_CREATOR_REF": ref,
                        "STRAT_CREATOR_REPO": str(source), "STRAT_MODE": "batch", "STRAT_RUN_ID": "mixed-test", "BATCH_SIZE": "10"}
-                scenario, templates = seed_scenario.load_scenario("batch-mixed-state")
-                args = SimpleNamespace(strat_creator=target, strat_creator_repo=str(source), scenario="batch-mixed-state",
+                scenario, templates = seed_scenario.load_scenario(scenario_name)
+                args = SimpleNamespace(strat_creator=target, strat_creator_repo=str(source), scenario=scenario_name,
                                        no_reset=False, dry_run=False)
                 with patch.dict(os.environ, env), patch.object(seed_scenario, "EMULATOR_HOSTS", {"127.0.0.1"}), \
                         patch("require_archive.check_archives", return_value={"ok": True}):
@@ -199,6 +223,9 @@ class LocalEmulatorTests(unittest.TestCase):
                     self.assertEqual(mixed.main(["guard", str(out / "seed.json"), str(target), str(state), str(out)]), 0)
                     prepared = json.loads((state / "run.json").read_text())
                     self.assertEqual(len(prepared["reused_push"]), 2)
+                    self.assertEqual(len(prepared["acquired_keys"]), scenario["expected_acquired"])
+                    if scenario_name == "batch-mixed-ten-distinct-v2":
+                        self.assertEqual(sorted(prepared["resume_points"].values()), sorted(["create"] * 4 + ["refine"] * 4 + ["review"] * 2))
                     # Reimport the published description as strategy-create
                     # Path A does, then verify actual reuse against its proof.
                     client, api = mixed.connection()
@@ -243,6 +270,10 @@ class LocalEmulatorTests(unittest.TestCase):
                             api("PUT", f"/rest/api/2/issue/{strat}", json={"update": {"labels": [{"add": "strat-creator-rubric-pass"}]}})
                     result = mixed.repeat(target, report, out)
                     self.assertTrue(result["ok"], result)
+                    if scenario_name == "batch-mixed-ten-distinct-v2":
+                        self.assertEqual(result["exit"], 78)
+                        self.assertEqual(result["run"]["input_keys"], ["RHAIRFE-3"])
+                        self.assertEqual(result["run"]["acquired_keys"], [])
         finally:
             server.close()
 

@@ -50,7 +50,7 @@ steps:
           path: var/benchmarks/strat-workflow/scripts/seed_scenario.py
           args: ["--scenario", "{{ run.scenario }}", "--strat-creator-ref", "{{ run.strat_creator_ref }}"]
         args:
-          model: "{% if run.scenario == 'batch-mixed-state' %}{{ run.model }}{% else %}claude-haiku-5-5{% endif %}"
+          model: "{% if run.scenario == 'batch-mixed-state' or run.scenario == 'batch-mixed-ten-distinct-v2' %}{{ run.model }}{% else %}claude-haiku-5-5{% endif %}"
           mlflow: false
           otel: false
           api_dump: false

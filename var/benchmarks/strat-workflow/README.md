@@ -230,6 +230,18 @@ reset, using the existing collector and receipt guard.
 
 ## Hardened S1 ten-ticket validation
 
+The new `s1-pr85-mixed-ten-opus` tier pins the same completion-hook repair
+`6ed858b2294a29457153a90f187a801022c21e8b` and uses the current checker. It
+seeds 29 issues with eighteen distinct RFE subjects: four fresh, four requiring
+refinement, two verified review-only recoveries and eight controls. Creation
+order makes lexical discovery acquire all ten actionable RFEs. The human-only
+control remains unchanged during the batch and is explicitly skipped by the
+model-free repeat, which acquires nothing and exits 78. Review-only proof comes
+from the pinned real preparation/push helpers. Expected work is four clones,
+eight refinements/pushes and ten reviews with forty role assessments. One Opus
+iteration, cap ten, native capture and stop-on-native-failure. Legacy mixed
+tiers retain their earlier fixture, nine acquisitions and source pins.
+
 The completion-hook retest is `s1-pr85-completion-fixed-opus`, pinned at
 `6ed858b2294a29457153a90f187a801022c21e8b`. It resets Jira and recreates the
 same ten distinct requests from `batch-ten-distinct-v2`, with the same Opus
@@ -553,6 +565,14 @@ error and completion text cannot stand in for a review. Architecture skips are
 reported separately and do not count toward four-assessment coverage. Exclusive
 scope, final incorporation and accuracy remain separate checks.
 [Contract, historical replays and limits](../../../.ledger/notes/s1-hardening-05-delivery-gate.md).
+
+`role-assessment-v2` also recognizes explanatory bodies under numbered Markdown
+headings and architecture judgments beginning with "Core architecture is" or
+"Architecture is". Numbered headings contribute their explanatory body;
+their titles and fenced examples do not supply that body. Pending or ambiguous
+judgments and conflicting decisions still fail. The prefix does not count as
+an explanation. This revises the offline checker only; historical results and
+source pins retain their original contract and verdicts.
 
 Recompute delivery from one saved job without services or model calls:
 

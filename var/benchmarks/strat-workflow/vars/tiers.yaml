@@ -3,6 +3,24 @@
 # (vars/models.yaml). Repeats run in rounds, all tests once and then again,
 # so the designs alternate.
 tiers:
+  s1-pr85-mixed-ten-opus:
+    # One full mixed batch on the completion-hook repair and current checker.
+    single_test: true
+    variant: opus
+    repeats: 1
+    tests:
+      - id: S1
+        arm: workflow
+        variants: [opus]
+        scenario: batch-mixed-ten-distinct-v2
+        mode: batch
+        batch_size: 10
+        repo: https://github.com/jctanner-fullsend-ai/strat-creator.git
+        strat_creator_ref: 6ed858b2294a29457153a90f187a801022c21e8b
+        workflow_max_concurrent_agents: 10
+        timeout_minutes: 295
+        capture_native: true
+        stop_on_workflow_failure: true
   s1-pr85-completion-fixed-opus:
     # Authorized retest: same ten distinct RFEs, optimized completion hook.
     single_test: true

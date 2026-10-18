@@ -48,6 +48,8 @@ def validate(scenario):
     active = [r for r in rows if r["action"] in {"create", "refine", "review"}]
     if len(active) != 10 or len({r["template"] for r in active}) != 10:
         raise ValueError("mixed scenario needs ten distinct actionable capabilities")
+    if scenario.get("require_distinct_templates") and len({r["template"] for r in rows}) != len(rows):
+        raise ValueError("mixed scenario controls must also have distinct templates")
     return scenario
 
 

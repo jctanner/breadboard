@@ -234,7 +234,7 @@ class OutcomeTests(unittest.TestCase):
         self.assertTrue(all(rfe["eligible"] for rfe in scenario["rfes"]))
         old = set()
         for path in (BENCH / "data/scenarios").glob("*.yaml"):
-            if path.stem != "batch-ten-distinct-v2":
+            if path.stem not in {"batch-ten-distinct-v2", "batch-mixed-ten-distinct-v2"}:
                 old.update(rfe["template"] for rfe in yaml.safe_load(path.read_text())["rfes"])
         self.assertFalse(set(templates) & old)
         historical = [yaml.safe_load((BENCH / "data/rfe-templates" / (name + ".yaml")).read_text()) for name in old]
@@ -338,11 +338,11 @@ class WorkflowTests(unittest.TestCase):
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REF == run.strat_creator_ref")
                                 steps[-1]["that"].append("captured_request.args.extra_env.STRAT_CREATOR_REPO == run.strat_creator_repo")
                                 steps[-1]["that"].append("captured_request.args.extra_env.CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS == run.workflow_max_concurrent_agents")
-                                if overrides.get("tier") in ("s1-mixed-glm", "s1-mixed-opus"):
+                                if overrides.get("tier") in ("s1-mixed-glm", "s1-mixed-opus", "s1-pr85-mixed-ten-opus"):
                                     steps[-1]["that"].append("captured_request.args.extra_env.STRAT_MIXED_SEED_JSON == '/app/artifacts/scripts/offline-seed/seed.json'")
                                 else:
                                     steps[-1]["that"].append("not captured_request.args.extra_env.STRAT_MIXED_SEED_JSON")
-                                if overrides.get("tier") == "s1-mixed-opus":
+                                if overrides.get("tier") in ("s1-mixed-opus", "s1-pr85-mixed-ten-opus"):
                                     steps[-1]["that"].append("captured_request.args.extra_env.STRAT_STOP_ON_WORKFLOW_FAILURE == '1'")
                                 if overrides.get("tier") in ("s1-pr85-distinct-ten-opus", "s1-pr85-completion-fixed-opus"):
                                     steps[-1]["that"] += [
@@ -510,6 +510,20 @@ class WorkflowTests(unittest.TestCase):
         for invalid in ({"only_tests": "S2"}, {"variants": "glm"}, {"repeats": 3}):
             result, rows = self.simulate({**settings, **invalid}, count=10)
             self.assertNotEqual(result.returncode, 0, result.stderr)
+            self.assertIsNone(rows)
+
+    def test_latest_mixed_opus_pins_repaired_source_and_preserves_handoff(self):
+        settings = {"tier": "s1-pr85-mixed-ten-opus", "variants": "opus", "repeats": 1}
+        result, rows = self.simulate(settings, count=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertEqual((row["test"], row["variant"], row["batch_size"]), ("S1", "opus", 10))
+        self.assertEqual(row["strat_creator_ref"], "6ed858b2294a29457153a90f187a801022c21e8b")
+        self.assertEqual(row["workflow_max_concurrent_agents"], "10")
+        for invalid in ({"only_tests": "S2"}, {"variants": "glm"}, {"repeats": 2}, {"wipe_at_start": True}):
+            result, rows = self.simulate({**settings, **invalid}, count=10)
+            self.assertNotEqual(result.returncode, 0)
             self.assertIsNone(rows)
 
     def test_tier_one_selection_and_defaults_survive(self):

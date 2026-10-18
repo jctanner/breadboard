@@ -6,7 +6,7 @@ that the explanation is accurate or that the whole report stayed in scope.
 """
 import re
 
-CONTRACT = "role-assessment-v1"
+CONTRACT = "role-assessment-v2"
 TARGET_HEADING = re.compile(r"^#{1,6}\s+((?:RHAISTRAT|STRAT)-\d+):[^\n]*", re.M)
 FIELDS = {
     "feasibility": ("Feasibility", r"feasible|infeasible|needs revision"),
@@ -26,6 +26,9 @@ PLACEHOLDER = re.compile(r"^\s*(?:<[^>\n]+>|(?:TODO|TBD|placeholder|lorem ipsum)
 FINDINGS = re.compile(r"^(?:\*\*(?:Detailed findings|Findings|Rationale)\*\*|"
                       r"#{1,6}\s+(?:Detailed findings|Findings|Rationale))\s*:?\s*$", re.M | re.I)
 NUMBERED_FINDINGS = re.compile(r"^\s*\d+[.)]\s+(.+)$", re.M)
+MARKDOWN_HEADING = re.compile(r"^#{1,6}[ \t]+(.+)")
+FENCE = re.compile(r"^[ \t]*(`{3,}|~{3,})(.*)$")
+ARCHITECTURE_SUBJECT = re.compile(r"^(?:core )?architecture is\s+", re.I)
 STATUS = re.compile(
     r"^(?:skill execution completed|review_scope_error:|(?:api |connection |upstream )?error\b|"
     r"(?:i(?:'ve| have) |we(?:'ve| have) )?(?:launched|started)\b|"
@@ -49,6 +52,29 @@ def _explains(value):
         if len(re.findall(r"[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*", line)) >= 6:
             return True
     return False
+
+
+def _numbered_sections(section):
+    """Read numbered Markdown findings, excluding titles and fenced examples."""
+    body, fence = None, None
+    for line in section.splitlines():
+        marker = FENCE.match(line)
+        if fence:
+            if marker and marker[1][0] == fence[0] and len(marker[1]) >= len(fence) and not marker[2].strip():
+                fence = None
+            continue
+        if marker:
+            fence = marker[1]
+            continue
+        heading = MARKDOWN_HEADING.match(line)
+        if heading:
+            if body is not None:
+                yield "\n".join(body)
+            body = [] if re.match(r"\d+[.)][ \t]+", heading[1]) else None
+        elif body is not None:
+            body.append(line)
+    if body is not None:
+        yield "\n".join(body)
 
 
 def classify(report, key, role, *, is_error=False):
@@ -104,6 +130,9 @@ def classify(report, key, role, *, is_error=False):
         return finish("incomplete", "unsupported role skip")
     if not judgments:
         return finish("incomplete", "missing or unfinished assigned-role judgment")
+    if role == "architecture":
+        # A grammatical subject does not change the verdict or supply rationale.
+        judgments = [ARCHITECTURE_SUBJECT.sub("", value) for value in judgments]
     normalized = set()
     for value in judgments:
         judgment = re.match(r"(?:" + outcomes + r")\b", value, re.I)
@@ -117,6 +146,7 @@ def classify(report, key, role, *, is_error=False):
                                    for value in values.get(name.lower(), []))]
     explanations.extend(section[heading.end():] for heading in FINDINGS.finditer(section))
     explanations.extend(heading[1] for heading in NUMBERED_FINDINGS.finditer(section))
+    explanations.extend(_numbered_sections(section))
     if not any(_explains(value) for value in explanations):
         return finish("incomplete", "no explanatory role content beyond verdict/status/boilerplate")
     return finish("assessment", "assigned-role judgment, recommendation and explanation present")

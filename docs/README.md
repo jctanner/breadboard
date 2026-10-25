@@ -30,6 +30,7 @@ Mermaid `.mmd` files — render on GitHub or paste into [Mermaid Live Editor](ht
 ## Model Relay
 
 - [model-relay.md](model-relay.md) — Model Relay endpoints at relay.local and relay-api.local, deployment, and admin key handling
+- [webhook-sink.md](webhook-sink.md) — the webhook sink at webhook-sink.local: sender and consumer tokens, the admin console, filters, and which emulators deliver
 
 ## Fullsend Integration
 

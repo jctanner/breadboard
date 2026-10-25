@@ -505,6 +505,24 @@ host-relay-admin-key: ## Print the Model Relay admin console key
 host-logs-relay: ## Follow Model Relay logs on host
 	kubectl logs -n ai-pipeline -l app=model-relay -f
 
+host-rebuild-webhook-sink: ## Rebuild and redeploy the webhook sink on host
+	@echo "==> Building webhook sink image..."
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05n-build-webhook-sink.sh
+	@echo "==> Applying manifest and restarting webhook sink..."
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/28-deploy-webhook-sink.sh
+	kubectl rollout restart deployment/webhook-sink -n ai-pipeline
+	kubectl rollout status deployment/webhook-sink -n ai-pipeline --timeout=120s
+	@echo "✓ Webhook sink rebuilt and redeployed"
+
+host-logs-webhook-sink: ## Follow webhook sink logs on host
+	kubectl logs -n ai-pipeline -l app=webhook-sink -f
+
+host-webhook-sink-tokens: ## Print the webhook sink admin key and default tokens
+	@for key in admin-key default-sender-token default-consumer-token; do \
+	  printf '%-24s ' "$$key"; \
+	  kubectl get secret webhook-sink-tokens -n ai-pipeline -o jsonpath="{.data.$$key}" | base64 -d; echo; \
+	done
+
 host-logs-dashboard: ## Follow dashboard logs on host
 	kubectl logs -n ai-pipeline -l app=pipeline-dashboard -f
 

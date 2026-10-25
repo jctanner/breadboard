@@ -117,6 +117,10 @@ spec:
           value: "false"
         - name: ATTACHMENT_DIR
           value: "/data/attachments"
+        # Lets webhooks reach in-cluster HTTP services such as the webhook
+        # sink (http://webhook-sink.ai-pipeline.svc.cluster.local).
+        - name: WEBHOOK_ALLOW_INSECURE_HTTP
+          value: "true"
 
         volumeMounts:
         # Mount the cert-manager issued certificate

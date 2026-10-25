@@ -128,6 +128,8 @@ spec:
     - model-relay.ai-pipeline.svc.cluster.local
     - relay.local
     - relay-api.local
+    - webhook-sink.local
+    - webhook-sink-admin.local
   issuerRef:
     name: internal-ca-issuer
     kind: Issuer

@@ -494,7 +494,7 @@ host-rebuild-relay: ## Rebuild and redeploy Model Relay on host
 	@echo "==> Building Model Relay image..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05m-build-model-relay.sh
 	@echo "==> Applying manifest and restarting Model Relay..."
-	kubectl apply -f deploy/k8s/29-model-relay.yaml
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/27-deploy-model-relay.sh
 	kubectl rollout restart deployment/model-relay -n ai-pipeline
 	kubectl rollout status deployment/model-relay -n ai-pipeline --timeout=180s
 	@echo "✓ Model Relay rebuilt and redeployed"

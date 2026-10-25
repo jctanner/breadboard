@@ -385,7 +385,7 @@ Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 
 - [Bash injection scanner false positives](tasks/pending/fullsend-bash-injection-scan-false-positives.md): refine environment-enumeration matching; eight ordinary Bash expressions currently trigger warnings.
 
-- [Webhook sink service](tasks/done/webhook-sink-service.md): deployed at `webhook-sink.local` (`checkouts/webhook-sink-service`). Jira emulator delivery is verified end to end with a long-poll consumer and signatures. Decision: [ADR-0013](decisions/ADR-0013-webhook-sink-in-rust.md). [GitHub end to end](tasks/blocked/webhook-sink-github-emulator-e2e.md) is blocked: the GitHub emulator never fires repository hooks.
+- [Webhook sink service](tasks/done/webhook-sink-service.md): deployed at `webhook-sink.local` (`checkouts/webhook-sink-service`). Jira emulator delivery is verified end to end with a long-poll consumer and signatures. Decision: [ADR-0013](decisions/ADR-0013-webhook-sink-in-rust.md). [GitHub end to end](tasks/done/webhook-sink-github-emulator-e2e.md) is done: the emulator now delivers repository webhooks.
 
 - [Visible initial architecture fetch](tasks/done/strat-entrypoint-visible-context-fetch.md): complete;43a6457 pushed,795 tests passed, both CI pins published.
 

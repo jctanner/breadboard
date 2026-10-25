@@ -141,7 +141,7 @@ out of scope.
 - [ ] **Not met; moved to a blocked follow-up.** End to end: a GitHub
       emulator repo hook records an `issues` event after an issue is
       created. The emulator never fires hooks; see
-      [the follow-up](../blocked/webhook-sink-github-emulator-e2e.md). Its
+      [the follow-up](webhook-sink-github-emulator-e2e.md). Its
       delivery code, called directly, does reach the sink with a valid
       signature.
 - [x] End to end: a long-poll consumer started before the event receives it

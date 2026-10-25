@@ -71,7 +71,7 @@ the way the sender already supports:
 | Emulator | Status | Setup |
 | --- | --- | --- |
 | Jira | Delivers | `POST /rest/webhooks/1.0/webhook` with `url`, `events`, and `"secret": "<sender token>"`. Jira signs with `X-Hub-Signature`. The deployment sets `WEBHOOK_ALLOW_INSECURE_HTTP=true`, so the emulator accepts the sink's `http://` URL. |
-| GitHub | **Does not deliver yet** | Create the hook with `config.secret` set to a sender token. The emulator never fires hooks; see `checkouts/github-emulator/docs/bugs/open/repository-webhooks-are-never-delivered.md`. Its delivery code works when called directly. |
+| GitHub | Delivers | Create the hook with `config.secret` set to a sender token. Issues, comments, pull requests, reviews, labels, and pushes (with branch `create`/`delete`) are delivered in the background. New hooks are pinged, and `POST …/hooks/{id}/pings` and `…/tests` work. |
 | GitLab | Not implemented | When it delivers, set the hook's secret token to a sender token. The sink accepts `X-Gitlab-Token`. |
 | Scripts | — | `Authorization: Bearer <sender token>`, or `?token=` as a last resort. |
 

@@ -15,11 +15,14 @@ env_path = Path(__file__).parent / ".env"
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
 else:
-    # In K8s, env vars come from secrets - .env not required
+    # In K8s, env vars come from secrets - .env not required. Model Relay
+    # supplies the Vertex project for routed jobs, so its URL is enough.
     import os
-    if not os.getenv("ANTHROPIC_VERTEX_PROJECT_ID"):
+    if not (os.getenv("ANTHROPIC_VERTEX_PROJECT_ID")
+            or os.getenv("PIPELINE_MODEL_RELAY_URL")):
         print(
-            "Error: .env file not found and ANTHROPIC_VERTEX_PROJECT_ID not set\n"
+            "Error: .env file not found and neither ANTHROPIC_VERTEX_PROJECT_ID\n"
+            "nor PIPELINE_MODEL_RELAY_URL is set\n"
             "\n"
             f"Expected location: {env_path}\n"
             "\n"
@@ -29,7 +32,7 @@ else:
             "  CLOUD_ML_REGION=global\n"
             "  ANTHROPIC_VERTEX_PROJECT_ID=<your-project>\n"
             "\n"
-            "The Claude Agent SDK requires valid Vertex AI credentials.",
+            "or set PIPELINE_MODEL_RELAY_URL to route through Model Relay.",
             file=sys.stderr,
         )
         sys.exit(1)

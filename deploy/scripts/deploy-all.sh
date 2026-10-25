@@ -18,19 +18,11 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# Check if .env exists
-if [ ! -f ${PROJECT_ROOT}/.env ]; then
-  echo "ERROR: ${PROJECT_ROOT}/.env file not found"
-  echo "Please create it with required credentials before running this script"
+# .env is optional: model credentials are managed by Model Relay, and every
+# value 06-create-secrets.sh reads from it has a default.
+if [ ! -f "${PROJECT_ROOT}/.env" ]; then
+  echo "No ${PROJECT_ROOT}/.env found; using default secret values"
   echo ""
-  echo "Required variables:"
-  echo "  CLAUDE_CODE_USE_VERTEX=1"
-  echo "  CLOUD_ML_REGION=global"
-  echo "  ANTHROPIC_VERTEX_PROJECT_ID=your-project-id"
-  echo "  JIRA_SERVER=https://issues.redhat.com"
-  echo "  JIRA_USER=your-email"
-  echo "  JIRA_TOKEN=your-token"
-  exit 1
 fi
 
 # Step 1: Install K3s (skip if already running)

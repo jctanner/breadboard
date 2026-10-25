@@ -1,20 +1,17 @@
 #!/bin/bash
-# Create Kubernetes secrets from .env file
+# Create Kubernetes secrets, taking optional overrides from .env
 
 set -euo pipefail
 
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
 
-echo "==> Creating secrets from .env file..."
+echo "==> Creating secrets..."
 
-if [ ! -f "${PROJECT_ROOT}/.env" ]; then
-  echo "ERROR: .env file not found at ${PROJECT_ROOT}/.env"
-  echo "Please create it with required credentials before running this script"
-  exit 1
+if [ -f "${PROJECT_ROOT}/.env" ]; then
+  source "${PROJECT_ROOT}/.env"
+else
+  echo "  No .env found; using defaults"
 fi
-
-# Source the .env file
-source "${PROJECT_ROOT}/.env"
 
 # markovd's JWT signing secret and the token Markov runner pods send with their
 # callbacks. markovd generates random ones when they're unset, so a markovd

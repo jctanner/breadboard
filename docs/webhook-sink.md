@@ -82,8 +82,21 @@ curl -H "Authorization: Bearer $WHC_TOKEN" \
   'http://webhook-sink.ai-pipeline.svc.cluster.local/events?source=jira&event=jira:issue_created&after=0&wait=30'
 ```
 
-Filter with `channel`, `source`, `event` and `sender`, a sender token ID.
-Each takes a comma-separated list. Keep the response's `next_after` as the
+Filter with:
+
+- `channel`, `source` and `event`;
+- `sender`, a sender token ID;
+- `host`, such as `github.local`;
+- `repo`, such as `fullsend-dev/triage-target` or a prefix like
+  `fullsend-dev/*`. For Jira it is the project key, such as `RHAIRFE`.
+
+Each takes a comma-separated list. Host and repository come from the
+payload, so they don't depend on the hook's channel name:
+
+```bash
+curl -H "Authorization: Bearer $WHC_TOKEN" \
+  'https://webhook-sink.local/events?host=github.local&repo=fullsend-dev/*&after=0&wait=60'
+``` Keep the response's `next_after` as the
 next request's `after`.
 
 ## Deployment

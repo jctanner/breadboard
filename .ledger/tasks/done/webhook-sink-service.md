@@ -327,3 +327,20 @@ cluster:
 - the revealed default consumer value matched the Secret's;
 - the copied default sender value matched the Secret's.
 
+## Follow-up: host and repository filters (2026-10-25)
+
+Consumers can filter with `host=` and `repo=`. A `repo` value ending in
+`*` matches by prefix, such as `org/*`. The sink reads both from each
+payload when it stores the event, and older events were backfilled once.
+See `checkouts/webhook-sink-service/docs/tasks/done/host-and-repo-filters.md`.
+
+After deploying, these filters were checked through
+`https://webhook-sink.local`:
+
+| Filter | Result |
+| --- | --- |
+| `host=github.local` | the four GitHub emulator events |
+| `repo=admin/*` | the four GitHub emulator events |
+| `host=jira.local&repo=TEST` | the two Jira events |
+| `host=github.com` | nothing |
+

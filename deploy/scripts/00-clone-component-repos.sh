@@ -14,6 +14,7 @@ repos=(
   "markovd|git@github.com:vokramd/markovd.git"
   "observatory|git@github.com:opendatahub-io/observatory.git"
   "model-relay|git@github.com:jctanner/model-relay.git"
+  "hooksink|git@github.com:jctanner/hooksink.git"
   "fullsend-ai/fullsend|git@github.com:fullsend-ai/fullsend.git"
   "fullsend-ai/agents|git@github.com:fullsend-ai/agents.git"
   "org-pulse-core|git@github.com:red-hat-data-services/org-pulse-core.git"

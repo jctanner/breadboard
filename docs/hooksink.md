@@ -1,6 +1,7 @@
-# Webhook Sink
+# Hooksink
 
-The webhook sink (`checkouts/webhook-sink-service`) is a small Rust service.
+Hooksink (`checkouts/hooksink`), Breadboard's webhook sink, is a small Rust
+service.
 It stores webhook deliveries from the emulators, and consumers read them back
 by cursor and filters, optionally long-polling for new ones. Every delivery
 needs a sender token, and every read a consumer token. An admin console
@@ -13,10 +14,10 @@ Breadboard runs it.
 
 | Name | Purpose |
 | --- | --- |
-| `https://webhook-sink-admin.local/admin/` | Admin console: tokens, events, channel resets |
-| `http://webhook-sink.ai-pipeline.svc.cluster.local/hooks/<channel>` | Webhook URL for in-cluster senders |
-| `http://webhook-sink.ai-pipeline.svc.cluster.local/events?source=github&after=<seq>&wait=30` | Consumer long-poll, with filters |
-| `https://webhook-sink.local` | The public API from the host |
+| `https://hooksink-admin.local/admin/` | Admin console: tokens, events, channel resets |
+| `http://hooksink.ai-pipeline.svc.cluster.local/hooks/<channel>` | Webhook URL for in-cluster senders |
+| `http://hooksink.ai-pipeline.svc.cluster.local/events?source=github&after=<seq>&wait=30` | Consumer long-poll, with filters |
+| `https://hooksink.local` | The public API from the host |
 
 Both `.local` names route through the host proxy. Inside the cluster they
 resolve through the CoreDNS rewrites in
@@ -24,7 +25,7 @@ resolve through the CoreDNS rewrites in
 `/etc/hosts`, next to the other `*.local` names:
 
 ```text
-192.168.1.115 … webhook-sink.local webhook-sink-admin.local
+192.168.1.115 … hooksink.local hooksink-admin.local
 ```
 
 The admin API is served only on the admin listener, so the public name never
@@ -32,7 +33,7 @@ exposes token management.
 
 ## Tokens
 
-`28-deploy-webhook-sink.sh` creates the Secret `webhook-sink-tokens` once,
+`28-deploy-hooksink.sh` creates the Secret `hooksink-tokens` once,
 when it is missing, with these keys:
 
 | Key | Use |
@@ -41,12 +42,12 @@ when it is missing, with these keys:
 | `default-sender-token` | Random `whs_…` value: paste it as a hook's secret |
 | `default-consumer-token` | Random `whc_…` value: send it as `Authorization: Bearer` when reading events |
 
-To set your own values instead, set `WEBHOOK_SINK_ADMIN_KEY`,
-`WEBHOOK_SINK_DEFAULT_SENDER_TOKEN` and `WEBHOOK_SINK_DEFAULT_CONSUMER_TOKEN`
+To set your own values instead, set `HOOKSINK_ADMIN_KEY`,
+`HOOKSINK_DEFAULT_SENDER_TOKEN` and `HOOKSINK_DEFAULT_CONSUMER_TOKEN`
 before the first deploy. To print the values:
 
 ```bash
-make host-webhook-sink-tokens
+make host-hooksink-tokens
 ```
 
 At startup the sink makes the Secret's tokens the defaults. Issue further
@@ -54,7 +55,7 @@ tokens for individual senders and consumers in the console. Each value is
 shown once; rotate a token if its value is lost.
 
 Breadboard runs the sink in **insecure reveal mode**
-(`WEBHOOK_SINK_INSECURE_REVEAL_TOKENS=true` in the manifest). The console's
+(`HOOKSINK_INSECURE_REVEAL_TOKENS=true` in the manifest). The console's
 token views offer **Show** and **Copy** for every active token, so you can
 copy a token from the console instead of from the Secret. For a shared
 deployment, set it to `false`; the sink then stores consumer tokens as
@@ -79,7 +80,7 @@ the way the sender already supports:
 
 ```bash
 curl -H "Authorization: Bearer $WHC_TOKEN" \
-  'http://webhook-sink.ai-pipeline.svc.cluster.local/events?source=jira&event=jira:issue_created&after=0&wait=30'
+  'http://hooksink.ai-pipeline.svc.cluster.local/events?source=jira&event=jira:issue_created&after=0&wait=30'
 ```
 
 Filter with:
@@ -95,7 +96,7 @@ payload, so they don't depend on the hook's channel name:
 
 ```bash
 curl -H "Authorization: Bearer $WHC_TOKEN" \
-  'https://webhook-sink.local/events?host=github.local&repo=fullsend-dev/*&after=0&wait=60'
+  'https://hooksink.local/events?host=github.local&repo=fullsend-dev/*&after=0&wait=60'
 ``` Keep the response's `next_after` as the
 next request's `after`.
 
@@ -103,12 +104,12 @@ next request's `after`.
 
 | File | Role |
 | --- | --- |
-| `deploy/scripts/05n-build-webhook-sink.sh` | Builds the image, running fmt, clippy and tests, and imports it into k3s |
-| `deploy/scripts/28-deploy-webhook-sink.sh` | Creates `webhook-sink-tokens` if missing, applies the manifest, and waits |
-| `deploy/k8s/31-webhook-sink.yaml` | The PVC, the services `webhook-sink` (port 80 to 8080) and `webhook-sink-admin` (port 80 to 8081), and a single-replica Deployment |
-| `make host-rebuild-webhook-sink` | Build, apply, then restart; also works on a first deploy |
-| `make host-webhook-sink-tokens` | Print the admin key and default tokens |
-| `make host-logs-webhook-sink` | Follow the logs. Each stored event is logged with its sequence number, channel, source, event, sender token and method. Token values are never logged. |
+| `deploy/scripts/05n-build-hooksink.sh` | Builds the image, running fmt, clippy and tests, and imports it into k3s |
+| `deploy/scripts/28-deploy-hooksink.sh` | Creates `hooksink-tokens` if missing, applies the manifest, and waits |
+| `deploy/k8s/31-hooksink.yaml` | The PVC, the services `hooksink` (port 80 to 8080) and `hooksink-admin` (port 80 to 8081), and a single-replica Deployment |
+| `make host-rebuild-hooksink` | Build, apply, then restart; also works on a first deploy |
+| `make host-hooksink-tokens` | Print the admin key and default tokens |
+| `make host-logs-hooksink` | Follow the logs. Each stored event is logged with its sequence number, channel, source, event, sender token and method. Token values are never logged. |
 
 The sink runs one replica with the `Recreate` strategy, because SQLite
 allows only one writer.

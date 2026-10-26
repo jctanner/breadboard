@@ -66,7 +66,7 @@ bash "${SCRIPT_DIR}/05i-build-fullsend.sh"
 bash "${SCRIPT_DIR}/05j-build-fullsend-dashboard.sh"
 bash "${SCRIPT_DIR}/05l-build-org-pulse.sh"
 bash "${SCRIPT_DIR}/05m-build-model-relay.sh"
-bash "${SCRIPT_DIR}/05n-build-webhook-sink.sh"
+bash "${SCRIPT_DIR}/05n-build-hooksink.sh"
 echo ""
 
 # Step 7: Deploy storage
@@ -134,7 +134,7 @@ echo ""
 
 # Deploy the webhook sink
 echo "Deploying webhook sink..."
-bash "${SCRIPT_DIR}/28-deploy-webhook-sink.sh"
+bash "${SCRIPT_DIR}/28-deploy-hooksink.sh"
 echo ""
 
 # Step 17: Deploy GitLab Runner (in-cluster Kubernetes executor)
@@ -188,7 +188,7 @@ kubectl wait --for=condition=Available --timeout=300s \
 kubectl wait --for=condition=Available --timeout=300s \
   deployment/model-relay -n ai-pipeline || true
 kubectl wait --for=condition=Available --timeout=300s \
-  deployment/webhook-sink -n ai-pipeline || true
+  deployment/hooksink -n ai-pipeline || true
 echo ""
 
 # Run validations
@@ -265,7 +265,7 @@ echo "  - https://${INGRESS_IP} -H 'Host: relay-api.local' (inference, TLS)"
 echo ""
 
 echo "Webhook sink:"
-echo "  - https://${INGRESS_IP} -H 'Host: webhook-sink.local' (events, TLS)"
+echo "  - https://${INGRESS_IP} -H 'Host: hooksink.local' (events, TLS)"
 echo ""
 
 echo "Internal Service URLs (from pods):"
@@ -277,7 +277,7 @@ echo "  - Observatory: http://observatory.ai-pipeline.svc.cluster.local:8000"
 echo "  - GitLab:      https://gitlab-emulator.ai-pipeline.svc.cluster.local:443"
 echo "  - Org Pulse:   http://org-pulse-frontend.ai-pipeline.svc.cluster.local:8080"
 echo "  - Model Relay: http://model-relay.ai-pipeline.svc.cluster.local:8080"
-echo "  - Webhooks:    http://webhook-sink.ai-pipeline.svc.cluster.local/hooks/<channel>"
+echo "  - Webhooks:    http://hooksink.ai-pipeline.svc.cluster.local/hooks/<channel>"
 echo ""
 
 echo "Cluster Status:"

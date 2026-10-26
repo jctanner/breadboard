@@ -87,16 +87,18 @@ out of scope.
 
 ## Deployment
 
-- **Code location:** a separate project at `checkouts/webhook-sink-service`.
+- **Code location:** a separate project at `checkouts/hooksink`.
   It has its own git repository, like the emulators, and is ignored by
   Breadboard.
   - Give it its own `AGENTS.md`, `PLAN.md` and ledger.
   - Breadboard keeps only the deployment wiring.
-  - Once the remote exists, add it to
-    `deploy/scripts/00-clone-component-repos.sh` as
-    `git@github.com:jctanner/webhook-sink-service.git`. Adding it earlier
-    would make the clone script fail.
-  - Kubernetes resources and the hostname stay `webhook-sink`.
+  - The project is branded hooksink. Its remote is
+    `git@github.com:jctanner/hooksink.git`, and
+    `deploy/scripts/00-clone-component-repos.sh` clones it to
+    `checkouts/hooksink`. (Renamed from `checkouts/webhook-sink-service` on
+    2026-10-26.)
+  - Kubernetes resources and hostnames were `webhook-sink` until
+    2026-10-26; see "Renamed to hooksink" below.
 - **Image:** a multi-stage Containerfile that caches dependency builds
   (for example with `cargo-chef`), so a source-only change rebuilds in
   seconds.
@@ -178,8 +180,8 @@ These differ from the design above:
   `WEBHOOK_ALLOW_INSECURE_HTTP=true`. Without it, the emulator rejects
   `http://` webhook URLs. Its `WEBHOOK_ALLOW_PRIVATE_NETWORKS` setting is
   defined but never read.
-- **Clone script:** not updated. Add the entry once
-  `git@github.com:jctanner/webhook-sink-service.git` exists.
+- **Clone script:** clones `git@github.com:jctanner/hooksink.git` to
+  `checkouts/hooksink` (added 2026-10-26, once the remote existed).
 
 ## Later: real GitHub (out of scope)
 
@@ -207,7 +209,7 @@ Move to Postgres or JetStream only under the conditions in ADR-0013.
 
 ## Files Likely Involved
 
-- `checkouts/webhook-sink-service/` (new project; its own repository)
+- `checkouts/hooksink/` (new project; its own repository)
 - `deploy/scripts/00-clone-component-repos.sh`
 - `deploy/k8s/31-webhook-sink.yaml` (new)
 - `deploy/k8s/02-certificates.yaml`
@@ -272,7 +274,7 @@ memory.
 ## Follow-up: tokens and admin console (2026-10-25)
 
 The design above has been superseded by
-`checkouts/webhook-sink-service/docs/decisions/ADR-0002-sender-tokens-are-signing-secrets.md`.
+`checkouts/hooksink/docs/decisions/ADR-0002-sender-tokens-are-signing-secrets.md`.
 
 **What changed:**
 
@@ -293,7 +295,7 @@ The design above has been superseded by
   `sender`, not stored topics, as the user chose.
 
 **Evidence:** recorded in
-`checkouts/webhook-sink-service/docs/tasks/done/admin-console-and-tokens.md`.
+`checkouts/hooksink/docs/tasks/done/admin-console-and-tokens.md`.
 
 - Jira delivered TEST-2, signed with the default sender token. A consumer
   long-polling with a filter, using the default consumer token, received
@@ -332,7 +334,7 @@ cluster:
 Consumers can filter with `host=` and `repo=`. A `repo` value ending in
 `*` matches by prefix, such as `org/*`. The sink reads both from each
 payload when it stores the event, and older events were backfilled once.
-See `checkouts/webhook-sink-service/docs/tasks/done/host-and-repo-filters.md`.
+See `checkouts/hooksink/docs/tasks/done/host-and-repo-filters.md`.
 
 After deploying, these filters were checked through
 `https://webhook-sink.local`:
@@ -344,3 +346,33 @@ After deploying, these filters were checked through
 | `host=jira.local&repo=TEST` | the two Jira events |
 | `host=github.com` | nothing |
 
+## Renamed to hooksink (2026-10-26)
+
+The project is branded hooksink, and Breadboard now uses that name
+throughout:
+
+- Checkout `checkouts/hooksink`, cloned from
+  `git@github.com:jctanner/hooksink.git`.
+- Deployment, services, PVC and Secret: `hooksink`, `hooksink-admin`,
+  `hooksink-data`, `hooksink-tokens`; image `hooksink:latest`.
+- Hostnames `hooksink.local` and `hooksink-admin.local` (proxy routes,
+  certificate names, the CoreDNS rewrite file and `/etc/hosts`).
+- Files `deploy/k8s/31-hooksink.yaml`, `deploy/scripts/05n-build-hooksink.sh`,
+  `deploy/scripts/28-deploy-hooksink.sh`, `docs/hooksink.md`; Make targets
+  `host-rebuild-hooksink`, `host-logs-hooksink`, `host-hooksink-tokens`;
+  override variables `HOOKSINK_DIR`, `HOOKSINK_ADMIN_KEY`,
+  `HOOKSINK_DEFAULT_SENDER_TOKEN`, `HOOKSINK_DEFAULT_CONSUMER_TOKEN`.
+- The program's environment variables were renamed in hooksink itself from
+  `WEBHOOK_SINK_*` to `HOOKSINK_*`, and the manifest follows. The
+  `whs_`/`whc_` token prefixes are unchanged.
+- The hooksink package, binary and console are named hooksink too, and the
+  redeployed pod logs `hooksink listening`; `GET /` reports
+  `"service": "hooksink"`.
+
+Migration on p15: the old pod was scaled to zero, `events.sqlite` copied into
+`hooksink-data`, and the Secret's values copied into `hooksink-tokens`, so
+events and issued tokens carried over. The three GitHub repository hooks and
+the Jira webhook were repointed to
+`http://hooksink.ai-pipeline.svc.cluster.local/hooks/<channel>` with their
+secrets kept; a signed GitHub ping was accepted (202). The old resources and
+image were then deleted.

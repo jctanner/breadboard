@@ -104,12 +104,12 @@ var routes = []Route{
 		Backend: "http://model-relay-admin.ai-pipeline.svc.cluster.local:8081",
 	},
 	{
-		Host:    "webhook-sink.local",
-		Backend: "http://webhook-sink.ai-pipeline.svc.cluster.local:80",
+		Host:    "hooksink.local",
+		Backend: "http://hooksink.ai-pipeline.svc.cluster.local:80",
 	},
 	{
-		Host:    "webhook-sink-admin.local",
-		Backend: "http://webhook-sink-admin.ai-pipeline.svc.cluster.local:80",
+		Host:    "hooksink-admin.local",
+		Backend: "http://hooksink-admin.ai-pipeline.svc.cluster.local:80",
 	},
 }
 

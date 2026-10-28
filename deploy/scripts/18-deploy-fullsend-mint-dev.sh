@@ -5,7 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
-GITHUB_URL="${GITHUB_EMULATOR_URL:-https://github.local}"
+GITHUB_URL="${GITHUB_EMULATOR_URL:-https://github.${BREADBOARD_DOMAIN:-local}}"
 GITHUB_TOKEN="${GITHUB_EMULATOR_TOKEN:-ghp_admin_default_token}"
 API="${GITHUB_URL%/}/api/v3"
 FULLSEND_ORG="${FULLSEND_GITHUB_ORG:-fullsend-dev}"
@@ -160,7 +160,7 @@ kubectl -n ai-pipeline create secret generic fullsend-mint-role-apps \
   --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 
 echo "==> Deploying fullsend-mint-dev"
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/24-fullsend-mint-dev.yaml"
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/24-fullsend-mint-dev.yaml"
 kubectl -n ai-pipeline rollout restart deployment/fullsend-mint-dev
 kubectl -n ai-pipeline rollout status deployment/fullsend-mint-dev --timeout=120s
 echo "==> fullsend-mint-dev is ready"

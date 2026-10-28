@@ -40,6 +40,10 @@ spec:
       labels:
         app: ingress-proxy
     spec:
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "2"
       containers:
       - name: proxy
         image: ingress-proxy:latest

@@ -25,13 +25,13 @@ echo "==> Deploying GitHub emulator Actions runners"
 # github-actions-config-runner served the deprecated org-mode
 # fullsend-dev/.fullsend config repository (Fullsend ADR 0044) and was
 # retired in phase 3; nothing had run on it since 2026-09-17.
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/23-github-actions-runner.yaml"
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/23c-github-actions-site-runner.yaml"
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/23-github-actions-runner.yaml"
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/23c-github-actions-site-runner.yaml"
 
 # F4: confine the Fullsend runners to the cluster. Applied here rather than
 # left to a manual step, because a policy that only exists on the cluster it
 # was typed into regresses on the next deploy-all and nothing reports it.
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/27-fullsend-runner-egress.yaml"
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/27-fullsend-runner-egress.yaml"
 kubectl -n ai-pipeline rollout restart deployment/github-actions-runner
 kubectl -n ai-pipeline rollout restart deployment/github-actions-site-runner
 kubectl -n ai-pipeline rollout status deployment/github-actions-runner --timeout=180s

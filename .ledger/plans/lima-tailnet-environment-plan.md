@@ -124,3 +124,22 @@ Next step: Draft `deploy/lima/breadboard-vm.yaml` and parameterize reverse proxy
   - Injected `breadboard_domain` and `service_urls` in `src/dashboard/webapp.py` and `layout.html`.
   - Parameterized external UI endpoints in `ticket_data.py`, `job_scripts.py`, `fullsend_onboarding.py`, and `fullsend-dashboard`.
   - Added unit test suite in `tests/test_domain_parameterization.py` (12 tests passing).
+
+### 2026-10-28 WP3 completed: Full Stack Deployment in Lima (bb-1sa.3)
+
+- Deployed complete Breadboard stack inside `breadboard` Lima VM on ARM64:
+  - Installed native Go 1.24.1, Rust stable (`aarch64-unknown-linux-gnu`), and `docker-buildx` via provisioner.
+  - Configured VM memory to 20GiB in `breadboard-vm.yaml` and `deploy/lima/README.md` for 32GiB host headroom.
+  - Added `image_in_k3s` guards to `deploy/scripts/05-build-images.sh` and `deploy-all.sh` to avoid redundant builds.
+  - Added Linux page cache clearing (`sync && echo 3 > /proc/sys/vm/drop_caches`) and builder cache pruning after image builds.
+  - Fixed `deploy/scripts/05k-build-github-actions-real-runner.sh` to install native ARM64 runner binaries on `aarch64`.
+  - Fixed OpenShell helm chart alignment (`dependencies.json` pinned to `b2ea81822bb5263679ed00ff0fbe8c08577abab5` matching image tag `0.0.110`).
+  - Fixed `deploy/k8s/18-observatory.yaml` `gcp-credentials` secret volume mount with `optional: true`.
+  - Added `dnsConfig` (`ndots: 2`) to `ingress-proxy` deployment and automated in-VM `/etc/hosts` sync for all `.local` and `.${DOMAIN}` endpoints.
+  - Wrapped `24-fullsend-mint-dev.yaml`, `23-github-actions-runner.yaml`, and `27-fullsend-runner-egress.yaml` through `apply-domain-manifests.sh`.
+  - Seeded Fullsend fixtures and verified `seed-fullsend-release.py` on both amd64 and arm64.
+- **Breakpoint B3 Verified**:
+  - All ~19 pods in `ai-pipeline`, `gitlab-runner`, `agent-sandbox-system`, `openshell-system`, and `cert-manager` reach Running/Ready.
+  - Cluster and certificate validation suites passed (`test-cluster.sh`, `test-certificates.sh`).
+  - Host kubeconfig verified (`make lima-kubeconfig` -> `~/.kube/breadboard-lima.yaml`), remote `kubectl get nodes` and `kubectl get pods -A` functional.
+  - Ingress proxy responds HTTP 200/401 across all services (`dashboard`, `fullsend`, `github`, `jira`, `gitlab`, `markovd`, `observatory`, `orgpulse`, `relay`, `hooksink`, `mlflow`) for both `bb.internal` and `local`.

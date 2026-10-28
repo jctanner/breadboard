@@ -23,7 +23,14 @@ if [[ ! -f "${RUNNER_CONTEXT}/Dockerfile" ]]; then
 fi
 
 echo "==> Building ${IMAGE} with ${CONTAINER_CMD}"
-"${CONTAINER_CMD}" build -f "${RUNNER_CONTEXT}/Dockerfile" -t "${IMAGE}" "${RUNNER_CONTEXT}"
+BUILD_DIR="$(mktemp -d /tmp/runner-build.XXXXXX)"
+cleanup() { rm -rf "${BUILD_DIR}"; }
+trap cleanup EXIT
+cp -r "${RUNNER_CONTEXT}"/* "${BUILD_DIR}/"
+if [[ "$(uname -m)" == "aarch64" || "$(uname -m)" == "arm64" ]]; then
+  sed -i "s/actions-runner-linux-x64/actions-runner-linux-arm64/g" "${BUILD_DIR}/Dockerfile"
+fi
+"${CONTAINER_CMD}" build -f "${BUILD_DIR}/Dockerfile" -t "${IMAGE}" "${BUILD_DIR}"
 
 echo "==> Importing ${IMAGE} into k3s"
 sudo k3s ctr images rm "docker.io/library/${IMAGE}" "localhost/${IMAGE}" 2>/dev/null || true

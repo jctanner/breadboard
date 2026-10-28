@@ -76,7 +76,7 @@ rejects the 11,809-character feasibility report because detailed prose appears
 under numbered headings and unrecognized fields. An offline replay adding only
 a Findings heading in memory passes. Original evidence is unchanged.
 [Analysis](../../notes/s1-fullsend-vertex-opus-smoke-20261015.md) and
-[checker defect](../../bugs/open/strat-review-gate-numbered-findings-false-negative.md).
+[checker defect](../../bugs/fixed/strat-review-gate-numbered-findings-false-negative.md).
 Final archive completed at 17:53:01 UTC: 1,612 files, 6,357,233,437 bytes,
 complete/final, errors=[]. The observer independently verified every checksum
 with no problems and confirmed receipt publication. This includes 1,102 strace

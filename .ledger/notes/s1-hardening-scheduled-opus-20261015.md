@@ -34,7 +34,7 @@ records content_chars=7179 but result_chars=0 because it uses zero to represent
 an assessment it rejected. That field alone must not be interpreted as missing
 transport data. The recorded benchmark verdict remains unchanged.
 
-[Tracked checker/producer vocabulary mismatch](../bugs/open/strat-review-gate-mostly-sound-false-negative.md).
+[Tracked checker/producer vocabulary mismatch](../bugs/fixed/strat-review-gate-mostly-sound-false-negative.md).
 A future fix should decide between canonical producer wording and explicitly
 supported qualified judgments, preserving negative tests for unfinished output.
 No paid rerun is needed to reproduce this case.

@@ -264,3 +264,34 @@ that every guard ran or that only benchmark-parser defects remain. A complex
 Markdown round-trip probe also confirms a review-only fingerprint coverage gap.
 These are open defects/qualification gaps; no new model run or source repair.
 [Review disposition and exact evidence](../notes/strat-creator-pr85-review-triage.md).
+
+## Current hardening revision retest, 2026-10-18
+
+The user authorized one further mixed Opus pass after the checkpoint/completion
+repairs and offline checker repair. New tier s1-pr85-mixed-ten-opus pins 6ed858b;
+published Breadboard 9232633 provides checker v2. The earlier fixture/pins/results
+remain unchanged. New batch-mixed-ten-distinct-v2 keeps all eighteen subjects
+distinct and orders creation so discovery acquires ten actionable RFEs: four
+fresh, four refine and two review-only. All eight controls stay protected.
+The human-only control is first exercised by the subsequent model-free repeat,
+which must skip it, acquire nothing and exit 78; there is no deferred work in
+this scenario. This deliberately differs from the legacy nine-acquired case.
+
+Markov run markov-run-bfc0b766 started 17:30:29 UTC. Normal Breadboard seeding
+completed, and actual pre-inference guard/read-back independently verify all
+29 issues, ten acquisitions, the 4/4/2 split and two genuine reused pushes.
+Clean candidate, all Opus aliases, concurrency ten, native capture, failure
+monitor and successful Vertex routing are confirmed. Observer 878799 archives
+and verifies terminal evidence under pr85-mixed-ten-vertex-opus-20261018;
+result and repeat remain pending. No automatic paid retry.
+[Completed task](../tasks/done/s1-pr85-mixed-ten-opus.md).
+
+The current-source pass completed successfully: 30m07s model-job runtime,
+all ten acquired tickets complete, all forty reports accepted, every mixed-state
+check true. Controls and review-only content are preserved, owned locks release,
+and the model-free repeat passes with no acquisitions or duplicate effects,
+exit 78 and zero model invocations. Benchmark pass=true; no failed checks.
+Terminal archive finished at 18:19:40 UTC; its manifest is complete/final,
+independent checksum verification passes with no problems, and verified receipts
+were published at 18:19:53 UTC. No new model run is authorized by this completion
+status.

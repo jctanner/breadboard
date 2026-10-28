@@ -19,3 +19,17 @@ field, while continuing to reject contradictory, unfinished or placeholder
 judgments. Preserve historical FAIL. No paid rerun is needed for parser tests.
 
 [Run audit](../../notes/s1-mixed-state-opus-20261016.md).
+
+## Closure confirmed, 2026-10-18
+
+The current v1 checker already normalized repeated completed judgments and
+required them to agree; that behavior predates today's format compatibility
+patch. Its ledger state had remained open. Existing authored regressions reject
+contradictory, pending and placeholder companion judgments. The unchanged
+mixed-state receiving-channel replay now confirms all 36 reports pass, including
+this testability report. Today's v2 adds the two separate format repairs and
+does not claim to introduce the existing repeat handling.
+
+Full benchmark suite: 104 passed, one optional integration skip. Original
+reports and historical FAIL remain unchanged; no model calls.
+[Verification](../../tasks/done/strat-review-checker-format-compatibility.md).

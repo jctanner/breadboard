@@ -19,6 +19,11 @@ CLI=checkouts/markovd/bin/markovd-cli
 $CLI health
 ```
 
+The local `./bin/markovd-cli` wrapper also delegates to that binary, preserving
+the working directory for configuration discovery. Both `help` and `--help`
+work without contacting Markovd. The wrapper and compiled binary are ignored
+local files; build the binary with `make -C checkouts/markovd markovd-cli`.
+
 The repository-local config is the normal way to define settings shared by
 commands. It currently defines:
 
@@ -228,6 +233,9 @@ List recent runs:
 ```bash
 $CLI runs list
 ```
+
+Run tables include a `STARTED` column with the local date/time and UTC offset.
+Runs that have not started show `-`. JSON/YAML retain the original API timestamps.
 
 ## Troubleshooting
 

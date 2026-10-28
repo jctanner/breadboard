@@ -862,3 +862,1012 @@ all 24 non-merge commits have matching signoffs. Every rewritten tree and final
 source tree equal the originals. GitHub DCO passes. No paid or local model run.
 Full mapping/verification retained with the existing PR 85 remediation archive.
 CI passed on Python 3.11/3.12 plus lint/Unicode; all 21 threads remain resolved.
+
+
+## 2026-10-18: Fullsend Workflow copy with relay-managed secrets
+
+Published GitLab strat-pipeline `feat/fullsend-claude-workflow` at 7b93d35a
+from the successful agent-led POC, preserving all old heads. The user selected
+Opus 4.6 / high / cap ten for this exercise, replacing GLM. Relay-issued
+Opus-only secret is masked in CI; OpenShell supplies credential placeholders.
+Fifteen local checks pass and real model-free pipeline 2095/job 4059 passes
+runtime/TLS/egress/secret/capture checks. All four diagnostic captures verify
+under private var/run-data. Actual single-ticket Workflow execution remains
+next. No inference or Jira mutation during setup. See
+[tasks/done/fullsend-claude-workflow-relay-copy.md](../tasks/done/fullsend-claude-workflow-relay-copy.md).
+
+## 2026-10-19: Existing SME revision flow audited
+
+Traced the supplied GitLab main fd36b15, refreshed strat-creator upstream main
+b396172, unchanged S1 6ed858b and the existing two-edit SME demo. The designed
+human flow already supports pull/edit/refine/review/push and resubmission of
+approved strategies. Push removes the verdict label; a description edit alone
+does not. Corrected the overbroad missing-feature characterization.
+
+Historical SME-loop run markov-run-bb4af08c completed three passes on July 31;
+the demo explicitly clears labels and prompts Jira-to-artifact SME sync. The
+current native Fullsend path and recent mixed-state fixture have not qualified
+that complete edit/resubmit sequence. Manual approved-ticket GitLab reprocess
+and gate-respecting S1 resume remain distinct entry points.
+
+Thirty-six model-free checks pass across main helpers, demo contract, S1
+freshness and temporary isolated probes. No model calls, shared resets, job
+launches or component source edits. Findings and plan updated; task complete.
+[SME contract and evidence](strat-sme-revision-flow-20261019.md).
+
+## 2026-10-19: SME local review passes; native CI resubmission in progress
+
+Preserved all 35 Jira issues and reused RHAIRFE-19 / RHAISTRAT-16. Real Opus
+4.6 pull/edit/refine/review/push runs with qualified Claude 2.1.296 and unchanged
+6ed858b. Successful local refinement takes 9m41s, preserves both human sections
+byte for byte and incorporates the main SME design changes. Local review takes
+12m10s, scores 8/8, preserves all four reports and testability dissent. Both
+source/plugin copies are clean. Every Jira issue remains unchanged until push;
+push takes 23s, changes only the strategy and clears its old approval label.
+
+Two earlier attempts are retained: host ingress absolute 120s timeout caused
+transport retries, and an inline-plugin harness setup protected local artifacts.
+Proxy repaired/deployed after mock HTTP/HTTPS/HTTP2 race tests; separate plugin
+installation proven with four zero-upstream native Read/Edit probes. Added
+bugs for CLI false-success status and missing human setup documentation. The
+failed/stopped attempts and complete local pre-push evidence verify under the
+private SME campaign. Unsupported polling target/other content caveats remain
+explicit rather than treating a numeric approval as complete quality proof.
+
+Normal default JQL discovers exactly the reopened RFE; CI pipeline 2102/job
+4071 runs on fdc770c1 through the actual GitLab emulator, Kubernetes Runner,
+job-owned Podman, Fullsend and OpenShell. Actual import has the SME marker,
+same strategy mapping and a productive refinement at 18:08:13 UTC. Relay
+requests use intended Opus 4.6/Vertex account. Observer cannot launch retries
+and archives/verifies at terminal state. Publication, final CI outcome, human
+sign-off and unchanged-selection check remain pending. No shared Jira reset.
+[SME task history](../tasks/done/strat-sme-local-to-fullsend-validation.md).
+
+## 2026-10-19: SME connected flow completed with findings
+
+CI 2102/job 4071 passes in 29m06s, dashboard 2103 passes. The same existing
+strategy imports/refines the actual SME input and captures all four reports.
+Input/report/scorer/composed hashes and caller/run attribution match. All 128
+CI requests complete on intended Opus 4.6/Vertex. Numeric 8/8 approval retains
+feasibility/testability dissent and known content-quality gaps.
+
+Post-CI native human pull returns success but duplicates the existing local
+body. Reproduced three cases without inference, repaired atomic document
+replacement locally, 26 pull tests and required suite pass (1,092 passed,
+five conditional dispatch skips). Direct live helper refresh leaves one latest
+document with unchanged SME/Jira. No second paid pull or CI run was launched.
+Original failed content check and source patch are preserved.
+
+Actual human sign-off displays the summary, waits for confirmation, then
+publishes, attaches review, adds human-sign-off and removes DRAFT. Latest body
+and SME section match canonical ADF read-back. Normal preparation exits 78,
+acquires nothing and makes no Jira/model changes. All 35 issues and controls
+are preserved. A checker false negative from an expanded linked-issue title is
+diagnosed and corrected using relationship identity, with its receipt retained.
+
+CI and final human-stage captures complete with separate checksum verification;
+final capture has 5,545 manifest entries. Old pre-rollout ingress logs remain
+an explicit collection gap. Human guide and pull repair are uncommitted in the
+feature checkout; proxy repair is deployed. CLI false-success and two default
+bootstrap fixes remain separate follow-ups. [Results](strat-sme-local-fullsend-validation-20261019.md).
+
+## 2026-10-19: SME pull repair and human guide published
+
+User authorized commit/push. Reviewed only the three strat-creator changes,
+checked the staged diff, ran required full make test (1,092 passed, six
+conditional skips), then created signed-off commit 1bcb8f4. Normal push updates
+origin/feat/s1-workflow-hardening; remote read-back matches the full commit ID
+and the component checkout is clean. Pull and guide bugs moved to fixed.
+No paid model run or benchmark archive rewrite. Breadboard changes are not
+part of this component commit.
+
+## 2026-10-19: Real GitLab Fullsend branch prepared locally
+
+User approved cloning jtanner1/strat-pipeline and patching a feature branch.
+Created checkouts.tmp/jtanner1/strat-pipeline and feat/fullsend-strategy-workflow
+from current upstream 3995ac1; auth stays in memory, no credential in remotes.
+Direct Vertex only, current architecture-context each new run, Opus 4.6/high,
+cap ten and one validation iteration. Added manual single/default-batch jobs,
+reference-style Podman/OpenShell gateway, per-repo harnesses, owned cleanup,
+publication gates and redacted diagnostics; existing four jobs remain available.
+
+Deployment bootstrap bridges the known source defaults without modifying the
+published candidate: live context excludes sibling aliases; host preflight only
+checks host dependencies. Native Fullsend requires local validators, so the
+verified candidate's validator/schema are hash-checked and copied during setup.
+GitLab compiler exposes an old null-input dashboard rule; corrected locally.
+
+87 model-free tests pass; native Fullsend locks both agents with eleven
+dependencies each; real live-context fetch succeeds; GitLab lint compiles
+default, manual-single and manual-batch job graphs without warnings/errors.
+No paid call, pipeline, Jira change, commit, push or MR. Runner/secrets and
+an authorized smoke remain required. [Plan/evidence](../plans/strat-pipeline-gitlab-fullsend.md).
+
+## 2026-10-20: Real GitLab Fullsend MR published
+
+User authorized the upstream MR. Rechecked main and duplicate-MR state, ran
+the full model-free suite (87 passed), checked syntax/staged whitespace and
+compared staged source against local credential values without exposing them.
+Created signed-off 7402726, pushed the fork's feat/fullsend-strategy-workflow,
+and opened upstream draft MR !15 targeting main. Native CI lint resolves the
+published local include without errors/warnings; default push selects only
+python-tests. MR read-back confirms source, target and expected commit with no
+conflicts. Automatic model-free MR pipeline 2967607300 was initially pending.
+Component checkout is clean; root Breadboard changes are not included.
+Real-runner smoke and PR 85 source qualification remain pending; no model call,
+Jira mutation or production schedule change. [MR](https://gitlab.com/redhat/rhel-ai/agentic-ci/strat-pipeline/-/merge_requests/15).
+
+## 2026-10-20: Fullsend consumer minimized to match autofixer
+
+User requested fewer pipeline files. Moved six reusable setup files and their
+tests into strat-creator, removed consumer harness wrappers, and consolidated
+jobs/guide/configuration checks into existing files. Final pipeline diff is
+five files, with only `.fullsend/config.yaml` added. Source 85e5cb3 and consumer
+d123c19 are signed off and pushed to the existing PR 85 / MR 15 branches.
+Both component checkouts are clean; root changes remain outside those commits.
+
+Native config-only lock initially fails on a missing plugin. Shared setup now
+materializes verified companions into private runtime state while keeping remote
+registrations unchanged. Actual published-source GitLab bootstrap and native
+0.47.1 locks pass for both agents. Source suite 1,118 passed/six optional skips;
+pipeline suite 69 passed; updated registration checks 30 passed; six native
+GitLab CI graphs pass. Syntax/lint/diff and local secret-value checks pass.
+MR description reflects the final shape. No paid call or production mutation;
+real runner smoke remains pending. [Task/evidence](../tasks/done/strat-pipeline-minimal-fullsend-consumer.md).
+
+Final GitLab MR read-back: pipeline 2967970795 succeeds on d123c19; expected
+source/target branches and the GitHub PR source head are confirmed remotely.
+
+## 2026-10-20: Onboarding PR compatibility checked
+
+Fetched current PR 85 comments and onboarding PR 86. Object-only merge-tree
+of heads 85e5cb3 / 03305e0 succeeds without overlapping changed paths. Removing
+the competing config resolved the literal merge conflict. The reviewer's later
+correction was missed by the current docs: he wants a committed combined config,
+and the prospective merge still lacks strategy registrations/allowlist. Recorded
+the [follow-up](../bugs/fixed/strat-creator-onboarding-registration-guidance.md).
+No actual branch merge, component edit, PR comment or model call.
+
+## 2026-10-20: Reconciled with the user's onboarding merge
+
+Fetched actual upstream main 9c87d83 after the user merged PR 86. Merged main
+into our feature branch, preserved all original onboarding settings/workflows,
+and added strategy registrations/allowlist to its committed config. Corrected
+README/example/ignore guidance and PR 85's stale body paragraph. Source merge
+8b2f1e0 and consumer pin update 0825ea4 are signed off and pushed; checkouts clean.
+
+Source full suite: 1,118 passed/six optional skips. Full lint/type validation
+passes after a prior pull-test import fix. Native actual-config harness/dispatch
+checks pass all twelve cases; all three strategy locks resolve. Pipeline suite:
+69 passed; published-source bootstrap/native locks and published GitLab CI lint
+pass. No paid strategy job or production mutation. Remaining real-runner smoke
+qualification is unchanged. [Task/evidence](../tasks/done/strat-creator-reconcile-onboarding.md).
+
+## 2026-10-20: Triage the new Fullsend review on PR 85
+
+Exported 91 historical/current records and assessed fourteen distinct new
+findings on 8b2f1e0. Seven model-free checks confirm a fresh-ticket dry-run
+404, Org Pulse enum rejection and dashboard omission of identified run
+directories, plus ownership/retry/recovery controls. Created three open bugs
+and recorded every disposition, including documentation fixes, intentional
+safeguards and the maintainer approval policy. Component source unchanged;
+no paid run or review reply. [Assessment](strat-creator-pr85-fullsend-review-20261020.md).
+
+## 2026-10-20: Repair the Fullsend review findings locally
+
+Fixed fresh dry-run freshness, unified dashboard/summary run discovery, withheld
+provisional Org Pulse exports and corrected skill/docs/CLI diagnostics. Added a
+separate consumer feature worktree from current upstream main for honest
+architecture skips. Numeric approval, dissent, ownership and recovery remain
+intact. Source full suite 1,136 passed/six skipped; consumer full suite 6,382
+passed/eleven skipped, after rerunning sandbox-blocked HTTP tests with sockets
+permitted. Both lints and isolated HTTP/producer-consumer contracts pass.
+Three bugs moved to fixed with local-only qualification. No commit, push,
+deployment, PR response or paid model test. [Repair task](../tasks/done/strat-creator-pr85-fullsend-review-repairs.md).
+
+## 2026-10-20: Publish the review repairs
+
+With user authorization, committed with signoffs and pushed source 080700e
+(PR 85), companion Org Pulse 84f08dca (separate fork feature branch) and
+GitLab consumer 6f996e2 (MR 15, source pin/remote registrations refreshed).
+All 23 staged files pass credential checks. Pipeline tests: 69 passed; actual
+published-source bootstrap and native Fullsend locks pass without inference.
+Remote heads verified, MR pipeline 2968770749 succeeds, component worktrees
+clean. Deployment, actual-runner qualification and maintainer approval remain
+separate. Unrelated Breadboard changes were not committed.
+
+## 2026-10-20: Open the companion Org Pulse PR
+
+With user authorization and in-memory `.env.github` auth, opened
+[PR 1789](https://github.com/red-hat-data-services/rhai-org-pulse/pull/1789)
+against upstream main. Verified the fork, exact 84f08dca head, six-file scope
+and absence of a duplicate. Description includes the contract, completed test
+results and companion strategy PR link. Ready for review; no merge/deployment.
+
+## 2026-10-20: Assess Org Pulse review and fix formatting nit
+
+Fetched all four PR 1789 entries. Bot review reports no functional/security
+issues; its only nit is an extra blank line. Removed it and pushed signed-off
+80746a8a after 6,382 passing tests/eleven skips, lint, credential and diff
+checks. PR head verified; branch clean. Ownership gate still requires accorvin
+for module files and Org Pulse maintainers for docs/fixtures/integration.
+Bot's prose approval is a COMMENTED review, not eligible owner approval.
+No approval request, reply, resolution, self-approval, merge or deployment.
+
+## 2026-10-20: Create the real Jira smoke-test RFE
+
+Used `.env.jira` in memory to check create permissions/required fields and
+search for the unique smoke marker, then created
+[RHAIRFE-3739](https://redhat.atlassian.net/browse/RHAIRFE-3739) once. Verified
+the workbench session-timing description and all six acceptance criteria by
+API read-back. New/Minor, two neutral smoke labels, no Target Version,
+release/quality labels, release versions or linked issues. Outside configured
+strategy discovery gates. No scheduler change or model job launched.
+[Task and receipt](../tasks/done/create-real-jira-strategy-smoke-rfe.md).
+
+## 2026-10-20: Start the smoke on the real agentic-ci runner
+
+With user authorization, placed reviewed consumer 6f996e2 on a temporary
+protected upstream branch to use runner 48079670. No merge or fork runner
+creation. Validation and 69 tests pass. Schedule pause was forbidden (403);
+kept production scheduling enabled and added smoke-only commit f5dfb0e to
+qualify/clean up the fixture inside the shared strat-batch resource group.
+
+Pipeline 2969118303 first failed before model execution on the missing
+Fullsend Analyst role token. Cleanup/archive verified. Provisioned a one-day,
+project-scoped masked/hidden/protected credential and retried only that setup
+failure as job 17329828389. Opus 4.6 / Claude 2.1.296 launched the Workflow at
+20:50:22 UTC for RHAIRFE-3739, dry-run=1/publish=0. Final outcome pending.
+
+Controller session 15760 monitors, archives and revokes the temporary credential
+at job completion. Review its final receipts/artifacts before calling the smoke
+successful. [Task, cleanup details and archival audit](../tasks/done/real-gitlab-strategy-single-smoke.md).
+
+## 2026-10-20: Verify the completed real GitLab smoke
+
+Pipeline 2969118303/job 17329828389 pass: 24m58s job, 15m45s agent, one actual
+Opus 4.6 iteration, model-reported $5.836762. One local dry-run STRAT-3739,
+four specialist assessments, 8/8 approve, zero business errors; trusted host
+validation/post-script handoff pass. Inspected refinement/reviewer/scorer
+transcripts and all cleanup receipts. Ticket neutral/unlinked, gateway clean,
+production schedule unchanged, temporary role token revoked/variable removed.
+
+Archive integrity passes, 40 files. Confirmed missing standalone business
+documents: the private handoff/report tree is not in CI artifacts. Saved six
+labeled transcript excerpts and verification.json; recorded the export fix
+alongside the role-secret preflight/docs follow-up. Live writes/publication
+and independent content judging remain outside this dry-run. [Completed task](../tasks/done/real-gitlab-strategy-single-smoke.md).
+
+## 2026-10-20: Compare local and real GitLab role credentials
+
+Archived local smoke 2100/4068 explicitly selected Analyst from
+FULLSEND_GITLAB_ANALYST_TOKEN at trace line 89. Both local and real tests use
+Fullsend 0.47.1. The local environment already supplied the credential, so it
+never hit the real project's missing-secret startup failure. Recorded this
+positive control in the role-preflight bug and real-GitLab plan. The missed
+prerequisite belongs to the adaptation/docs; no new model run or remote write.
+
+## 2026-10-20: Check the rfe-autofixer reference's credential contract
+
+Read current real GitLab main efc285d: its Fullsend job still downloads 0.43.0,
+before the mandatory role-token selection in our 0.47.1. Latest ten listed
+Fullsend jobs are manual/unstarted, not evidence of runtime success. Recorded
+the version/credential difference in the existing bug and strategy deployment
+plan. No autofixer execution, model call or remote change.
+
+## 2026-10-20: Distinguish role-token presence from authentication
+
+Exact 0.47.1 Selection.Token only trims whitespace and rejects empty strings;
+an invalid nonempty value passes startup selection. It becomes GITLAB_TOKEN;
+actual GitLab calls would fail, with status notifications only warning. The
+Jira-only path might never consume it. Corrected the earlier overly strong
+valid-token claim in the bug and plan. No invalid-token runtime test, secret
+change or model run was performed.
+
+## 2026-10-20: Reuse the results token for Fullsend's Analyst credential
+
+At the user's request, the real GitLab consumer explicitly exports its
+existing RESULTS_PUSH_TOKEN as FULLSEND_GITLAB_ANALYST_TOKEN before setup.
+Missing/empty/whitespace-only values fail early; tracing is disabled before
+assignment. Documented dry-run requirements and the token's real permissions.
+Published signed-off d27a314 to the existing MR !15 branch. All 74 pipeline
+tests pass, including five new offline shell cases; diff checks pass.
+Moved the preflight/docs bug and implementation task to fixed/done. Shared
+strat-creator code/pins unchanged. No model/production run or secret change;
+API permissions remain untested and can be revisited if needed in production.
+
+## 2026-10-20: Mark strategy pipeline MR !15 ready for review
+
+Refreshed the description with current tests/source pin, the real GitLab
+dry-run result and the explicitly separate publication/archive follow-ups.
+Removed Draft and verified remote `draft=false` on d27a314; passing CI, no
+conflicts and resolved discussions checked before the update. Status now
+awaits approval. GitLab strips a final description newline; reconciled that
+read-back difference without retrying the write. No merge, model run, secret
+change or production scheduling change. Task moved to done; diff check passes.
+
+## 2026-10-21: Launch the authorized live GitLab canary
+
+Verified MR !15 merged to main 38efbce and source pin 080700e. Created exact-main
+pipeline 2972360596 for RHAIRFE-3739, single/live/publish enabled. Input checks
+and all 74 repository tests pass. With no competing production pipeline and
+the next schedule at 16:00Z, added only release/fixture labels and played
+job 17351822419 once. Opus 4.6 started 14:20:40Z and Workflow at 14:20:48Z.
+No model retry or schedule change. Controller session 43061 monitors/archives
+and removes only this run's fixture labels on completion. Final live Jira,
+data-repo publication and dashboard result remain pending.
+
+## 2026-10-21: Diagnose and archive the failed live canary
+
+Job 17351822419 fails after 27m25s, agent about 18m37s, one iteration and
+model-reported $5.64756225. Jira RHAISTRAT-3027 is cloned/refined and contains
+the 8/8 review comment/attachment, but OpenShell denies the verification
+redirect to api.media.atlassian.com. Reviewer switches to --dry-run despite
+live inputs and records local completion without the verdict label. Host
+validation catches that omission and skips publication/dashboard.
+
+Archived native logs/ZIP/failure recovery, Jira snapshots/comments and actual
+review attachment; host-side HTTP303-to-media200 download byte-matches the
+retained review. ZIP integrity passes, 80 files. Owner/fixture/sandbox/gateway
+cleanup and unchanged schedule verified; data run path absent. Controller43061
+completed. Created two open bugs for egress and live fallback/receipt behavior,
+and moved the execution task to done with failed qualification. No code fix,
+manual verdict-label patch or repeat inference was performed.
+
+## 2026-10-21: Follow the strategy source branch between jobs
+
+At the user's request, published source helper 630fcca to existing PR #85 and
+consumer caaf92e in new ready-for-review MR !16. Pipeline selects the feature
+branch; each job fetches once and binds its private runtime registrations,
+target, hooks and validators to that observed snapshot. Branch/commit/hash
+provenance is retained; consumer pins no source commit/digest. Existing pinned
+consumers remain compatible. Minimal one-config-file consumer is preserved.
+
+Full source suite: 1,142 pass/six optional skips; pipeline: 79 pass. Lint/type
+validation, actual published-source bootstrap, native single/batch locks and
+six GitLab CI compiler scenarios pass with zero model calls. Remote heads/MR
+target verified, no conflicts; approval pending and MR CI initially running.
+Both components clean. Secret scan's private-key marker was verified as the
+unchanged synthetic fixture, with no actual configured secret matches. No
+merge, Jira mutation, model run or schedule change; live-canary fixes remain open.
+
+## 2026-10-21: Fix live review media egress and completion receipts
+
+Published signed-off 02dd13b to existing strat-creator PR #85. Added the
+specific Python media endpoint and credential-safe attachment redirects.
+Prepared live runs reject --dry-run fallback; recording completion now
+requires read-back of the exact comment, attachment and numeric verdict
+label. Partial publication remains incomplete and recovers without duplicate
+mutations. Numeric-only approval/dissent and fast local hooks are preserved.
+
+Model-free focused suite 112 passed; full suite 1,158 passed/six skips.
+One old live fixture was corrected to publish before recording completion.
+Lint/type validation, diff checks and staged secret scan pass. Actual branch
+bootstrap and native Fullsend single/batch locks pass on the published head.
+Repaired client also reads the existing canary attachment and matches the
+archive without writes. Moved the two bugs to fixed and the task to done.
+No paid run, manual Jira repair, consumer merge or schedule change. The old
+canary remains failed; real OpenShell live qualification is still pending.
+
+## 2026-10-21: Verify merged GitLab branch-following configuration
+
+User reports MR !16 merged. Verified upstream main fe9ca62 and passing push
+CI 2972994099. Main CI variables and single/batch URLs follow the user's
+strat-creator feature branch, currently 02dd13b with the tested media and
+publication fixes. Legacy six-hour schedule and manual Fullsend gates remain
+unchanged. Updated rollout notes; no pipeline launch or remote mutation.
+
+## 2026-10-21: Check whether the retry needs strategy closure
+
+Read-only Jira/GitLab preflight confirms the existing RHAISTRAT-3027 is New
+without a verdict label or owner lock, linked only to smoke RHAIRFE-3739.
+It can be reused in a fresh run. Closing it would make the RFE skip under
+the active/completed strategy gates, rather than trigger a new clone. RFE
+needs temporary release eligibility again. Runner online, no active/pending
+pipelines; production schedule unchanged. Recorded readiness in rollout plan;
+no ticket mutation or paid run.
+
+## 2026-10-21: Complete the authorized publication-only recovery
+
+Used the current versioned publisher with a standalone export of the exact
+archived RHAISTRAT-3027 review and a copy of its original effects journal.
+Verified all provenance, live strategy/SME input and RFE content before writes.
+Existing comment/upload match; pending upload becomes verified via media
+readback. One PUT adds the missing rubric-pass label. Second publication and
+readback make zero writes and leave all snapshots identical. One comment/one
+attachment, unchanged content and dissent, zero model calls/tokens. Original
+failed Workflow evidence/freshness remain untouched; no fake success receipt.
+
+Archived 89 files with hashes, sanitized HTTP audit, snapshots and source
+driver; configured-secret scan passes. Initial read-only setup alias error
+preserved separately and corrected without mutations. Task moved to done and
+rollout plan updated; no component code change, GitLab job, OpenShell runtime,
+data-repo push, dashboard trigger, RFE qualification or schedule change.
+
+## 2026-10-21: Verify Org Pulse PR #1789 merged
+
+User reports merge; read-only GitHub confirms expected 80746a8a head merged
+to upstream main as 7ba9353e at 14:05:03Z. Updated the work index, PR tasks
+and strategy rollout plan: source compatibility resolved, deployment/live
+ingestion still unverified. No code changes, remote mutations or model run.
+
+## 2026-10-21: Address the new PR #85 review findings
+
+Fetched/refreshed 116 entries. Reproduced current defects and published
+signed-off b3c10ec: strict mode parsing, owner-verified cleanup independent of
+work freshness and per-key failures, prepared Business Need reconstruction,
+sealed empty-run history/skip reasons, summary regeneration after concurrent
+updates and safe all-provisional Org Pulse diagnostics. Fixed documentation
+nits and linked the merged consumer-owned contract. Fourteen files changed;
+numeric gate, dissent and recovery checks preserved.
+
+Full source suite 1,189 passed/six skips in 346.81s; focused 108 passed.
+Lint/types, shell syntax, diff and secret checks pass. Published bootstrap and
+native Fullsend single/batch locks pass with no model smoke. Verified remote
+head and clean checkout; archived fifteen evidence files plus hash manifest.
+Moved grouped defects to fixed and task to done. Maintainer protected-path
+approval and expected security feedback remain pending. Explicitly recorded
+that merged GitLab changes are opt-in smoke integration, with no production
+cutover. No live Jira mutation, schedule change, PR reply or thread resolution.
+
+## 2026-10-21: Fresh real GitLab smoke authorized after review fixes
+
+The user chose not to wait multiple days for Stoyan's security feedback.
+Prepared one Opus 4.6/high live/publish single-ticket run, not a production
+cutover. Distinct synthetic RHAIRFE-3748 requests a credential-free project
+connection CSV inventory. Created once/read-back verified outside discovery
+scope. Pipeline 2974269929 on merged fe9ca62 is running model-free checks;
+source PR head b3c10ec verified. Runner online, no competing work, next legacy
+schedule 04:00Z. Temporary eligibility will be applied only after CI checks.
+Evidence root: var/run-data/20261021-real-gitlab-fresh-single-opus46-postreview/.
+
+Both smoke checks passed and job 17366396650 was played exactly once at
+23:51:10Z, confirmed running. Controller 83805 now monitors and owns fixture
+cleanup/archival. Only RHAIRFE-3748 was temporarily qualified; original test
+pair and legacy schedule remain unchanged. No success claim yet.
+
+## 2026-10-21/22: Fresh live smoke completed and verified
+
+Opus 4.6 job 17366396650 passes in 27m00s on b3c10ec. RHAIRFE-3748 becomes
+RHAISTRAT-3038: numeric 8/8 approves with feasibility dissent preserved.
+Strict checker, exact live Jira review bytes, sealed data-repo publication,
+both summaries, fixture cleanup and owner release verify. Model-reported
+3,024,433 combined tokens/$5.25737975; one iteration. Controller 83805 ended.
+
+Downstream delivery incomplete: Org Pulse TLS chain verification fails all
+42 aggregate batches, dashboard 2974334519/pages 17366831288 cannot authenticate
+the data-repo clone. Recorded both open bugs; no fixes/credential changes or
+retry yet. Parent green does not include downstream failure. Sixty-two-file
+archive plus manifest passes ZIP/hashes/credential checks. Task moved done,
+plan updated. No production cutover, schedule change or new model call.
+
+## 2026-10-21: User-approved temporary Org Pulse TLS bypass
+
+User chose to disable verification for now. Implemented request-local legacy
+behavior in the host Org Pulse exporter, plus README and actual local HTTPS
+regression. Red test reproduced the certificate failure; focused eight pass;
+full make test 1,190 passed/six skips (347.11s), lint/types/diff and configured
+credential scan pass. Signed-off 85e8307 pushed and PR #85 head API verified.
+Permanent CA trust remains open; no new inference, live export retry, Jira
+change, dashboard credential change or cutover. Separate evidence archive:
+var/run-data/20261021-org-pulse-temporary-tls-bypass/.
+
+## 2026-10-22: Downstream recovery without model inference
+
+Org Pulse export-only pipeline 2976666017/17383298312 creates exactly one saved
+feature and verifies GET 200, numeric 8/8 and feasibility revise. No aggregate
+replay, repeated POST or direct Jira mutation. Dashboard's configured token
+is present but rejected; working replacement proves build access. Fixed stale
+served JSON in diagnostic build, then verified the native CI_JOB_TOKEN works.
+
+Dashboard one-file fix 6a9085d passes exact pipeline 2976991608/job 17385905560
+without any credential override; HTML, individual and aggregate JSON verified.
+Ready MR !7 opened. GitLab reports required approval pending; protected main
+not merged and project variables unchanged. Permanent solution needs no static
+replacement/admin grant. Task moved blocked pending MR approval/merge.
+Evidence: var/run-data/20261022-strat-downstream-publication-recovery/.
+Legacy schedule and strategy executor unchanged. Additional model spend zero.
+
+Recovery archive finalized: 72 files plus manifest; ZIP CRC, 1,326 embedded-file
+credential scans and SHA-256 readback pass, zero configured-secret findings.
+Required approval on dashboard MR !7 remains the only landing step; no attempt
+to approve/bypass it or merge protected main. Additional model tokens zero.
+
+## 2026-10-22: Dashboard authentication predates the Workflow PR
+
+Fetched 100 main dashboard pipelines, all failed, ranging September 28 through
+October 22. Representative traces on September 28, September 29 and October 15
+confirm the same data-repo Git authentication rejection. PR #85 creation is
+October 15 12:37Z, consumer MR !15 October 20. Thus authentication was already
+broken before our PR/integration. Do not conflate it with new identified-run
+reader compatibility. Twelve-file archive plus SHA manifest and configured
+credential scan pass; no remote mutation or model call. Bug and plan updated.
+
+## 2026-10-22: Stoyan security review fetched and dissected
+
+Fetched all 131 PR #85 entries; identified stoniko's architectural comment
+6341322570 at 12:57:49Z. Verified clean source/remote head 85e8307. The central
+issue is valid: agent-editable guards plus a raw Jira write token permit
+effects before host validation. Actual-source offline reproduction shows
+missing run input bypasses dry-run refusal, ownership and journaling, with
+input bytes restored afterward. Only in-memory fake writes; zero model calls
+or external mutations. Reviewer-only dynamic tests use newer Claude/OpenShell
+versions and are qualified accordingly.
+
+Assessment recommends host snapshots, artifact/effects-plan generation,
+trusted host validation/apply with host-only recovery ledger, removal of
+sandbox Jira credentials/egress, and narrowed model egress. Existing dry-run
+still reads Jira and is not a complete offline path. Preserve normal Fullsend
+entrypoint, local skills, numeric gate and dissent; do not remove current
+guards or declare all hooks fail-open before replacement. Separate new bot
+issues recorded. No implementation/reply/cutover. Thirty-one-file archive at
+var/run-data/20261022-strat-pr85-stoyan-security-review/ passes configured-secret
+scan and SHA-256 readback. Task moved done for assessment; fixes remain pending.
+
+## 2026-10-22: Scope security work against rfe-autofixer
+
+User wants incremental fixes and a shared baseline rather than leading a new
+security architecture in strat-creator. Read current GitLab main efc285d,
+registered rfe-creator83cbc27 and main36ef1a0. Base-policy and harness hashes
+verify. Same writable sandbox, raw Google credential and pinned broad Vertex
+profile; reference Fullsend differs on Jira: provider credential plus declared
+read-only profile and host submit (dry-run). Its legacy non-Fullsend runner
+passes the raw Jira token with write egress. Latest ten Fullsend jobs in the
+100-job sample are manual/unstarted; no runtime safety/success inferred.
+
+Updated review assessment/index: host-only writer remains an unapproved
+architectural option. Preserve real diagnosis while identifying shared
+platform risks and strategy-specific authority. No implementation or model
+run. Comparison archived separately, leaving original review archive sealed.
+
+## 2026-10-22: Owner security-scope comment posted to PR #85
+
+User explicitly approved posting the exact drafted comment. Posted once as
+jctanner at 16:04:01Z, ID6345317940, and verified exact body/author/target through
+GitHub API read-back. Acknowledges the finding; owner keeps migration focused
+on concrete defects and documented trust assumptions, using rfe-autofixer as
+baseline. Host-only publication stays a separate proposal. No implementation,
+thread resolution, review dismissal, model call or production cutover.
+https://github.com/fullsend-ai/strat-creator/pull/85#issuecomment-6345317940
+
+## 2026-10-22: Seven bounded PR #85 fixes implemented locally
+
+Owner approved the scoped work. Direct harness prep now defaults dry and needs
+explicit0 for live; managed-run flag prevents missing-input fallback during
+normal execution. Publication rejects configured credential material without
+rewriting artifacts; SME input survives missing Strategy heading; failed CI
+exports retain owner sidecar; Org Pulse requires HTTPS and follows no redirects
+while keeping the approved certificate exception; RFE Key skip headers parse;
+trust documentation states actual editable-code/credential limits.
+
+Focused failures reproduced before fixes; repaired groups pass12/24/22.
+Complete required make test (model smoke disabled):1,230 pass/six optional
+skips in362.72s. Lint/types/shell/diff pass. Thirty-seven-file archive at
+var/run-data/20261022-strat-pr85-scoped-review-fixes/ passes configured-secret
+scan and SHA readback. Task moved done for local implementation. Component
+changes are uncommitted/unpushed; no model, live Jira/export, reviewer message,
+thread resolution, deployment or cutover. Broad host-only writer remains
+unapproved; missing-input flag does not establish malicious-agent containment.
+
+## 2026-10-22: Scoped review fixes committed and pushed
+
+User requested publication. All26 staged source/test/doc files match the
+1,230-pass tested archive. Full-blob configured credential/private-key/pattern
+scan has zero findings, allowing only the exact pre-existing synthetic non-key
+fixture. Signed-off32700ec6ea4476d62a6b768aa598883196dcb76e pushed normally to
+jctanner-fullsend-ai/strat-creator:feat/s1-workflow-hardening; GitHub API verifies
+PR85 exact head. Component worktree clean; sealed evidence unchanged. No new
+benchmark, live Jira/export replay, review reply/resolution, deployment or cutover.
+
+## 2026-10-22: Automated review follow-up on 32700ec
+
+Fetched137 current PR85 entries, including three new inline findings from
+review5618750397. One new code defect reproduced: historical attachment A
+incorrectly satisfies A→B→A publication while readers still use B. Shared
+reconciler now compares only newest exact-filename attachment using the
+existing timestamp/ID ordering. Both strategy and review publication-to-pull
+tests pass, repeated current bytes remain idempotent, and pending/verified
+same-run writes superseded by another writer stop without re-upload.
+
+Eight red regressions before repair; focused39 pass after. Full required
+offline suite1,238 pass/six optional skips in365.65s; lint/types/diff pass.
+Thirteen-file archive at var/run-data/20261022-strat-pr85-post327-review-followup/
+passes configured credential scan/hash readback. New bug/task moved fixed/done
+for local implementation. Three component files remain uncommitted/unpushed.
+TLS finding is the owner's retained temporary exception; authorization flags
+are process metadata, no issue/approval fabricated. No paid smoke, live service
+change, reviewer reply, thread resolution, deployment or cutover.
+
+## 2026-10-22: Attachment repair published and current CI checked
+
+At the user's direction, committed the three archived/tested component files
+as signed-off 73c454b and pushed the existing PR #85 branch. Full staged
+credential scan has zero findings; bytes match the 1,238-pass tested snapshot.
+GitHub API confirms the exact new PR head, and the component worktree is clean.
+Remote Python 3.11/3.12 tests, lint, Unicode and DCO checks all pass.
+
+Fetched the subsequent review: discussion now has 148 entries, including nine
+new inline findings in review 5621646395. Recorded host review readback, YAML
+delimiter handling and recovery pathnames for follow-up, plus the repeated
+exception/compatibility/documentation findings. No further source changes,
+review replies, thread resolutions or paid smoke. Publication and new review
+evidence: var/run-data/20261022-strat-pr85-attachment-fix-publication/.
+
+## 2026-10-22: Org Pulse verification decision reaffirmed
+
+The owner reiterated that Org Pulse certificate/hostname verification is already
+an accepted temporary exception. Removed that repeated review finding from the
+active assessment table and made explicit that it does not block the next smoke.
+Clarified that the separate Jira review publication readback finding concerns
+Jira comments, attachments and verdict labels, not Org Pulse TLS. Updated the
+CA-trust follow-up to remove superseded recommendations. No code or external
+state changed; no model call.
+
+## 2026-10-22: Three additional PR #85 findings repaired offline
+
+At the owner's request, repaired final Jira review readback, scope frontmatter
+titles containing --- and CI recovery credentials in pathnames. The trusted host
+uses the existing read-only publisher verifier; scope hooks use the shared YAML
+frontmatter parser; CI rejects unsafe pathnames and prints generic scrub errors.
+Org Pulse's accepted certificate exception and numeric approval policy remain.
+
+Before-fix regressions: 23 fail/four controls pass. Repaired selection: all 27
+pass. Corrected the test HTTP observer to include Jira's custom opener. Full
+required suite: 1,261 pass/six optional skips, 406.12 seconds. Ruff, descriptors
+and whitespace checks pass. Eighteen-file evidence archive, source and full
+patch at var/run-data/20261022-strat-pr85-three-review-fixes/ passes secret scan
+and hash readback. Eight component files remain uncommitted on 73c454b. No
+model calls, live Jira/export changes, external review replies, push or cutover.
+
+## 2026-10-22: Three-review-fix commit pushed
+
+At the owner's request, published all eight tested strat-creator files as
+signed-off 0707b5b (Fix final review readback and recovery artifact checks)
+to the existing feat/s1-workflow-hardening branch for PR #85. Staged bytes
+match the 1,261-pass archived snapshot; full staged credential scan is clean
+with the existing synthetic non-key fixture explicitly recognized. API confirms
+exact PR head 0707b5baf546b2e0712cb4f9861a8f7705b4815f, component worktree clean.
+No extra model/live run, remote review reply, deployment or cutover. New remote
+CI/review results have not been assessed in this commit/push task.
+
+## 2026-10-23: Prepared import completeness and recovery repaired
+
+At the owner's request, repaired review findings4355503644/4355503650 on
+strat-creator0707b5b. Prepared imports reject overflow without the named full
+strategy attachment. Supporting inputs are staged before publication; a per-run
+completion record is written last. Receipt-less partial imports rebuild context
+while preserving existing refined task bytes. Complete imports stay idempotent;
+missing completed inputs or already-bound review recovery stop for reconciliation.
+
+Before repair13 regression failures/one control pass. Repaired import/pull/
+freshness selection90 passes. Full required suite1,275 pass/six optional skips,
+417.30s; lint, descriptors and whitespace checks pass. Actual SIGKILL and a
+post-task-publication interruption are covered. Sixteen-file source/test/patch
+archive at var/run-data/20261023-strat-pr85-import-recovery-fixes/ passes secret
+scan and hash readback. Four component files remain uncommitted. No model
+calls, live Jira/export mutation, review reply, push, deployment or merge.
+
+## 2026-10-23: Import recovery fixes committed and pushed
+
+At the owner's request, published all four tested strat-creator files as
+signed-off fbbbc6e (Stage complete strategy imports and verify retry completion)
+to feat/s1-workflow-hardening for PR #85. Staged bytes match the archived
+1,275-pass snapshot; complete staged credential scan has zero findings. API
+readback confirms head fbbbc6eb10e67472d15bad0a80b850873bce8d95, with a clean
+component worktree. No additional smoke, live Jira/export action, review reply,
+deployment or merge. New remote CI/review results were not assessed here.
+
+## 2026-10-23: Latest PR review checked after fbbbc6e
+
+Read-only GitHub fetch: review 5628698410 adds four inline comments. One new
+functional concern is stale optional context absent from the staged import;
+source inspection supports it, reproduction remains pending. Other comments
+repeat the accepted Org Pulse exception and two low-priority documentation
+requests. The rollup explicitly acknowledges both preceding import fixes as
+resolved. Current Python 3.11/3.12, lint, Unicode and DCO checks pass. No new
+human comments/reviews since the previous status cutoff. Recorded pending
+follow-up and bug; no component edits, tests/model calls or remote mutations.
+
+## 2026-10-23: Stale optional import review reproduced
+
+At the owner's request, reproduced comment 4359883142 on unchanged fbbbc6e
+using real host preparation, owned acquisition, managed child CLIs and live
+freshness checks against the local Jira emulator. SIGKILL after prior-review
+publication leaves incomplete import state. Delete the remote attachment, retry:
+import succeeds with the old review still present outside completion inventory.
+Reuse reports already_imported; record-create and freshness read both pass.
+The clean no-review control leaves no review file. Two observation assertions
+pass in 6.71s. No model consumption was tested or claimed.
+
+Thirty-one-file source/probe/snapshot/result archive under
+var/run-data/20261023-strat-stale-optional-reproduction/ passes credential scan
+and hash readback; source hashes match the managed baseline. Bug stays open,
+component remains clean. No implementation, live service action, paid run,
+remote reply, commit, push or deployment.
+
+## 2026-10-23: Optional-context recovery fixed locally
+
+At the owner's request, fixed reproduced review 4359883142 on fbbbc6e. The
+importer refuses unmatched optional local context before publication or completion,
+preserving local work for reconciliation. v2 receipts refuse the weaker old
+contract while preserving reviews produced after valid completion. Source
+inspection also found the create Skill's documented no-comment placeholder;
+a regression failed the initial guard, then the exact verified-empty note was
+supported with original bytes retained. Added feedback still causes refusal.
+
+Initial regressions: five fail/one control pass. Final selection65 passes.
+The initial guard suite1,281 passed, then the added compatibility case exposed
+the normal-flow issue. Final source full suite1,282 pass/six optional skips,
+434.68s; lint/types/diff pass. Seventeen-file archive under
+var/run-data/20261023-strat-import-optional-context-fix/ passes credential scan
+and hash readback, including intermediate evidence. Three component files are
+uncommitted. No model calls, live Jira/export action, remote reply, push, merge
+or deployment.
+
+## 2026-10-23: Optional-context recovery fix committed and pushed
+
+At the owner's request, published the three tested strat-creator files as
+signed-off 95a5c8f (Reject unreconciled optional context during import recovery)
+to feat/s1-workflow-hardening for PR #85. Staged bytes match the archived
+1,282-pass snapshot; full staged credential scan has zero findings. GitHub
+API confirms head 95a5c8febb0b7deb7cda663e5390d8b3a1feabcd, component clean.
+No additional model run, live Jira/export action, remote reply, deployment or
+merge. New remote CI/review results were not assessed in this publication task.
+## 2026-10-26: Strategy pipeline team ownership
+
+Updated the clean jtanner1/strat-pipeline checkout by switching to main and
+rebasing on freshly fetched upstream/main (fe9ca62). Created
+chore/expand-team-codeowners and added @alustosa, @jtanner, @astefanu, @fmosca,
+and @myochpaz to both ownership rules, exactly matching the requested
+architecture-context-pipeline reference. Preserved all existing owners.
+Owner syntax, duplicate checks, exact membership, upstream base, single-file
+diff scope, and git diff --check pass. Only CODEOWNERS changed in the component;
+the edit initially remained uncommitted and unpushed. No pipeline or paid model run.
+
+## 2026-10-26: Strategy pipeline team ownership published
+
+At the owner's request, committed only CODEOWNERS with signoff as 9550f93
+(Add strategy team members to code ownership), then pushed
+chore/expand-team-codeowners to the jtanner1/strat-pipeline GitLab fork.
+Staged bytes exactly match the reference; diff checks pass and the component
+worktree is clean. Authenticated remote readback confirms full SHA
+9550f932367ea06eeb2edbecd507faddccc3d15f. No MR, merge, or pipeline launch.
+
+## 2026-10-26: All four strategy jobs migrated locally to Workflow execution
+
+Created feat/fullsend-workflow-cutover in jtanner1/strat-pipeline from updated
+upstream main 9bbac1e, and companion feat/fullsend-ci-cutover in strat-creator
+from 95a5c8f. Owner confirmed config-batch and STRAT reprocess parity is required.
+The four regular job names now use the versioned Fullsend/OpenShell Workflow
+wrapper; legacy orchestration and duplicate trial jobs are removed from CI.
+Config discovery honors the source-local YAML/filter/size/offset. Reprocess
+host-imports the exact pipeline-created STRAT and prior review, then refines
+and reviews again; its explicit prepared request alone permits reassessing a
+rubric pass. Human gates and ambiguity refuse; ordinary resume still skips
+approved work. Neither path clears labels to force work through.
+
+Six-hour schedule, batch queue, immediate single/reprocess jobs, direct Vertex,
+current architecture context, Opus 4.6/high effort/concurrency ten/one iteration,
+owned cleanup, strict completion and publication are preserved. Consumer jobs
+choose live publication defaults; the reusable launcher stays dry by default.
+Push/MR pipelines run tests only. No model or real pipeline was launched.
+
+Full suites: 63 consumer tests pass (14.05s); 1,343 source tests pass, six
+optional skips (464.49s). Ruff/types/shell/diff checks pass. GitLab CI lint
+accepts the real YAML without errors/warnings. Actual registrations package all
+three harnesses against one local committed source snapshot. Thirty-file
+archive under var/run-data/20261026-strat-pipeline-workflow-cutover/ has verified
+hash readback and zero credential findings. Both branches remain uncommitted
+and unpushed. Source publication must precede consumer publication; final
+real GitLab/Fullsend smoke requires separate authorization.
+
+## 2026-10-26: Workflow cutover branches committed and pushed
+
+At the owner's request, staged only the exact source/deletion inventory from
+the verified zero-credential archive. Published signed-off strat-creator
+284389cdd36938714c1819bbf1c68aa4ead7ec98 on feat/fullsend-ci-cutover first,
+then signed-off strat-pipeline 48f4eebc639ba3862bfa385b6fa7ce55ad20e6ba on
+feat/fullsend-workflow-cutover. Fifteen source files and six consumer files;
+all staged bytes match the tested snapshot, diff checks pass. Both SSH pushes
+succeeded and authenticated remote readback confirms both SHAs. Both component
+worktrees are clean. The existing sealed archive remains unchanged.
+The owner will create the PR/MR. No new model run, live Jira mutation, schedule
+change, deployment or merge was performed; remote CI was not assessed.
+
+## 2026-10-26: Cutover consumer follows upstream main after merge
+
+Owner clarified the pipeline targets the post-merge source, not a personal
+development branch. Updated bootstrap URL to fullsend-ai/strat-creator.git,
+branch to main, all three remote registrations and the allowlist. Updated
+README and regression assertions. All 63 consumer tests pass; actual consumer
+packaging checks pass; upstream GitLab CI lint returns valid with no errors or
+warnings. Credential-pattern checks and staged diff checks pass.
+Published signed-off c51451357c6b833be4d55b0918a2b509f6d8a548 on the existing
+feat/fullsend-workflow-cutover branch; remote readback matches and worktree is
+clean. Source branch 284389c remains unchanged. Push output identifies the
+owner-created upstream MR !18; no MR created/edited by the agent. No model run,
+schedule change, deployment or merge. Source interfaces must merge to upstream
+main before cutover execution.
+
+## 2026-10-26: PR #85 review repairs, upstream conflict and CI support published
+
+Fetched complete current review inventory (42 reviews/117 inline/24 regular).
+Returned to clean feat/s1-workflow-hardening at 95a5c8f. Reproduced and fixed
+partial review-summary writes, missing inventory traceback, numeric architecture
+release sorting and inherited DRY_RUN metadata. Scoped red run12fail/3controls;
+new tests15pass; expanded selection47pass/5optional skips. Pending-review
+consumers preserve JSON values and render neutrally; documented that contract.
+Existing owner-approved TLS and sandbox trust decisions remain unchanged.
+
+Merged upstream bb4887b, preserving its onboarding changes and all strategy
+registrations. One config-header conflict resolved. The first broad run caught
+an earlier invalid-context rejection diagnostic; isolated it, retained the
+no-claim guard and added missing-release/missing-PLATFORM cases. Complete
+repairs/merge suite1301pass/6skips. At the owner's explicit choice, folded the
+four-job CI support from284389c into PR85. Final combined suite1362pass/6skips,
+473.58s; lint/types/shell/diff and actual consumer packaging pass.
+
+Published signed-off merge68b98f2, fixes2ecd758 and CI-support b8d67c3 to PR85.
+SSH/GitHub readback verifies b8d67c334697dc3297c67b608584f4d4dd600060.
+GitHub reports mergeable=true; worktree clean. DCO passed; other new-head checks
+had not reported. Forty-six-file evidence archive at
+var/run-data/20261026-strat-pr85-review-and-merge/ passes credential scan/hash
+readback. Sealed pre-push metadata is retained unchanged. No paid smoke,
+live Jira write, deployment, PR merge, reviewer reply or thread resolution.
+
+## 2026-10-26: New automated review on b8d67c3 assessed
+
+Fetched all current PR85 pages (44reviews/125inline/25regular), source head b8d67c3.
+All required current-head Python3.11/3.12/lint/Unicode/DCO checks now pass;
+the branch remains conflict-free. New source-level concerns are STRAT human
+labels absent from freshness, direct publication copies vulnerable to truncation,
+and absent lock_owner skipping checks. Missing CI source default is a separate
+low-priority hardening item. Captured the owned-label/provenance nuance before
+any change: needs-attention also belongs to the pipeline's own review effects.
+TLS/Jira authority repeats retain owner scope; pending semantics already have
+documentation/tests. Numeric ordering, environment isolation, summary writes and
+missing-review lookup are marked resolved by the latest bot rollups.
+Recorded task strat-pr85-review-b8d67c3.md. No implementation, test execution,
+remote reply, paid model call or service change in this read-only assessment.
+
+## 2026-10-26: Three approved PR #85 concerns fixed
+
+Added live STRAT human-gate checks at snapshot binding and actual owned writes,
+with only exact current-run verdict-intent recovery exempting needs-attention.
+Human sign-off always blocks. Results copies now stage privately inside .git,
+verify/fsync and atomically publish. Missing/malformed managed owner is rejected
+before effects, preserving explicit standalone human helpers.
+
+Red reproduction: 27 failures and five controls. Focused: 129 pass. Corrected
+one old shared host fixture to use owned RFEs and actual publisher verdicts;
+11 host/readback checks pass. Final full offline suite: 1,394 pass, six optional
+skips (534.95s). Ruff/types/diff checks pass. Credential scans found zero secrets.
+Signed-off a0158d9 pushed/read back on PR #85, conflict-free and component clean;
+remote checks pending at publication time. Sealed 25-file evidence and separate
+publication receipt under var/run-data/20261026-strat-pr85-human-gates-publication-ownership*.
+No model calls, live Jira writes, deployment, cutover, PR reply or merge.
+
+## 2026-10-26: PR #85 publication-path and label-response fixes
+
+Fixed the three owner-approved findings on a0158d9: reject directory symlinks
+and escaping publication paths before state/copies, require Jira labels to be
+a list of strings before gates/ownership/freshness, and wrap the CLAUDE.md
+paragraph without changing words. Red: 19 fail/one control; retained four real
+escaped-copy hashes from fake local cloned-Git fixtures. Focused: 148 pass;
+full offline: 1,413 pass/six optional skips (545.67s). Ruff/types/diff checks pass.
+Signed-off 0d60824 pushed/read back, conflict-free and component clean. Source,
+staged patch and 19-file archive credential scans found zero secrets; hashes
+and byte readback verified. Publication receipt sealed separately under
+var/run-data/20261026-strat-pr85-path-label-publication/. DCO passed, remaining
+new-head CI pending at publication. No model/live Jira calls, deployment, public
+reply or PR merge. Accepted/deferred review scope unchanged.
+
+## 2026-10-26: Two bounded PR #85 fixes completed
+
+Fixed the owned-RFE acquisition human-gate race and aligned reviewer descriptor
+enums with runtime. The bounded audit covered initial/recovered/final reads,
+durable candidate records, matching-baseline RFE writes and actual host release.
+Gate failures authorize no work, preserve cleanup intent and human labels;
+foreign-owner refusal remains. Descriptor pending/architecture skipped values
+are documented, with numeric recommendation unchanged.
+
+Red: 19 failures/two controls; focused: 172 pass. Single final full offline
+suite: 1,434 pass/six optional skips (564.24s). Ruff/types/diff checks pass.
+Signed-off 364e1ca pushed/read back on PR #85, conflict-free and component clean.
+Credential scans zero; 17-file evidence archive/hash readback verified at
+var/run-data/20261026-strat-pr85-lock-schema/ with separate publication receipt.
+DCO passed, remaining new-head CI pending. No model calls, live Jira mutation,
+deployment, public reply or PR merge. Accepted/deferred scope unchanged.
+
+## 2026-10-26: GitLab rollout changed to opt-in Workflow
+
+Restored the four original scripted jobs from upstream main, selecting verified
+stable-1.x (same starting commit as release 1.0.0). Added four workflow-* jobs
+on upstream main. STRAT_EXECUTOR=legacy is default; fullsend opts into Workflow
+for new pipelines. Families are exclusive, batches share one queue, one
+dashboard serves both and push/MR paths remain model-free. Existing job bodies,
+defaults and cleanup match upstream. No project/schedule executor override exists.
+
+134 tests passed (14.62s), 50 embedded shell steps checked, actual registrations
+packaged from the tested local source snapshot, GitLab lint valid/no warnings.
+Signed-off e8f3959 pushed/read back on MR !18; title/description updated with
+author signoff preserved. GitLab trimmed a final newline; read-only metadata
+verification confirmed matching text. MR pipeline 2992428660 passed. Credential
+scans zero, 20-file archive and separate publication receipt/hash readback
+verified under var/run-data/20261026-strat-pipeline-opt-in*. Component clean.
+No runtime settings/schedules, manual pipeline, model job or merge changed.
+
+## 2026-10-26 Eastern: Latest strat-creator review assessed
+
+Fetched all PR #85 pages at 2026-10-27T02:37Z: 50 reviews, 144 inline and
+28 regular comments, head 364e1ca. One new automated round, no new human review.
+Acquisition race is explicitly resolved. Five new inline comments repeat
+TLS, Jira authority, allowlists, missing CI source and external pending-reader
+compatibility. Runtime/descriptor/consumer support already covers in-repo
+pending/skipped; no new consumer failure or code defect is reported. Required
+CI all green and conflict-free; PR still requests changes. Applied the agreed
+finish line: no patch, test/model run, reply, thread resolution or merge.
+Raw snapshot: /tmp/strat-pr85-post364-review-20261027T023741Z.json.
+
+## 2026-10-27: Legacy cleanup regression file restored
+
+Federico correctly flagged MR !18's deleted tests/test_cleanup_shell.py after
+legacy jobs returned as the default. The original full-cutover deletion had
+been missed. Restored the original upstream file unchanged: 14 actual-YAML Bash
+cleanup tests pass (0.41s); full consumer suite 148 pass (14.96s). Runtime and
+CI bytes unchanged, and the test file no longer has a deletion/modification in
+the MR baseline-to-head diff.
+
+Signed-off 200b04b pushed/read back, component clean; MR description test count
+updated. Credential scans zero; ten-file evidence and separate publication
+receipt/hash readback verified under var/run-data/20261027-strat-pipeline-cleanup-tests*.
+New MR pipeline 2995309329 pending at publication. No reply/thread resolution,
+model job, live Jira mutation, runtime setting change or merge.
+
+## 2026-10-27: GitLab MR !18 merged with legacy still selected
+
+Read-only API verification confirms owner merge at 19:10Z, upstream main
+b00078e (squash c5e2b87, source 200b04b). Merged CI bytes equal the tested
+branch. STRAT_EXECUTOR default legacy, source stable-1.x; project and active
+six-hour schedule have no executor override. No cutover setting changed.
+Strat-creator #85 remains open at 364e1ca; its merge comes before an explicitly
+authorized manual Workflow smoke and later schedule enablement. No jobs started,
+settings changed or local source branches switched. Receipt:
+/tmp/strat-pipeline-merge-20261027T191933Z.json.
+
+## 2026-10-27: Strat-creator #85 merge verified
+
+Owner merged #85 at 19:34:22Z. GitHub confirms closed/merged from 364e1ca;
+upstream main b295fe9 has ten required CI/harness/preparation/reprocess/Workflow
+blobs identical to the tested revision. GitLab !18 remains merged and defaults
+to legacy/stable-1.x; current observed project/active schedule have no override.
+Source interfaces are available for an authorized one-ticket manual Workflow
+smoke. No settings, schedules, local source branches or jobs changed. Receipts:
+/tmp/strat-pipeline-merge-20261027T194100Z.json and
+/tmp/strat-main-interfaces-20261027T195836Z.json.
+
+## 2026-10-28: Workflow batch freshness isolation
+
+Implemented owner-requested repair on feat/isolate-stale-batch-tickets in the strat-creator fork. Signed-off 6ad16b5 pushed; upstream PR #93 opened and exact head/base verified. Ticket edits defer only their RFE, host verifies partial publication, deferred work is archived, and shared failures retain a failed diagnostic receipt. Full local suite 1,463 pass/six skips; lint/types and credential scans pass. Evidence archived under var/run-data/20261028-strat-batch-freshness-isolation/. No paid run or schedule change. PR merge and live qualification remain pending.
+
+## 2026-10-28: Bash to dynamic workflows retrospective draft
+
+Created notes/strat-workflow-migration-lessons.md from migration plans, hardening
+and bug records, runtime controls, usage accounting, and real GitLab runs.
+Verified Anthropic's dynamic workflows terminology and measured merged PR85:
+164 files, 17,156 insertions, 351 deletions; Workflow 322 lines plus bundled copy.
+The draft separates observed source editing/relaunch from changes inside an
+already executing VM, and application recovery from an immutable boundary.
+Includes active PR93 review work, legacy schedule status, and dated cost limits.
+Only ledger documentation changed; no component edits, model jobs, Jira writes,
+or runtime changes. Writing task and index link added.
+
+## 2026-10-28: Retrospective editorial review applied
+
+Reordered the migration retrospective around its conclusion and observed
+source-edit/relaunch incident. Added separate decision-maker and engineer
+sections, moved RFE actor-attribution detail to a footnote, and made runtime
+version drift explicit. The cited fault investigations cover Claude 2.1.296;
+Dojo's documented 2.1.311 smoke is not revalidation of those controls.
+Linked the documented JavaScript learning effort. No runtime tests, model jobs,
+settings changes, or component edits; local documentation checks performed.

@@ -3,6 +3,16 @@
 Created 2026-10-09. Source: `eval-plan-workflow-vs-bash.md` in
 `2026_10_09_strat_creator_workflow_debate/`.
 
+2026-10-18 conclusion: the hardened Workflow is functionally validated at ten
+fresh RFEs and ten mixed-state acquisitions, with historical checker failures
+retained and separately replayed. The [hardening conclusion](strat-workflow-s1-hardening.md#2026-10-18-migration-verdict-and-why-the-testing-mattered)
+records the migration recommendation, why testing was necessary, avoidable
+expense, likely consequences of shipping untested and remaining qualification
+limits. [Cumulative accounting](../notes/strat-workflow-total-token-usage-20261018.md)
+is about 489M tokens and $485 API equivalent with GLM free, excluding development
+chat and unrecovered usage. Subsequent entries retain their historical scope;
+this is not a statistical reliability or independent content-quality result.
+
 2026-10-13 direction change: custom entrypoints were rejected, so production
 work now targets [S1 hardening](strat-workflow-s1-hardening.md). Historical
 comparisons/pins remain intact. Nine repairs are ordered there; iterative live
@@ -4034,7 +4044,7 @@ resolved a mechanism or exposed a confound. Original measurements remain intact.
     input hashes verify. This is operational delivery/preservation evidence,
     not independent technical grading or a causal concurrency comparison.
     [Detailed audit](../notes/s1-hardening-scheduled-opus-20261015.md);
-    [checker vocabulary issue](../bugs/open/strat-review-gate-mostly-sound-false-negative.md).
+    [checker vocabulary issue](../bugs/fixed/strat-review-gate-mostly-sound-false-negative.md).
 
 21. **Archival limits must scale with retained data** (2026-10-15).
     The overnight collector correctly refused a final receipt after its

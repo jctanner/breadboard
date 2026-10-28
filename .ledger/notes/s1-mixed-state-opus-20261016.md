@@ -59,7 +59,7 @@ not changes to stored reports, source rules or the historical result. They do
 not judge the technical accuracy of the reports.
 
 The first two defects were already tracked. The repeated judgment is a new
-[checker defect](../bugs/open/strat-review-gate-repeated-judgment-false-negative.md).
+[checker defect](../bugs/fixed/strat-review-gate-repeated-judgment-false-negative.md).
 Repair the checker with retained positive and negative report replays; a paid
 rerun is unnecessary to reproduce these cases. No new run was submitted.
 

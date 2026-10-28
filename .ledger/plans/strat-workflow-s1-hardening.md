@@ -342,7 +342,7 @@ full-batch reliability or independent content accuracy. The numeric-only gate
 correctly retains a testability revise recommendation while approving 7/8.
 
 The pinned benchmark remains FAIL on one
-[new parser false negative](../bugs/open/strat-review-gate-numbered-findings-false-negative.md).
+[new parser false negative](../bugs/fixed/strat-review-gate-numbered-findings-false-negative.md).
 Its feasibility classifier ignores detailed numbered findings attached to
 unrecognized fields, despite an 11,809-character delivered report. An offline
 replay adding only a Findings heading in memory passes; the original evidence
@@ -539,3 +539,787 @@ that every guard ran or that only benchmark-parser defects remain. A complex
 Markdown round-trip probe also confirms a review-only fingerprint coverage gap.
 These are open defects/qualification gaps; no new model run or source repair.
 [Review disposition and exact evidence](../notes/strat-creator-pr85-review-triage.md).
+
+### Post-review one-ticket Opus smoke: blocking hook still exceeds its budget
+
+One authorized run, `markov-run-64a6b4f4`, tested repaired PR 85 head 18cdf46
+with Claude Code 2.1.296, one RFE and cap ten. The model job failed in 15m46s.
+Creation/refinement succeeded; no scoring or specialist review started. The
+refinement checkpoint agent carried the correct helper JSON, but its
+`refine_checkpoint_guard.py` PreToolUse hook exceeded ten seconds on five
+attempts. The now-blocking timeout behavior correctly failed the Workflow;
+valid local work alone did not produce a deliverable receipt.
+
+Moving Jira work out of short hooks did not establish a safe local runtime
+budget: the guard still performs duplicate source/context freshness scans.
+That code path is verified; precise cost attribution requires profiling with
+the full staged architecture tree and instrumentation. Retain fail-closed
+validation and address the bounded-work problem. A small native fixture passing
+without provider calls did not cover this production-size hook execution.
+
+The failure monitor stopped the primary after native failure, the host checker
+rejected missing final output, and all claims were released. All 81 captured
+inference requests used Opus, with no recorded API/rate-limit errors. Markov
+`completed` only means its evaluation finished; the model job and benchmark
+failed. Final archive complete/verified: 1,228 files, no capture errors, receipts
+published. No retry or resume. [Result](../tasks/done/strat-creator-pr85-reviewed-opus-one-rfe.md),
+[guard defect](../bugs/fixed/strat-refine-checkpoint-hook-timeout.md).
+
+Archived syscall follow-up confirms the immediate cost: 453 source and 1,846
+architecture files are scanned, then scanned again through saved-progress
+verification. The initial single-pass guard completed in 5.60 seconds. Each
+later failed guard made over 82,000 metadata calls and about 5,000 file opens
+before Claude sent SIGTERM at ten seconds; the progress lock was acquired and
+no network connection occurred. Roughly 60 MB of trace was generated per failed
+guard. Benchmark instrumentation is part of the observed runtime environment;
+its contribution needs a model-free matched replay rather than attributing
+the full cost to filesystem speed. Full snapshot and tracing budget coverage
+must accompany short-hook verification, not only miniature fixtures.
+
+### Model-free profiling and checkpoint performance repair
+
+The isolated replay matches all 453 source and 1,846 architecture hashes,
+preserves seven Git symlinks, and uses the original absolute path, image
+(Python 3.13.16), resource limits and tracing flags. Original hook: 1.386s plain,
+10.731s traced; a ten-second cutoff reproduces its SIGTERM. The repaired hook:
+0.366s plain, 1.921s traced, and passes the same cutoff in 2.096s. Traced metadata
+calls decrease from 91,133 to 1,133. These are single matched mechanical
+measurements; they do not establish a new model-run success rate.
+
+The repair combines input/progress verification into one full baseline check,
+and uses directory-entry traversal with explicit alias/cycle containment.
+All logical content hashes are recomputed on every invocation. No freshness
+cache, added agent/hook, timeout increase or failure-policy relaxation is used.
+Thirteen new regression cases cover alias behavior, unchanged-size/timestamp
+edits and absent/empty/foreign progress. Full-size traced rejection cases still
+block forged return JSON, changed source/context and forged artifact provenance.
+
+All 84 focused checks pass. `make test-unit` and `make test` each pass 1,080
+tests, with five/six existing optional skips. Ruff, descriptor validation and
+diff checks pass. Signed-off 2a4b7c9 is pushed to PR 85's existing branch; its
+component worktree is clean. Evidence, exact fixtures/patch, profiles, traces, image identity,
+controllers and logs: `refine-checkpoint-profile-20261016/` under the private
+hardening run-data root. Preliminary controller/copy-topology measurements are
+retained and excluded from the final pair. The temporary profiling pod is
+removed; no model calls or Jira reset occurred. A later authorized smoke must
+use the new source SHA and fresh host preparation, preserving the failed run's
+baseline rather than adopting its progress across a code change.
+
+The final profiling archive independently verifies 4,372 entries / 504,789,902
+bytes with no problems. Its saved verifier and checksums permit later replay.
+The published source diff exactly matches the profiled candidate patch. No
+end-to-end model run has been repeated; the original smoke verdict stays FAIL.
+
+### Authorized checkpoint-fixed one-RFE Opus retest: PASS
+
+Run `markov-run-f5a9eb0a` tested published 2a4b7c9 with the same pinned Claude
+Code 2.1.296 and benchmark 440d864, one RFE and cap ten. The job completed in
+26m38s; native Workflow completed in 25m24s. Independent evaluation passes
+every check, and all pipeline stage exit codes are zero. One strategy was
+created/refined/pushed and reviewed, all four assigned assessments returned
+without reruns, and all claims were released. Final score 7/8 approves under
+the numeric-only approval policy, although two role reports recommend revision.
+
+The refinement checkpoint that previously failed completed on its first attempt.
+The checkpoint agent's full 10.454s includes inference and its helper command;
+it does not mean the ten-second hook cutoff was exceeded. CLI stderr contains
+no hook timeout. The final business receipt also validates. This is one
+successful integration retest, not a measured reliability rate or independent
+content-quality judgment. The original failed run remains FAIL.
+
+All 117 captured requests use Opus 4.6, with no recorded API/rate-limit errors.
+Accounted usage totals 4,897,354 tokens, mostly cached input. Job evidence is
+collected under `pr85-checkpoint-fixed-vertex-opus-one-rfe-20261016/` in the
+private hardening run-data root. Final archive independently verifies 1,742
+entries, complete/final, no capture errors, and receipts are published.
+No further paid run or resume was launched.
+[Run task](../tasks/done/strat-creator-checkpoint-fixed-opus-one-rfe.md).
+
+### Fresh ten-ticket batch authorized
+
+The user requests one ten-ticket batch and explicitly requires distinct RFEs.
+The earlier all-new fixture reused historical templates, so a separate
+`batch-ten-distinct-v2` scenario introduces ten newly authored requests with
+independent deliverables and explicit scope boundaries. Historical fixtures
+and verdicts remain intact. The `s1-pr85-distinct-ten-opus` tier pins 2a4b7c9,
+one Opus iteration, batch size/cap ten, native capture and failure monitoring.
+Preflight and offline rendering must pass before the single paid submission.
+[Task and scope review](../tasks/done/strat-creator-pr85-distinct-ten-opus.md).
+
+Published benchmark 2963585, 99 tests (one optional skip), directory validation
+and exact-payload offline execution pass. All 80 imported files match. Prior
+archives independently reverify before Jira reset. One run launched through
+markovd-cli at 2026-10-17 01:59:22 UTC: `markov-run-0e40b64c`. Live readback
+confirms all ten new RFE descriptions exactly match their fixtures, with ten
+unique hashes. Process inspection verifies candidate 2a4b7c9, acquired keys
+RHAIRFE-1 through RHAIRFE-10, cap ten and Opus for primary/helpers/aliases;
+successful Vertex requests use the intended service-account profile. The
+detached observer archived terminal evidence and published verified receipts.
+
+### Fresh ten-ticket result: completed business work, final hook timeout
+
+The job ends FAIL after 37m21s; native Workflow fails after 35m38s. All ten
+distinct RFEs produced separate created/refined/pushed/scored/reviewed strategies,
+with no deduplication or skips. All forty role assessments returned with one
+launch each and no reruns. All final recommendations approve by the requested
+numeric-only policy (three 8/8, six 7/8, one 6/8). All claims were released.
+The host's business validator passes and independent evaluation passes every
+check except `finished`. This is not independent validation of strategy quality.
+
+The final result helper produced a valid receipt at 02:33:54 UTC. The `write
+result` agent returned it unchanged, but its `strat_completion_guard.py`
+PreToolUse hook timed out at ten seconds on all five attempts. Blocking behavior
+failed native completion; the failure monitor stopped the primary. CLI exit 1
+is a real runtime failure even though trusted host validation and post/release
+steps return 0. Do not call the native Workflow successful from saved artifacts.
+
+The repaired refinement checkpoint passes first try. The final guard has a
+separate repeated-work path: completion verifies progress, business validation
+does so again, and each ticket's review verification scans freshness again.
+Full-batch local replay under tracing is needed to measure this scaling cost.
+Short-hook tests must cover the largest supported batch, not just the full
+architecture tree with one ticket. [Final-hook defect and repair](../bugs/fixed/strat-completion-hook-ten-ticket-timeout.md).
+
+Accounted usage: 31,994,117 tokens, exclusively Opus 4.6; 866 request captures
+and 865 usage-bearing responses, no recorded API/rate errors. Final archive
+complete/final, independently verified: 10,951 entries / 16,586,566,882 bytes,
+no collection errors and receipts published. No paid retry or resume occurred.
+
+### Ten-ticket completion hook optimized without model calls
+
+Matched replay reproduces the ten-second kill: the old final hook takes
+20.423s under original tracing. cProfile measures twelve full freshness checks
+within one completion call. The repaired hook takes 2.465s traced and passes
+the same ten-second cutoff in 2.601s; plain runtime is 2.858s before, 0.643s
+after. File opens fall from 32,116 to 3,186 and trace bytes from 81,091,443 to
+9,634,165. These are single matched mechanical observations, not a measured
+reliability rate or a successful new model run.
+
+Completion verifies the complete input/progress baseline once, then checks
+every task, score, role report, attribution and manifest through private data
+validators. Standalone public validators retain freshness checks; separate
+calls rescan content. There is no cross-call cache or exposed skip flag, and
+the configured timeout and blocking/numeric policies are unchanged.
+
+Replay preserves all 453 source and 1,846 architecture hashes, 113 receipt
+input hashes, ten strategies and seven Git symlinks, with the original absolute
+path, Python 3.13.16 image and resource/tracing settings. A separate authored
+candidate fixture records changed-code provenance, never a production baseline
+rewrite. Eight final traced tampering cases block within 0.45–2.60s, including
+rehashing outer receipts after changing the tenth ticket. The source negative
+preserves valid Python, size and mtime and fails specifically on freshness.
+
+The first full suite caught a missed bundled review-helper copy and a permission
+fixture affected by the profiling launcher's umask. Both are corrected; initial
+logs/measurements are retained and excluded from final candidate numbers. The
+synchronized final candidate is reprofiled under the same image/resources.
+Required unit/full suites each pass 1,089 tests (five/six existing optional
+skips); 140 focused checks, Ruff, descriptor and diff/credential checks pass.
+
+Signed-off 6ed858b is pushed to the existing PR 85 feature branch. Its patch
+matches the final profiled candidate. Evidence is collected under
+`completion-hook-profile-20261017/`; its final archive independently verifies
+10,093 entries / 852,391,176 bytes with no problems. The original ten-ticket
+run archive also re-verifies unchanged. Profiling pods are removed. No model
+calls, deployed Jira reset or paid retry.
+A future authorized fresh run must select the new source SHA; the historical
+ten-ticket FAIL and its archived source/progress remain unchanged.
+[Repair task](../tasks/done/strat-completion-hook-performance.md).
+
+### Authorized ten-ticket retest on the completion-hook repair
+
+The user authorized one rerun with the same ten distinct fixtures, Opus 4.6,
+high effort and cap ten. New tier `s1-pr85-completion-fixed-opus` pins 6ed858b;
+benchmark source f980238 is published and all 80 imported files match. Both
+historical pins and failed verdicts are retained. Directory/exact-payload
+validation and 99 offline tests pass; incomplete discovery and invalid model,
+design or repeat settings stop before inference.
+
+Earlier preparation stopped before submission. When the user checked status,
+no launch intent/response or new Markov run existed. Missing temporary files
+were restored from durable campaign evidence and checks repeated with the
+repo-local binaries. Prior archives and all completion-fix evidence independently
+verify; provider readiness and idle/schedule checks pass before Jira reset.
+
+One run submitted through `checkouts/markovd/bin/markovd-cli` at 2026-10-18
+01:56:31 UTC: `markov-run-0b098f6e`. Startup verifies clean 6ed858b source,
+ten acquired keys, all Opus aliases, cap ten, expected pipeline image and
+successful Vertex service-account requests. Actual Jira descriptions exactly
+match the ten distinct fixtures. A detached observer collects/verifies terminal
+evidence under `pr85-completion-fixed-vertex-opus-ten-rfe-20261017/` in the
+private hardening run-data root. No automatic paid retry.
+[Retest task](../tasks/done/strat-creator-completion-fixed-ten-opus.md).
+
+### Completion-hook retest: native success, two checker format false negatives
+
+Run markov-run-0b098f6e completes the native Workflow in 36m41s and the model
+job in 38m26s. All 36 Workflow agents complete on their first attempt. CLI,
+host validation, post step and release exit 0; all ten distinct strategies are
+created/refined/pushed/scored/reviewed, none merged/skipped, all claims released.
+The final completion guard passes its first receipt in 2.525709s traced,
+with the unchanged ten-second timeout. StructuredOutput round trip is 2.572s;
+the entire write-result agent takes 20.998s, which includes separate work.
+This is one real full-batch qualification of the optimized guard, not a
+reliability rate. The preceding failed run and its source remain unchanged.
+
+Pinned evaluation retains FAIL solely for reviewer_outputs_returned: 38 reports
+accepted and two complete reports rejected. Feasibility for RHAISTRAT-5 has
+9,265 characters and detailed Markdown-numbered headings the checker misses;
+architecture for RHAISTRAT-6 has 6,391 characters and a judgment beginning
+“Core architecture is sound.” These reproduce the known findings/prefix defects.
+Independent joins confirm all forty producer transcripts, receiving Skill
+results, provenance hashes and composed reviews agree. Formatting-only probes
+in memory make both reports pass. No raw report, historical verdict or checker
+source was changed. Fix/replay the checker without paid inference before
+considering another model test. [Audit](../notes/s1-completion-fixed-opus-ten-rfe-20261018.md).
+
+Reviews occupy a 15m11s envelope and remain the longest phase. Ten ticket reviews
+overlap, but the four roles within each ticket still run sequentially. Peak
+reviewer transcript overlap is ten. Scope checks find no peer-ticket headings,
+IDs or tool paths. The 43 denied reads recover through authorized inputs;
+41 involve the assigned ticket's local/ alias and two other invalid paths.
+These checks do not establish semantic accuracy. All final numeric decisions
+approve (four 8/8, two 7/8, four 6/8), while 23 role reports recommend revise;
+their dissent is retained under the user's numeric-only policy.
+
+Usage: 854 captured/usage-bearing Opus calls, 33,214,640 accounted tokens,
+no recorded API/rate errors. Recorded Opus API list equivalent $55.27; thinking
+is included in output. The primary's ~1.2M-token prose summary omits cumulative
+API usage and is unsuitable for cost accounting. Job duration is 65s longer
+than the failed predecessor; differing model work prevents attributing the
+whole-job change to the hook. Matched replay and the traced guard establish
+the optimization directly.
+
+Archive complete/final with 11,033 files / 17,094,202,740 bytes, no capture
+errors; independent checksum verification passes and final receipts are
+published. Reproducible read-only analysis is saved separately from the raw
+archive. No paid retry/resume or new source deployment occurred during analysis.
+
+### Checker format repair, verified without model calls
+
+On the user's approval, repaired Breadboard's mechanical assessment checker,
+versioned `role-assessment-v2`. Numbered Markdown findings contribute their
+explanatory body rather than just a title. The reader excludes fenced examples
+and stops at the next heading. Explicit architecture subjects (“Core
+architecture is” / “Architecture is”) are removed before matching the existing
+completed verdicts. That subject is not counted as explanatory content.
+Status, TODO/placeholder, empty/quoted/code-only findings, wrong-ticket sections,
+ambiguous judgments, conflicting decisions and receiving-channel/history
+substitutions remain negative cases. S1 and its numeric-only policy are unchanged.
+
+The actual latest before/after receiving-channel replay moves 38/40 to 40/40,
+changing exactly RHAISTRAT-5 feasibility and RHAISTRAT-6 architecture. Input
+hashes match before/after, and the historical original gate/overall FAIL remain
+beside the new delivery result. Five other historical captures replay too:
+mixed-state Opus 36/36; completed S2 12/12; failed S1 stream 0/12, quota-stopped
+S2 7/12 and completed S1 with lost handoffs 2/12 remain failed. This evaluates
+delivery only, not content accuracy or a new pipeline trial.
+
+Six new authored regression methods demonstrate the failures before the patch
+and pass afterward. Focused tests: 27 pass. Full benchmark suite with offline
+Markov simulations enabled: 104 pass, one optional emulator integration skip.
+Compilation and diff checks pass. Existing repeated-judgment normalization is
+also confirmed against the mixed-state report; that previously fixed logic
+predates this patch, and its stale open ledger status is corrected.
+
+Sixteen evidence files / 1,769,863 bytes independently verify under the latest
+campaign's separate `analysis/checker-format-fix-20261018/`, including old/new
+checker sources, test sources/logs and immutable before/after/control replays.
+No inference tokens, Jira changes, source-pin edits or deployment. Changes are
+local/uncommitted; a future benchmark must pin a published revision containing
+the fix. [Completed task](../tasks/done/strat-review-checker-format-compatibility.md).
+
+### Current-source mixed batch: ten actual acquisitions
+
+The user authorized one mixed-state Opus batch on repaired S1. Published
+Breadboard 9232633 includes checker v2 and a new s1-pr85-mixed-ten-opus tier
+pinned to 6ed858b. Historical tiers/pins and failed results are unchanged.
+The new fixture has 29 issues, eighteen distinct RFE subjects, four fresh,
+four refinement and two verified review-only work items. Controls are seeded
+between the prior-push pair and the other eight work items, so lexical discovery
+selects all ten actionable RFEs. The human-only control is excluded by the first
+cap and exercised as a late skip during the model-free repeat, which must
+acquire nothing and exit 78. No gate or concurrency semantics change.
+
+106 offline tests pass, two optional isolated-emulator tests skipped; directory,
+exact-payload Markov simulation, staged secret scan and diff checks pass.
+The optional local emulator process did not start while waiting for sandbox
+approval. On the user's path clarification, real integration preflight used
+the normal Breadboard seed and pre-inference guard. All 81 imported files
+match the published source; archive/routing/idle/schedule preflight passes.
+
+Submitted once through markovd-cli at 17:30:29 UTC on October 18:
+markov-run-bfc0b766. Actual seed/read-back confirms all eighteen distinct
+summaries/descriptions. Live guard passes ten acquisitions and 4/4/2 resume
+points with two verified prior pushes. Direct process inspection confirms clean
+6ed858b, Opus for all aliases, cap ten, native failure monitoring and the
+qualified image. Successful requests use the intended Vertex service account.
+Observer 878799 will archive and verify terminal evidence; it cannot resubmit.
+Data root is pr85-mixed-ten-vertex-opus-20261018 under the private hardening
+run-data directory. Outcome/repeat/terminal archive pending; no automatic paid retry.
+[Completed run task](../tasks/done/s1-pr85-mixed-ten-opus.md).
+
+Terminal result: markov-run-bfc0b766 completed at 18:01:28 UTC, model job
+30m07s. Pinned evaluation PASS with no failed checks, ten completed strategies
+and forty accepted role assessments. Four new clones, eight refinement/push
+paths and two review-only preservation paths meet the mixed checks. Controls
+stay unchanged and all claims release. The model-free repeat passes with no
+acquisitions, no duplicate effects, exit 78 and zero model calls. Usage records
+855 Opus calls / 32,138,772 accounted tokens, no recorded API/rate errors.
+Archive collection ran 18:01:36–18:19:40 UTC. The final manifest is complete;
+independent checksum verification passes with no problems, and verified receipts
+were published at 18:19:53 UTC. Source match and benchmark PASS are recorded in
+launch-context/result.json. No paid retry/resume.
+
+## 2026-10-18: migration verdict and why the testing mattered
+
+### Verdict and remaining limits
+
+The migration is functionally successful for the tested configuration. The
+recommendation is to proceed with the hardened Workflow implementation for
+strat-creator and qualify it in the actual Fullsend deployment before broad
+rollout. This is a recommendation, not a production deployment approval.
+
+The fresh ten-RFE run completed natively in 38m26s with all forty reports
+delivered and preserved. Its original benchmark FAIL remains recorded; the
+two remaining checker false negatives were subsequently repaired and verified
+by immutable replay. The current-source mixed ten-RFE run is a clean PASS in
+30m07s, covering four fresh, four refinement and two review-only paths. Controls,
+lock cleanup and the model-free repeat pass, with no duplicate effects.
+
+Reliability comes from explicit assignments, persisted assessments, provenance,
+completion receipts, ordinary Python validators/hooks and recovery/freshness
+rules alongside Workflow scheduling. Deterministic JavaScript does not make
+the agents beneath it deterministic. Those checks are part of the design and
+must remain in the production integration.
+
+These results support this implementation; they do not establish a general
+cost, simplicity or reliability advantage over scripted orchestration. The
+benchmarks used Kubernetes jobs through Breadboard and Markovd, not the Fullsend
+runner/OpenShell boundary. Independent strategy-quality judging and statistical
+failure-rate measurement remain unperformed. Numeric scores remain the user's
+sole approval gate; preserved reviewer requests for revision are informational,
+so final approval does not imply unanimous reviewer agreement.
+
+External source/baseline protection remains an [open follow-up](../bugs/open/s1-primary-edits-source-and-freshness-after-failure.md).
+Overlapping jobs also need stronger ownership than [Jira labels](../bugs/open/strat-jira-label-locks-not-atomic.md)
+to establish atomic distributed claims. A clean batch does not close either
+qualification gap. Reviewer fan-out remains deferred by the user.
+
+### Cumulative testing cost
+
+The [deduplicated accounting](../notes/strat-workflow-total-token-usage-20261018.md)
+records 478,893,465 recoverable reported tokens, plus about 10 million from a
+rounded early smoke summary: approximately **489 million tokens** overall.
+The original comparisons account for about 187.5 million; subsequent S1
+hardening/integration accounts for 301.4 million.
+
+With GLM treated as free, standard global API list-price equivalent is about
+**$485**, with a calculated range of $481.26–$487.44. Opus contributes $475.02,
+Haiku $6.24–$12.42 and GLM $0. Hardening contributes $345.51; original benchmarks
+contribute $135.75–$141.93. Failed/stopped/replacement runs are included;
+duplicate captures and synthetic model responses are excluded.
+
+These are usage equivalents, not reconciled invoice charges. Development-chat
+tokens, infrastructure/labor costs and usage missing from captures are excluded.
+The Haiku range reflects missing per-request context tiers in old summaries;
+most recorded tokens are cached input. No cost-per-defect or financial return
+on testing has been measured.
+
+### Which testing was necessary, and which expense was avoidable
+
+Most testing was necessary to establish that the pipeline performed the work
+it claimed to perform. A successful CLI exit or a review comment in Jira could
+conceal a lost assessment. We needed to inspect what the receiving agent
+actually obtained and what persisted, not just whether agents ran.
+
+- Single-target and batch tests exposed whole-batch reviewing despite a
+  single-ticket assignment. One-ticket tests cannot expose that interference.
+- Full-size tests exposed hooks that passed for one ticket but exceeded their
+  timeout at ten. Testing only the average workload would miss the supported
+  maximum's failure.
+- Mixed-state tests covered refinement, verified review-only continuation,
+  untouched controls and exclusion of completed work. Fresh-only runs could
+  not answer these questions.
+- Model-specific integration mattered: GLM accepted a schema that Anthropic
+  rejected. A GLM pass could not qualify that boundary for Opus.
+- Controlled failure/recovery tests checked safe reuse and side effects without
+  paying for whole model batches. Native controls and checker replays often
+  required zero provider calls.
+
+Some paid expense could have been avoided with earlier deterministic checks
+and stronger preparation. Relay failures, quota interruptions, incorrect model
+selection and overly narrow checker rules consumed time without directly
+answering the architectural comparison. Full-size local hook profiling could
+have exposed scaling defects before paid integration runs. The final checker
+repair demonstrated the better sequence: replay saved reports, repair the
+parser, retain genuine negative cases, then use a live run for a new integration
+question. Those operational incidents still produced useful findings; their
+entire cost is not an unavoidable cost of evaluating a Workflow.
+
+The campaign combined comparison, debugging, infrastructure repair and
+integration qualification. Changed revisions and fixtures cannot be pooled as
+independent repetitions of one stable implementation to claim a failure rate.
+The conclusion is sufficient functional evidence to stop repeating ordinary
+clean batches on this revision. Further paid testing should answer a specific
+remaining question; prioritize model-free fault/replay checks, actual Fullsend
+integration and separately scoped content judging. This recommendation does not
+authorize another paid run.
+
+### Consequences of shipping without the tests and repairs
+
+The most serious risk was false confidence: a run could publish a strategy as
+reviewed while the intended specialist assessments had not reached the final
+review. Downstream readers would see ordinary documents, comments and approval
+labels without knowing the process behind them was incomplete.
+
+| Demonstrated problem | Likely production consequence |
+| --- | --- |
+| Specialist reports lost at the Skill return | Missing findings; coordinator-written replacement sections could be mistaken for delivered specialist assessments |
+| Reviewers cover the batch despite one assigned target | Individual strategies receive reasoning insufficiently specific to their own requirements |
+| Malformed refinement receipt disagrees with saved progress | Ready work can be excluded from review and require manual reconciliation |
+| Anthropic rejects the Workflow schemas | Opus jobs fail when they reach the affected stages |
+| Final completion hook times out at ten tickets | Completed business work is reported as failed, making safe retry decisions difficult |
+| Missing recovery/freshness safeguards | Retries risk duplicate side effects or reuse of results that no longer match their inputs |
+| Primary edits Workflow source/baselines and relaunches | Execution departs from reviewed code, spends more tokens and can publish side effects before a trusted final check refuses it |
+
+Visible failures would create stalled work and operator investigation. Silent
+failures would be harder to discover because the expected Jira artifacts
+could already exist. In one observed ten-ticket run, all substantive work
+finished before the final hook failed; artifact presence alone could not tell
+an operator whether restarting was safe.
+
+The mechanisms were observed in tests or controlled fault cases. Their
+production consequences are engineering inferences, not observed production
+incidents or measured occurrence rates. Some defects belonged to shared Skills
+and helpers and predated the migration. The original implementation would have
+inherited them. Testing moved discovery into a controlled environment and
+exposed failure modes that the original success checks themselves missed.
+
+## Authorized Opus 5.5 mixed-state comparison, 2026-10-18
+
+The user requests one repeat of the passing ten-acquisition mixed-state batch
+with claude-opus-5-5. This asks a new model-compatibility question, while holding
+candidate 6ed858b, fixture, high effort, concurrency ten and single iteration
+constant. Native capture, failure monitoring, numeric-only approval and the
+model-free repeat remain unchanged. No automatic paid retry or model fallback.
+
+Published benchmark 0b89021 adds variant opus55 and a separate restricted tier;
+prior model mappings and historical tiers stay intact. The 109-test offline
+suite passes with two optional skips, exact-payload Markov simulation passes,
+and all 81 imported files match. The existing Vertex upstream now permits the
+exact model; a one-output-token availability probe returns HTTP 200 through the
+same relay credentials the jobs use. Archive/idle/schedule preflight precedes
+the single CLI submission. [Completed run task](../tasks/done/s1-pr85-mixed-ten-opus55.md).
+
+Run markov-run-296d9e2e completed: native Workflow 23m19s, model job 25m18s,
+all pipeline exits zero. All ten mixed-state paths and model-free repeat pass.
+Independent audit confirms forty final reports delivered and preserved, with
+no mechanical scope problems; there were two additional testability launches.
+Pinned benchmark remains FAIL solely because a 6,119-character scope judgment
+begins "The capability is right-sized" and the checker expects "right-sized"
+at the field's start. An in-memory wording diagnostic passes; no source/report
+or historical result has been changed. [Parser finding, subsequently fixed](../bugs/fixed/strat-review-gate-scope-subject-false-negative.md).
+
+All 791 requests use Opus 5.5; accounted usage 37,261,081 tokens, CLI list-price
+equivalent $42.80, no recorded API/rate errors. Compared with the preceding
+same-fixture Opus 4.6 observation, runtime is about 16% shorter and equivalent
+cost about 17% lower. Numeric decisions are five approve/five revise versus
+nine approve/one revise, without an independent accuracy judgment. Same S1
+script, Claude 2.1.296 and image are verified from retained runtime evidence;
+the late live process inspection missed the completed primary. Archive is now
+complete/final and independently verified: 13,930 files / 18.85 GB, no capture
+errors, receipts published. All 791 model responses uniquely match successful
+Vertex service-account telemetry on the intended provider. No checker fix or
+paid retry occurred during the run/audit. [Analysis](../notes/s1-opus55-mixed-ten-20261018.md).
+
+### Scope-checker repair, no inference
+
+The user requested this fix before considering revision-rate differences.
+role-assessment-v3 accepts a bounded capability/scope subject before the existing
+canonical judgment. It does not count the subject as rationale or search the
+whole report for a verdict. Unfinished, negated, ambiguous/conflicting,
+wrong-target, error and invalid-receipt controls remain negative.
+
+Unchanged Opus 5.5 receiving-channel replay moves 39/40 to **40/40**, changing
+only RHAISTRAT-1 scope. Input hashes, report bytes, original gate and overall
+FAIL are preserved. Seven prior captures retain their v2 results, including
+genuine failed/lost-handoff cases. Five regression methods reproduce the defect;
+32 focused checks pass, and full suite is 112 passed / two optional skips.
+
+Published Breadboard d3a8a8f contains only checker/tests/README changes. All 81
+Markovd-imported files match the pushed revision. The model-free replay archive
+independently verifies: 27 files / 2,649,699 bytes, complete/final, no problems.
+No model calls, Jira changes, S1 changes, paid rerun or image rebuild. Historical
+pins/verdicts remain unchanged; future benchmarks can use the published fix.
+Revision-rate analysis is still deferred. [Completed repair](../tasks/done/strat-review-scope-subject-checker.md).
+
+## Saved-content comparison: Opus 4.6 and 5.5
+
+The user requested judging the refined strategies after the checker repair.
+One assistant pass with producer labels masked preferred 5.5 in all eight
+new-output pairs: four fresh/create/refine and four identical-draft refinements.
+RFEs/comments match apart from terminal whitespace, initial drafts match
+exactly, and all 321 frozen reference files match. Preferences/criterion ratings
+were frozen before labels and pipeline scores were revealed.
+
+Concrete advantages include Standard-mode canary prerequisites, shared-artifact
+and cache-deletion safety, Kueue borrowing, explicit archive freshness and
+authorization, and provider-specific export provenance. The two unchanged
+review-only controls were excluded from the output tally. Their pipeline scores
+still decrease (6 to 4 and 4 to 3 of eight), showing that the lower approval
+count cannot be attributed solely to worse generated content.
+
+Important gaps remain in 5.5: inferred credential adoption can still produce
+false readiness; CronJob delay/skip semantics are unsettled; destructive
+cross-service races remain; database transactions are overstated as isolation;
+queue-position causality and canary metrics access need correction. No gate,
+prompt, S1 source or original benchmark verdict changed. These are synthetic
+fixture content findings, not new defects in relay credential management.
+
+This is an exploratory single-judge assessment of one batch pair, not calibrated
+accuracy or eight independent model trials. No new pipeline/provider inference
+or external judge run; separate provider cost $0, excluding this Codex
+conversation usage. [Comparison, evidence and limits](../notes/strat-content-opus46-vs55-20261018.md).
+
+## Revision-decision investigation
+
+Saved evidence reconciles all 20 assessor reports and published decisions;
+parser and composer agree on all 81 score vectors. Four approval flips explain
+the move from one to five revise outcomes. Most concerns are substantive; the
+queue strategy's scope penalty remains debatable. Scope/architecture account
+for ten of twelve fewer score points. Unchanged controls independently show
+reviewing behavior/variation. Numeric-only approval remains unchanged.
+
+The useful follow-up is readiness calibration: distinguish sourced requirements,
+unresolved owner-bound discovery and implementation blockers without inventing
+targets or treating required cross-component work as optional scope. No blind
+automatic rewrite loop is indicated.
+
+A separate existing report-format bug explains both extra testability calls:
+prose-bearing Recommendation fields fail capture, then the parent diagnoses
+missing files and regenerates. It is not the scope checker, five numeric revise
+decisions or strategy rewriting. Original/replacement reports preserved; fix
+remains pending. [Full findings and proposed next step](../notes/strat-opus55-revision-analysis-20261018.md).
+
+## Native Fullsend and OpenShell qualification
+
+The user authorized one single-RFE Opus 4.6 smoke through the copied GitLab CI
+branch, rather than the Markov/Breadboard job path. RHAIRFE-19 is a new,
+distinct workbench-storage-expansion RFE; existing Jira records are preserved.
+Candidate `6ed858b`, benchmark context `7d61f09`, high effort and cap ten remain
+pinned. Released Fullsend launches its stock Claude agent, which must launch
+the Workflow; the relay key stays in the OpenShell provider.
+
+Zero-inference setup failures found gaps the model-free connection probe did
+not exercise: optional Fullsend CLI debug syntax, broken aliases in the
+default cone sparse checkout, certificate-export ordering, and the compiled
+Claude executable identity in the provider allowlist. Host-clone symlinks also
+exposed an evidence-loss path in the redactor. These are copied-adapter/context
+integration fixes; Workflow source is unchanged. Nineteen model-free checks
+pass. Preserve the known native-artifact gap in 2097 explicitly.
+
+2099 reached Claude but OpenShell blocked every request before the relay:
+zero tokens and $0, no strategy output, correct validation failure, no host
+publication, owned claim released, complete native archive verified. Its API
+and syscall captures provide the exact denied executable. One Fullsend
+validation iteration still permits multiple native SDK transport retries;
+those controls govern different layers.
+
+The corrected adapter `fdc770c1` **passes single-ticket pipeline 2100/job 4068
+in 26m05s**. RHAIRFE-19 produces RHAISTRAT-16, approval, all four role reports
+and a verified native business receipt. Host validation/report publication,
+downstream dashboard 2101, owned-lock release and gateway cleanup all pass.
+Opus 4.6 requests use the intended managed Vertex relay account. The complete
+private archive and a separate checksum verification pass: 5,535 files /
+910.12 MB, including native sessions, 218 API capture files and syscall traces.
+This qualifies one real Fullsend/OpenShell integration smoke; prior benchmark
+verdicts and source pins are unchanged. [Run, repairs and evidence](../tasks/done/fullsend-claude-workflow-opus-single-smoke.md).
+
+Two portable fixes remain for the feature branch: default context fetching must
+avoid broken sparse aliases, and host preflight must check host dependencies
+while sandbox hooks enforce the Claude version. Local relay/provider settings,
+certificates and evidence tooling remain deployment configuration.
+[Source portability follow-up](../bugs/open/strat-creator-default-fullsend-portability.md).
+
+### Lessons from the GitLab / Fullsend smoke
+
+- **The native integration works for one RFE.** All 120 relay requests bearing
+  `gitlab-job-4068` completed with HTTP 200, model `claude-opus-4-6`, and managed
+  upstream `vertex-strat-evals`. The unchanged Workflow delivered the strategy
+  and four role reports, then passed native validation and publication.
+- **Preflight must exercise the real execution boundary.** Python model
+  discovery passed while Claude's compiled leaf executable was blocked. Agent
+  registration also did not catch optional debug-flag parsing in the actual
+  run command. Host and sandbox have separate runtimes, dependencies and trust
+  stores. Test the exact launch and calling executable before buying inference.
+- **Reference data is an execution input.** Sparse checkout left aliases to
+  missing releases, so freshness correctly stopped preparation. Use an explicit
+  immutable subset and retain its source identity; preserve the strict check.
+- **Failure handling was exercised, not merely specified.** Failed inference
+  produced a failed job, missing-result validation, skipped publication and
+  released ownership. Keep receipt validation, host publication and cleanup
+  independent from the agent's completion claim. This is observed behavior for
+  these failures, not proof of recovery from a hard kill.
+- **Retry controls belong to different layers.** One Fullsend iteration still
+  allowed about three minutes of native SDK connection retries. The blocked
+  attempts used zero tokens. Interpret iteration, network retry and job timeout
+  settings separately when estimating cost and delay.
+- **Evidence collection needs its own acceptance checks.** The original
+  redactor dropped early artifacts on source symlinks. Recording links as data
+  preserves evidence without following targets; absent required artifacts now
+  prevent a complete-archive claim. Native OpenShell logs named the exact
+  rejected executable, which the top-level connection error did not explain.
+- **CI time includes substantial work outside Claude.** The successful job's
+  26m05s comprises about 4m20s before the agent, 19m56s of native agent execution,
+  and 1m49s afterward. The setup includes image acquisition/building. This one
+  fixture does not establish a speed difference from the Markov runs.
+
+The result qualifies a single-ticket Fullsend/OpenShell path with the local
+adapter. Ten-ticket mixed-state, resume and interruption behavior still need
+qualification on that path. The earlier Markov results remain evidence for
+their original execution environment. No further paid run is implied here.
+
+### Existing SME revision contract audited, 2026-10-19
+
+SME-driven reprocessing already exists in upstream main (`b396172`, fetched)
+and the supplied GitLab pipeline (`fd36b15`). The documented human loop is
+pull, edit the strategy's Staff Engineer / SME Input, refine/review locally,
+then `/strategy-push`. Push publishes the changes and removes the current
+`needs-attention` or `rubric-pass` label so a later eligible batch imports,
+refines and reviews the existing strategy. Local mode deliberately bypasses
+pipeline review-label gates while preserving human input. A Jira description
+edit alone does not reopen the ticket. Earlier characterization of all SME
+reprocessing as missing was too broad.
+
+The existing `strat-dashboard-sme-loop-test` ran successfully as
+`markov-run-bb4af08c` on July 31: initial refinement and two SME revisions,
+expected counts 1/2/3. Its continuation explicitly clears review labels and
+prompts the agent to synchronize the Jira SME section. This proves that
+assisted revision flow on the historical fork, not automatic edit-triggered
+selection or the new Fullsend runtime. The recent mixed-state fixture seeded
+a human-cleared state; it did not exercise actual SME feedback resubmission.
+
+S1 `6ed858b` preserves the human pull/push/refine skills. An eligible new job
+imports updated SME input and establishes a new freshness baseline; an older
+run cannot publish against changed inputs. Preserve a separate parity
+question: GitLab manual `reprocess-strat` accepts approved post-CI strategies
+and pulls in local mode, whereas S1 resume skips a still-approved strategy.
+The human resubmission flow removes that gate first. Do not equate the two
+entry points or implement an edit watcher merely to reproduce the human loop.
+
+Thirty-six model-free checks pass across current-main helpers, the demo
+contract, S1 freshness and temporary isolated edit/reopen probes. No source
+changes, paid runs or shared resets. [Contract, evidence and qualification
+limits](../notes/strat-sme-revision-flow-20261019.md).
+
+### SME local-to-native-CI qualification in progress, 2026-10-19
+
+The user authorized the connected SME test on the existing native smoke's
+RHAIRFE-19 / RHAISTRAT-16. All 35 Jira issues are preserved. Initial source is
+still clean 6ed858b; adapter fdc770c1. Local helper/scope tests pass 114 cases,
+four additional local-hook/composition probes pass, and all 19 adapter checks
+pass with the released Fullsend binary. The isolated human workspace uses
+the qualified Claude 2.1.296 rather than changing the host's 2.1.300 default.
+
+Actual pull passes and leaves Jira unchanged. A new SME directive changes the
+PVC PATCH API design, rejects a custom backend state field and adds retry/UID
+acceptance cases. This is a content-compliance check, beyond retaining a marker.
+
+The first local refinement fails on transport before writing its revised body.
+HTTP 200 is not evidence of a completed stream: the host Go ingress proxy's
+absolute 120s write deadline repeatedly cancels the requests. Native retry
+recovery lasts 38m04s and eventually returns an API error, yet forked Skill
+CLI status is success / exit 0. Independent content checks reject the result;
+Jira and tracked source are unchanged. Local commands need artifact/error
+validation as well as exit status. [CLI status defect](../bugs/open/claude-local-forked-skill-transport-error-exit-zero.md).
+
+The proxy issue is reproduced with a mock upstream and repaired without
+changing S1: only dedicated inference virtual hosts lose their absolute write
+and response-header deadlines. HTTP/HTTPS/HTTP2, long nonstream, ordinary
+console deadline and cancellation tests pass with Go race detection. Both
+replicas run repaired image 6f997256; an actual model response now completes
+beyond the former 120s limit. [Transport repair](../bugs/fixed/ingress-proxy-model-response-write-deadline.md).
+
+The failed attempt's data is independently checksum-verified in a separate
+private archive. An earlier symlink-verification failure remains preserved;
+new captures record native links as metadata. Old ingress replica logs were
+not collected before rollout and are explicitly unavailable. Subsequent
+captures now include all proxy replicas.
+
+A single explicit continuation started at 17:00:30 UTC with identical SME
+input, source, architecture and Opus 4.6 settings. Local refinement/review,
+human publication, normal CI batch rediscovery, sign-off and unchanged repeat
+are not yet qualified. No second CI batch or replacement ticket was seeded.
+[Task history and evidence](../tasks/done/strat-sme-local-to-fullsend-validation.md).
+
+The transport-fixed local attempt then exposes a harness setup mistake:
+loading the editable checkout itself with --plugin-dir makes its local/
+artifacts sensitive plugin assets to native Edit. The test is stopped without
+applying model-generated candidate text manually. Four corrected native
+Read/Edit probes against a localhost mock establish the boundary in ordinary
+and forked calls: inline-root edits are denied; a separate plugin installation
+permits the working checkout's artifacts, even with its dormant manifest and
+project skills still present. These probes are synthetic and use zero upstream
+tokens. This is not a strategy-content or S1 business-logic defect.
+
+A source-identical separate plugin is installed for the human test. One
+explicit refinement starts 17:18:40 UTC; current stage is
+refine-installed-plugin. Existing failed and stopped evidence is retained;
+the stopped-attempt/probe archive independently records complete and verifies
+checksums. The human review guide should document the qualified CLI and plugin
+setup: [documentation gap, now fixed](../bugs/fixed/strat-human-review-guide-runtime-and-plugin-setup.md).
+
+### SME connected flow: results, 2026-10-19
+
+Actual local pull/edit/refine/review/push passes on RHAIRFE-19 / RHAISTRAT-16:
+human sections preserved byte for byte, all Jira unchanged until push, and
+push reopens the old approval gate. A separate clean plugin installation fixes
+the inline-plugin test setup. The human guide now documents that setup and the
+qualified runtime/dependencies, with local publication still pending.
+
+Normal default-JQL CI pipeline 2102/job 4071 passes in 29m06s through GitLab
+emulator, Kubernetes Runner, job-owned Podman, Fullsend and OpenShell. It imports
+the full SME section, refines the same strategy and captures all four distinct
+role reports with matching hashes and caller/run attribution. Native completion
+receipt and host business validation pass. All 128 CI requests complete on the
+intended Opus 4.6 Vertex account. Dashboard pipeline 2103 also passes. No special
+SME-sync prompt, manual label edit, reset or duplicate strategy is used.
+
+The original source does **not** pass the entire human round trip: post-CI
+pull into the existing workspace appends a second document. The body-preserving
+frontmatter helper was followed by an append. Three model-free regressions
+reproduce it. The local fix builds a fresh validated file and replaces the old
+one after successful writing. All 26 pull tests and 1,092 required suite checks
+pass (five conditional dispatch checks skip for missing CLI on test PATH).
+Live helper refresh then passes without inference or Jira writes. The paid
+slash-command failure is preserved; no additional paid pull or CI run is used
+to qualify the repair. [Pull defect, now published](../bugs/fixed/strat-pull-appends-existing-local-body.md).
+
+Actual human sign-off displays the summary and waits for confirmation; after
+confirmation in the same CLI session it publishes, attaches the review, adds
+human-sign-off and removes DRAFT. Canonical ADF read-back proves the complete
+latest CI body and SME section were published once. The source business fields,
+link identity and controls are unchanged. A checker initially confused the
+linked strategy's updated embedded title with an RFE mutation; the retained
+false-negative is corrected by checking relationship identity separately.
+All 35 issues remain present. Final normal host preparation exits 78, acquires
+nothing and leaves Jira unchanged with zero inference. The test ticket is no
+longer selected; the existing human-signed-off control is also skipped.
+
+SME directions change actual design content, not just a marker. Quality limits
+remain: requested route/state acceptance tests are not explicit enough; an
+unsupported polling target survives; a quota example mistakes reaching 50Gi for
+exceeding it. CI scores 8/8 while preserving feasibility/testability requests
+for revision. This honors the user's numeric-only approval policy, and shows
+why flow qualification and independent content-quality judging are different
+tests. No new paid judge call is used.
+
+[Full results and evidence](../notes/strat-sme-local-fullsend-validation-20261019.md)
+preserve failed/stopped attempts and qualification boundaries. The deployed
+proxy repair is separate from S1. At test completion the human guide/pull repair
+were local; the user then authorized publication. Signed-off commit 1bcb8f4 is
+pushed to the feature branch, verified by remote read-back, and the checkout is
+clean. Full pre-push make test passes 1,092 tests with six conditional skips.
+No new paid run. The two previously recorded default bootstrap fixes and native CLI
+false-success defect remain follow-up work.

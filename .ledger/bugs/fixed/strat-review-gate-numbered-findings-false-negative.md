@@ -67,3 +67,31 @@ report, provenance hash and composed review match. Adding only a Findings
 heading in memory makes the classifier pass. Pipeline and mixed-state/repeat
 checks passed; historical eval remains failed.
 [Audit](../../notes/s1-mixed-state-opus-20261016.md).
+
+## Completion-hook retest recurrence
+
+Run markov-run-0b098f6e completes natively and publishes all ten reviews, but
+the pinned checker rejects RHAISTRAT-5 feasibility (9,265 characters). The
+complete report has `#### 1.` through `#### 8.` findings, a completed needs-
+revision judgment and revise recommendation. SHA-256:
+`d3479267cfbedb6c32c9a4fa8654db6634dfbef8a511dd0a811ca42bc38a1d2a`.
+Producer, parent return, saved hash and final review agree. Adding only a
+Findings heading in memory makes it pass. Historical FAIL remains unchanged;
+no checker repair or inference during analysis.
+[Audit](../../notes/s1-completion-fixed-opus-ten-rfe-20261018.md).
+
+## Fixed in the local checker, 2026-10-18
+
+`role-assessment-v2` reads explanatory bodies under numbered Markdown headings,
+stopping at the next heading and excluding fenced examples and heading titles.
+Normal completed judgment/recommendation and assigned-section checks remain.
+New negative fixtures cover empty headings, status/TODO text, quoted/table/code
+content and borrowing the next ticket's explanation.
+
+The unchanged latest ten-ticket receiving-channel replay improves 38/40 to
+40/40; its feasibility report now passes without editing report bytes. The
+mixed-state capture passes 36/36. Genuine error, progress and missing-handoff
+controls retain their earlier failing counts. Full benchmark suite: 104 pass,
+one optional local-emulator integration skip. Evidence saved and verified;
+historical evaluation files and archive inputs remain unchanged. No inference,
+source pin or deployment change. [Repair task](../../tasks/done/strat-review-checker-format-compatibility.md).

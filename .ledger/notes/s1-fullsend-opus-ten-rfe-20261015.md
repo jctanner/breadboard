@@ -65,7 +65,7 @@ that the producing reviewers intentionally chose to repeat the verdict.
 
 The historical benchmark additionally rejects feasibility bodies for
 RHAISTRAT-2, -4 and -10, although the live hook captured and composed them.
-This repeats the [numbered-findings false negative](../bugs/open/strat-review-gate-numbered-findings-false-negative.md).
+This repeats the [numbered-findings false negative](../bugs/fixed/strat-review-gate-numbered-findings-false-negative.md).
 The run still genuinely failed because two final reviews are incomplete.
 
 ## Runtime and provider observations

@@ -1,6 +1,499 @@
 # Project work index
 
+## Migration retrospective
+
+- [Bash to Claude dynamic workflows](notes/strat-workflow-migration-lessons.md):
+  draft covering added implementation and validation work, JavaScript/runtime
+  semantics, observed source edits and relaunches, recovery/freshness, live
+  qualification, and dated effort accounting. [Writing task](tasks/done/strat-workflow-migration-retrospective.md).
+
 ## Current milestone
+
+- [PR93 review reproduction and repair](tasks/current/strat-pr93-review-followup.md):
+  owner authorized local fault reproduction and repairs to push-label races,
+  create accounting, deferral history/reasons and reporting. Preserve host
+  verification; no paid run, Jira write or schedule switch.
+
+- [Batch freshness isolation PR #93](tasks/done/strat-batch-freshness-isolation.md):
+  signed-off 6ad16b5 pushed on feat/isolate-stale-batch-tickets; upstream PR
+  verifies main base/exact head, 25 files, mergeable. Ticket edits defer their
+  RFE; host verifies partial completion/publication and retains deferred recovery.
+  Shared/unverifiable failures stay fatal but can produce failed receipts.
+  Nineteen added fault/control-flow cases; full 1,463 pass/six skips, lint/types
+  clean. DCO/lint/Unicode CI pass; Python CI/review in progress. Archive verified
+  25 files plus manifest; credential scans zero. No paid run or schedule change.
+
+- [Post-fix live batch failed on real input drift](tasks/done/strat-placeholder-repair-live-batch-20261028.md):
+  pipeline 2996960969 / job 17523658071, 47m12s, Opus 4.6/main b75e838.
+  All six strategies refined/pushed before RHAIRFE-3785's description changed;
+  batch-wide freshness blocked all review completions and result finalization.
+  [Failure-isolation follow-up](bugs/open/strat-batch-freshness-failure-isolation.md).
+  StructuredOutput errors were missing-checkpoint hook rejections, with no
+  independent malformed-schema error found. All locks released, host publication
+  skipped, schedule still legacy. Native estimated $34.11/26.55M tokens including
+  cache. Archive verified 118 files plus manifest, zero configured-secret
+  findings. No Jira reset, source patch, model retry or schedule re-enable.
+
+- [SME placeholder fix merged](tasks/done/strat-freshness-empty-placeholder-fix.md):
+  PR92 merged Oct 28 00:38Z, main b75e838. Both implementation/test blobs match
+  tested 0b69019; [source bug fixed](bugs/fixed/strat-freshness-empty-sme-placeholder-format.md).
+  Real schedule still inherits legacy; next due midnight New York. No paid
+  requalification or schedule switch performed merely because the PR merged.
+
+- [Scheduled execution restored to legacy](tasks/done/restore-strat-schedule-legacy-20261027.md):
+  owner-approved rollback verified at 22:56:10Z. Schedule 4222905 inherits legacy;
+  jtanner1 ownership, batch ten and cadence unchanged. Next due midnight New
+  York. Failed run/artifacts and partial Jira work preserved; no paid retry.
+  [Narrow source repair PR #92](tasks/done/strat-freshness-empty-placeholder-fix.md)
+  merged: tested signed-off 0b69019 on fork fix/empty-sme-placeholder-freshness.
+  Required full suite 1,444 pass/six skips, full lint/schema pass. DCO/remote
+  lint/Unicode/Python 3.11/3.12 all pass. Qodo reports no issues; Fullsend's sole
+  changes-requested finding is protected scripts path needing a linked issue
+  and human approval, not a code defect. GitHub mergeable/clean. No source
+  change or public response made to the review. Schedule stays legacy.
+
+- [Real Workflow schedule enabled](tasks/done/enable-real-strat-workflow-schedule-20261027.md):
+  schedule 4222905 now fullsend; ownership transfer to jtanner1 separately
+  approved and verified. Batch ten, six-hour cadence and legacy project default
+  unchanged. Next due 22:00Z / 6 PM New York Oct 27; no manual pipeline launched.
+  Before/after receipts archived. [First scheduled batch qualification](tasks/done/first-scheduled-strat-workflow-batch-20261027.md)
+  failed: pipeline 2996590097 / job 17520981396. Own empty SME placeholder's
+  punctuation variation tripped literal freshness comparison; reproduced
+  offline. All locks released, host publication skipped, partial Jira artifacts
+  retained. [Freshness bug](bugs/fixed/strat-freshness-empty-sme-placeholder-format.md).
+  Owner-approved rollback completed; no paid retry. Failed archive verified
+  65 files plus manifest, rollback archive seven; configured-secret scans zero.
+
+- [Post-merge single-ticket smoke passed](tasks/done/strat-postmerge-single-smoke-20261027.md):
+  upstream main/Opus 4.6, one model iteration, 28m 37s; RHAISTRAT-3074 scored
+  7/8 approve with testability revise preserved. Jira bytes/comments, 14 sealed
+  publication files, dashboard output and cleanup verified. Org Pulse upload
+  reports one new record plus 18 aggregate warnings; local per-feature GET
+  unavailable due internal DNS. Evidence archived; no source patch or model
+  retry. Schedule remained legacy during the smoke; later enablement is above.
+
+- [Org Pulse aggregate review-schema warnings](bugs/open/org-pulse-aggregate-review-schema-warnings.md):
+  eighteen aggregate entries rejected by existing schema, examples are older
+  STRATs. Separate data compatibility follow-up; current run contract unchanged.
+
+- [Both rollout PRs merged](tasks/done/strat-creator-pr85-merged.md):
+  source #85 merged Oct 27 from tested 364e1ca. Upstream main b295fe9 contains
+  ten verified matching CI/harness/Workflow interfaces. GitLab !18 already
+  merged; legacy/stable-1.x still selected, project/schedule settings unchanged.
+  Next step is an explicitly authorized manual single-ticket fullsend smoke;
+  no job launched and no scheduled cutover performed.
+
+- [GitLab MR !18 merge confirmed](tasks/done/strat-pipeline-mr18-merged.md):
+  merged to main as b00078e on Oct 27. CI bytes match the tested branch;
+  legacy/stable-1.x remains default and project/active schedule have no override.
+  No executor setting changed or job launched. Strat-creator #85 still open;
+  its merge precedes an explicitly authorized Workflow smoke and later enablement.
+
+- [Restore legacy cleanup coverage](tasks/done/strat-pipeline-legacy-cleanup-tests.md):
+  Federico's omission fixed by restoring original upstream tests unchanged.
+  Fourteen cleanup regressions/full 148 tests pass; runtime/CI untouched.
+  Signed-off 200b04b pushed/read back, clean; no cleanup-file deletion remains
+  in MR diff. Credential scans zero; ten-file archive and receipt verified.
+  MR test-count description updated, no thread reply/resolution. New CI pending.
+
+- [PR #85 review after 364e1ca](tasks/done/strat-pr85-review-364e1ca.md):
+  new bot round resolves acquisition race and reports no new code defect.
+  Remaining comments repeat accepted/deferred/process/compatibility concerns;
+  in-repo pending handling is acknowledged. Required CI all green, conflict-free,
+  still changes requested. Read-only status check; no new patch round started.
+
+- [Preserve stable pipelines and opt into Workflow](tasks/done/strat-pipeline-opt-in-workflow.md):
+  MR !18 now keeps four legacy jobs on stable-1.x and adds workflow-* jobs on
+  main. STRAT_EXECUTOR defaults to legacy; fullsend opts into Workflow.
+  134 tests, 50 shell checks, preserved job-body comparison, packaging and GitLab
+  lint pass. Project/active schedule have no override; settings unchanged.
+  Signed-off e8f3959 pushed/read back, MR title/body updated, GitLab MR pipeline
+  2992428660 passed. Credential scans zero; 20-file archive and separate receipt
+  verified. No model job, manual pipeline, deployed cutover or merge.
+
+- [PR #85 acquisition and reviewer-contract fixes](tasks/done/strat-pr85-review-0d60824.md):
+  human gates rechecked after acquisition and before owned writes; candidate
+  records preserved for cleanup. Reviewer descriptor matches runtime; numeric
+  policy unchanged. Red: 19 fail/two controls; focused 172 pass; single final
+  full suite 1,434 pass/six optional skips. Signed-off 364e1ca pushed/read back,
+  conflict-free and component clean. Credential scans zero, 17-file archive and
+  separate publication receipt verified. DCO passed, remaining CI pending.
+  Bounded audit complete; other comments retain accepted/deferred scope.
+  Required CI subsequently passed on this head.
+
+- [PR #85 review on a0158d9 fixed](tasks/done/strat-pr85-review-a0158d9.md):
+  publication ancestor symlinks and malformed Jira labels rejected; paragraph
+  reflowed without instruction changes. Red: 19 fail/one control; focused:
+  148 pass; full offline: 1,413 pass/six optional skips. Signed-off 0d60824
+  pushed/read back, conflict-free and component clean. Credential scans zero;
+  19-file archive plus separate publication receipt verified. DCO passed,
+  remaining remote CI subsequently passed. Accepted/deferred scope unchanged.
+
+- [PR #85 three approved review fixes](tasks/done/strat-pr85-review-b8d67c3.md):
+  late human gates, interrupted artifact copies and missing managed ownership
+  fixed. Full offline suite: 1,394 pass, six optional skips; 129 focused cases
+  and 11 shared-fixture/readback checks pass. Signed-off a0158d9 pushed/read back,
+  conflict-free and component clean. Credential scan zero findings; 25-file
+  evidence archive plus separate publication receipt verified. New-head remote
+  CI all green on subsequent read-back. Missing-CI-source hardening deferred;
+  accepted scope preserved.
+
+- [PR #85 October 26 review and merge](tasks/done/strat-pr85-review-and-merge-20261026.md):
+  four new defects fixed; upstream conflict resolved and approved four-job CI
+  support folded into #85. Combined suite: 1,362 pass, six optional skips.
+  Forty-six-file archive verified, no credentials. Signed-off head b8d67c3
+  pushed/read back; GitHub confirms conflict-free and component clean. DCO
+  passed; other remote checks pending. Accepted TLS/security scope preserved.
+
+- [Strategy pipeline Workflow cutover](tasks/done/strat-pipeline-workflow-cutover.md):
+  all four job types migrate on separate local consumer/source branches.
+  Config discovery and explicit STRAT reprocess retain their distinct semantics.
+  Full suites pass: 63 consumer and 1,343 source tests (six optional skips).
+  GitLab CI lint/package checks pass; 30-file archive verified, no credentials.
+  Signed-off source 284389c and consumer correction c514513 pushed; consumer now
+  targets fullsend-ai/strat-creator main for after the source merge. Remote SHAs
+  verified and both components clean. Owner-created consumer MR !18 exists.
+  No model run or deployed cutover was launched.
+
+- [Strategy pipeline team ownership](tasks/done/strat-pipeline-team-codeowners.md):
+  rebased main onto upstream fe9ca62; new chore/expand-team-codeowners branch adds
+  all five missing reference owners to both rules. Membership/scope/diff checks
+  pass; signed-off 9550f93 pushed to the fork and remote SHA verified.
+
+- [GitHub REST response counters](tasks/done/github-emulator-comment-counters.md):
+  comment/review-comment counts now read real rows; PR Git stats are consistent
+  across REST responses. All 762 tests pass; deployed and live probe passed,
+  including decrement checks, then its temporary repository was deleted.
+  [Separate GraphQL stat gap](bugs/open/github-emulator-graphql-pr-diff-stat-placeholders.md)
+  is tracked for follow-up.
+
+- [GitHub branch registration](tasks/done/github-emulator-branch-registration.md):
+  shared user/org initialization registers the initial Git SHA; forks and contents
+  writes also record branches. Added matching-refs. All 757 tests pass; deployed
+  and verified the live org probe against Git and all four REST endpoints, then deleted it.
+
+- [GitHub PR review visibility](tasks/done/github-emulator-pr-review-visibility.md):
+  submitted reviews and inline comments now appear in conversation and file diffs.
+  Seven focused frontend tests, production build, lint and diff checks pass;
+  deployed and browser-verified review 70 and comments 20/21 on experiment PR #2.
+
+- [Fix optional-context recovery](tasks/done/strat-import-optional-context-fix.md):
+  reproduced stale-file case now refuses ambiguous leftovers before publication;
+  stronger completion contract rejects pre-fix records while preserving later
+  local reviews and the documented empty-comment placeholder. All 65 focused
+  and 1,282 full-suite checks pass (six optional skips); lint/types/diff pass.
+  Seventeen-file archive verified, zero credential findings. Three tested files
+  published as signed-off 95a5c8f; exact PR head verified and component clean.
+  No model calls, live action, deployment or merge.
+
+- [Stale optional review reproduced](tasks/done/strat-import-stale-optional-reproduction.md):
+  actual managed preparation/live freshness plus SIGKILL and retry confirms stale
+  prior review survives outside completion inventory. Clean control passes;
+  31-file archive verified, no credentials found. Reproduction used unchanged
+  component code; the subsequent repair is linked above. No model/live action.
+
+- [Review after fbbbc6e](tasks/pending/strat-pr85-review-fbbbc6e.md):
+  latest CI passes and reviewer marks both import fixes resolved. One new
+  optional-context recovery defect is now repaired locally above. Org Pulse
+  exception and two documentation requests are repeated. CI refers to fbbbc6e.
+
+- [Prepared import recovery repairs](tasks/done/strat-pr85-import-recovery-fixes.md):
+  missing overflow attachments and incomplete context retries reproduced on
+  0707b5b. Repair stages downloads, preserves existing refined task text and
+  records completion after publication. All 90 focused and 1,275 full-suite
+  checks pass (six optional skips); lint/types/diff pass. Sixteen-file archive
+  verified with zero credential findings. Four tested component files published
+  as signed-off fbbbc6e; exact PR head verified and component clean. No paid
+  smoke, live mutation, deployment or merge. Org Pulse exception retained.
+
+- [Three actionable PR review repairs](tasks/done/strat-pr85-three-review-fixes.md):
+  Jira review readback, title delimiter parsing and recovery pathname redaction
+  reproduced and repaired locally. All 27 focused checks and 1,261 full-suite
+  tests pass (six optional skips); lint/types/diff pass. Eighteen-file archive
+  verified, zero credential findings. Org Pulse exception retained. Eight
+  tested component files published as signed-off 0707b5b; exact PR head verified
+  and component clean. No model calls or live writes.
+
+- [New review on73c454b awaiting triage](tasks/pending/strat-pr85-review-73c454b.md):
+  remote CI passed on the published base. Its three actionable findings are
+  now published above; compatibility/documentation findings remain in
+  the queue. Preserve owner-approved scope and TLS exception. No new paid smoke.
+
+- [New automated PR #85 findings handled](tasks/done/strat-pr85-post327-review-followup.md):
+  one attachment-history bug reproduced and repaired; 1,238 tests
+  pass/six optional skips, lint/types/diff pass. Thirteen-file archive verified.
+  TLS exception retained; process metadata documented without fabricated
+  approval. Three component files published as signed-off73c454b; exact PR head
+  verified, component clean, remote CI passes. No paid smoke.
+
+- [Scoped PR #85 fixes implemented](tasks/done/strat-pr85-scoped-review-fixes.md):
+  all seven bounded changes done locally; 1,230 tests pass/six optional skips,
+  lint/types/shell/diff pass. Thirty-seven-file archive verified, no configured
+  secrets found. Workflow and Jira publication architecture retained. Changes
+  published as signed-off 32700ec; PR head verified and component clean.
+  No paid run, live replay, deployment or cutover.
+
+- [Stoyan security review assessed](tasks/done/strat-pr85-stoyan-security-review.md):
+  fetched 131 entries; core writable-guards/Jira-token boundary finding valid.
+  Offline fake-write reproduction passes; 31-file evidence archive verified.
+  [Assessment and rfe-autofixer comparison](notes/strat-pr85-stoyan-security-review-20261022.md):
+  user wants incremental scope against the reference pipeline. Shared writable
+  workspace/GCP risks confirmed; reference Fullsend Jira profile is read-only.
+  Host-only writer remains an unapproved option, not an implementation task.
+  Owner scope comment posted/read-back verified; seven bounded repairs now
+  implemented locally as linked above. No model run or cutover.
+
+- [Complete downstream publication](tasks/blocked/strat-downstream-publication-recovery.md):
+  Org Pulse replay/readback passes: one feature, 8/8 and dissent preserved.
+  Dashboard fix passes with native CI_JOB_TOKEN, no secret override; HTML/JSON
+  verified. [MR !7](https://gitlab.com/redhat/rhel-ai/agentic-ci/strat-dashboard/-/merge_requests/7)
+  awaits required approval before main merge. No model run or executor cutover.
+
+- [Temporary Org Pulse TLS exception](tasks/done/strat-org-pulse-temporary-tls-bypass.md):
+  signed-off 85e8307 pushed/API verified. User-requested legacy TLS behavior
+  is restored only in the Org Pulse exporter; local HTTPS, 1,190 tests/six skips
+  and lint pass. Permanent CA follow-up remains; no model/export retry/cutover.
+
+- [Fresh real GitLab single-ticket smoke](tasks/done/real-gitlab-fresh-single-smoke-after-review.md):
+  Opus 4.6 job 17366396650 passes in 27m: live Jira review, strict validation,
+  data-repo publication and owned cleanup verified; 62-file archive sealed.
+  Downstream delivery incomplete: [Org Pulse TLS trust](bugs/open/strat-fullsend-org-pulse-ca-trust.md)
+  and [dashboard Git authentication](bugs/open/strat-dashboard-data-repo-auth-smoke.md)
+  fail despite green parent. Estimated $5.26/3.02M tokens. No cutover.
+
+- [Address new strat-creator PR #85 comments](tasks/done/strat-pr85-new-review-fixes-20261021.md):
+  signed-off b3c10ec pushed, current technical findings repaired; 1,189 tests/
+  six skips, lint and native bootstrap/locks pass. Fifteen-file evidence archive
+  verified. Maintainer approval/additional security review remain; no cutover.
+
+- [Recover live publication without models](tasks/done/strat-live-publication-idempotence-recovery.md):
+  PASS on RHAISTRAT-3027: existing comment/upload verified, one missing-label
+  PUT, second publication zero writes; original review/dissent unchanged.
+  Zero model calls/tokens; 89-file archive verified. Real CI/sandbox smoke remains.
+
+- [Fix live Jira media/publication completion](tasks/done/strat-live-review-media-and-publication-guards.md):
+  signed-off 02dd13b pushed to existing PR #85. Specific media egress,
+  credential-safe redirects and verified live publication before completion;
+  1,158 tests/six skips, lint and native bootstrap/dependency checks pass.
+  No repeat paid run; real OpenShell live qualification remains pending.
+
+- [Follow the strategy source branch](tasks/done/strat-pipeline-follow-source-branch.md):
+  source 630fcca pushed to PR #85; consumer caaf92e in new MR !16 follows
+  feat/s1-workflow-hardening with one consistent snapshot per job. Source 1,142
+  tests/six skips and 79 pipeline tests pass; native locks and six CI graphs
+  pass. MR !16 merged as fe9ca62; main CI 2972994099 passes. New manual
+  Fullsend smoke jobs follow the branch, currently 85e8307. Legacy schedule
+  unchanged; no production cutover.
+
+- [Live real-GitLab strategy canary](tasks/done/real-gitlab-strategy-single-live-canary.md):
+  failed pipeline 2972360596/job 17351822419 after 27m25s. Created/refined
+  RHAISTRAT-3027, scores 8/8, but attachment reconciliation hits
+  [blocked media egress](bugs/fixed/strat-fullsend-jira-attachment-media-egress.md).
+  Reviewer [substitutes dry-run in live mode](bugs/fixed/strat-live-review-dry-run-fallback-completes.md);
+  final host validation catches the missing verdict label and skips publication.
+  Archive/cleanup verified; no model retry or production schedule change.
+
+- [Strategy pipeline MR !15 ready for review](tasks/done/strat-pipeline-mr15-ready-for-review.md):
+  Draft removed on `d27a314`; passing CI and conflict/discussion checks verified.
+  Description now includes the real smoke and separates publication from the
+  CI archive follow-up. Reviewer approval and production rollout remain separate.
+
+- [Real GitLab strategy smoke](tasks/done/real-gitlab-strategy-single-smoke.md):
+  PASS pipeline 2969118303/job 17329828389 on the real agentic-ci runner,
+  Podman/OpenShell/direct Vertex. One Opus 4.6 dry-run, 24m58s job/15m45s agent,
+  one strategy/four assessments, 8/8 approve, strict validation passes. Fixture,
+  gateway and temporary credential cleanup verified; schedule unchanged.
+  Live Jira writes/publication remain untested here. Credential preflight/docs
+  [fixed](bugs/fixed/strat-fullsend-gitlab-role-preflight.md): existing results
+  token explicitly supplies Analyst, signed-off `d27a314` pushed to MR !15,
+  74 offline tests pass. [Task](tasks/done/strat-fullsend-reuse-results-credential.md).
+  Remaining follow-up:
+  [standalone business-artifact export](bugs/open/strat-fullsend-ci-business-artifact-export.md).
+
+- [Real Jira smoke-test RFE](tasks/done/create-real-jira-strategy-smoke-rfe.md):
+  created and read-back verified
+  [RHAIRFE-3739](https://redhat.atlassian.net/browse/RHAIRFE-3739), workbench
+  session timing. Release/quality qualifications and Target Version remain
+  unset, outside strategy discovery; no job launched.
+
+- [Org Pulse compatibility PR](tasks/done/org-pulse-architecture-skip-pr.md):
+  [upstream #1789](https://github.com/red-hat-data-services/rhai-org-pulse/pull/1789)
+  merged into main as 7ba9353e on 2026-10-21; API merge/head verified.
+  Architecture-skipped assessments are accepted, pending remains rejected.
+  [Review follow-up](tasks/done/org-pulse-pr1789-review-followup.md): bot reports
+  no functional issues; formatting nit fixed/pushed as 80746a8a, with 6,382 tests
+  and lint passing. Deployed production version/live ingestion remain unverified.
+
+- [Repair the new PR 85 findings](tasks/done/strat-creator-pr85-fullsend-review-repairs.md):
+  local dry-run, dashboard and reviewer-state fixes plus review cleanup pass
+  1,136 source tests and 6,382 companion Org Pulse tests. Lint and local HTTP
+  contract checks pass. Published signed-off source 080700e, companion 84f08dca
+  and GitLab pin 6f996e2; 69 pipeline tests, actual bootstrap/native locks and
+  GitLab MR CI pass. Consumer deployment and maintainer approval remain separate.
+
+- [Triage the new PR 85 Fullsend review](tasks/done/strat-creator-pr85-fullsend-review-triage.md):
+  fourteen distinct findings on 8b2f1e0. Seven model-free reproduction/control
+  checks confirm a fresh-ticket dry-run failure, a dashboard directory mismatch
+  and an Org Pulse reviewer-state mismatch. Repair those before deployment
+  qualification; retain ownership/recovery safeguards. [Full dispositions](notes/strat-creator-pr85-fullsend-review-20261020.md).
+
+- [Reconcile merged onboarding](tasks/done/strat-creator-reconcile-onboarding.md):
+  published source 8b2f1e0 from upstream main 9c87d83 and consumer 0825ea4.
+  Original onboarding settings/workflows preserved; three strategy agents
+  registered and guidance corrected. Full lint, 1,118 source tests, twelve
+  native config/dispatch checks, three locks and 69 pipeline tests pass.
+
+- [Minimize the Fullsend consumer](tasks/done/strat-pipeline-minimal-fullsend-consumer.md):
+  published source 85e5cb3 and consumer d123c19. Pipeline keeps one registration
+  file; final MR diff is five files with only config.yaml added. Source 1,118
+  tests, pipeline 69 tests, native bootstrap/locks and six CI graphs pass.
+
+- [Real GitLab Fullsend pipeline branch](tasks/done/strat-pipeline-gitlab-fullsend.md):
+  local feat/fullsend-strategy-workflow from upstream 3995ac1, direct Vertex,
+  live architecture-context and manual single/batch jobs. 87 tests, native
+  Fullsend locks, current-context fetch and GitLab CI compiler checks pass.
+  Existing production jobs preserved. Latest signed-off d123c19 in
+  [upstream draft MR !15](https://gitlab.com/redhat/rhel-ai/agentic-ci/strat-pipeline/-/merge_requests/15)
+  targeting main. Real-runner smoke pending; no inference launched.
+
+- [Validate the local SME to Fullsend CI loop](tasks/done/strat-sme-local-to-fullsend-validation.md):
+  completed with findings. Local human flow and CI 2102/4071 pass, same strategy,
+  four reports, Opus 4.6, 29m06s. Post-CI pull exposes duplicated local body;
+  repaired helper passes live model-free refresh and 1,092 suite checks (five
+  conditional skips). Human sign-off/latest-content read-back and zero-model
+  repeat pass. All 35 issues preserved; final and CI archives independently
+  verify. Pull/guide fixes published as signed-off 1bcb8f4; full pre-push suite
+  passes 1,092 tests with six conditional skips. [Results](notes/strat-sme-local-fullsend-validation-20261019.md).
+
+- [Audit the designed SME revision flow](tasks/done/strat-sme-revision-flow-audit.md):
+  existing pull/edit/refine/review/push resubmission verified against current
+  main and GitLab; historical two-edit demo completed, 36 model-free checks
+  pass. S1 preserves the human flow; new-runtime SME loop remains unqualified.
+  [Contract and coverage limits](notes/strat-sme-revision-flow-20261019.md).
+
+- [Single-RFE Opus Workflow smoke through Fullsend](tasks/done/fullsend-claude-workflow-opus-single-smoke.md):
+  PASS 2100/4068 in 26m05s; RHAIRFE-19 → RHAISTRAT-16, approve, four role
+  reports, native completion/validation/publication, clean claims and gateway.
+  Downstream dashboard 2101 passes. Source 6ed858b unchanged, adapter fdc770c1;
+  Opus 4.6 / high / cap ten through managed Vertex relay profile. Archive and
+  separate verification pass: 5,535 files / 910.12 MB, real API/syscall evidence.
+  Setup fixes pass 19 local checks; earlier zero-usage failures/gaps preserved.
+  [Two portable fixes still belong in the feature branch](bugs/open/strat-creator-default-fullsend-portability.md).
+
+- [Copy Fullsend POC for Claude Workflow and relay](tasks/done/fullsend-claude-workflow-relay-copy.md):
+  isolated `feat/fullsend-claude-workflow` published, baselines preserved;
+  Opus 4.6 / high / cap ten selected by user, managed Opus-only relay secret.
+  Fifteen local checks pass; real model-free sandbox qualification passes
+  2095/4059, including secrets, TLS, blocked egress, runtime and syscall capture.
+  All four diagnostics archived/verified. First actual Opus Workflow smoke
+  remains next; no inference or Jira mutation performed during setup.
+
+- [Inspect GitLab Fullsend branch reuse](tasks/done/inspect-gitlab-strategy-workflow-base.md):
+  both POC branches remain green (script 2073, agent-led 2090); runner ready,
+  schedules empty. Recommend copying agent-led 89c879b for the current Workflow,
+  with source/runtime/config/env/local-policy/archive adaptations before smoke.
+  [Live findings](notes/gitlab-strategy-fullsend-workflow-base-20261018.md).
+
+- [Explain 5.5 revision decisions](tasks/done/strat-opus55-revision-analysis.md):
+  all 20 reports and 81 score vectors reconcile. Four approval flips mostly
+  reflect real readiness gaps; queue scope is debatable. Both extra calls are
+  a separate prose-verdict capture/retry defect. [Findings](notes/strat-opus55-revision-analysis-20261018.md);
+  separate 35-file evidence archive verifies, zero new provider calls.
+
+- [Judge saved refined strategies, Opus 4.6 versus 5.5](tasks/done/strat-content-opus46-vs55.md):
+  fixed-rubric assistant pass preferred 5.5 in all eight pairs, with material
+  residual gaps. Unchanged controls also score lower under 5.5's pipeline.
+  [Content findings](notes/strat-content-opus46-vs55-20261018.md); separate
+  evidence verifies (708 files / 15.43 MB), no new provider inference.
+
+- [Repair scope-judgment checker](tasks/done/strat-review-scope-subject-checker.md):
+  published d3a8a8f / role-assessment-v3; all 81 imported files match. Opus 5.5
+  replay now 40/40, only one scope pair changes; historical failures still fail.
+  112 checks pass, two optional skips; separate evidence archive verifies.
+  Zero inference; revision-rate follow-up is recorded above.
+
+- [Mixed-state ten-ticket Opus 5.5 repeat](tasks/done/s1-pr85-mixed-ten-opus55.md):
+  one run authorized, same candidate/fixture/high effort/cap ten; separate model
+  tier published at 0b89021, 107 offline checks pass (two optional skips), all
+  81 imported files match. Vertex inventory updated, exact model probe HTTP 200;
+  markov-run-296d9e2e completed in 25m18s, ten paths/repeat pass, forty reports
+  independently delivered/preserved. Benchmark FAIL solely on a scope wording
+  false negative; two additional testability calls. 37.26M tokens / $42.80 list
+  equivalent. [Analysis](notes/s1-opus55-mixed-ten-20261018.md); final archive
+  independently verified (13,930 files / 18.85 GB), receipts published and all
+  791 captured generations joined to successful intended Vertex routing.
+
+- [Workflow migration conclusion](plans/strat-workflow-s1-hardening.md#2026-10-18-migration-verdict-and-why-the-testing-mattered):
+  functional qualification, testing rationale/avoidable expense and inferred
+  production consequences recorded. Fullsend deployment, content-quality,
+  source protection and distributed ownership limits remain explicit.
+
+- [Cumulative strategy benchmark token audit](notes/strat-workflow-total-token-usage-20261018.md):
+  478.9M exact recoverable reported tokens, about 488.9M including the rounded
+  first smoke; 301.4M belongs to S1 hardening. Duplicate captures and mock
+  responses excluded; development-chat tokens and unreported usage excluded.
+  With GLM free, standard API equivalent is about $485 ($481–$487);
+  hardening contributes $345.51. This is not reconciled invoice spend.
+
+- [Latest S1 mixed ten-ticket Opus batch](tasks/done/s1-pr85-mixed-ten-opus.md):
+  one run authorized, ten acquired RFEs (4 fresh / 4 refine / 2 review-only),
+  eight distinct controls, cap ten and model-free repeat. Published 9232633;
+  106 offline checks pass (two optional skips), all 81 imported files match.
+  Archive/routing preflight passes. Submitted markov-run-bfc0b766 at 13:30
+  New York; observer 878799 attached. Actual Breadboard guard verifies ten
+  acquisitions, 4/4/2 split and two prior pushes. Clean 6ed858b, all Opus aliases,
+  cap ten, qualified image and successful Vertex requests confirmed. PASS in
+  30m07s job time: 10/10 tickets, 40/40 reports, controls/cleanup and zero-model
+  repeat all pass. Terminal archive complete, independently checksum-verified
+  and receipted at 18:19 UTC; no paid retry.
+
+- [Repair reviewer checker formats](tasks/done/strat-review-checker-format-compatibility.md):
+  role-assessment-v2 accepts the unchanged latest 40/40 and mixed-state 36/36
+  reports; genuine error/lost-handoff controls still fail. 104 tests pass,
+  one optional skip. Historical results/bytes preserved, evidence verified;
+  no model calls. Checker published in 9232633 with the mixed-batch setup.
+
+- [Ten-ticket Opus completion-hook retest](tasks/done/strat-creator-completion-fixed-ten-opus.md):
+  markov-run-0b098f6e completes natively on 6ed858b: ten strategies, forty
+  delivered/preserved reports; final guard passes first try in 2.526s traced.
+  Workflow 36m41s / job 38m26s, 33.21M tokens, $55.27 Opus list equivalent.
+  Pinned benchmark FAIL is solely two known format false negatives; no lost
+  handoff found. Archive independently verified: 11,033 files / 17.09 GB,
+  receipts published. [Analysis](notes/s1-completion-fixed-opus-ten-rfe-20261018.md).
+
+- [Optimize the final completion hook](tasks/done/strat-completion-hook-performance.md):
+  full-size traced replay improves 20.423s to 2.465s and passes the unchanged
+  ten-second cutoff. 140 focused checks and eight traced tampering cases pass;
+  both required suites 1,089 passed. Published 6ed858b to PR 85. Profiling
+  archive independently verified: 10,093 entries / 852.39 MB; original run
+  archive unchanged and verified, profiling pods removed. No model calls.
+
+- [Ten fresh RFEs through repaired S1](tasks/done/strat-creator-pr85-distinct-ten-opus.md):
+  markov-run-0e40b64c FAIL in 37m21s. Ten separate strategies and forty role
+  reports complete; business validation passes and all claims released.
+  [Final completion hook](bugs/fixed/strat-completion-hook-ten-ticket-timeout.md)
+  times out on five receipt returns; refinement checkpoint passes first try.
+  31.99M accounted Opus tokens, no recorded API/rate errors. Archive complete
+  and independently verified: 10,951 entries / 16.59 GB, receipts published.
+
+- [One-RFE Opus test after checkpoint repair](tasks/done/strat-creator-checkpoint-fixed-opus-one-rfe.md):
+  markov-run-f5a9eb0a PASS in 26m38s on 2a4b7c9. One strategy, all four
+  role reports, approve 7/8; checkpoint passed first attempt, claims released.
+  117 Opus requests / 4.90M accounted tokens, no recorded API/rate errors.
+  Final archive independently verified: 1,742 entries, no capture errors;
+  receipts published.
+
+- [Profile/fix refinement checkpoint timeouts](tasks/done/strat-refine-checkpoint-performance.md):
+  published 2a4b7c9 to PR 85. Full-size traced hook: 10.731s to 1.921s;
+  unchanged ten-second cutoff passes. Both suites: 1,080 passed. Full evidence
+  independently verified, 4,372 entries / 504.79 MB; no model calls or paid retest.
+
+- [PR 85 one-ticket Opus integration test](tasks/done/strat-creator-pr85-reviewed-opus-one-rfe.md):
+  markov-run-64a6b4f4 failed in 15m46s after create/refine succeeded. The
+  [refinement checkpoint hook](bugs/fixed/strat-refine-checkpoint-hook-timeout.md)
+  timed out on all five structured-output attempts; no scoring/reviews started.
+  Locks released; Opus identity verified, no recorded API/rate-limit errors.
+  Final archive independently verified, 1,228 files, receipts published. No retry.
 
 - [PR 85 remediation](tasks/done/strat-creator-pr85-remediation.md): pushed fixes f941955, 21 original threads addressed, native/default checks passed; no paid inference.
 - [PR 85 historical DCO](tasks/done/strat-creator-pr85-historical-dco.md): completed at 18cdf46; DCO passes, author/date/tree identity preserved, old history backed up.
@@ -184,6 +677,10 @@
   complete: both smoke passes/archives verified; S1 reviewer loss and S2
   same-model non-stream fallback recorded.
 
+- **Deployed (optional service):** [Workflow Dojo](plans/workflow-dojo-plan.md):
+  LeetCode-style trainer for Claude workflow scripts at `dojo.local`, with a live
+  Claude shell on a Model Relay key; real Workflow runs verified 2026-10-26.
+
 - **Proposed (awaiting review):** [Testing the strat-creator Claude Workflow](plans/strat-workflow-eval-plan.md).
   Smoke and full tiers for PR #83's Workflow, run as dashboard jobs through
   Model Relay (haiku-5-5 to wire up, opus-4-6 for results), with per-test
@@ -310,6 +807,11 @@ Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 
 ## Resolved integration bugs
 
+- [Qualified architecture judgments](bugs/fixed/strat-review-gate-mostly-sound-false-negative.md)
+  and [numbered reviewer findings](bugs/fixed/strat-review-gate-numbered-findings-false-negative.md):
+  checker v2, real-channel replay and negative controls verified without inference.
+- [Consistent repeated role judgments](bugs/fixed/strat-review-gate-repeated-judgment-false-negative.md):
+  existing handling confirmed by mixed-state replay; stale open status corrected.
 - [Dashboard state archive timeout](bugs/fixed/strat-archive-dashboard-state-timeout.md):
   fast Python-compatible gzip, configurable timeout, 16 focused tests and final
   live recovery verification pass.
@@ -323,10 +825,6 @@ Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 - [Scorer shell preflight unavailable](bugs/fixed/strat-scorer-recovery-preflight-has-no-shell.md).
 - [Review-only round-trip fingerprint](bugs/fixed/strat-review-only-roundtrip-fingerprint.md).
 
-- [Consistent repeated role judgment rejected](bugs/open/strat-review-gate-repeated-judgment-false-negative.md).
-
-- [Qualified architecture judgment rejected by the benchmark](bugs/open/strat-review-gate-mostly-sound-false-negative.md).
-- [Delivered numbered feasibility findings rejected by the benchmark](bugs/open/strat-review-gate-numbered-findings-false-negative.md).
 - [Reviewer Skill serialization](bugs/open/strat-reviewer-skills-serialized.md):
   deferred by the user; about six minutes of ideal single-ticket savings does
   not currently justify the concurrency, provenance and recovery changes.

@@ -71,7 +71,7 @@ sections as an unrecognized field. The parser then reports missing explanation.
 A local replay reproduces the rejection. Adding only a Findings heading in
 memory makes the same content pass. The original report and historical result
 remain unchanged. This is a
-[checker bug](../bugs/open/strat-review-gate-numbered-findings-false-negative.md),
+[checker bug](../bugs/fixed/strat-review-gate-numbered-findings-false-negative.md),
 with no observed recurrence of reviewer transport loss.
 
 ## Evidence and archival

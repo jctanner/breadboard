@@ -329,7 +329,8 @@ write the script does not remove the need to understand what production runs.
 The existing Bash and Python skills remain necessary for the helpers, hooks,
 CI jobs, and deployment adapters.
 
-This learning cost was concrete: Workflow Dojo added a JavaScript tier for
+This learning cost was concrete:
+[Workflow Dojo](https://github.com/jctanner/claude-workflow-dojo) added a JavaScript tier for
 Python developers after JavaScript semantics repeatedly cost the maintainer
 time. Its exercises cover returns, truthiness, sorting, scope, collections,
 callbacks, and async behavior before the production orchestration patterns.

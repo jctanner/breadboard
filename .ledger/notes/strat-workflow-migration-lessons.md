@@ -28,11 +28,11 @@ The project's ADR for a custom script entrypoint in Fullsend,
 
 | Date | Event |
 | --- | --- |
-| October 6 | A reviewer [requested changes](https://github.com/fullsend-ai/fullsend/pull/7947#pullrequestreview-5432894717), including weighing runtime-native workflows as an option because they keep the runner's per-tool-call hooks, status and usage. |
-| October 8, 17:00Z | A maintainer [approved](https://github.com/fullsend-ai/fullsend/pull/7947#pullrequestreview-5460180264) the revised ADR. |
-| October 8, 21:15Z | The same reviewer [recommended rejecting](https://github.com/fullsend-ai/fullsend/pull/7947#pullrequestreview-5462939711) `entrypoint:` and replacing it with an ADR for workflow-definition repositories as harness resources. |
-| October 9 | That reviewer opened the replacement, [ADR 0130](https://github.com/fullsend-ai/fullsend/pull/8225). |
-| October 13 | The maintainer [closed #7947 unmerged](https://github.com/fullsend-ai/fullsend/pull/7947#issuecomment-6153432606) after a Slack discussion: "Let's head in the direction proposed by @waynesun09." |
+| October 6 | Maintainer `waynesun09` [requested changes](https://github.com/fullsend-ai/fullsend/pull/7947#pullrequestreview-5432894717), including weighing runtime-native workflows as an option because they keep the runner's per-tool-call hooks, status and usage. |
+| October 8, 17:00Z | A different maintainer, `ralphbean`, [approved](https://github.com/fullsend-ai/fullsend/pull/7947#pullrequestreview-5460180264) the revised ADR. |
+| October 8, 21:15Z | `waynesun09` [recommended rejecting](https://github.com/fullsend-ai/fullsend/pull/7947#pullrequestreview-5462939711) `entrypoint:` and replacing it with an ADR for workflow-definition repositories as harness resources. |
+| October 9 | `waynesun09` opened the replacement, [ADR 0130](https://github.com/fullsend-ai/fullsend/pull/8225). |
+| October 13 | `ralphbean`, who had approved it, [closed #7947 unmerged](https://github.com/fullsend-ai/fullsend/pull/7947#issuecomment-6153432606) after a Slack discussion: "Let's head in the direction proposed by @waynesun09." |
 
 The recommendation's stated reasons were that an entrypoint leaves the runner
 with no complete token, cost or turn metrics and with hooks only for children

@@ -314,6 +314,16 @@ host-kubeconfig: ## Copy k3s kubeconfig to ~/.kube/config for non-sudo kubectl
 host-deploy-all: ## Run full deployment from scratch on host
 	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/deploy-all.sh
 
+host-rebuild-prereqs: ## Install cert-manager, namespace, CA, secrets, storage, and RBAC on host
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/02-install-cert-manager.sh
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/03-setup-certificates.sh
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/04-extract-ca-cert.sh
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/06-create-secrets.sh
+	kubectl apply -f deploy/k8s/03-storage.yaml
+	kubectl apply -f deploy/k8s/14-pipeline-storage.yaml
+	kubectl apply -f deploy/k8s/16-pipeline-rbac.yaml
+	@echo "✓ Prerequisites ready in namespace ai-pipeline"
+
 host-conformance-reset: ## Reset conformance state including the OpenShell gateway (prompts)
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/25-reset-conformance.sh
 
@@ -352,6 +362,7 @@ host-build-dashboard: ## Build dashboard image on host
 host-rebuild-dashboard: ## Rebuild and redeploy dashboard on host
 	@echo "==> Rebuilding dashboard image..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05a-build-dashboard.sh
+	kubectl apply -f deploy/k8s/20-pipeline-dashboard.yaml
 	kubectl delete pod -n ai-pipeline -l app=pipeline-dashboard --wait=false
 	@echo "==> Waiting for dashboard pod to be ready..."
 	kubectl wait --for=condition=ready pod -n ai-pipeline -l app=pipeline-dashboard --timeout=60s || true
@@ -360,6 +371,7 @@ host-rebuild-dashboard: ## Rebuild and redeploy dashboard on host
 host-rebuild-fullsend-dashboard: ## Rebuild and redeploy Fullsend dashboard on host
 	@echo "==> Rebuilding Fullsend dashboard image..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05j-build-fullsend-dashboard.sh
+	kubectl apply -f deploy/k8s/26-fullsend-dashboard.yaml
 	kubectl rollout restart deployment/fullsend-dashboard -n ai-pipeline
 	kubectl rollout status deployment/fullsend-dashboard -n ai-pipeline --timeout=60s
 	@echo "✓ Fullsend dashboard rebuilt and redeployed"
@@ -379,6 +391,8 @@ host-agent-test: ## Run a test job with the agent image on host
 host-rebuild-jira: ## Rebuild and redeploy Jira emulator on host
 	@echo "==> Rebuilding Jira emulator..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05b-build-jira-emulator.sh
+	kubectl apply -f deploy/k8s/11-jira-emulator-config.yaml
+	kubectl apply -f deploy/k8s/12-jira-emulator.yaml
 	kubectl rollout restart deployment/jira-emulator -n ai-pipeline
 	kubectl rollout status deployment/jira-emulator -n ai-pipeline --timeout=60s
 	@echo "✓ Jira emulator rebuilt and redeployed"
@@ -386,6 +400,8 @@ host-rebuild-jira: ## Rebuild and redeploy Jira emulator on host
 host-rebuild-github: ## Rebuild and redeploy GitHub emulator on host
 	@echo "==> Rebuilding GitHub emulator..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05a-build-github-emulator.sh
+	kubectl apply -f deploy/k8s/09-github-emulator-config.yaml
+	kubectl apply -f deploy/k8s/10-github-emulator.yaml
 	kubectl rollout restart deployment/github-emulator -n ai-pipeline
 	kubectl rollout status deployment/github-emulator -n ai-pipeline --timeout=60s
 	@echo "✓ GitHub emulator rebuilt and redeployed"
@@ -393,6 +409,7 @@ host-rebuild-github: ## Rebuild and redeploy GitHub emulator on host
 host-rebuild-gitlab: ## Rebuild and redeploy GitLab emulator on host
 	@echo "==> Rebuilding GitLab emulator..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05f-build-gitlab-emulator.sh
+	kubectl apply -f deploy/k8s/19-gitlab-emulator.yaml
 	kubectl rollout restart deployment/gitlab-emulator -n ai-pipeline
 	kubectl rollout status deployment/gitlab-emulator -n ai-pipeline --timeout=60s
 	@echo "✓ GitLab emulator rebuilt and redeployed"
@@ -439,7 +456,7 @@ host-images: ## List imported k3s images on host
 
 host-rebuild-ingress-proxy: ## Rebuild and redeploy ingress proxy on host
 	@echo "==> Rebuilding ingress proxy..."
-	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/09-deploy-ingress-proxy.sh
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/09-deploy-ingress-proxy.sh
 	@echo "✓ Ingress proxy rebuilt and redeployed"
 
 host-rebuild-observatory: ## Rebuild and redeploy Observatory on host
@@ -477,7 +494,7 @@ host-rebuild-relay: ## Rebuild and redeploy Model Relay on host
 	@echo "==> Building Model Relay image..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05m-build-model-relay.sh
 	@echo "==> Applying manifest and restarting Model Relay..."
-	kubectl apply -f deploy/k8s/29-model-relay.yaml
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/27-deploy-model-relay.sh
 	kubectl rollout restart deployment/model-relay -n ai-pipeline
 	kubectl rollout status deployment/model-relay -n ai-pipeline --timeout=180s
 	@echo "✓ Model Relay rebuilt and redeployed"
@@ -487,6 +504,24 @@ host-relay-admin-key: ## Print the Model Relay admin console key
 
 host-logs-relay: ## Follow Model Relay logs on host
 	kubectl logs -n ai-pipeline -l app=model-relay -f
+
+host-rebuild-hooksink: ## Rebuild and redeploy the webhook sink on host
+	@echo "==> Building webhook sink image..."
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05n-build-hooksink.sh
+	@echo "==> Applying manifest and restarting webhook sink..."
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/28-deploy-hooksink.sh
+	kubectl rollout restart deployment/hooksink -n ai-pipeline
+	kubectl rollout status deployment/hooksink -n ai-pipeline --timeout=120s
+	@echo "✓ Webhook sink rebuilt and redeployed"
+
+host-logs-hooksink: ## Follow webhook sink logs on host
+	kubectl logs -n ai-pipeline -l app=hooksink -f
+
+host-hooksink-tokens: ## Print the webhook sink admin key and default tokens
+	@for key in admin-key default-sender-token default-consumer-token; do \
+	  printf '%-24s ' "$$key"; \
+	  kubectl get secret hooksink-tokens -n ai-pipeline -o jsonpath="{.data.$$key}" | base64 -d; echo; \
+	done
 
 host-logs-dashboard: ## Follow dashboard logs on host
 	kubectl logs -n ai-pipeline -l app=pipeline-dashboard -f
@@ -572,6 +607,7 @@ host-rebuild-markovd: ## Rebuild and redeploy markovd on host
 	@echo "==> Building markovd image..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05c-build-markovd.sh
 	@echo "==> Restarting markovd..."
+	kubectl apply -f deploy/k8s/15-markovd.yaml
 	kubectl rollout restart deployment/markovd -n ai-pipeline
 	kubectl rollout status deployment/markovd -n ai-pipeline --timeout=60s
 	@echo "✓ markovd rebuilt and redeployed"

@@ -22,7 +22,7 @@ from src.dashboard.report_data import (
 )
 from src.cli.paths import discover_models, model_workspace
 from src.dashboard.rfe_data import load_rfe_issues, load_single_rfe, load_strat_issues, load_single_strat, load_epic_issues
-from src.dashboard.ticket_data import TicketAggregator
+from src.dashboard.ticket_data import TicketAggregator, not_deployed
 
 # K8s orchestration (imported lazily to avoid requiring K8s client when not needed)
 try:
@@ -86,6 +86,8 @@ def _check_service(service: dict[str, str]) -> dict[str, str]:
         response.raise_for_status()
         return {**service, "status": "up", "detail": f"HTTP {response.status_code}"}
     except requests.RequestException as exc:
+        if not_deployed(exc):
+            return {**service, "status": "not deployed", "detail": "Host name does not resolve"}
         return {**service, "status": "down", "detail": str(exc)}
 
 
@@ -656,6 +658,7 @@ def create_app() -> Flask:
             "total": total,
             "pages": (total + page_size - 1) // page_size,
             "errors": result.errors,
+            "not_deployed": result.not_deployed,
         })
 
     @app.route("/api/rfes")

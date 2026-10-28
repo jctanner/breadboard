@@ -18,19 +18,11 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# Check if .env exists
-if [ ! -f ${PROJECT_ROOT}/.env ]; then
-  echo "ERROR: ${PROJECT_ROOT}/.env file not found"
-  echo "Please create it with required credentials before running this script"
+# .env is optional: model credentials are managed by Model Relay, and every
+# value 06-create-secrets.sh reads from it has a default.
+if [ ! -f "${PROJECT_ROOT}/.env" ]; then
+  echo "No ${PROJECT_ROOT}/.env found; using default secret values"
   echo ""
-  echo "Required variables:"
-  echo "  CLAUDE_CODE_USE_VERTEX=1"
-  echo "  CLOUD_ML_REGION=global"
-  echo "  ANTHROPIC_VERTEX_PROJECT_ID=your-project-id"
-  echo "  JIRA_SERVER=https://issues.redhat.com"
-  echo "  JIRA_USER=your-email"
-  echo "  JIRA_TOKEN=your-token"
-  exit 1
 fi
 
 # Step 1: Install K3s (skip if already running)
@@ -74,6 +66,7 @@ bash "${SCRIPT_DIR}/05i-build-fullsend.sh"
 bash "${SCRIPT_DIR}/05j-build-fullsend-dashboard.sh"
 bash "${SCRIPT_DIR}/05l-build-org-pulse.sh"
 bash "${SCRIPT_DIR}/05m-build-model-relay.sh"
+bash "${SCRIPT_DIR}/05n-build-hooksink.sh"
 echo ""
 
 # Step 7: Deploy storage
@@ -139,6 +132,11 @@ echo "Deploying Model Relay..."
 bash "${SCRIPT_DIR}/27-deploy-model-relay.sh"
 echo ""
 
+# Deploy the webhook sink
+echo "Deploying webhook sink..."
+bash "${SCRIPT_DIR}/28-deploy-hooksink.sh"
+echo ""
+
 # Step 17: Deploy GitLab Runner (in-cluster Kubernetes executor)
 echo "Step 17/19: Deploying GitLab Runner..."
 bash "${SCRIPT_DIR}/15-deploy-gitlab-runner.sh"
@@ -189,6 +187,8 @@ kubectl wait --for=condition=Available --timeout=300s \
   deployment/org-pulse-backend -n ai-pipeline || true
 kubectl wait --for=condition=Available --timeout=300s \
   deployment/model-relay -n ai-pipeline || true
+kubectl wait --for=condition=Available --timeout=300s \
+  deployment/hooksink -n ai-pipeline || true
 echo ""
 
 # Run validations
@@ -264,6 +264,10 @@ echo "  - https://${INGRESS_IP} -H 'Host: relay.local' (admin console, TLS)"
 echo "  - https://${INGRESS_IP} -H 'Host: relay-api.local' (inference, TLS)"
 echo ""
 
+echo "Webhook sink:"
+echo "  - https://${INGRESS_IP} -H 'Host: hooksink.local' (events, TLS)"
+echo ""
+
 echo "Internal Service URLs (from pods):"
 echo "  - GitHub:      https://github-emulator.ai-pipeline.svc.cluster.local:443"
 echo "  - Jira:        https://jira-emulator.ai-pipeline.svc.cluster.local:443"
@@ -273,6 +277,7 @@ echo "  - Observatory: http://observatory.ai-pipeline.svc.cluster.local:8000"
 echo "  - GitLab:      https://gitlab-emulator.ai-pipeline.svc.cluster.local:443"
 echo "  - Org Pulse:   http://org-pulse-frontend.ai-pipeline.svc.cluster.local:8080"
 echo "  - Model Relay: http://model-relay.ai-pipeline.svc.cluster.local:8080"
+echo "  - Webhooks:    http://hooksink.ai-pipeline.svc.cluster.local/hooks/<channel>"
 echo ""
 
 echo "Cluster Status:"

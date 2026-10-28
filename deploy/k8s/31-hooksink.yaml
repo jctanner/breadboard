@@ -1,0 +1,164 @@
+# Hooksink, the webhook sink: keeps webhook deliveries from the emulators and serves them
+# to consumers by cursor or long-poll.
+# Source: checkouts/hooksink. Image: 05n-build-hooksink.sh.
+#
+# Senders:   POST http://hooksink.ai-pipeline.svc.cluster.local/hooks/<channel>
+# Consumers: GET  http://hooksink.ai-pipeline.svc.cluster.local/events?after=<seq>&wait=30
+# Host:      https://hooksink.local through the ingress proxy.
+#
+# Every delivery needs a sender token, and every read a consumer token.
+# Tokens are issued in the admin console at https://hooksink-admin.local.
+# 28-deploy-hooksink.sh creates the Secret hooksink-tokens, when it
+# is missing, with:
+#   admin-key               the console's admin key ("admin" by default)
+#   default-sender-token    paste as a hook's secret (GitHub, Jira, GitLab)
+#   default-consumer-token  Authorization: Bearer for /events
+# It is never stored in this manifest. Print them with:
+#   make host-hooksink-tokens
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hooksink-data
+  namespace: ai-pipeline
+  labels:
+    app: hooksink
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hooksink
+  namespace: ai-pipeline
+  labels:
+    app: hooksink
+spec:
+  selector:
+    app: hooksink
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hooksink-admin
+  namespace: ai-pipeline
+  labels:
+    app: hooksink
+spec:
+  selector:
+    app: hooksink
+  ports:
+    - name: admin
+      port: 80
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hooksink
+  namespace: ai-pipeline
+  labels:
+    app: hooksink
+spec:
+  # SQLite has one writer; never overlap pods on the data volume.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hooksink
+  template:
+    metadata:
+      labels:
+        app: hooksink
+    spec:
+      automountServiceAccountToken: false
+      # Long-polls are released on SIGTERM, so shutdown is quick.
+      terminationGracePeriodSeconds: 15
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+      containers:
+        - name: sink
+          image: hooksink:latest
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: admin
+              containerPort: 8081
+          env:
+            - name: HOOKSINK_LISTEN
+              value: 0.0.0.0:8080
+            - name: HOOKSINK_DB
+              value: /data/events.sqlite
+            - name: HOOKSINK_ADMIN_LISTEN
+              value: 0.0.0.0:8081
+            - name: HOOKSINK_ADMIN_KEY_FILE
+              value: /run/secrets/hooksink/admin-key
+            - name: HOOKSINK_DEFAULT_SENDER_TOKEN_FILE
+              value: /run/secrets/hooksink/default-sender-token
+            - name: HOOKSINK_DEFAULT_CONSUMER_TOKEN_FILE
+              value: /run/secrets/hooksink/default-consumer-token
+            # Shown in the console's setup instructions.
+            - name: HOOKSINK_PUBLIC_URL
+              value: http://hooksink.ai-pipeline.svc.cluster.local
+            # Local development: the console can show and copy token values,
+            # and consumer values are stored so it can. Set "false" for a
+            # shared deployment; the sink then deletes stored consumer
+            # values at startup and keeps only fingerprints.
+            - name: HOOKSINK_INSECURE_REVEAL_TOKENS
+              value: "true"
+            - name: HOOKSINK_MAX_WAIT_SECONDS
+              value: "60"
+            - name: HOOKSINK_RETENTION_MAX_AGE_SECONDS
+              value: "604800"
+            - name: HOOKSINK_RETENTION_MAX_EVENTS
+              value: "100000"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tokens
+              mountPath: /run/secrets/hooksink
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hooksink-data
+        - name: tokens
+          secret:
+            secretName: hooksink-tokens

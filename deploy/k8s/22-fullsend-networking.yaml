@@ -11,6 +11,8 @@ data:
     rewrite stop name exact orgpulse.local ingress-proxy.ai-pipeline.svc.cluster.local answer auto
     rewrite stop name exact relay.local ingress-proxy.ai-pipeline.svc.cluster.local answer auto
     rewrite stop name exact relay-api.local ingress-proxy.ai-pipeline.svc.cluster.local answer auto
+    rewrite stop name exact hooksink.local ingress-proxy.ai-pipeline.svc.cluster.local answer auto
+    rewrite stop name exact hooksink-admin.local ingress-proxy.ai-pipeline.svc.cluster.local answer auto
     rewrite stop name exact dashboard.local ingress-proxy.ai-pipeline.svc.cluster.local answer auto
     rewrite stop name exact observatory.local ingress-proxy.ai-pipeline.svc.cluster.local answer auto
     rewrite stop name exact mlflow.local ingress-proxy.ai-pipeline.svc.cluster.local answer auto

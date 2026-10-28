@@ -883,6 +883,8 @@ Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 
 - [Bash injection scanner false positives](tasks/pending/fullsend-bash-injection-scan-false-positives.md): refine environment-enumeration matching; eight ordinary Bash expressions currently trigger warnings.
 
+- [Webhook sink service](tasks/done/webhook-sink-service.md): deployed as hooksink at `hooksink.local` (`checkouts/hooksink`; renamed from webhook-sink on 2026-10-26). Jira emulator delivery is verified end to end with a long-poll consumer and signatures. Decision: [ADR-0013](decisions/ADR-0013-webhook-sink-in-rust.md). [GitHub end to end](tasks/done/webhook-sink-github-emulator-e2e.md) is done: the emulator now delivers repository webhooks.
+
 - [Visible initial architecture fetch](tasks/done/strat-entrypoint-visible-context-fetch.md): complete;43a6457 pushed,795 tests passed, both CI pins published.
 
 - [One-RFE batch with setup logs](tasks/done/strat-one-rfe-context-log-batch.md): started2067/4021 for fresh8, batch size1, latest entrypoint source.

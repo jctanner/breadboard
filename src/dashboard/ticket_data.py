@@ -9,13 +9,33 @@ from urllib.parse import quote, urlsplit
 
 import requests
 import urllib3
-from urllib3.exceptions import InsecureRequestWarning
+from urllib3.exceptions import InsecureRequestWarning, NameResolutionError
 
 
 @dataclass
 class TicketResult:
     tickets: list[dict[str, Any]] = field(default_factory=list)
     errors: list[dict[str, str]] = field(default_factory=list)
+    not_deployed: list[str] = field(default_factory=list)
+
+
+def not_deployed(exc: BaseException) -> bool:
+    """True when a request failed because its host name does not resolve.
+
+    A cluster Service name stops resolving once the Service is deleted, so
+    this is how an emulator that is not deployed shows up. Any other failure
+    of a deployed service is still an error.
+    """
+    pending = [exc]
+    while pending:
+        current = pending.pop()
+        if isinstance(current, NameResolutionError):
+            return True
+        pending.extend(arg for arg in current.args if isinstance(arg, BaseException))
+        reason = getattr(current, "reason", None)
+        if isinstance(reason, BaseException):
+            pending.append(reason)
+    return False
 
 
 def _base_url(value: str, *suffixes: str) -> str:
@@ -40,6 +60,7 @@ class TicketAggregator:
         self.timeout = float(os.getenv("BREADBOARD_TICKET_TIMEOUT", "10"))
         self.max_pages = max(1, int(os.getenv("BREADBOARD_TICKET_MAX_PAGES", "100")))
         self.errors: list[dict[str, str]] = []
+        self.not_deployed: list[str] = []
 
         jira = os.getenv(
             "BREADBOARD_JIRA_URL",
@@ -63,6 +84,13 @@ class TicketAggregator:
         self.github_token = os.getenv("GITHUB_TOKEN", "")
         self.gitlab_token = os.getenv("GITLAB_TOKEN", "")
 
+    def _failed(self, source: str, exc: Exception) -> None:
+        if not_deployed(exc):
+            if source not in self.not_deployed:
+                self.not_deployed.append(source)
+        else:
+            self.errors.append({"source": source, "message": str(exc)})
+
     def _get(self, source: str, url: str, **params: Any) -> Any:
         headers: dict[str, str] = {}
         if source == "github" and self.github_token:
@@ -80,7 +108,7 @@ class TicketAggregator:
             response.raise_for_status()
             return response.json()
         except (requests.RequestException, ValueError) as exc:
-            self.errors.append({"source": source, "message": str(exc)})
+            self._failed(source, exc)
             return None
 
     def _jira(self) -> list[dict[str, Any]]:
@@ -112,7 +140,7 @@ class TicketAggregator:
                 response.raise_for_status()
                 payload = response.json()
             except (requests.RequestException, ValueError) as exc:
-                self.errors.append({"source": "jira", "message": str(exc)})
+                self._failed("jira", exc)
                 break
 
             raw = payload.get("issues", []) if isinstance(payload, dict) else []
@@ -344,4 +372,4 @@ class TicketAggregator:
                 continue
             filtered.append(ticket)
         filtered.sort(key=lambda item: item.get("updated", ""), reverse=True)
-        return TicketResult(filtered, self.errors)
+        return TicketResult(filtered, self.errors, self.not_deployed)

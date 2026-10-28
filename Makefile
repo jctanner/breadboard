@@ -301,6 +301,7 @@ vagrant-reset: ## Delete namespace and reinstall (WARNING: destructive)
 # Deploy scripts use PROJECT_ROOT to find project files.
 
 HOST_PROJECT_ROOT := $(shell pwd)
+BREADBOARD_DOMAIN ?= local
 
 host-install-k3s: ## Install K3s on host with /data auto-detection
 	sudo bash deploy/scripts/01-install-k3s-host.sh
@@ -312,7 +313,7 @@ host-kubeconfig: ## Copy k3s kubeconfig to ~/.kube/config for non-sudo kubectl
 	@echo "✓ kubeconfig updated — kubectl should work without sudo"
 
 host-deploy-all: ## Run full deployment from scratch on host
-	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/deploy-all.sh
+	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) BREADBOARD_DOMAIN="$(BREADBOARD_DOMAIN)" bash deploy/scripts/deploy-all.sh
 
 host-rebuild-prereqs: ## Install cert-manager, namespace, CA, secrets, storage, and RBAC on host
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/02-install-cert-manager.sh
@@ -693,7 +694,16 @@ lima-install-k3s: ## Install K3s inside the Lima VM
 	limactl shell $(LIMA_INSTANCE) -- sudo bash "$(HOST_PROJECT_ROOT)/deploy/scripts/01-install-k3s-host.sh"
 
 lima-deploy-all: ## Run deploy-all.sh inside the Lima VM
-	limactl shell $(LIMA_INSTANCE) -- sudo PROJECT_ROOT="$(HOST_PROJECT_ROOT)" bash "$(HOST_PROJECT_ROOT)/deploy/scripts/deploy-all.sh"
+	limactl shell $(LIMA_INSTANCE) -- sudo PROJECT_ROOT="$(HOST_PROJECT_ROOT)" BREADBOARD_DOMAIN="$(BREADBOARD_DOMAIN)" bash "$(HOST_PROJECT_ROOT)/deploy/scripts/deploy-all.sh"
+
+lima-kubeconfig: ## Fetch K3s kubeconfig from Lima VM to ~/.kube/breadboard-lima.yaml
+	@mkdir -p $(HOME)/.kube
+	@limactl shell $(LIMA_INSTANCE) -- sudo cat /etc/rancher/k3s/k3s.yaml > $(HOME)/.kube/breadboard-lima.yaml
+	@chmod 600 $(HOME)/.kube/breadboard-lima.yaml
+	@echo "Saved $(HOME)/.kube/breadboard-lima.yaml. Test with: KUBECONFIG=~/.kube/breadboard-lima.yaml kubectl get nodes"
+
+lima-validate: ## Run cluster and certificate validation tests inside Lima VM
+	limactl shell $(LIMA_INSTANCE) -- sudo PROJECT_ROOT="$(HOST_PROJECT_ROOT)" BREADBOARD_DOMAIN="$(BREADBOARD_DOMAIN)" bash -c 'cd "$(HOST_PROJECT_ROOT)/deploy/validation" && bash test-cluster.sh && bash test-certificates.sh'
 
 lima-delete: ## Delete the Lima VM (destructive)
 	@echo "WARNING: This will delete the Lima VM $(LIMA_INSTANCE)!"

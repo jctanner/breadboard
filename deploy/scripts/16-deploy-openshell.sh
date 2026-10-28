@@ -5,6 +5,9 @@ set -euo pipefail
 
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -z "${KUBECONFIG:-}" ] && [ -f /etc/rancher/k3s/k3s.yaml ]; then
+  export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+fi
 MANIFEST="${PROJECT_ROOT}/deploy/dependencies.json"
 VALUES="${PROJECT_ROOT}/deploy/k8s/openshell-values.yaml"
 RBAC="${PROJECT_ROOT}/deploy/k8s/openshell-gateway-sandbox-rbac.yaml"

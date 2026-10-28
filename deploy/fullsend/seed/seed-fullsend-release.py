@@ -47,7 +47,10 @@ UPSTREAM_BRANCH = "main"
 # The action matches ``^v[0-9]+\\.[0-9]+\\.[0-9]+$`` and takes the highest.
 TAG = os.environ.get("FULLSEND_RELEASE_TAG", "v0.0.1")
 VERSION = TAG.removeprefix("v")
-ASSET_NAME = f"fullsend_{VERSION}_linux_amd64.tar.gz"
+ASSET_NAMES = [
+    f"fullsend_{VERSION}_linux_amd64.tar.gz",
+    f"fullsend_{VERSION}_linux_arm64.tar.gz",
+]
 REPO_PATH = f"/repos/{UPSTREAM_ORG}/{UPSTREAM_REPO}"
 
 
@@ -125,7 +128,7 @@ def main() -> None:
     status, existing = api_request("GET", f"{REPO_PATH}/releases/tags/{TAG}")
     if status == 200 and isinstance(existing, dict):
         asset_names = [asset.get("name") for asset in existing.get("assets") or []]
-        if tag_sha() == head and marker in (existing.get("body") or "") and ASSET_NAME in asset_names:
+        if tag_sha() == head and marker in (existing.get("body") or "") and all(name in asset_names for name in ASSET_NAMES):
             print(
                 f"release {TAG} already current on {UPSTREAM_ORG}/{UPSTREAM_REPO} "
                 f"(commit {head[:8]}, sha256 {binary_digest[:12]})"
@@ -160,12 +163,13 @@ def main() -> None:
         raise RuntimeError(f"could not create release {TAG}: {status} {release}")
 
     content = tarball(BINARY)
-    asset = upload_asset(release["id"], ASSET_NAME, content)
-    print(
-        f"released {TAG} on {UPSTREAM_ORG}/{UPSTREAM_REPO} at {head[:8]} with "
-        f"{ASSET_NAME} ({len(content) // (1024 * 1024)} MiB, asset {asset['id']}, "
-        f"sha256 {binary_digest[:12]})"
-    )
+    for asset_name in ASSET_NAMES:
+        asset = upload_asset(release["id"], asset_name, content)
+        print(
+            f"released {TAG} on {UPSTREAM_ORG}/{UPSTREAM_REPO} at {head[:8]} with "
+            f"{asset_name} ({len(content) // (1024 * 1024)} MiB, asset {asset['id']}, "
+            f"sha256 {binary_digest[:12]})"
+        )
 
 
 if __name__ == "__main__":

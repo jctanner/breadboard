@@ -12,7 +12,7 @@ images:
     arch: "aarch64"
 
 cpus: 8
-memory: "28GiB"
+memory: "20GiB"
 disk: "100GiB"
 
 mountType: virtiofs
@@ -63,7 +63,8 @@ provision:
         python3-pip \
         python3-venv \
         build-essential \
-        docker.io
+        docker.io \
+        docker-buildx
 
       echo "==> Enabling and starting Docker..."
       systemctl enable --now docker
@@ -78,6 +79,30 @@ provision:
       echo "==> Installing Tailscale..."
       curl -fsSL https://tailscale.com/install.sh | sh
       systemctl enable --now tailscaled || true
+
+      echo "==> Installing Go..."
+      if ! command -v go &>/dev/null; then
+        curl -fsSL https://go.dev/dl/go1.24.1.linux-arm64.tar.gz | tar -C /usr/local -xz
+        ln -sfn /usr/local/go/bin/go /usr/local/bin/go
+        ln -sfn /usr/local/go/bin/gofmt /usr/local/bin/gofmt
+      fi
+
+      echo "==> Installing Rust toolchain..."
+      if ! command -v cargo &>/dev/null; then
+        export RUSTUP_HOME=/opt/rust/rustup CARGO_HOME=/opt/rust/cargo
+        curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
+        ln -sfn /opt/rust/cargo/bin/* /usr/local/bin/
+        cat << "EOF" > /etc/profile.d/rust.sh
+export RUSTUP_HOME=/opt/rust/rustup
+export CARGO_HOME=/opt/rust/cargo
+export PATH="/opt/rust/cargo/bin:$PATH"
+EOF
+        chmod 644 /etc/profile.d/rust.sh
+        cat << "EOF" >> /etc/environment
+RUSTUP_HOME="/opt/rust/rustup"
+CARGO_HOME="/opt/rust/cargo"
+EOF
+      fi
 
       echo "==> Setting up convenience symlinks..."
       for candidate in \

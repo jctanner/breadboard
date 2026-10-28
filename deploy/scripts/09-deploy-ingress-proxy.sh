@@ -57,6 +57,19 @@ LB_IP=$(kubectl get svc -n ai-pipeline ingress-proxy -o jsonpath='{.status.loadB
 
 DOMAIN="${BREADBOARD_DOMAIN:-local}"
 
+# Ensure /etc/hosts has entries for all local services so scripts inside the VM/host resolve them
+HOSTS_LINE="127.0.0.1 dashboard.local fullsend.local github.local gitlab.local jira.local markovd.local observatory.local orgpulse.local relay.local relay-api.local hooksink.local hooksink-admin.local mlflow.local"
+if [ "${DOMAIN}" != "local" ]; then
+  HOSTS_LINE="${HOSTS_LINE} dashboard.${DOMAIN} fullsend.${DOMAIN} github.${DOMAIN} gitlab.${DOMAIN} jira.${DOMAIN} markovd.${DOMAIN} observatory.${DOMAIN} orgpulse.${DOMAIN} relay.${DOMAIN} relay-api.${DOMAIN} hooksink.${DOMAIN} hooksink-admin.${DOMAIN} mlflow.${DOMAIN}"
+fi
+
+MARKER="# Breadboard services"
+if grep -q "${MARKER}" /etc/hosts 2>/dev/null; then
+  sed -i "s/^.*${MARKER}.*$/${HOSTS_LINE} ${MARKER}/" /etc/hosts 2>/dev/null || true
+elif [ -w /etc/hosts ]; then
+  echo "${HOSTS_LINE} ${MARKER}" >> /etc/hosts
+fi
+
 echo "==> Ingress proxy deployed successfully"
 echo ""
 echo "LoadBalancer IP: ${LB_IP}"

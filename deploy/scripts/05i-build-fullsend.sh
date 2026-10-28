@@ -3,6 +3,8 @@
 
 set -euo pipefail
 
+export PATH="/opt/rust/cargo/bin:/usr/local/go/bin:${PATH}"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 FULLSEND_ROOT="${PROJECT_ROOT}/checkouts/fullsend-ai/fullsend"
@@ -197,11 +199,18 @@ drift_check "pre-commit version" \
   "$(sed -n 's/.*pre-commit==\([0-9][0-9.]*\)".*/\1/p' "${PRECOMMIT_LIB}" | head -1)" \
   "$(containerfile_arg PRECOMMIT_VERSION)" "${PRECOMMIT_LIB}"
 
-echo "==> Building ${RUNNER_IMAGE}"
-"${CONTAINER_CMD}" build -f "${RUNNER_CONTEXT}/Containerfile" -t "${RUNNER_IMAGE}" "${BUILD_CONTEXT}"
+BUILD_ARCH="$(uname -m)"
+case "${BUILD_ARCH}" in
+  x86_64) TARGETARCH=amd64 ;;
+  aarch64|arm64) TARGETARCH=arm64 ;;
+  *) TARGETARCH=amd64 ;;
+esac
 
-echo "==> Building ${SANDBOX_IMAGE}"
-"${CONTAINER_CMD}" build -f "${SANDBOX_CONTEXT}/Containerfile" -t "${SANDBOX_IMAGE}" "${SANDBOX_CONTEXT}"
+echo "==> Building ${RUNNER_IMAGE} (arch: ${TARGETARCH})"
+"${CONTAINER_CMD}" build --build-arg TARGETARCH="${TARGETARCH}" -f "${RUNNER_CONTEXT}/Containerfile" -t "${RUNNER_IMAGE}" "${BUILD_CONTEXT}"
+
+echo "==> Building ${SANDBOX_IMAGE} (arch: ${TARGETARCH})"
+"${CONTAINER_CMD}" build --build-arg TARGETARCH="${TARGETARCH}" -f "${SANDBOX_CONTEXT}/Containerfile" -t "${SANDBOX_IMAGE}" "${SANDBOX_CONTEXT}"
 
 # The conformance sandboxes are Fullsend's own pinned images plus this
 # cluster's internal CA. The supervisor reads its upstream TLS roots once at

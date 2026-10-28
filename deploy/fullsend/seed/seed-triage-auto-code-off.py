@@ -29,11 +29,42 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from emulator import BASE_URL, ORG, REPO, api_request  # noqa: E402
+from emulator import BASE_URL, ORG, REPO, api_request, ensure_org, ensure_repo  # noqa: E402
 
 AGENTS_REPO = "fullsend-ai/agents"
 HARNESS_PATH = ".fullsend/triage.yaml"
 CONFIG_PATH = ".fullsend/config.yaml"
+SHIM_PATH = ".github/workflows/fullsend.yaml"
+SHIM_WORKFLOW = """---
+# This file is managed by Fullsend. Do not edit it directly.
+name: fullsend
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+  issue_comment:
+    types: [created]
+  pull_request_target:
+    types: [opened, synchronize, ready_for_review, closed, labeled, unlabeled]
+  pull_request_review:
+    types: [submitted]
+
+permissions: {}
+
+jobs:
+  dispatch:
+    concurrency:
+      group: >-
+        fullsend-dispatch-${{ github.event.issue.number || github.event.pull_request.number }}-${{
+          github.event.action == 'labeled' && format('label-{0}', github.event.label.name) || 'dispatch'
+        }}
+      cancel-in-progress: false
+    if: >-
+      (github.event_name != 'pull_request_target' && github.event_name != 'pull_request_review') ||
+      github.event.pull_request.state == 'open' || github.event.action == 'closed'
+    uses: fullsend-ai/fullsend/.github/workflows/reusable-dispatch.yml@main
+    secrets: inherit
+"""
 
 
 def _get_file(path: str) -> tuple[str | None, str | None]:
@@ -70,6 +101,8 @@ def _mirror_pin() -> tuple[str, str]:
 
 
 def main() -> None:
+    ensure_org()
+    ensure_repo()
     sha, digest = _mirror_pin()
     harness = (
         "# Conformance target: triage classifies and labels, and never promotes to\n"
@@ -90,10 +123,21 @@ def main() -> None:
     else:
         print(f"{HARNESS_PATH} already current")
 
+    shim, s_sha = _get_file(SHIM_PATH)
+    if shim is None:
+        _put_file(SHIM_PATH, SHIM_WORKFLOW, "Install managed Fullsend event shim", None)
+        print(f"wrote {SHIM_PATH}")
+
     raw, csha = _get_file(CONFIG_PATH)
     if raw is None:
-        raise RuntimeError(f"{CONFIG_PATH} not found; install the per-repo scaffold first")
-    config = yaml.safe_load(raw) or {}
+        config = {
+            "version": "1",
+            "runtime": "dummy",
+            "roles": ["triage"],
+            "agents": [],
+        }
+    else:
+        config = yaml.safe_load(raw) or {}
     agents = list(config.get("agents") or [])
     entry = {"name": "triage", "source": "triage.yaml"}
     existing = next((a for a in agents if isinstance(a, dict) and a.get("name") == "triage"), None)

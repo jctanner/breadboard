@@ -16,6 +16,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 export PYTHONPATH="${PROJECT_ROOT}/deploy/fullsend/seed"
+export GITHUB_EMULATOR_URL="${GITHUB_EMULATOR_URL:-https://github.${BREADBOARD_DOMAIN:-local}}"
 
 # The per-repo shim calls a reusable workflow in fullsend-ai/fullsend, so
 # that repository has to exist in the emulator before any dispatch can

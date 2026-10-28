@@ -8,7 +8,7 @@ running the Breadboard integrated stack on macOS Apple Silicon (ARM64).
 - **Virtualization Framework**: Apple Virtualization (`vmType: vz`) for native ARM64 performance
 - **Rosetta Emulation**: `rosetta: { enabled: true, binfmt: true }` transparently runs x86_64 container layers and binaries (e.g., GitHub Actions runners, Fullsend releases) without QEMU overhead
 - **OS**: Ubuntu 24.04 LTS (Noble Numbat) ARM64 cloud image
-- **Resources**: 8 vCPUs, 28 GiB RAM, 100 GiB virtual disk
+- **Resources**: 8 vCPUs, 20 GiB RAM, 100 GiB virtual disk
 - **Mounts**: User home directory (`~`) mounted writable via `virtiofs`
 - **Port Forwards**: Ports 80, 443, 5000, 6443 forwarded to `127.0.0.1`
 

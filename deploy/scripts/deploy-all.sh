@@ -6,6 +6,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
+export BREADBOARD_DOMAIN="${BREADBOARD_DOMAIN:-local}"
+if [ -z "${KUBECONFIG:-}" ] && [ -f /etc/rancher/k3s/k3s.yaml ]; then
+  export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+fi
 
 echo "=========================================="
 echo "AI-First Pipeline K3s Deployment"
@@ -16,6 +20,17 @@ echo ""
 if [ "$EUID" -ne 0 ]; then
   echo "This script should be run as root (use sudo)"
   exit 1
+fi
+
+# In worktrees, checkouts/ may be a symlink to another repository.
+# Docker build context cannot traverse symlinks pointing outside PROJECT_ROOT,
+# so convert it to an in-tree bind mount if needed.
+if [ -L "${PROJECT_ROOT}/checkouts" ]; then
+  CHECKOUTS_TARGET="$(readlink -f "${PROJECT_ROOT}/checkouts")"
+  echo "==> Converting symlinked checkouts to bind mount: ${CHECKOUTS_TARGET} -> ${PROJECT_ROOT}/checkouts"
+  rm -f "${PROJECT_ROOT}/checkouts"
+  mkdir -p "${PROJECT_ROOT}/checkouts"
+  mount --bind "${CHECKOUTS_TARGET}" "${PROJECT_ROOT}/checkouts"
 fi
 
 # .env is optional: model credentials are managed by Model Relay, and every
@@ -58,15 +73,56 @@ echo ""
 
 # Step 6: Build images
 echo "Step 6/19: Building container images..."
-bash "${SCRIPT_DIR}/05-build-images.sh"
-bash "${SCRIPT_DIR}/05g-build-github-actions-runner.sh"
-bash "${SCRIPT_DIR}/05k-build-github-actions-real-runner.sh"
-bash "${SCRIPT_DIR}/05h-build-fullsend-mint-dev.sh"
-bash "${SCRIPT_DIR}/05i-build-fullsend.sh"
-bash "${SCRIPT_DIR}/05j-build-fullsend-dashboard.sh"
-bash "${SCRIPT_DIR}/05l-build-org-pulse.sh"
-bash "${SCRIPT_DIR}/05m-build-model-relay.sh"
-bash "${SCRIPT_DIR}/05n-build-hooksink.sh"
+image_in_k3s() {
+  local img="$1"
+  sudo k3s ctr images ls -q 2>/dev/null | grep -qE "(docker\.io/library/|localhost/)${img}"
+}
+FORCE_REBUILD="${FORCE_REBUILD:-0}"
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "pipeline-dashboard:latest" || ! image_in_k3s "pipeline-agent:latest"; then
+  bash "${SCRIPT_DIR}/05-build-images.sh"
+else
+  echo "  Core images already present in k3s; skipping 05-build-images.sh (set FORCE_REBUILD=1 to rebuild)"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "github-emulator-actions-runner:k3s"; then
+  bash "${SCRIPT_DIR}/05g-build-github-actions-runner.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "github-emulator-actions-real-runner:k3s"; then
+  bash "${SCRIPT_DIR}/05k-build-github-actions-real-runner.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "fullsend-mint-dev:k3s"; then
+  bash "${SCRIPT_DIR}/05h-build-fullsend-mint-dev.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "fullsend-runner-dev:k3s" || ! image_in_k3s "fullsend-sandbox-local:k3s"; then
+  bash "${SCRIPT_DIR}/05i-build-fullsend.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "fullsend-dashboard:latest"; then
+  bash "${SCRIPT_DIR}/05j-build-fullsend-dashboard.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "org-pulse-backend:k3s" || ! image_in_k3s "org-pulse-frontend:k3s"; then
+  bash "${SCRIPT_DIR}/05l-build-org-pulse.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "model-relay:latest"; then
+  bash "${SCRIPT_DIR}/05m-build-model-relay.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "hooksink:latest"; then
+  bash "${SCRIPT_DIR}/05n-build-hooksink.sh"
+fi
+
+docker builder prune -a -f >/dev/null 2>&1 || true
+if [ -w /proc/sys/vm/drop_caches ]; then
+  sync
+  echo 3 > /proc/sys/vm/drop_caches || true
+  echo "==> Linux page cache freed"
+fi
 echo ""
 
 # Step 7: Deploy storage

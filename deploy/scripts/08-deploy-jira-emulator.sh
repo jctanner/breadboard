@@ -3,6 +3,7 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
 
 echo "==> Deploying Jira Emulator to k3s..."
@@ -18,7 +19,7 @@ echo "--- Setting up certificate infrastructure ---"
 kubectl apply -f 01-ca-issuer.yaml
 
 echo "--- Creating certificates ---"
-kubectl apply -f 02-certificates.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" 02-certificates.yaml
 
 echo "--- Waiting for certificates to be ready ---"
 kubectl wait --for=condition=ready certificate/jira-emulator-tls -n ai-pipeline --timeout=120s || {

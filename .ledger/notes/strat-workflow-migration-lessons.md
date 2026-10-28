@@ -14,6 +14,7 @@ configurations, with Python helpers, explicit state, hooks, independent host
 validation, and recovery protocols around a small JavaScript coordinator.
 
 [Decision makers](#for-decision-makers) can read the observed execution change,
+the recommendation for other teams,
 implementation effort, rollout status, and version limits first.
 [Engineers](#for-engineers) can then follow the changed execution boundaries,
 resilience mechanisms, validation evidence, and migration sequence.
@@ -130,6 +131,57 @@ independent strategy quality, a production failure rate, immutable execution,
 or distributed ownership. Those are separate claims with separate acceptance
 criteria.
 
+### Recommendation for other teams
+
+Do not migrate a working script- or SDK-driven production pipeline to a
+dynamic workflow by default. The evidence here does not show a benefit that
+pays for what such a migration gives up:
+
+- **An external coordinator.** A script or SDK program can sit outside the
+  agent's reach when permissions enforce that boundary. A dynamic workflow
+  runs inside a session that, with ordinary write and launch permissions, can
+  edit and relaunch it, and this migration observed that. Restoring the
+  boundary needs platform or permission controls, not workflow code.
+- **Direct mechanics.** Deterministic helpers become agent-mediated tool calls
+  with relayed results. Each relay is a new failure point; the pre-hardening
+  run delivered 2 of 12 reviewer reports.
+- **Resilience it does not supply.** Write-once effects, freshness and
+  independent completion are still application code, now also covering agent
+  handoffs and native replay.
+- **Version stability.** Runtime behavior was characterized on one pinned
+  release and must be requalified on upgrade.
+
+The observed advantage, overlap of stages, is available to scripts too. The
+one matched comparison was close on tokens and cost before hardening. Hardened
+runs have recorded usage and cost estimates, but no controlled comparison
+against an equivalent scripted implementation, so do not cite a per-run cost
+difference either way.
+
+A dynamic workflow is reasonable when:
+
+- the platform steers toward it. Here, Fullsend maintainers rejected custom
+  entrypoints and recommended workflows as an alternative; that does not
+  establish that Fullsend requires workflows in general. Budget for the
+  hardening and ask the platform for a host-supplied read-only script, launch
+  policy and host-side writes;
+- the task is exploratory or one-off (audits, research, code migrations,
+  reviews), where generating the orchestration is the point;
+- external effects are idempotent or absent, and a person or trusted host
+  validates output before publication; or
+- the work is new and the deterministic parts stay in ordinary code, with the
+  workflow only scheduling.
+
+Teams that migrate anyway should follow the
+[sequence for the next migration](#a-practical-sequence-for-the-next-migration)
+and treat two items as entry conditions: keep the workflow source, baselines
+and launch policy outside the worker's writable state, and route external
+writes through host-side code or an intent-then-readback protocol.
+
+In short, dynamic workflows suit orchestration that has to be improvised. For
+an established production process, this migration demonstrated substantial
+additional engineering without establishing a compensating advantage over
+external orchestration.
+
 ### Runtime versions and revalidation
 
 The runtime analysis, native controls, and detailed handoff/replay findings in
@@ -203,6 +255,11 @@ This learning cost was concrete: Workflow Dojo added a JavaScript tier for
 Python developers after JavaScript semantics repeatedly cost the maintainer
 time. Its exercises cover returns, truthiness, sorting, scope, collections,
 callbacks, and async behavior before the production orchestration patterns.
+Four of those patterns are drawn from this retrospective: freshness keys that
+cover every input, intent recorded before an external write, per-item deferral
+instead of batch failure, and completion decided from an artifact inventory.
+They exercise the recovery rules in a simulator; they are not evidence about
+the Claude runtime.
 [Dojo training record](../plans/workflow-dojo-plan.md).
 
 The tested Claude Code 2.1.296 runtime is also a restricted JavaScript

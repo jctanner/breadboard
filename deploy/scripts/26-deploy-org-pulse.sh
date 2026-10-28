@@ -2,12 +2,14 @@
 # Deploy Org Pulse (AI Engineering flavour, demo mode) to k3s.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
+DOMAIN="${BREADBOARD_DOMAIN:-local}"
 
 echo "==> Deploying Org Pulse..."
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/02-certificates.yaml"
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/02-certificates.yaml"
 kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/28-org-pulse.yaml"
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/08-ingress-https.yaml"
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/08-ingress-https.yaml"
 
 echo "  Waiting for MongoDB, the backend and the frontend..."
 for deployment in org-pulse-mongodb org-pulse-backend org-pulse-frontend; do
@@ -17,7 +19,7 @@ done
 echo "==> Org Pulse deployed"
 echo ""
 echo "Access Org Pulse:"
-echo "  - Via Ingress: https://orgpulse.local"
+echo "  - Via Ingress: https://orgpulse.${DOMAIN}"
 echo "  - Internal:    http://org-pulse-frontend.ai-pipeline.svc.cluster.local:8080"
 echo "  - API:         http://org-pulse-backend.ai-pipeline.svc.cluster.local:3001/api"
 echo ""

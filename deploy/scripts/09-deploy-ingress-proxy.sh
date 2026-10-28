@@ -31,7 +31,7 @@ sudo k3s ctr images tag localhost/ingress-proxy:latest docker.io/library/ingress
 
 # Deploy to cluster
 echo "  Deploying to Kubernetes..."
-kubectl apply -f deployment.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" deployment.yaml
 
 # Restart pods to pick up the new image
 echo "  Restarting pods..."
@@ -55,19 +55,21 @@ done
 # Get LoadBalancer IP
 LB_IP=$(kubectl get svc -n ai-pipeline ingress-proxy -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "pending")
 
+DOMAIN="${BREADBOARD_DOMAIN:-local}"
+
 echo "==> Ingress proxy deployed successfully"
 echo ""
 echo "LoadBalancer IP: ${LB_IP}"
 echo ""
 echo "Access services via:"
-echo "  - GitHub:    http://${LB_IP} -H 'Host: github.local'"
-echo "  - GitLab:    http://${LB_IP} -H 'Host: gitlab.local'"
-echo "  - Jira:      http://${LB_IP} -H 'Host: jira.local'"
-echo "  - Dashboard: http://${LB_IP} -H 'Host: dashboard.local'"
-echo "  - Fullsend:  http://${LB_IP} -H 'Host: fullsend.local'"
-echo "  - MLflow:    http://${LB_IP} -H 'Host: mlflow.local'"
-echo "  - Org Pulse: http://${LB_IP} -H 'Host: orgpulse.local'"
-echo "  - Relay:     http://${LB_IP} -H 'Host: relay.local'"
-echo "  - Webhooks:  http://${LB_IP} -H 'Host: hooksink.local'"
-echo "  - Webhooks admin: http://${LB_IP} -H 'Host: hooksink-admin.local'"
+echo "  - GitHub:    http://${LB_IP} -H 'Host: github.${DOMAIN}'"
+echo "  - GitLab:    http://${LB_IP} -H 'Host: gitlab.${DOMAIN}'"
+echo "  - Jira:      http://${LB_IP} -H 'Host: jira.${DOMAIN}'"
+echo "  - Dashboard: http://${LB_IP} -H 'Host: dashboard.${DOMAIN}'"
+echo "  - Fullsend:  http://${LB_IP} -H 'Host: fullsend.${DOMAIN}'"
+echo "  - MLflow:    http://${LB_IP} -H 'Host: mlflow.${DOMAIN}'"
+echo "  - Org Pulse: http://${LB_IP} -H 'Host: orgpulse.${DOMAIN}'"
+echo "  - Relay:     http://${LB_IP} -H 'Host: relay.${DOMAIN}'"
+echo "  - Webhooks:  http://${LB_IP} -H 'Host: hooksink.${DOMAIN}'"
+echo "  - Webhooks admin: http://${LB_IP} -H 'Host: hooksink-admin.${DOMAIN}'"
 echo ""

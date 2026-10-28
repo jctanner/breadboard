@@ -98,7 +98,7 @@ echo ""
 
 # Step 12: Deploy pipeline dashboard
 echo "Step 12/19: Deploying pipeline dashboard..."
-kubectl apply -f ${PROJECT_ROOT}/deploy/k8s/20-pipeline-dashboard.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/20-pipeline-dashboard.yaml"
 bash "${SCRIPT_DIR}/23-deploy-fullsend-dashboard.sh"
 echo ""
 
@@ -215,57 +215,59 @@ echo ""
 
 # Get LoadBalancer IP for ingress proxy
 INGRESS_IP=$(kubectl get svc ingress-proxy -n ai-pipeline -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "pending")
+DOMAIN="${BREADBOARD_DOMAIN:-local}"
 
 echo "All services are accessible via Ingress Proxy:"
 echo "  LoadBalancer IP: ${INGRESS_IP}"
+echo "  Domain: ${DOMAIN}"
 echo ""
 
 echo "Pipeline Dashboard:"
-echo "  - http://${INGRESS_IP} -H 'Host: dashboard.local'"
+echo "  - http://${INGRESS_IP} -H 'Host: dashboard.${DOMAIN}'"
 echo "  - http://localhost:5000 (Vagrantfile port forward)"
 echo ""
 
 echo "Fullsend Operations Dashboard:"
-echo "  - https://${INGRESS_IP} -H 'Host: fullsend.local'"
+echo "  - https://${INGRESS_IP} -H 'Host: fullsend.${DOMAIN}'"
 echo ""
 
 echo "GitHub Emulator:"
-echo "  - http://${INGRESS_IP} -H 'Host: github.local'"
-echo "  - https://${INGRESS_IP} -H 'Host: github.local' (TLS)"
+echo "  - http://${INGRESS_IP} -H 'Host: github.${DOMAIN}'"
+echo "  - https://${INGRESS_IP} -H 'Host: github.${DOMAIN}' (TLS)"
 echo ""
 
 echo "Jira Emulator:"
-echo "  - http://${INGRESS_IP} -H 'Host: jira.local'"
-echo "  - https://${INGRESS_IP} -H 'Host: jira.local' (TLS)"
+echo "  - http://${INGRESS_IP} -H 'Host: jira.${DOMAIN}'"
+echo "  - https://${INGRESS_IP} -H 'Host: jira.${DOMAIN}' (TLS)"
 echo "  - Default credentials: admin / admin"
 echo ""
 
 echo "MLflow Tracking Server:"
-echo "  - http://${INGRESS_IP} -H 'Host: mlflow.local'"
-echo "  - https://${INGRESS_IP} -H 'Host: mlflow.local' (TLS)"
+echo "  - http://${INGRESS_IP} -H 'Host: mlflow.${DOMAIN}'"
+echo "  - https://${INGRESS_IP} -H 'Host: mlflow.${DOMAIN}' (TLS)"
 echo ""
 
 echo "Observatory:"
-echo "  - http://${INGRESS_IP} -H 'Host: observatory.local'"
-echo "  - https://${INGRESS_IP} -H 'Host: observatory.local' (TLS)"
+echo "  - http://${INGRESS_IP} -H 'Host: observatory.${DOMAIN}'"
+echo "  - https://${INGRESS_IP} -H 'Host: observatory.${DOMAIN}' (TLS)"
 echo ""
 
 echo "GitLab Emulator:"
-echo "  - http://${INGRESS_IP} -H 'Host: gitlab.local'"
-echo "  - https://${INGRESS_IP} -H 'Host: gitlab.local' (TLS)"
+echo "  - http://${INGRESS_IP} -H 'Host: gitlab.${DOMAIN}'"
+echo "  - https://${INGRESS_IP} -H 'Host: gitlab.${DOMAIN}' (TLS)"
 echo ""
 
 echo "Org Pulse (demo mode):"
-echo "  - https://${INGRESS_IP} -H 'Host: orgpulse.local' (TLS)"
+echo "  - https://${INGRESS_IP} -H 'Host: orgpulse.${DOMAIN}' (TLS)"
 echo ""
 
 echo "Model Relay:"
-echo "  - https://${INGRESS_IP} -H 'Host: relay.local' (admin console, TLS)"
-echo "  - https://${INGRESS_IP} -H 'Host: relay-api.local' (inference, TLS)"
+echo "  - https://${INGRESS_IP} -H 'Host: relay.${DOMAIN}' (admin console, TLS)"
+echo "  - https://${INGRESS_IP} -H 'Host: relay-api.${DOMAIN}' (inference, TLS)"
 echo ""
 
 echo "Webhook sink:"
-echo "  - https://${INGRESS_IP} -H 'Host: hooksink.local' (events, TLS)"
+echo "  - https://${INGRESS_IP} -H 'Host: hooksink.${DOMAIN}' (events, TLS)"
 echo ""
 
 echo "Internal Service URLs (from pods):"

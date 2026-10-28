@@ -108,3 +108,19 @@ Fork set up (`durandom/breadboard` origin, `jctanner/breadboard` upstream).
 Analyzed x86_64 dependencies across checkouts and emulators.
 ADR-0014 recorded. Plan drafted with 4 verifiable breakpoints.
 Next step: Draft `deploy/lima/breadboard-vm.yaml` and parameterize reverse proxy.
+
+### 2026-10-28 WP2 completed: Ingress Domain Parameterization (bb-1sa.2)
+
+- Go reverse proxy (`deploy/golang-reverse-proxy`):
+  - Parameterized via `BREADBOARD_DOMAIN` (default `"local"`).
+  - Dynamically registers `<service>.<domain>` alongside `<service>.local`.
+  - Added unit test in `main_test.go` verifying dual-resolution for `bb.internal` and `.local`.
+- Manifest and Certificate rendering:
+  - Added `deploy/scripts/render_domain_manifest.py` and `deploy/scripts/apply-domain-manifests.sh`.
+  - Preserves base `.local` in manifests for static `kubectl apply -f` compatibility.
+  - Generates `<service>.<domain>` SANs and Ingress rules when `BREADBOARD_DOMAIN != "local"` without touching `*.svc.cluster.local`.
+  - CoreDNS rewrites updated to route both `.local` and `.<domain>` to `ingress-proxy`.
+- Dashboard UI:
+  - Injected `breadboard_domain` and `service_urls` in `src/dashboard/webapp.py` and `layout.html`.
+  - Parameterized external UI endpoints in `ticket_data.py`, `job_scripts.py`, `fullsend_onboarding.py`, and `fullsend-dashboard`.
+  - Added unit test suite in `tests/test_domain_parameterization.py` (12 tests passing).

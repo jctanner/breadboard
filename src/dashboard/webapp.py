@@ -298,6 +298,27 @@ def _normalize_extra_env(value):
 # Flask app factory
 # ---------------------------------------------------------------------------
 
+def get_breadboard_domain() -> str:
+    domain = os.getenv("BREADBOARD_DOMAIN", "local").strip().strip(".")
+    return domain or "local"
+
+
+def get_service_urls(domain: str | None = None) -> dict[str, str]:
+    dom = (domain or get_breadboard_domain()).lstrip(".")
+    return {
+        "mlflow": os.getenv("MLFLOW_UI_URL", f"http://mlflow.{dom}").rstrip("/"),
+        "markovd": os.getenv("MARKOVD_UI_URL", f"http://markovd.{dom}").rstrip("/"),
+        "github": os.getenv("GITHUB_UI_URL", f"https://github.{dom}").rstrip("/"),
+        "gitlab": os.getenv("GITLAB_UI_URL", f"https://gitlab.{dom}").rstrip("/"),
+        "jira": os.getenv("JIRA_UI_URL", f"https://jira.{dom}").rstrip("/"),
+        "observatory": os.getenv("OBSERVATORY_UI_URL", f"https://observatory.{dom}").rstrip("/"),
+        "fullsend": os.getenv("FULLSEND_UI_URL", f"https://fullsend.{dom}").rstrip("/"),
+        "orgpulse": os.getenv("ORGPULSE_UI_URL", f"https://orgpulse.{dom}").rstrip("/"),
+        "relay": os.getenv("RELAY_UI_URL", f"https://relay.{dom}").rstrip("/"),
+        "hooksink_admin": os.getenv("HOOKSINK_ADMIN_UI_URL", f"https://hooksink-admin.{dom}").rstrip("/"),
+    }
+
+
 def create_app() -> Flask:
     """Create and configure the Flask application."""
     app = Flask(
@@ -307,6 +328,13 @@ def create_app() -> Flask:
     app.jinja_loader = FileSystemLoader(
         os.path.join(os.path.dirname(__file__), "templates")
     )
+
+    @app.context_processor
+    def inject_domain_context():
+        return {
+            "breadboard_domain": get_breadboard_domain(),
+            "service_urls": get_service_urls(),
+        }
 
     @app.route("/healthz")
     def healthz():

@@ -57,6 +57,8 @@ spec:
           protocol: TCP
 
         env:
+        - name: BREADBOARD_DOMAIN
+          value: "local"
         # Secrets from pipeline-secrets
         - name: CLAUDE_CODE_USE_VERTEX
           valueFrom:

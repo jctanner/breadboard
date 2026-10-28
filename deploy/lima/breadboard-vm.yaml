@@ -1,0 +1,108 @@
+# Lima VM Configuration for Breadboard on Apple Silicon (ARM64)
+# Provides Ubuntu 24.04 on Apple Virtualization (vz) with Rosetta binfmt emulation.
+
+vmType: vz
+
+rosetta:
+  enabled: true
+  binfmt: true
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+
+cpus: 8
+memory: "28GiB"
+disk: "100GiB"
+
+mountType: virtiofs
+
+mounts:
+  - location: "~"
+    writable: true
+
+portForwards:
+  - guestPort: 80
+    guestIP: "0.0.0.0"
+    guestIPMustBeZero: false
+    hostIP: "127.0.0.1"
+  - guestPort: 443
+    guestIP: "0.0.0.0"
+    guestIPMustBeZero: false
+    hostIP: "127.0.0.1"
+  - guestPort: 5000
+    guestIP: "0.0.0.0"
+    guestIPMustBeZero: false
+    hostIP: "127.0.0.1"
+  - guestPort: 6443
+    guestIP: "0.0.0.0"
+    guestIPMustBeZero: false
+    hostIP: "127.0.0.1"
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      export DEBIAN_FRONTEND=noninteractive
+
+      echo "==> Updating package cache and installing prerequisites..."
+      apt-get update
+      apt-get install -y \
+        curl \
+        wget \
+        git \
+        vim \
+        jq \
+        ca-certificates \
+        gnupg \
+        lsb-release \
+        net-tools \
+        dnsutils \
+        iputils-ping \
+        python3-pip \
+        python3-venv \
+        build-essential \
+        docker.io
+
+      echo "==> Enabling and starting Docker..."
+      systemctl enable --now docker
+
+      echo "==> Adding users to docker group..."
+      for u in "{{.User}}" lima; do
+        if id "$u" &>/dev/null; then
+          usermod -aG docker "$u"
+        fi
+      done
+
+      echo "==> Installing Tailscale..."
+      curl -fsSL https://tailscale.com/install.sh | sh
+      systemctl enable --now tailscaled || true
+
+      echo "==> Setting up convenience symlinks..."
+      for candidate in \
+        /Users/*/src/jctanner/breadboard* \
+        /Users/*/src/*/breadboard* \
+        /Users/*/breadboard* \
+        "{{.Home}}/src/jctanner/breadboard*" \
+        "{{.Home}}/src/jctanner/breadboard.wp1-lima-vm" \
+        "{{.Home}}/src/jctanner/breadboard" \
+        "{{.Home}}/breadboard"; do
+        if [ -d "$candidate" ]; then
+          ln -sfn "$candidate" /breadboard
+          ln -sfn "$candidate" /vagrant
+          break
+        fi
+      done
+
+  - mode: user
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+
+      echo "==> Installing uv..."
+      curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      if ! grep -q '\.local/bin' "$HOME/.bashrc" 2>/dev/null; then
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+      fi

@@ -652,6 +652,54 @@ host-reset: ## Delete namespace and reinstall on host (WARNING: destructive)
 	kubectl delete namespace ai-pipeline || true
 	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/deploy-all.sh
 
+##@ Lima: Apple Silicon VM (vz + Rosetta)
+
+LIMA_INSTANCE ?= breadboard
+LIMA_CONFIG   ?= deploy/lima/breadboard-vm.yaml
+
+lima-up: ## Start the Lima VM (creates if not present) and configure project links
+	@if ! limactl list -q 2>/dev/null | grep -q "^$(LIMA_INSTANCE)$$"; then \
+		echo "==> Creating and starting Lima VM $(LIMA_INSTANCE)..."; \
+		limactl start --name=$(LIMA_INSTANCE) --tty=false $(LIMA_CONFIG); \
+	elif [ "$$(limactl list --json $(LIMA_INSTANCE) 2>/dev/null | jq -r .status)" != "Running" ]; then \
+		echo "==> Starting existing Lima VM $(LIMA_INSTANCE)..."; \
+		limactl start --tty=false $(LIMA_INSTANCE); \
+	else \
+		echo "Lima VM $(LIMA_INSTANCE) is already running."; \
+	fi
+	@echo "==> Ensuring project symlinks exist inside VM..."
+	@limactl shell $(LIMA_INSTANCE) -- sudo ln -sfn "$(HOST_PROJECT_ROOT)" /breadboard
+	@limactl shell $(LIMA_INSTANCE) -- sudo ln -sfn "$(HOST_PROJECT_ROOT)" /vagrant
+	@echo "✓ Lima VM $(LIMA_INSTANCE) ready"
+
+lima-halt: ## Stop the Lima VM
+	limactl stop $(LIMA_INSTANCE)
+
+lima-stop: lima-halt ## Alias for lima-halt
+
+lima-shell: ## Open an interactive shell inside the Lima VM
+	limactl shell $(LIMA_INSTANCE)
+
+lima-status: ## Show Lima VM and Kubernetes cluster status
+	@echo "==> Lima VM Status:"
+	@limactl list $(LIMA_INSTANCE)
+	@echo ""
+	@if [ "$$(limactl list --json $(LIMA_INSTANCE) 2>/dev/null | jq -r .status)" = "Running" ]; then \
+		echo "==> Cluster Pods:"; \
+		limactl shell $(LIMA_INSTANCE) -- bash -c "kubectl get pods -A 2>/dev/null || echo 'K3s not running or no pods found'"; \
+	fi
+
+lima-install-k3s: ## Install K3s inside the Lima VM
+	limactl shell $(LIMA_INSTANCE) -- sudo bash "$(HOST_PROJECT_ROOT)/deploy/scripts/01-install-k3s-host.sh"
+
+lima-deploy-all: ## Run deploy-all.sh inside the Lima VM
+	limactl shell $(LIMA_INSTANCE) -- sudo PROJECT_ROOT="$(HOST_PROJECT_ROOT)" bash "$(HOST_PROJECT_ROOT)/deploy/scripts/deploy-all.sh"
+
+lima-delete: ## Delete the Lima VM (destructive)
+	@echo "WARNING: This will delete the Lima VM $(LIMA_INSTANCE)!"
+	@read -p "Are you sure? (yes/no): " confirm && [ "$$confirm" = "yes" ]
+	limactl delete -f $(LIMA_INSTANCE)
+
 ##@ Local Development (no Vagrant)
 
 test: ## Run Python tests locally

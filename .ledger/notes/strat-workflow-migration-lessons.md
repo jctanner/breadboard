@@ -13,13 +13,51 @@ implementation handles full fresh and mixed batches in the tested
 configurations, with Python helpers, explicit state, hooks, independent host
 validation, and recovery protocols around a small JavaScript coordinator.
 
-[Decision makers](#for-decision-makers) can read the observed execution change,
-the recommendation for other teams,
-implementation effort, rollout status, and version limits first.
+[Decision makers](#for-decision-makers) can read how the direction was set, the
+observed execution change, the false-confidence risk, implementation effort,
+rollout status, the recommendation for other teams, and version limits first.
 [Engineers](#for-engineers) can then follow the changed execution boundaries,
 resilience mechanisms, validation evidence, and migration sequence.
 
 ## For decision makers
+
+### How the workflow direction was set
+
+The project's ADR for a custom script entrypoint in Fullsend,
+[#7947](https://github.com/fullsend-ai/fullsend/pull/7947), was reviewed from October 1 to 13, 2026:
+
+| Date | Event |
+| --- | --- |
+| October 6 | A reviewer [requested changes](https://github.com/fullsend-ai/fullsend/pull/7947#pullrequestreview-5432894717), including weighing runtime-native workflows as an option because they keep the runner's per-tool-call hooks, status and usage. |
+| October 8, 17:00Z | A maintainer [approved](https://github.com/fullsend-ai/fullsend/pull/7947#pullrequestreview-5460180264) the revised ADR. |
+| October 8, 21:15Z | The same reviewer [recommended rejecting](https://github.com/fullsend-ai/fullsend/pull/7947#pullrequestreview-5462939711) `entrypoint:` and replacing it with an ADR for workflow-definition repositories as harness resources. |
+| October 9 | That reviewer opened the replacement, [ADR 0130](https://github.com/fullsend-ai/fullsend/pull/8225). |
+| October 13 | The maintainer [closed #7947 unmerged](https://github.com/fullsend-ai/fullsend/pull/7947#issuecomment-6153432606) after a Slack discussion: "Let's head in the direction proposed by @waynesun09." |
+
+The recommendation's stated reasons were that an entrypoint leaves the runner
+with no complete token, cost or turn metrics and with hooks only for children
+launched through a helper; that the entrypoint proof of concept re-implemented
+about 970 of its 2,874 lines to regain runner features; and that an entrypoint
+still runs as one bounded job, so it did not address multi-hour batches. It
+named three acceptable agent-led shapes (skill-guided, prompt-guided, and an
+orchestration script behind a thin trigger prompt) and placed strat-creator on
+the Claude workflow because its Skills are Claude-specific. The evidence cited
+for that port was a passing headless smoke run.
+
+As of October 28, Fullsend has no merged record of the decision. ADR 0130 is
+open; its file is marked Accepted, and its implementation PRs
+([#8226](https://github.com/fullsend-ai/fullsend/pull/8226), [#8228](https://github.com/fullsend-ai/fullsend/pull/8228)) are unmerged. It records the script
+entrypoint as rejected because the runner sees only the script's exit code and
+stdout. When implemented, it pins the workflow by commit and tree hash, scans
+it, and has the runner start it. It adds no tool or hook surface, so it does
+not stop the session from editing the delivered copy or launching another
+execution, and it does not move external writes to the host. Its
+validation-loop retry reruns the same command and relies on the workflow's
+own durable state to skip finished work. Until it lands, consumers vendor the
+workflow from a host pre-script, which is what strat-creator does.
+
+Neither the review nor ADR 0130 weighed the coordinator-control trade-off
+described in the next section.
 
 ### The agent changed the Workflow during a failed run
 
@@ -74,6 +112,16 @@ the migration's agreed incremental scope.
 [Security assessment and reproduced limits](strat-pr85-stoyan-security-review-20261022.md),
 [scope comparison with rfe-autofixer](../tasks/done/strat-security-rfe-autofixer-baseline.md).
 
+### The most serious risk was false confidence
+
+Before hardening, a run could publish a strategy as reviewed while the
+intended specialist assessments had never reached the final review. Readers
+downstream would see ordinary documents, comments and approval labels, with
+nothing showing that the process behind them was incomplete. That failure is
+silent: it does not raise an error or cost noticeably more, so token totals and
+exit codes do not reveal it. Much of the hardening exists to make it visible.
+[Hardening record](../plans/strat-workflow-s1-hardening.md#2026-10-18-migration-verdict-and-why-the-testing-mattered).
+
 ### The size and cost of the work
 
 The merged strat-creator migration at `b295fe9`, compared with its parent
@@ -97,6 +145,10 @@ GLM priced at zero. It was not an invoice reconciliation or the total cost
 of the project. Later GitLab runs alone added roughly 29, 30, and 47 minutes
 of job runtime for the single smoke, scheduled failure, and post-fix batch.
 The records do not support a complete person-hour or October 28 token total.
+They also do not measure the recurring cost: ownership of the Workflow, its
+Python helpers and hooks, and requalification on each Claude Code release.
+For a team deciding whether to migrate, that ongoing cost is a missing input,
+not a known quantity.
 [Dated accounting and method](strat-workflow-total-token-usage-20261018.md).
 
 Some expense was necessary to expose interactions that small tests could not:
@@ -133,37 +185,58 @@ criteria.
 
 ### Recommendation for other teams
 
+Start with one question: as deployed, is your current coordinator actually
+outside the worker's writable state? The answer decides whether a migration
+would give up a boundary or merely keep a gap you already have.
+
 Do not migrate a working script- or SDK-driven production pipeline to a
 dynamic workflow by default. The evidence here does not show a benefit that
-pays for what such a migration gives up:
+pays for the additional orchestration boundaries and qualification work:
 
-- **An external coordinator.** A script or SDK program can sit outside the
-  agent's reach when permissions enforce that boundary. A dynamic workflow
-  runs inside a session that, with ordinary write and launch permissions, can
-  edit and relaunch it, and this migration observed that. Restoring the
-  boundary needs platform or permission controls, not workflow code.
+- **Control of the running outer loop.** In the scripted design, Bash runs
+  the outer loop and Claude is a worker it invokes. Editing a file does not
+  hot-reload that already parsed loop; replacing it requires an explicit
+  reload or re-execution. In the observed Workflow incident, the surrounding
+  primary Claude session could edit the Workflow and launch another execution
+  within the same job. This was edit-and-relaunch, not hot-patching a running
+  VM. That control difference does not establish that the old script's source
+  was read-only. Source permissions, trusted baselines, and launch policy need
+  explicit enforcement in either architecture.
 - **Direct mechanics.** Deterministic helpers become agent-mediated tool calls
-  with relayed results. Each relay is a new failure point; the pre-hardening
-  run delivered 2 of 12 reviewer reports.
+  with relayed results. Each relay adds a boundary to validate. In the
+  historical three-RFE Opus Workflow run, only 2 of 12 specialist assessments
+  reached the receiving agent through the intended Skill result; ten returned
+  acknowledgements instead. This is the handoff-loss comparison, separate from
+  the later self-modification incident.
+  [Handoff diagnosis](../../scripts/claude_binary_analysis/docs/claude-code-2.1.296-workflow-specialist-handoff.md#what-this-explains-in-the-real-runs).
 - **Resilience it does not supply.** Write-once effects, freshness and
   independent completion are still application code, now also covering agent
   handoffs and native replay.
 - **Version stability.** Runtime behavior was characterized on one pinned
   release and must be requalified on upgrade.
 
-The observed advantage, overlap of stages, is available to scripts too. The
-one matched comparison was close on tokens and cost before hardening. Hardened
-runs have recorded usage and cost estimates, but no controlled comparison
-against an equivalent scripted implementation, so do not cite a per-run cost
-difference either way.
+The observed advantage, overlap of stages, is available to scripts too.
+Historical Opus evidence includes three successful single-RFE runs per design
+and one completed three-RFE batch per design. The singles experienced unequal
+transport failures; the completed batches used overlapping Workflow stages
+versus sequential scripted stages. These small, confounded samples do not
+establish equivalent performance or a general cost ranking. Hardened runs
+have recorded usage and cost estimates, but no controlled comparison against
+an equivalent scripted implementation establishes a hardened per-run cost
+difference.
+[Evaluation record](../plans/strat-workflow-eval-plan.md),
+[completed batch comparison](../../var/benchmarks/strat-workflow/analysis.md#11-the-workflow-finished-sooner).
 
 A dynamic workflow is reasonable when:
 
-- the platform steers toward it. Here, Fullsend maintainers rejected custom
-  entrypoints and recommended workflows as an alternative; that does not
-  establish that Fullsend requires workflows in general. Budget for the
-  hardening and ask the platform for a host-supplied read-only script, launch
-  policy and host-side writes;
+- the platform steers toward it. Here, Fullsend closed the custom-entrypoint
+  ADR in favor of a reviewer's proposal that named a workflow as one of three
+  agent-led shapes (see [how the direction was set](#how-the-workflow-direction-was-set));
+  that does not establish that Fullsend requires workflows in general. Budget
+  for the hardening and ask the platform for a host-supplied read-only script,
+  launch policy and host-side writes. Those are platform changes; the
+  workflow's own repository cannot supply them, and ADR 0130 as proposed
+  covers only pinned, scanned delivery and a runner-started launch;
 - the task is exploratory or one-off (audits, research, code migrations,
   reviews), where generating the orchestration is the point;
 - external effects are idempotent or absent, and a person or trusted host
@@ -176,6 +249,10 @@ Teams that migrate anyway should follow the
 and treat two items as entry conditions: keep the workflow source, baselines
 and launch policy outside the worker's writable state, and route external
 writes through host-side code or an intent-then-readback protocol.
+
+This note evaluates the Workflow architecture and its Fullsend integration. It
+does not compare runner platforms (support model, upgrade cadence, lock-in,
+exit cost, or who owns runtime fixes); that choice needs its own evaluation.
 
 In short, dynamic workflows suit orchestration that has to be improvised. For
 an established production process, this migration demonstrated substantial
@@ -235,7 +312,8 @@ flowchart TD
 
 The historical S1/S2 benchmarks compared native Workflow orchestration with a
 scripted entrypoint. They were followed by native Workflow hardening after
-custom entrypoints were rejected for the production direction. That history
+custom entrypoints were rejected for the production direction
+([how the direction was set](#how-the-workflow-direction-was-set)). That history
 matters: some work was architectural comparison, some was application repair,
 and some was integrating the selected architecture into Fullsend and GitLab.
 They are different sources of effort.
@@ -280,18 +358,18 @@ claims about every later Claude release.
 
 ### What had to be added around the Workflow
 
-| Responsibility | Failure exposed during migration | Additional implementation |
-| --- | --- | --- |
-| Delivering reviewer results | A specialist finished, but the receiving agent got an acknowledgement instead of the assessment | Explicit reviewer agent configuration, tool isolation, capture of actual returned content, and delivery checks |
-| Keeping ticket scope | Reviewers assessed the whole batch despite an individual assignment | Exact target binding, constrained reads, scope hooks, and target validation |
-| Reconciling progress | Refinement was saved, but malformed returned JSON excluded it from review | Durable state, target-bound receipts, and readiness reconciliation against actual artifacts |
-| Preserving review evidence | A final narrative could lose findings or dissent | Persisted source reports, provenance hashes, mechanical composition, and independent verification |
-| Establishing completion | CLI exit, native Workflow state, and business work disagreed | Completion receipts, journal inspection, artifact checks, and host validation |
-| Recovering external writes | A write committed before the caller recorded success | Durable mutation intent, exact remote readback, operation identity, and refusal of ambiguous retries |
-| Reusing saved work | Cached results survived changes to files and instructions | Source/context/input baselines and explicit freshness checks |
-| Enforcing checks within time limits | Hooks timed out, first allowing continuation and later blocking valid work | Blocking failure configuration, separate heavy checks, and full-size profiling |
-| Handling one changed ticket | One stale RFE blocked five unchanged tickets | Per-ticket deferral, independent host accounting, filtered publication, and recovery evidence |
-| Deploying the selected path | A local pass did not prove sandbox, GitLab, or downstream compatibility | Harness materialization, provider/egress setup, CI parity tests, artifact export, and real runner qualification |
+| Responsibility | Failure exposed during migration | Additional implementation | Workflow-specific? |
+| --- | --- | --- | --- |
+| Delivering reviewer results | A specialist finished, but the receiving agent got an acknowledgement instead of the assessment | Explicit reviewer agent configuration, tool isolation, capture of actual returned content, and delivery checks | No: an agent/schema defect that also reproduced in a plain CLI control |
+| Keeping ticket scope | Reviewers assessed the whole batch despite an individual assignment | Exact target binding, constrained reads, scope hooks, and target validation | No: affected both designs in the comparison |
+| Reconciling progress | Refinement was saved, but malformed returned JSON excluded it from review | Durable state, target-bound receipts, and readiness reconciliation against actual artifacts | Partly: the relay through structured output is new; durable progress is general |
+| Preserving review evidence | A final narrative could lose findings or dissent | Persisted source reports, provenance hashes, mechanical composition, and independent verification | No: any agent-composed review needs it |
+| Establishing completion | CLI exit, native Workflow state, and business work disagreed | Completion receipts, journal inspection, artifact checks, and host validation | Partly: the extra runtime state is new; independent completion is general |
+| Recovering external writes | A write committed before the caller recorded success | Durable mutation intent, exact remote readback, operation identity, and refusal of ambiguous retries | Partly: native replay adds a path; write-once recovery is general |
+| Reusing saved work | Cached results survived changes to files and instructions | Source/context/input baselines and explicit freshness checks | Partly: native replay reuse is new; freshness is general |
+| Enforcing checks within time limits | Hooks timed out, first allowing continuation and later blocking valid work | Blocking failure configuration, separate heavy checks, and full-size profiling | Partly: hook-based enforcement inside the agent session |
+| Handling one changed ticket | One stale RFE blocked five unchanged tickets | Per-ticket deferral, independent host accounting, filtered publication, and recovery evidence | No: batch isolation is general |
+| Deploying the selected path | A local pass did not prove sandbox, GitLab, or downstream compatibility | Harness materialization, provider/egress setup, CI parity tests, artifact export, and real runner qualification | Partly: specific to the Fullsend path, not to Workflow scheduling |
 
 These responsibilities are not universally unique to workflows. Bash also
 needs idempotence, ownership, and freshness for safe recovery. The specific
@@ -439,8 +517,9 @@ configuration batch, single RFE, and explicit STRAT reprocessing. Resume is
 not automatically equivalent to deliberate reprocessing of approved work.
 GitLab rules had to select exactly one executor family, preserve batch
 serialization and cleanup, and prevent push/MR validation pipelines from
-starting model work. The final switch keeps legacy on `stable-1.x` and selects
-the Workflow explicitly with `STRAT_EXECUTOR=fullsend`.
+starting model work. The final switch keeps legacy on the `stable-1.x`
+branch (rollback point: tag `1.0.0`, commit `bb4887b`) and selects the
+Workflow explicitly with `STRAT_EXECUTOR=fullsend`.
 [Cutover parity](strat-pipeline-workflow-cutover-20261026.md),
 [opt-in rollout](strat-pipeline-opt-in-workflow-20261026.md).
 
@@ -481,7 +560,9 @@ in the record.
 [checker replay](../tasks/done/strat-review-checker-format-compatibility.md),
 [mixed batch and conclusion](../plans/strat-workflow-s1-hardening.md#2026-10-18-migration-verdict-and-why-the-testing-mattered).
 
-The merged-source GitLab qualification then exposed additional issues:
+The merged-source GitLab qualification then exposed additional issues. The
+GitLab pipeline and merge-request links are private; the table summarizes what
+each run established for readers who cannot open them.
 
 | Run | How it was executed | Result |
 | --- | --- | --- |
@@ -505,11 +586,11 @@ deferral, independent host verification, filtered partial publication,
 diagnostic failure receipts, and retained recovery state. Its initial local
 suite passed 1,463 tests with six skips. Review then identified further edge
 cases involving push/label timing, create accounting, deferral reasons/history,
-and fully deferred reporting; those repairs are active. Review feedback is
-part of the remaining work, and the initial test count does not establish
-live qualification of the final repair.
+and fully deferred reporting. Repairs for those cases are pushed, and the full
+suite then passed 1,503 tests with six skips. The PR is still under review,
+and neither test count establishes live qualification of the final repair.
 [Isolation implementation](../tasks/done/strat-batch-freshness-isolation.md),
-[active review follow-up](../tasks/current/strat-pr93-review-followup.md).
+[review follow-up](../tasks/done/strat-pr93-review-followup.md).
 
 ### A practical sequence for the next migration
 

@@ -62,24 +62,25 @@ class TicketAggregator:
         self.errors: list[dict[str, str]] = []
         self.not_deployed: list[str] = []
 
+        domain = os.getenv("BREADBOARD_DOMAIN", "local").strip().strip(".") or "local"
         jira = os.getenv(
             "BREADBOARD_JIRA_URL",
             "https://jira-emulator.ai-pipeline.svc.cluster.local",
         )
         self.jira_url = _base_url(jira, "/rest/api/2", "/rest/api/3")
-        self.jira_ui = os.getenv("JIRA_UI_URL", "https://jira.local").rstrip("/")
+        self.jira_ui = os.getenv("JIRA_UI_URL", f"https://jira.{domain}").rstrip("/")
 
         self.github_api = os.getenv(
             "GITHUB_API_URL",
             "https://github-emulator.ai-pipeline.svc.cluster.local/api/v3",
         ).rstrip("/")
-        self.github_ui = os.getenv("GITHUB_UI_URL", "https://github.local").rstrip("/")
+        self.github_ui = os.getenv("GITHUB_UI_URL", f"https://github.{domain}").rstrip("/")
 
         self.gitlab_api = os.getenv(
             "GITLAB_API_URL",
             "https://gitlab-emulator.ai-pipeline.svc.cluster.local/api/v4",
         ).rstrip("/")
-        self.gitlab_ui = os.getenv("GITLAB_UI_URL", "https://gitlab.local").rstrip("/")
+        self.gitlab_ui = os.getenv("GITLAB_UI_URL", f"https://gitlab.{domain}").rstrip("/")
 
         self.github_token = os.getenv("GITHUB_TOKEN", "")
         self.gitlab_token = os.getenv("GITLAB_TOKEN", "")

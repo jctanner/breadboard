@@ -18,13 +18,9 @@ type Route struct {
 	Backend string
 }
 
-var routes = []Route{
+var clusterRoutes = []Route{
 	{
 		Host:    "github-emulator.ai-pipeline.svc.cluster.local",
-		Backend: "https://github-emulator.ai-pipeline.svc.cluster.local:443",
-	},
-	{
-		Host:    "github.local",
 		Backend: "https://github-emulator.ai-pipeline.svc.cluster.local:443",
 	},
 	{
@@ -32,15 +28,7 @@ var routes = []Route{
 		Backend: "https://jira-emulator.ai-pipeline.svc.cluster.local:443",
 	},
 	{
-		Host:    "jira.local",
-		Backend: "https://jira-emulator.ai-pipeline.svc.cluster.local:443",
-	},
-	{
 		Host:    "dashboard.ai-pipeline.svc.cluster.local",
-		Backend: "http://pipeline-dashboard.ai-pipeline.svc.cluster.local:5000",
-	},
-	{
-		Host:    "dashboard.local",
 		Backend: "http://pipeline-dashboard.ai-pipeline.svc.cluster.local:5000",
 	},
 	{
@@ -48,15 +36,7 @@ var routes = []Route{
 		Backend: "http://fullsend-dashboard.ai-pipeline.svc.cluster.local:5000",
 	},
 	{
-		Host:    "fullsend.local",
-		Backend: "http://fullsend-dashboard.ai-pipeline.svc.cluster.local:5000",
-	},
-	{
 		Host:    "mlflow.ai-pipeline.svc.cluster.local",
-		Backend: "http://mlflow.ai-pipeline.svc.cluster.local:5000",
-	},
-	{
-		Host:    "mlflow.local",
 		Backend: "http://mlflow.ai-pipeline.svc.cluster.local:5000",
 	},
 	{
@@ -64,15 +44,7 @@ var routes = []Route{
 		Backend: "http://markovd.ai-pipeline.svc.cluster.local:8080",
 	},
 	{
-		Host:    "markovd.local",
-		Backend: "http://markovd.ai-pipeline.svc.cluster.local:8080",
-	},
-	{
 		Host:    "observatory.ai-pipeline.svc.cluster.local",
-		Backend: "http://observatory.ai-pipeline.svc.cluster.local:8000",
-	},
-	{
-		Host:    "observatory.local",
 		Backend: "http://observatory.ai-pipeline.svc.cluster.local:8000",
 	},
 	{
@@ -80,37 +52,67 @@ var routes = []Route{
 		Backend: "https://gitlab-emulator.ai-pipeline.svc.cluster.local:443",
 	},
 	{
-		Host:    "gitlab.local",
-		Backend: "https://gitlab-emulator.ai-pipeline.svc.cluster.local:443",
-	},
-	{
 		Host:    "org-pulse-frontend.ai-pipeline.svc.cluster.local",
-		Backend: "http://org-pulse-frontend.ai-pipeline.svc.cluster.local:8080",
-	},
-	{
-		Host:    "orgpulse.local",
 		Backend: "http://org-pulse-frontend.ai-pipeline.svc.cluster.local:8080",
 	},
 	{
 		Host:    "model-relay.ai-pipeline.svc.cluster.local",
 		Backend: "http://model-relay.ai-pipeline.svc.cluster.local:8080",
 	},
-	{
-		Host:    "relay-api.local",
-		Backend: "http://model-relay.ai-pipeline.svc.cluster.local:8080",
-	},
-	{
-		Host:    "relay.local",
-		Backend: "http://model-relay-admin.ai-pipeline.svc.cluster.local:8081",
-	},
-	{
-		Host:    "hooksink.local",
-		Backend: "http://hooksink.ai-pipeline.svc.cluster.local:80",
-	},
-	{
-		Host:    "hooksink-admin.local",
-		Backend: "http://hooksink-admin.ai-pipeline.svc.cluster.local:80",
-	},
+}
+
+type ExternalService struct {
+	Prefix  string
+	Backend string
+}
+
+var externalServices = []ExternalService{
+	{Prefix: "github", Backend: "https://github-emulator.ai-pipeline.svc.cluster.local:443"},
+	{Prefix: "jira", Backend: "https://jira-emulator.ai-pipeline.svc.cluster.local:443"},
+	{Prefix: "dashboard", Backend: "http://pipeline-dashboard.ai-pipeline.svc.cluster.local:5000"},
+	{Prefix: "fullsend", Backend: "http://fullsend-dashboard.ai-pipeline.svc.cluster.local:5000"},
+	{Prefix: "mlflow", Backend: "http://mlflow.ai-pipeline.svc.cluster.local:5000"},
+	{Prefix: "markovd", Backend: "http://markovd.ai-pipeline.svc.cluster.local:8080"},
+	{Prefix: "observatory", Backend: "http://observatory.ai-pipeline.svc.cluster.local:8000"},
+	{Prefix: "gitlab", Backend: "https://gitlab-emulator.ai-pipeline.svc.cluster.local:443"},
+	{Prefix: "orgpulse", Backend: "http://org-pulse-frontend.ai-pipeline.svc.cluster.local:8080"},
+	{Prefix: "relay-api", Backend: "http://model-relay.ai-pipeline.svc.cluster.local:8080"},
+	{Prefix: "relay", Backend: "http://model-relay-admin.ai-pipeline.svc.cluster.local:8081"},
+	{Prefix: "hooksink", Backend: "http://hooksink.ai-pipeline.svc.cluster.local:80"},
+	{Prefix: "hooksink-admin", Backend: "http://hooksink-admin.ai-pipeline.svc.cluster.local:80"},
+}
+
+func getBreadboardDomain() string {
+	domain := strings.TrimSpace(os.Getenv("BREADBOARD_DOMAIN"))
+	if domain == "" {
+		return "local"
+	}
+	return strings.TrimPrefix(domain, ".")
+}
+
+func buildRoutes(domain string) []Route {
+	var r []Route
+	r = append(r, clusterRoutes...)
+
+	// Always register .local routes
+	for _, svc := range externalServices {
+		r = append(r, Route{
+			Host:    svc.Prefix + ".local",
+			Backend: svc.Backend,
+		})
+	}
+
+	// If domain is configured and not "local", also register domain routes
+	if domain != "" && domain != "local" {
+		for _, svc := range externalServices {
+			r = append(r, Route{
+				Host:    svc.Prefix + "." + domain,
+				Backend: svc.Backend,
+			})
+		}
+	}
+
+	return r
 }
 
 var (
@@ -121,18 +123,25 @@ var (
 )
 
 func initProxies() {
-	sharedTransport = &http.Transport{
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
-		DialContext:           (&net.Dialer{Timeout: 5 * time.Second}).DialContext,
-		ResponseHeaderTimeout: 120 * time.Second,
-		MaxIdleConns:          100,
-		MaxIdleConnsPerHost:   10,
-		IdleConnTimeout:       90 * time.Second,
+	initProxiesForDomain(getBreadboardDomain())
+}
+
+func initProxiesForDomain(domain string) {
+	if sharedTransport == nil {
+		sharedTransport = &http.Transport{
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+			DialContext:           (&net.Dialer{Timeout: 5 * time.Second}).DialContext,
+			ResponseHeaderTimeout: 120 * time.Second,
+			MaxIdleConns:          100,
+			MaxIdleConnsPerHost:   10,
+			IdleConnTimeout:       90 * time.Second,
+		}
 	}
 
 	proxyCache = make(map[string]*httputil.ReverseProxy)
 	hostToBackend = make(map[string]string)
 
+	routes := buildRoutes(domain)
 	for _, route := range routes {
 		host := strings.ToLower(route.Host)
 		hostToBackend[host] = route.Backend
@@ -156,7 +165,7 @@ func initProxies() {
 		proxyCache[route.Backend] = proxy
 	}
 
-	log.Printf("Initialized %d cached reverse proxies for %d routes", len(proxyCache), len(routes))
+	log.Printf("Initialized %d cached reverse proxies for %d routes (domain=%s)", len(proxyCache), len(routes), domain)
 }
 
 func getBackend(host string) string {

@@ -4,9 +4,10 @@
 
 Workflow Dojo is a LeetCode-style page for learning to create, run and debug
 Claude Code workflow scripts (the Workflow tool's `agent`/`parallel`/`pipeline`
-JavaScript). Its source is the local-only component repository
-`checkouts/workflow-dojo/`, which has no remote yet; its files are
-uncommitted. Maintained docs: `docs/workflow-dojo.md`.
+JavaScript). Its source is the separate component repository
+[jctanner/claude-workflow-dojo](https://github.com/jctanner/claude-workflow-dojo),
+checked out locally at `checkouts/workflow-dojo/`.
+Maintained integration docs: `docs/workflow-dojo.md`.
 
 Decisions:
 

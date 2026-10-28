@@ -9,6 +9,13 @@
 
 ## Current milestone
 
+- [Lima VM and Tailnet DMZ environment](tasks/pending/lima-tailnet-environment.md):
+  replicate the Breadboard stack on Apple Silicon in an ARM64 Lima VM with
+  Rosetta emulation, parameterized ingress domain (`BREADBOARD_DOMAIN`), and
+  isolated Tailnet DMZ access (`tag:breadboard`). Plan: [lima-tailnet-environment-plan.md](plans/lima-tailnet-environment-plan.md);
+  ADR: [ADR-0014](decisions/ADR-0014-lima-tailnet-dmz-environment.md).
+
+
 - [PR93 review reproduction and repair](tasks/current/strat-pr93-review-followup.md):
   owner authorized local fault reproduction and repairs to push-label races,
   create accounting, deferral history/reasons and reporting. Preserve host

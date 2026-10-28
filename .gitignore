@@ -122,3 +122,10 @@ checkouts.fullsend_prototype/
 
 # Local Google service-account credential; never publish.
 /strat-creator-evals-key.json
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
+*.gate.lock*

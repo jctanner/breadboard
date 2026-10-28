@@ -3,6 +3,7 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
 
 echo "==> Setting up certificate infrastructure..."
@@ -30,7 +31,7 @@ kubectl wait --for=condition=Ready --timeout=60s \
 }
 
 # Apply service certificates
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/02-certificates.yaml"
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/02-certificates.yaml"
 
 echo "==> Waiting for certificates to be issued..."
 sleep 10

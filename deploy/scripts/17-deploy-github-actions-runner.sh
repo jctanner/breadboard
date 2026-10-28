@@ -7,8 +7,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 TOKEN="${GITHUB_EMULATOR_TOKEN:-ghp_admin_default_token}"
 
-echo "==> Configuring in-cluster .local DNS"
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/22-fullsend-networking.yaml"
+echo "==> Configuring in-cluster DNS"
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/22-fullsend-networking.yaml"
 kubectl -n kube-system rollout restart deployment/coredns
 kubectl -n kube-system rollout status deployment/coredns --timeout=120s
 

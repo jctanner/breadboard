@@ -10,13 +10,25 @@ comes from a known place only:
   host), ``ref`` (full 40-character commit) and ``path`` inside the clone.
 """
 
+import os
 import posixpath
 import re
 from urllib.parse import urlparse
 
 RUN_SCRIPT = "/app/scripts/run_script.sh"
 IMAGE_SCRIPT_PREFIX = "var/benchmarks/"
-ALLOWED_SCRIPT_HOSTS = {"github.com", "github.local", "gitlab.local"}
+
+
+def get_allowed_script_hosts() -> set[str]:
+    domain = os.getenv("BREADBOARD_DOMAIN", "local").strip().strip(".") or "local"
+    hosts = {"github.com", "github.local", "gitlab.local"}
+    if domain != "local":
+        hosts.add(f"github.{domain}")
+        hosts.add(f"gitlab.{domain}")
+    return hosts
+
+
+ALLOWED_SCRIPT_HOSTS = get_allowed_script_hosts()
 MAX_SCRIPT_ARGS = 32
 MAX_SCRIPT_ARG_LEN = 4096
 
@@ -71,9 +83,10 @@ def normalize_script_spec(spec) -> dict:
     parsed = urlparse(repo.strip())
     if parsed.scheme != "https" or not parsed.hostname:
         raise ValueError("script.repo must be an https URL")
-    if parsed.hostname not in ALLOWED_SCRIPT_HOSTS:
+    allowed_hosts = get_allowed_script_hosts()
+    if parsed.hostname not in allowed_hosts:
         raise ValueError(
-            f"script.repo host must be one of {', '.join(sorted(ALLOWED_SCRIPT_HOSTS))}"
+            f"script.repo host must be one of {', '.join(sorted(allowed_hosts))}"
         )
     if parsed.username or parsed.password or parsed.query or parsed.fragment:
         raise ValueError("script.repo must not carry credentials, a query or a fragment")

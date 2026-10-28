@@ -92,6 +92,7 @@ class OnboardingConfig:
 
     def __init__(self) -> None:
         self.namespace = os.getenv("FULLSEND_ONBOARD_NAMESPACE", "ai-pipeline")
+        domain = os.getenv("BREADBOARD_DOMAIN", "local").strip().strip(".") or "local"
         self.deployment = os.getenv(
             "FULLSEND_ONBOARD_DEPLOYMENT", "github-actions-runner"
         )
@@ -99,7 +100,7 @@ class OnboardingConfig:
             "GITHUB_API_URL",
             "https://github-emulator.ai-pipeline.svc.cluster.local/api/v3",
         ).rstrip("/")
-        self.server_url = os.getenv("GITHUB_SERVER_URL", "https://github.local").rstrip("/")
+        self.server_url = os.getenv("GITHUB_SERVER_URL", f"https://github.{domain}").rstrip("/")
         self.mint_url = os.getenv("FULLSEND_MINT_URL", "")
         self.inference_project = os.getenv("FULLSEND_GCP_PROJECT_ID", "")
         self.inference_wif_provider = os.getenv("FULLSEND_GCP_WIF_PROVIDER", "")
@@ -113,7 +114,7 @@ class OnboardingConfig:
         # Linking the CLI's URL gives a 404, so the browse URL is built from a
         # template that can be set per forge — the default is this emulator's
         # shape, and a real GitHub deployment sets the canonical one.
-        self.ui_url = os.getenv("GITHUB_UI_URL", "https://github.local").rstrip("/")
+        self.ui_url = os.getenv("GITHUB_UI_URL", f"https://github.{domain}").rstrip("/")
         self.pull_url_template = os.getenv(
             "FULLSEND_ONBOARD_PULL_URL_TEMPLATE",
             "{ui}/ui/{owner}/{repo}/pulls/{number}",

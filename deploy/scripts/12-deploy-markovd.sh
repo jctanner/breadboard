@@ -3,6 +3,7 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
 
 echo "==> Deploying markovd..."
@@ -14,8 +15,8 @@ kubectl apply -f 00-namespace.yaml
 kubectl apply -f 01-ca-issuer.yaml
 
 echo "--- Applying markovd resources ---"
-kubectl apply -f 15-markovd.yaml
-kubectl apply -f 08-ingress-https.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" 15-markovd.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" 08-ingress-https.yaml
 
 echo "--- Waiting for certificate ---"
 kubectl wait --for=condition=ready certificate/markovd-tls -n ai-pipeline --timeout=120s || {
@@ -34,10 +35,11 @@ kubectl wait --for=condition=Available --timeout=120s \
 echo ""
 echo "==> markovd deployed successfully"
 echo ""
+DOMAIN="${BREADBOARD_DOMAIN:-local}"
 echo "Access markovd:"
 echo "  - Internal: http://markovd.ai-pipeline.svc.cluster.local:8080"
 echo "  - Via Ingress: https://markovd.ai-pipeline.svc.cluster.local"
-echo "  - Via Local: https://markovd.local"
+echo "  - Via Edge: https://markovd.${DOMAIN}"
 echo ""
 echo "Check status:"
 echo "  kubectl get pods -n ai-pipeline -l app=markovd"

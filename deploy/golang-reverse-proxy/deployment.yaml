@@ -58,6 +58,8 @@ spec:
           value: /etc/tls/tls.crt
         - name: TLS_KEY_FILE
           value: /etc/tls/tls.key
+        - name: BREADBOARD_DOMAIN
+          value: "local"
 
         volumeMounts:
         # Mount TLS certificate (we'll use a wildcard cert or SNI)

@@ -61,11 +61,12 @@ class FullsendCollector:
     """Collect state from the local GitHub emulator and Kubernetes API."""
 
     def __init__(self) -> None:
+        domain = os.getenv("BREADBOARD_DOMAIN", "local").strip().strip(".") or "local"
         self.github_api = os.getenv(
             "GITHUB_API_URL",
             "http://github-emulator-backend.ai-pipeline.svc.cluster.local:8000/api/v3",
         ).rstrip("/")
-        self.github_ui = os.getenv("GITHUB_UI_URL", "https://github.local").rstrip("/")
+        self.github_ui = os.getenv("GITHUB_UI_URL", f"https://github.{domain}").rstrip("/")
         self.github_repos = [
             item.strip()
             for item in os.getenv("GITHUB_REPOS", "fullsend-dev/triage-target").split(",")

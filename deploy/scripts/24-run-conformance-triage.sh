@@ -99,9 +99,13 @@ if true; then
   for PROFILE in fullsend-vertex-ai fullsend-github-ro fullsend-github-code; do
     INSTALLED="$(kubectl exec -n ai-pipeline deploy/github-actions-runner -- \
       openshell provider profile export "${PROFILE}" 2>/dev/null || true)"
-    SOURCE="$(api "${FORGE}/fullsend-ai/agents/raw/main/profiles/${PROFILE}.yaml" 2>/dev/null || true)"
+    # -f: a 404 must read as absent, not as a profile made of its JSON body.
+    # From v0.52.0 fullsend-vertex-ai and fullsend-github-ro ship inside the
+    # fullsend binary and are absent here; upstream #7973 verifies those
+    # imports against the gateway's export itself.
+    SOURCE="$(api -f "${FORGE}/fullsend-ai/agents/raw/main/profiles/${PROFILE}.yaml" 2>/dev/null || true)"
     if [ -z "${SOURCE}" ]; then
-      note "  ${PROFILE}: not in the agents mirror (skipping)"
+      note "  ${PROFILE}: not in the agents mirror (shipped with fullsend; skipping)"
       continue
     fi
     if [ -z "${INSTALLED}" ]; then

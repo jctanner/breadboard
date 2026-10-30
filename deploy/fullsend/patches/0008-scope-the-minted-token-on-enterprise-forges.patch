@@ -32,7 +32,7 @@ be sent upstream as-is. Add a DCO sign-off before submitting it as a
 human-authored change.
 
 diff --git a/internal/cli/minttoken_test.go b/internal/cli/minttoken_test.go
-index 7caf3cb..30a3a98 100644
+index 7caf3cb98..30a3a9802 100644
 --- a/internal/cli/minttoken_test.go
 +++ b/internal/cli/minttoken_test.go
 @@ -391,3 +391,34 @@ func TestMintTokenCmd_MintTokenError(t *testing.T) {
@@ -71,11 +71,11 @@ index 7caf3cb..30a3a98 100644
 +	}
 +}
 diff --git a/internal/cli/run.go b/internal/cli/run.go
-index eceb406..b3bc76d 100644
+index 683eb5167..120b10064 100644
 --- a/internal/cli/run.go
 +++ b/internal/cli/run.go
-@@ -5230,6 +5230,39 @@ func remintAgentTokenForPostScript(ctx context.Context, h *harness.Harness, mint
- 	return cleanup
+@@ -6935,6 +6935,39 @@ func remintAgentTokenForPostScript(ctx context.Context, h *harness.Harness, mint
+ 	return cleanup, nil
  }
  
 +// ghEnterpriseTokenVars returns the environment variables gh reads a
@@ -114,17 +114,17 @@ index eceb406..b3bc76d 100644
  // syncRunnerEnvTokens copies the current process-env token vars into
  // h.RunnerEnv so childScriptEnv's last-wins merge does not restore the
  // values expanded at the start of the run. Without this, a remint would
-@@ -5240,6 +5273,7 @@ func syncRunnerEnvTokens(h *harness.Harness) {
+@@ -6945,6 +6978,7 @@ func syncRunnerEnvTokens(h *harness.Harness) {
  		return
  	}
- 	names := []string{"GH_TOKEN"}
+ 	names := append([]string(nil), agentTokenEnvVars...)
 +	names = append(names, ghEnterpriseTokenVars()...)
  	for _, tv := range roleTokenVars[resolveRole(h.Role)] {
  		names = append(names, tv.Name)
  	}
-@@ -5295,6 +5329,17 @@ func mintAgentToken(ctx context.Context, role, mintURL, forgePlatform string, pr
+@@ -7164,6 +7198,17 @@ func mintAgentTokenAtLevel(ctx context.Context, role, mintURL, forgePlatform, le
+ 		os.Setenv(name, result.Token)
  	}
- 	os.Setenv("GH_TOKEN", result.Token)
  
 +	// On any forge other than github.com, GH_TOKEN is not the variable gh
 +	// reads, so scoping it alone would leave the ambient credential in

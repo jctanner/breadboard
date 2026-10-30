@@ -5,12 +5,12 @@
       "name": "openshell",
       "kind": "git-checkout",
       "repository": "https://github.com/NVIDIA/openshell.git",
-      "ref": "b2ea81822bb5263679ed00ff0fbe8c08577abab5",
+      "ref": "5a7728c304b5528e954e9ae900cf21f84e1a12b1",
       "checkout": "checkouts/openshell",
       "chart": "deploy/helm/openshell",
-      "gateway_image_tag": "0.0.110",
-      "supervisor_image_tag": "0.0.110",
-      "notes": "The checkout's chart metadata is 0.0.0; release image tags are pinned separately."
+      "gateway_image_tag": "0.1.4",
+      "supervisor_image_tag": "0.1.4",
+      "notes": "v0.1.4, the release fullsend v0.52.0 pins in .github/scripts/openshell-version.sh. The checkout's chart metadata is 0.0.0; release image tags are pinned separately in deploy/k8s/openshell-values.yaml (global.image.tag), which also covers the sandbox runtime image."
     },
     {
       "name": "agent-sandbox",

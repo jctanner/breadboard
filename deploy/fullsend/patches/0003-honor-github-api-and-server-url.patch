@@ -21,7 +21,7 @@ run time. It is written to be sent upstream as-is. Add a DCO sign-off before
 submitting it as a human-authored change.
 
 diff --git a/.github/actions/install-fullsend-cli/action.yml b/.github/actions/install-fullsend-cli/action.yml
-index 1ea0d689..d3af4413 100644
+index 1ea0d689d..d3af4413f 100644
 --- a/.github/actions/install-fullsend-cli/action.yml
 +++ b/.github/actions/install-fullsend-cli/action.yml
 @@ -179,7 +179,8 @@ runs:
@@ -35,10 +35,10 @@ index 1ea0d689..d3af4413 100644
          git init "${SRC}"
          git -C "${SRC}" remote add origin "${REMOTE}"
 diff --git a/action.yml b/action.yml
-index 9ed38708..46e5f541 100644
+index 24fad0b3f..a25f4083a 100644
 --- a/action.yml
 +++ b/action.yml
-@@ -125,7 +125,7 @@ runs:
+@@ -149,7 +149,7 @@ runs:
            TAG="$(retry_curl -fsSL \
              -H "Accept: application/vnd.github+json" \
              -H "Authorization: Bearer ${GH_TOKEN}" \
@@ -47,7 +47,7 @@ index 9ed38708..46e5f541 100644
            if [[ -z "${TAG}" || "${TAG}" == "null" ]]; then
              echo "::error::Could not resolve latest release tag"
              exit 1
-@@ -140,7 +140,7 @@ runs:
+@@ -164,7 +164,7 @@ runs:
            commit_sha=$(retry_curl -fsSL \
              -H "Accept: application/vnd.github+json" \
              -H "Authorization: Bearer ${GH_TOKEN}" \
@@ -56,7 +56,7 @@ index 9ed38708..46e5f541 100644
              | jq -r '.object.sha // empty') || true
            if [[ -n "${commit_sha}" ]]; then
              echo "Dereferenced annotated tag object ${VERSION:0:12} to commit ${commit_sha:0:12}"
-@@ -158,7 +158,7 @@ runs:
+@@ -182,7 +182,7 @@ runs:
              resp=$(retry_curl -fsSL \
                -H "Accept: application/vnd.github+json" \
                -H "Authorization: Bearer ${GH_TOKEN}" \
@@ -65,7 +65,7 @@ index 9ed38708..46e5f541 100644
                || { echo "::warning::Tag lookup failed on page ${page}; skipping SHA-to-tag resolution"; break; }
              match=$(echo "${resp}" | jq -r --arg sha "${VERSION}" \
                '.[] | select(.commit.sha == $sha) | .name' \
-@@ -190,7 +190,7 @@ runs:
+@@ -214,7 +214,7 @@ runs:
          HTTP_STATUS="$(retry_curl -sL -o /dev/null -w "%{http_code}" \
            -H "Accept: application/vnd.github+json" \
            -H "Authorization: Bearer ${GH_TOKEN}" \
@@ -74,7 +74,7 @@ index 9ed38708..46e5f541 100644
  
          if [[ "${HTTP_STATUS}" == "200" ]]; then
            echo "Found release ${VERSION_URL}; downloading pre-built binary"
-@@ -270,7 +270,8 @@ runs:
+@@ -294,7 +294,8 @@ runs:
          esac
  
          ASSET_NAME="fullsend_${VERSION_ASSET}_${os}_${arch}.tar.gz"
@@ -84,7 +84,7 @@ index 9ed38708..46e5f541 100644
  
          echo "Downloading from: ${URL}"
          retry_curl -fsSL "${URL}" -o "/tmp/${ASSET_NAME}"
-@@ -326,7 +327,8 @@ runs:
+@@ -350,7 +351,8 @@ runs:
          fi
          echo "::add-mask::${GH_TOKEN}"
          SRC="${RUNNER_TEMP}/fullsend-src"

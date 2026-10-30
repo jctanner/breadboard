@@ -3,11 +3,17 @@
 
 set -euo pipefail
 
-PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 MANIFEST="${PROJECT_ROOT}/deploy/dependencies.json"
 VALUES="${PROJECT_ROOT}/deploy/k8s/openshell-values.yaml"
 RBAC="${PROJECT_ROOT}/deploy/k8s/openshell-gateway-sandbox-rbac.yaml"
+
+# Run under sudo, root has no usable kubeconfig of its own (at most a stub):
+# k3s's kubectl finds /etc/rancher/k3s/k3s.yaml by itself, but helm does not.
+if [ -z "${KUBECONFIG:-}" ] && [ -r /etc/rancher/k3s/k3s.yaml ]; then
+  export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+fi
 
 if ! command -v helm >/dev/null 2>&1; then
   bash "${SCRIPT_DIR}/00-install-helm.sh"
@@ -51,6 +57,16 @@ echo "==> Preparing OpenShell sandbox namespace"
 kubectl create namespace ai-pipeline --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> Installing OpenShell gateway from ${chart_path}"
+# The 0.1.x chart renamed the StatefulSet's serviceName (openshell ->
+# openshell-peer), an immutable field. Orphan-delete a pre-0.1 StatefulSet so
+# helm can recreate it; the pod keeps running until the new one replaces it
+# and the openshell-data PVC is kept.
+existing_service=$(kubectl get statefulset openshell -n openshell-system \
+  -o jsonpath='{.spec.serviceName}' 2>/dev/null || true)
+if [ -n "${existing_service}" ] && [ "${existing_service}" != "openshell-peer" ]; then
+  echo "    replacing pre-0.1 StatefulSet (serviceName ${existing_service}); PVC kept"
+  kubectl delete statefulset openshell -n openshell-system --cascade=orphan
+fi
 helm upgrade --install openshell "${chart_path}" \
   --namespace openshell-system \
   --create-namespace \

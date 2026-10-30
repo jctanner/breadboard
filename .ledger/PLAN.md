@@ -9,6 +9,15 @@
 
 ## Current milestone
 
+- [Fullsend v0.52.0 patch rebase](tasks/current/fullsend-v052-patch-rebase.md):
+  both checkouts fast-forwarded (fullsend 2,616 and agents 620 commits);
+  fullsend 0010 dropped as fixed upstream, 0015 added (dispatch/lint fallback
+  host), 0016 split out as the embedded read-only profile's local half. Agents
+  0002 replaced by a local-only placeholder design (upstream #1407 forbids real
+  tokens in the sandbox); OpenShell 0.1.4 deployed (fresh gateway DB,
+  CA-bearing local supervisor image, emulator non-cone checkout). Conformance
+  passed on run 1816.
+
 - [Permanent scheduled Workflow cutover](tasks/done/strat-workflow-permanent-schedule-cutover-20261029.md):
   owner authorized permanent fullsend on schedule 4222905; API readback
   verified at 00:34 UTC October 30. Next run midnight New York; six-hour

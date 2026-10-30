@@ -42,13 +42,14 @@ be sent upstream as-is. Add a DCO sign-off before submitting it as a
 human-authored change.
 
 diff --git a/internal/runtime/dummy.go b/internal/runtime/dummy.go
-index 9904d8e..8f0f4fb 100644
+index 201b7590b..f8f46689c 100644
 --- a/internal/runtime/dummy.go
 +++ b/internal/runtime/dummy.go
-@@ -70,6 +70,17 @@ type DummyRuntime struct {
- 	ExecFn         sandboxExecFunc
- 	UploadFn       sandboxUploadFunc
- 	WriteResultsFn writeBehaviourResultsFunc
+@@ -106,6 +106,18 @@ type DummyRuntime struct {
+ 	// RunParams.HostRepoDir; checkout_branch runs its git remote access
+ 	// there because sandboxes cannot fetch from the forge.
+ 	hostRepoDir string
++
 +	// EnvFile overrides the harness environment file behaviour operations
 +	// source. Tests that run generated commands in a real host shell set it;
 +	// production leaves it empty and uses defaultBehaviourEnvFile.
@@ -63,7 +64,7 @@ index 9904d8e..8f0f4fb 100644
  }
  
  func (r DummyRuntime) execFn() sandboxExecFunc {
-@@ -223,6 +234,36 @@ func executeBehaviourScript(ctx context.Context, rt DummyRuntime, sandboxName, r
+@@ -309,6 +321,36 @@ func executeBehaviourScript(ctx context.Context, rt DummyRuntime, sandboxName, r
  	return results, firstErr
  }
  
@@ -100,7 +101,7 @@ index 9904d8e..8f0f4fb 100644
  func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op BehaviourOperation) error {
  	switch op.Op {
  	case "read_file":
-@@ -234,7 +275,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
+@@ -320,7 +362,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
  		if err != nil {
  			return err
  		}
@@ -109,8 +110,8 @@ index 9904d8e..8f0f4fb 100644
  		_, stderr, exitCode, err := rt.execFn()(sandboxName, cmd, 30*time.Second)
  		if err != nil {
  			return fmt.Errorf("read_file exec: %w", err)
-@@ -251,7 +292,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
- 		if err := validateHTTPURL(rawURL); err != nil {
+@@ -337,7 +379,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
+ 		if err := validateHTTPURL("url_get", rawURL); err != nil {
  			return err
  		}
 -		cmd := fmt.Sprintf("curl -sf -- %s -o /dev/null", shellQuote(rawURL))
@@ -118,16 +119,7 @@ index 9904d8e..8f0f4fb 100644
  		_, stderr, exitCode, err := rt.execFn()(sandboxName, cmd, 60*time.Second)
  		if err != nil {
  			return fmt.Errorf("url_get exec: %w", err)
-@@ -296,7 +337,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
- 		if !branchNamePattern.MatchString(name) || strings.Contains(name, "..") {
- 			return fmt.Errorf("checkout_branch invalid branch name %q", name)
- 		}
--		cmd := checkoutBranchCommand(repoDir, name)
-+		cmd := rt.withHarnessEnv(checkoutBranchCommand(repoDir, name))
- 		_, stderr, exitCode, err := rt.execFn()(sandboxName, cmd, 120*time.Second)
- 		if err != nil {
- 			return fmt.Errorf("checkout_branch exec: %w", err)
-@@ -313,7 +354,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
+@@ -391,7 +433,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
  		if !envVarNamePattern.MatchString(varName) {
  			return fmt.Errorf("assert_env invalid variable name %q", varName)
  		}
@@ -136,7 +128,7 @@ index 9904d8e..8f0f4fb 100644
  		_, stderr, exitCode, err := rt.execFn()(sandboxName, cmd, 30*time.Second)
  		if err != nil {
  			return fmt.Errorf("assert_env exec: %w", err)
-@@ -331,7 +372,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
+@@ -432,7 +474,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
  		if err != nil {
  			return err
  		}
@@ -145,7 +137,7 @@ index 9904d8e..8f0f4fb 100644
  		_, stderr, exitCode, err := rt.execFn()(sandboxName, cmd, 30*time.Second)
  		if err != nil {
  			return fmt.Errorf("assert_file exec: %w", err)
-@@ -354,7 +395,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
+@@ -455,7 +497,7 @@ func executeBehaviourOp(rt DummyRuntime, sandboxName, repoDir string, op Behavio
  		if err != nil {
  			return err
  		}
@@ -154,29 +146,37 @@ index 9904d8e..8f0f4fb 100644
  		_, stderr, exitCode, err := rt.execFn()(sandboxName, cmd, 30*time.Second)
  		if err != nil {
  			return fmt.Errorf("assert_json exec: %w", err)
+@@ -536,7 +578,7 @@ func executeCheckoutBranch(rt DummyRuntime, sandboxName, repoDir, name string) e
+ 		return fmt.Errorf("checkout_branch %s: runner ls-remote failed with %d: %s", name, exitCode, strings.TrimSpace(stderr))
+ 	}
+ 
+-	cmd := checkoutBranchCommand(repoDir, name, bundleRef)
++	cmd := rt.withHarnessEnv(checkoutBranchCommand(repoDir, name, bundleRef))
+ 	_, stderr, exitCode, err = rt.execFn()(sandboxName, cmd, 120*time.Second)
+ 	if err != nil {
+ 		return fmt.Errorf("checkout_branch exec: %w", err)
 diff --git a/internal/runtime/dummy_test.go b/internal/runtime/dummy_test.go
-index 917790d..d2b4f65 100644
+index 538578861..500b6f5a1 100644
 --- a/internal/runtime/dummy_test.go
 +++ b/internal/runtime/dummy_test.go
-@@ -581,7 +581,12 @@ func TestExecuteBehaviourOp_CheckoutBranchSuccess(t *testing.T) {
- // the command via sh -c instead of a sandbox.
- func runCheckoutBranchForReal(t *testing.T, repoDir, branch string) error {
+@@ -856,7 +856,13 @@ func TestRunHostGit(t *testing.T) {
+ func runCheckoutBranchForReal(t *testing.T, hostRepo, sandboxRepo, branch string) (bundlePath string, err error) {
  	t.Helper()
--	rt := DummyRuntime{ExecFn: func(_ string, cmd string, _ time.Duration) (string, string, int, error) {
+ 	bundlePath = filepath.Join(t.TempDir(), "checkout-branch.bundle")
 +	// These tests run the generated command in a real host shell, where the
 +	// sandbox's harness environment file does not exist. They are about
 +	// checkout semantics, so give them an empty one that is readable.
 +	envFile := filepath.Join(t.TempDir(), ".env")
 +	require.NoError(t, os.WriteFile(envFile, []byte(""), 0o644))
-+	rt := DummyRuntime{EnvFile: envFile, ExecFn: func(_ string, cmd string, _ time.Duration) (string, string, int, error) {
- 		out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
- 		if err != nil {
- 			var exitErr *exec.ExitError
-@@ -811,3 +816,59 @@ func TestDummyRuntime_ClearIterationArtifacts_SweepFailureIsNotAnError(t *testin
- 	require.Len(t, cmds, 2)
- 	assert.Contains(t, cmds[1], "rm -rf")
+ 	rt := DummyRuntime{
++		EnvFile: envFile,
+ 		ExecFn: func(_ string, cmd string, _ time.Duration) (string, string, int, error) {
+ 			cmd = strings.ReplaceAll(cmd, checkoutBranchBundlePath, bundlePath)
+ 			var stdout, stderr bytes.Buffer
+@@ -1395,6 +1401,43 @@ func TestExecuteHTTPProbe_RedactsJWT(t *testing.T) {
+ 	}
  }
-+
+ 
 +// Behaviour operations run in a fresh shell per call, so a value delivered
 +// through the harness environment file is invisible unless the operation
 +// sources it. This is what made assert_env report a correctly delivered
@@ -200,6 +200,12 @@ index 917790d..d2b4f65 100644
 +					got = cmd
 +					return "", "", 0, nil
 +				},
++				// checkout_branch probes the remote on the runner first;
++				// report the branch absent so only the sandbox command runs.
++				HostGitFn: func(context.Context, string, ...string) (string, string, int, error) {
++					return "", "", 2, nil
++				},
++				hostRepoDir: "/host/repo",
 +			}
 +			require.NoError(t, executeBehaviourOp(rt, "sb", sandbox.SandboxWorkspace+"/target-repo", op))
 +			assert.Contains(t, got, ". '"+sandbox.SandboxWorkspace+"/.env'",
@@ -207,6 +213,14 @@ index 917790d..d2b4f65 100644
 +		})
 +	}
 +}
++
+ func TestExecuteHTTPProbe_ExecError(t *testing.T) {
+ 	t.Parallel()
+ 
+@@ -1606,3 +1649,28 @@ func TestExecuteBehaviourOp_AssertNotJWT(t *testing.T) {
+ 	err = executeBehaviourOp(rt, "sandbox", t.TempDir(), BehaviourOperation{Op: "assert_not_jwt", Args: "X"})
+ 	require.ErrorContains(t, err, "exec down")
+ }
 +
 +// A scenario whose harness environment is missing is not testing what it
 +// claims to, so the operation says that rather than reporting the assertion

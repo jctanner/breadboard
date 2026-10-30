@@ -62,17 +62,17 @@ Exercised locally on the review stage only; the code and fix stages have not
 been run against this change.
 
 diff --git a/Makefile b/Makefile
-index e79fbf8..06c68b4 100644
+index e5854ce..89168eb 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -75,6 +75,7 @@ script-test:
- 	$(call run-timed,bash scripts/post-review-test.sh)
+@@ -91,6 +91,7 @@ script-test:
  	$(call run-timed,bash scripts/risk-tier1-test.sh)
+ 	$(call run-timed,bash scripts/pre-fix-test.sh)
  	$(call run-timed,bash scripts/post-fix-test.sh)
 +	$(call run-timed,bash scripts/github-host-validation-test.sh)
  	$(call run-timed,bash scripts/review-body-fallback-test.sh)
+ 	$(call run-timed,bash scripts/pre-retro-test.sh)
  	$(call run-timed,bash scripts/post-retro-test.sh)
- 	$(call run-timed,bash scripts/pre-scribe-test.sh)
 diff --git a/scripts/github-host-validation-test.sh b/scripts/github-host-validation-test.sh
 new file mode 100755
 index 0000000..16f68b4
@@ -230,16 +230,16 @@ index 0000000..16f68b4
 +fi
 +echo "All github host validation tests passed"
 diff --git a/scripts/lib/github-code-ops.lib.sh b/scripts/lib/github-code-ops.lib.sh
-index a161af2..8838813 100644
+index 53567d2..1020bf3 100644
 --- a/scripts/lib/github-code-ops.lib.sh
 +++ b/scripts/lib/github-code-ops.lib.sh
-@@ -15,11 +15,18 @@
- [[ -n "${GITHUB_CODE_OPS_SH_LOADED:-}" ]] && return 0
- GITHUB_CODE_OPS_SH_LOADED=1
- 
+@@ -21,12 +21,18 @@ source "${BASH_SOURCE[0]%/*}/forge-transient-retry.lib.sh"
+ # API publish that gets the commits signed by GitHub.
+ # shellcheck source=github-signed-push.lib.sh
+ source "${BASH_SOURCE[0]%/*}/github-signed-push.lib.sh"
 +# shellcheck source=github-host-validation.lib.sh
 +source "${BASH_SOURCE[0]%/*}/github-host-validation.lib.sh"
-+
+ 
  # --- URL handling ---
  
  forge_validate_issue_url() {
@@ -253,7 +253,7 @@ index a161af2..8838813 100644
      echo "ERROR: ISSUE_URL does not match expected GitHub pattern: ${url}" >&2
      return 1
    fi
-@@ -27,13 +34,17 @@ forge_validate_issue_url() {
+@@ -34,13 +40,17 @@ forge_validate_issue_url() {
  
  forge_parse_issue_url() {
    local url="${1:-${ISSUE_URL:-}}"
@@ -273,7 +273,7 @@ index a161af2..8838813 100644
  }
  
  forge_extract_issue_from_url() {
-@@ -175,8 +186,14 @@ forge_get_default_branch() {
+@@ -237,8 +247,14 @@ forge_get_default_branch() {
  
  forge_set_push_remote() {
    local token="$1"
@@ -290,20 +290,19 @@ index a161af2..8838813 100644
  
  forge_check_remote_branch() {
 diff --git a/scripts/lib/github-fix-ops.lib.sh b/scripts/lib/github-fix-ops.lib.sh
-index 5668c3d..d9d7fdc 100644
+index 8ff2468..61e2b1b 100644
 --- a/scripts/lib/github-fix-ops.lib.sh
 +++ b/scripts/lib/github-fix-ops.lib.sh
-@@ -15,6 +15,9 @@
- [[ -n "${GITHUB_FIX_OPS_SH_LOADED:-}" ]] && return 0
- GITHUB_FIX_OPS_SH_LOADED=1
- 
+@@ -19,6 +19,8 @@ GITHUB_FIX_OPS_SH_LOADED=1
+ # API publish that gets the commits signed by GitHub.
+ # shellcheck source=github-signed-push.lib.sh
+ source "${BASH_SOURCE[0]%/*}/github-signed-push.lib.sh"
 +# shellcheck source=github-host-validation.lib.sh
 +source "${BASH_SOURCE[0]%/*}/github-host-validation.lib.sh"
-+
+ 
  if ! declare -F gha_echo >/dev/null 2>&1; then
    gha_echo() {
-     local lvl="$1"; shift
-@@ -29,7 +32,11 @@ fi
+@@ -34,7 +36,11 @@ fi
  
  forge_validate_pr_url() {
    local url="${1:-${PR_URL:-}}"
@@ -316,7 +315,7 @@ index 5668c3d..d9d7fdc 100644
      echo "ERROR: PR_URL does not match expected GitHub pattern: ${url}" >&2
      return 1
    fi
-@@ -37,7 +44,9 @@ forge_validate_pr_url() {
+@@ -42,7 +48,9 @@ forge_validate_pr_url() {
  
  forge_parse_pr_url() {
    local url="${1:-${PR_URL:-}}"
@@ -327,7 +326,7 @@ index 5668c3d..d9d7fdc 100644
    # shellcheck disable=SC2034
    PR_NUMBER=$(basename "${url}")
  }
-@@ -52,8 +61,14 @@ forge_get_pr_head_ref() {
+@@ -102,8 +110,14 @@ forge_get_pr_labels() {
  
  forge_set_push_remote() {
    local token="$1"
@@ -407,7 +406,7 @@ index 0000000..e4b0846
 +  printf '%s' "${url#"${base}/"}"
 +}
 diff --git a/scripts/lib/github-review-ops.lib.sh b/scripts/lib/github-review-ops.lib.sh
-index 14238ae..30d6ac4 100644
+index 5cbbe1e..2c84378 100644
 --- a/scripts/lib/github-review-ops.lib.sh
 +++ b/scripts/lib/github-review-ops.lib.sh
 @@ -16,17 +16,26 @@
@@ -440,13 +439,13 @@ index 14238ae..30d6ac4 100644
  }
  
 diff --git a/scripts/post-code.sh b/scripts/post-code.sh
-index 5bc3e60..cc84336 100755
+index fa712ff..4387fe5 100755
 --- a/scripts/post-code.sh
 +++ b/scripts/post-code.sh
-@@ -1271,11 +1271,75 @@ case "${FULLSEND_FORGE:-}" in
- [[ -n "${GITHUB_CODE_OPS_SH_LOADED:-}" ]] && return 0
- GITHUB_CODE_OPS_SH_LOADED=1
- 
+@@ -1958,12 +1958,75 @@ _forge_push_branch() {
+   echo "Branch ${branch} is at ${tip} on origin"
+ }
+ # END bundled: lib/github-signed-push.lib.sh
 +# shellcheck source=github-host-validation.lib.sh
 +# BEGIN bundled: lib/github-host-validation.lib.sh
 +# shellcheck shell=bash
@@ -506,7 +505,7 @@ index 5bc3e60..cc84336 100755
 +  printf '%s' "${url#"${base}/"}"
 +}
 +# END bundled: lib/github-host-validation.lib.sh
-+
+ 
  # --- URL handling ---
  
  forge_validate_issue_url() {
@@ -520,7 +519,7 @@ index 5bc3e60..cc84336 100755
      echo "ERROR: ISSUE_URL does not match expected GitHub pattern: ${url}" >&2
      return 1
    fi
-@@ -1283,13 +1347,17 @@ forge_validate_issue_url() {
+@@ -1971,13 +2034,17 @@ forge_validate_issue_url() {
  
  forge_parse_issue_url() {
    local url="${1:-${ISSUE_URL:-}}"
@@ -540,7 +539,7 @@ index 5bc3e60..cc84336 100755
  }
  
  forge_extract_issue_from_url() {
-@@ -1431,8 +1499,14 @@ forge_get_default_branch() {
+@@ -2174,8 +2241,14 @@ forge_get_default_branch() {
  
  forge_set_push_remote() {
    local token="$1"
@@ -557,13 +556,13 @@ index 5bc3e60..cc84336 100755
  
  forge_check_remote_branch() {
 diff --git a/scripts/post-fix.sh b/scripts/post-fix.sh
-index 1ccbac5..76527d8 100755
+index b526e56..d982277 100755
 --- a/scripts/post-fix.sh
 +++ b/scripts/post-fix.sh
-@@ -89,6 +89,66 @@ case "${FULLSEND_FORGE:-}" in
- [[ -n "${GITHUB_FIX_OPS_SH_LOADED:-}" ]] && return 0
- GITHUB_FIX_OPS_SH_LOADED=1
- 
+@@ -419,6 +419,65 @@ _forge_push_branch() {
+   echo "Branch ${branch} is at ${tip} on origin"
+ }
+ # END bundled: lib/github-signed-push.lib.sh
 +# shellcheck source=github-host-validation.lib.sh
 +# BEGIN bundled: lib/github-host-validation.lib.sh
 +# shellcheck shell=bash
@@ -623,11 +622,10 @@ index 1ccbac5..76527d8 100755
 +  printf '%s' "${url#"${base}/"}"
 +}
 +# END bundled: lib/github-host-validation.lib.sh
-+
+ 
  if ! declare -F gha_echo >/dev/null 2>&1; then
    gha_echo() {
-     local lvl="$1"; shift
-@@ -103,7 +163,11 @@ fi
+@@ -434,7 +493,11 @@ fi
  
  forge_validate_pr_url() {
    local url="${1:-${PR_URL:-}}"
@@ -640,7 +638,7 @@ index 1ccbac5..76527d8 100755
      echo "ERROR: PR_URL does not match expected GitHub pattern: ${url}" >&2
      return 1
    fi
-@@ -111,7 +175,9 @@ forge_validate_pr_url() {
+@@ -442,7 +505,9 @@ forge_validate_pr_url() {
  
  forge_parse_pr_url() {
    local url="${1:-${PR_URL:-}}"
@@ -651,7 +649,7 @@ index 1ccbac5..76527d8 100755
    # shellcheck disable=SC2034
    PR_NUMBER=$(basename "${url}")
  }
-@@ -126,8 +192,14 @@ forge_get_pr_head_ref() {
+@@ -502,8 +567,14 @@ forge_get_pr_labels() {
  
  forge_set_push_remote() {
    local token="$1"
@@ -668,10 +666,10 @@ index 1ccbac5..76527d8 100755
  
  forge_setup_push_token() {
 diff --git a/scripts/post-review.sh b/scripts/post-review.sh
-index f638713..01665ba 100755
+index 9c344c9..aed772e 100755
 --- a/scripts/post-review.sh
 +++ b/scripts/post-review.sh
-@@ -66,17 +66,83 @@ case "${FULLSEND_FORGE:-}" in
+@@ -69,17 +69,83 @@ case "${FULLSEND_FORGE:-}" in
  [[ -n "${GITHUB_REVIEW_OPS_SH_LOADED:-}" ]] && return 0
  GITHUB_REVIEW_OPS_SH_LOADED=1
  
@@ -758,13 +756,13 @@ index f638713..01665ba 100755
  }
  
 diff --git a/scripts/pre-code-jira.sh b/scripts/pre-code-jira.sh
-index f28be44..6c37a92 100755
+index da67353..b21d6b6 100755
 --- a/scripts/pre-code-jira.sh
 +++ b/scripts/pre-code-jira.sh
-@@ -143,11 +143,75 @@ case "${FULLSEND_FORGE:-}" in
- [[ -n "${GITHUB_CODE_OPS_SH_LOADED:-}" ]] && return 0
- GITHUB_CODE_OPS_SH_LOADED=1
- 
+@@ -618,12 +618,75 @@ _forge_push_branch() {
+   echo "Branch ${branch} is at ${tip} on origin"
+ }
+ # END bundled: lib/github-signed-push.lib.sh
 +# shellcheck source=github-host-validation.lib.sh
 +# BEGIN bundled: lib/github-host-validation.lib.sh
 +# shellcheck shell=bash
@@ -824,7 +822,7 @@ index f28be44..6c37a92 100755
 +  printf '%s' "${url#"${base}/"}"
 +}
 +# END bundled: lib/github-host-validation.lib.sh
-+
+ 
  # --- URL handling ---
  
  forge_validate_issue_url() {
@@ -838,7 +836,7 @@ index f28be44..6c37a92 100755
      echo "ERROR: ISSUE_URL does not match expected GitHub pattern: ${url}" >&2
      return 1
    fi
-@@ -155,13 +219,17 @@ forge_validate_issue_url() {
+@@ -631,13 +694,17 @@ forge_validate_issue_url() {
  
  forge_parse_issue_url() {
    local url="${1:-${ISSUE_URL:-}}"
@@ -858,7 +856,7 @@ index f28be44..6c37a92 100755
  }
  
  forge_extract_issue_from_url() {
-@@ -303,8 +371,14 @@ forge_get_default_branch() {
+@@ -834,8 +901,14 @@ forge_get_default_branch() {
  
  forge_set_push_remote() {
    local token="$1"
@@ -875,13 +873,13 @@ index f28be44..6c37a92 100755
  
  forge_check_remote_branch() {
 diff --git a/scripts/pre-code.sh b/scripts/pre-code.sh
-index b17144c..f53d0c7 100755
+index 1edda83..d676c1a 100755
 --- a/scripts/pre-code.sh
 +++ b/scripts/pre-code.sh
-@@ -79,11 +79,75 @@ case "${FULLSEND_FORGE:-}" in
- [[ -n "${GITHUB_CODE_OPS_SH_LOADED:-}" ]] && return 0
- GITHUB_CODE_OPS_SH_LOADED=1
- 
+@@ -560,12 +560,75 @@ _forge_push_branch() {
+   echo "Branch ${branch} is at ${tip} on origin"
+ }
+ # END bundled: lib/github-signed-push.lib.sh
 +# shellcheck source=github-host-validation.lib.sh
 +# BEGIN bundled: lib/github-host-validation.lib.sh
 +# shellcheck shell=bash
@@ -941,7 +939,7 @@ index b17144c..f53d0c7 100755
 +  printf '%s' "${url#"${base}/"}"
 +}
 +# END bundled: lib/github-host-validation.lib.sh
-+
+ 
  # --- URL handling ---
  
  forge_validate_issue_url() {
@@ -955,7 +953,7 @@ index b17144c..f53d0c7 100755
      echo "ERROR: ISSUE_URL does not match expected GitHub pattern: ${url}" >&2
      return 1
    fi
-@@ -91,13 +155,17 @@ forge_validate_issue_url() {
+@@ -573,13 +636,17 @@ forge_validate_issue_url() {
  
  forge_parse_issue_url() {
    local url="${1:-${ISSUE_URL:-}}"
@@ -975,7 +973,7 @@ index b17144c..f53d0c7 100755
  }
  
  forge_extract_issue_from_url() {
-@@ -239,8 +307,14 @@ forge_get_default_branch() {
+@@ -776,8 +843,14 @@ forge_get_default_branch() {
  
  forge_set_push_remote() {
    local token="$1"
@@ -992,13 +990,13 @@ index b17144c..f53d0c7 100755
  
  forge_check_remote_branch() {
 diff --git a/scripts/pre-fix.sh b/scripts/pre-fix.sh
-index 1b894aa..54e0893 100755
+index 8ade936..f05187f 100755
 --- a/scripts/pre-fix.sh
 +++ b/scripts/pre-fix.sh
-@@ -52,6 +52,66 @@ case "${FULLSEND_FORGE:-}" in
- [[ -n "${GITHUB_FIX_OPS_SH_LOADED:-}" ]] && return 0
- GITHUB_FIX_OPS_SH_LOADED=1
- 
+@@ -382,6 +382,65 @@ _forge_push_branch() {
+   echo "Branch ${branch} is at ${tip} on origin"
+ }
+ # END bundled: lib/github-signed-push.lib.sh
 +# shellcheck source=github-host-validation.lib.sh
 +# BEGIN bundled: lib/github-host-validation.lib.sh
 +# shellcheck shell=bash
@@ -1058,11 +1056,10 @@ index 1b894aa..54e0893 100755
 +  printf '%s' "${url#"${base}/"}"
 +}
 +# END bundled: lib/github-host-validation.lib.sh
-+
+ 
  if ! declare -F gha_echo >/dev/null 2>&1; then
    gha_echo() {
-     local lvl="$1"; shift
-@@ -66,7 +126,11 @@ fi
+@@ -397,7 +456,11 @@ fi
  
  forge_validate_pr_url() {
    local url="${1:-${PR_URL:-}}"
@@ -1075,7 +1072,7 @@ index 1b894aa..54e0893 100755
      echo "ERROR: PR_URL does not match expected GitHub pattern: ${url}" >&2
      return 1
    fi
-@@ -74,7 +138,9 @@ forge_validate_pr_url() {
+@@ -405,7 +468,9 @@ forge_validate_pr_url() {
  
  forge_parse_pr_url() {
    local url="${1:-${PR_URL:-}}"
@@ -1086,7 +1083,7 @@ index 1b894aa..54e0893 100755
    # shellcheck disable=SC2034
    PR_NUMBER=$(basename "${url}")
  }
-@@ -89,8 +155,14 @@ forge_get_pr_head_ref() {
+@@ -465,8 +530,14 @@ forge_get_pr_labels() {
  
  forge_set_push_remote() {
    local token="$1"
@@ -1103,10 +1100,10 @@ index 1b894aa..54e0893 100755
  
  forge_setup_push_token() {
 diff --git a/scripts/pre-review.sh b/scripts/pre-review.sh
-index 63be9b0..c62cfff 100755
+index b3f1b5b..7b7a16f 100755
 --- a/scripts/pre-review.sh
 +++ b/scripts/pre-review.sh
-@@ -51,17 +51,83 @@ case "${FULLSEND_FORGE:-}" in
+@@ -84,17 +84,83 @@ case "${FULLSEND_FORGE:-}" in
  [[ -n "${GITHUB_REVIEW_OPS_SH_LOADED:-}" ]] && return 0
  GITHUB_REVIEW_OPS_SH_LOADED=1
  

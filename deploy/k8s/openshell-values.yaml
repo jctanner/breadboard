@@ -4,23 +4,39 @@
 # integration. TLS and user authentication must be enabled before exposing
 # the gateway outside the cluster.
 
-image:
-  tag: "0.0.110"
-  pullPolicy: IfNotPresent
+# One tag for the gateway, supervisor and sandbox runtime images. Keep it at
+# the OpenShell release Fullsend pins (OPENSHELL_VERSION in
+# checkouts/fullsend-ai/fullsend/.github/scripts/openshell-version.sh) and at
+# the ref in deploy/dependencies.json; 05i refuses to build the CLI against a
+# different checkout.
+global:
+  image:
+    tag: "0.1.4"
+    pullPolicy: IfNotPresent
 
+# The pinned supervisor plus the internal CA (built by 05i-build-fullsend.sh):
+# from 0.1.x the supervisor runs in its own container and verifies upstream
+# TLS to the *.local services against its own image's trust store.
 supervisor:
   image:
-    tag: "0.0.110"
-    pullPolicy: IfNotPresent
-  sideloadMethod: init-container
+    registry: docker.io
+    repository: library/openshell-supervisor-local
+    tag: k3s
+    pullPolicy: Never
+
+# Default image for sandboxes created without an explicit image (the
+# dashboard's OpenShell execution backend).
+sandbox:
+  image:
+    repository: docker.io/library/pipeline-agent
+    tag: latest
+    pullPolicy: Never
 
 server:
   telemetryEnabled: false
   # Use the pipeline namespace so sandbox pods can mount the pipeline PVCs.
   # PVCs are namespace-scoped and cannot be mounted across namespaces.
   sandboxNamespace: ai-pipeline
-  sandboxImage: docker.io/library/pipeline-agent:latest
-  sandboxImagePullPolicy: Never
   workspaceStorageClass: local-path
   disableTls: true
   auth:

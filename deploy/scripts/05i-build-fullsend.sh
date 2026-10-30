@@ -16,6 +16,11 @@ OPENSHELL_ROOT="${PROJECT_ROOT}/checkouts/openshell"
 # HTTPS check for an http:// URL, and nothing on any path uses one: the
 # repository variable and .fullsend/config.yaml both name https. The file is
 # kept for the record; the gap in the numbering is deliberate.
+# 0010 (do not cache a profile import that replaced nothing) was dropped in
+# the v0.52.0 rebase: upstream now verifies the gateway's exported profile
+# against the file before treating "already exists" as success (#7973), which
+# closes the same hole. 0016 is a local substitution, not upstream-bound; see
+# its header.
 # These patch Go source before the binary is compiled. Patches that change
 # files a workflow reads at run time belong to MIRROR_PATCHES in
 # deploy/fullsend/seed/seed-upstream-fullsend.py instead; a patch in the wrong
@@ -26,11 +31,12 @@ FULLSEND_PATCHES=(
   "${PROJECT_ROOT}/deploy/fullsend/patches/0007-parse-enterprise-raw-content-urls.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0008-scope-the-minted-token-on-enterprise-forges.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0009-load-the-harness-environment-for-behaviour-ops.patch"
-  "${PROJECT_ROOT}/deploy/fullsend/patches/0010-do-not-cache-a-profile-import-that-never-replaced-anything.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0011-address-the-configured-forge-in-the-github-commands.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0012-let-an-installation-name-its-runner.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0013-allow-the-configured-forge-in-the-default-remote-resources.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0014-address-the-configured-forge-in-the-remaining-clients.patch"
+  "${PROJECT_ROOT}/deploy/fullsend/patches/0015-resolve-the-agents-repo-in-dispatch-lint-and-offline-cache.patch"
+  "${PROJECT_ROOT}/deploy/fullsend/patches/0016-local-allow-the-emulator-in-the-embedded-github-ro-profile.patch"
 )
 RUNNER_CONTEXT="${PROJECT_ROOT}/deploy/fullsend-runner-dev"
 SANDBOX_CONTEXT="${PROJECT_ROOT}/deploy/fullsend-sandbox-dev"
@@ -39,6 +45,8 @@ RUNNER_IMAGE="fullsend-runner-dev:k3s"
 SANDBOX_IMAGE="fullsend-sandbox-dev:k3s"
 SANDBOX_LOCAL_IMAGE="fullsend-sandbox-local:k3s"
 CODE_LOCAL_IMAGE="fullsend-code-local:k3s"
+SUPERVISOR_LOCAL_CONTEXT="${PROJECT_ROOT}/deploy/openshell-supervisor-local"
+SUPERVISOR_LOCAL_IMAGE="openshell-supervisor-local:k3s"
 
 # The CA-bearing local images, each "<tag>|<harness file>|<base repository>".
 # The base digest is not written here: it is read from the harness file that
@@ -244,7 +252,19 @@ for entry in "${LOCAL_SANDBOX_IMAGES[@]}"; do
     -t "${local_image}" "${SANDBOX_LOCAL_CONTEXT}"
 done
 
-for image in "${RUNNER_IMAGE}" "${SANDBOX_IMAGE}" "${SANDBOX_LOCAL_IMAGE}" "${CODE_LOCAL_IMAGE}"; do
+# From OpenShell 0.1.x the supervisor, which verifies upstream TLS, runs in
+# its own image, so the CA in the images above no longer reaches it. The base
+# tag is the one deploy/dependencies.json pins for the gateway chart.
+supervisor_tag="$(jq -er '.dependencies[] | select(.name == "openshell") | .supervisor_image_tag' \
+  "${PROJECT_ROOT}/deploy/dependencies.json")"
+cp "${CA_OUT}" "${SUPERVISOR_LOCAL_CONTEXT}/internal-ca.crt"
+echo "==> Building ${SUPERVISOR_LOCAL_IMAGE} FROM ghcr.io/nvidia/openshell/supervisor:${supervisor_tag}"
+"${CONTAINER_CMD}" build -f "${SUPERVISOR_LOCAL_CONTEXT}/Containerfile" \
+  --build-arg "SUPERVISOR_IMAGE=ghcr.io/nvidia/openshell/supervisor:${supervisor_tag}" \
+  -t "${SUPERVISOR_LOCAL_IMAGE}" "${SUPERVISOR_LOCAL_CONTEXT}"
+
+for image in "${RUNNER_IMAGE}" "${SANDBOX_IMAGE}" "${SANDBOX_LOCAL_IMAGE}" "${CODE_LOCAL_IMAGE}" \
+    "${SUPERVISOR_LOCAL_IMAGE}"; do
   echo "==> Importing ${image} into k3s"
   sudo k3s ctr images rm "docker.io/library/${image}" "localhost/${image}" 2>/dev/null || true
   "${CONTAINER_CMD}" save "${image}" | sudo k3s ctr images import -
@@ -252,4 +272,4 @@ for image in "${RUNNER_IMAGE}" "${SANDBOX_IMAGE}" "${SANDBOX_LOCAL_IMAGE}" "${CO
 done
 
 echo "==> Imported Fullsend/OpenShell images"
-sudo k3s ctr images ls | grep -E 'fullsend-(runner-dev|sandbox-dev|sandbox-local|code-local)'
+sudo k3s ctr images ls | grep -E 'fullsend-(runner-dev|sandbox-dev|sandbox-local|code-local)|openshell-supervisor-local'

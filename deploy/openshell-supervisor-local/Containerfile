@@ -1,0 +1,17 @@
+# OpenShell's pinned supervisor image plus this cluster's internal CA.
+#
+# From 0.1.x the supervisor runs in its own container, so it verifies upstream
+# TLS (github.local and the other *.local services) against this image's
+# bundle, not the agent image's. The image is distroless with no shell, so the
+# bundle is assembled in a throwaway stage and copied back over the original.
+# 0.1.4 accepts a CA only as an upstream proxy CA, and only with a proxy URL.
+ARG SUPERVISOR_IMAGE
+FROM ${SUPERVISOR_IMAGE} AS supervisor
+
+FROM docker.io/library/busybox:1.37 AS bundle
+COPY --from=supervisor /etc/ssl/certs/ca-certificates.crt /bundle.crt
+COPY internal-ca.crt /internal-ca.crt
+RUN cat /internal-ca.crt >> /bundle.crt
+
+FROM ${SUPERVISOR_IMAGE}
+COPY --from=bundle /bundle.crt /etc/ssl/certs/ca-certificates.crt

@@ -31,10 +31,10 @@ changes files a workflow reads at run time. Written to be sent upstream as-is.
 Add a DCO sign-off before submitting it as a human-authored change.
 
 diff --git a/action.yml b/action.yml
-index 9ed38708..e31382af 100644
+index a25f4083a..34d814caa 100644
 --- a/action.yml
 +++ b/action.yml
-@@ -365,11 +365,27 @@ runs:
+@@ -391,11 +391,27 @@ runs:
  
      - name: Install Podman
        shell: bash
@@ -63,7 +63,7 @@ index 9ed38708..e31382af 100644
          test -f /sys/fs/cgroup/cgroup.controllers || { echo "::error::cgroups v2 required"; exit 1; }
          whoami_user="$(whoami)"
          grep -q "^${whoami_user}:" /etc/subuid || sudo usermod --add-subuids 100000-165535 --add-subgids 100000-165535 "${whoami_user}"
-@@ -380,6 +396,14 @@ runs:
+@@ -406,6 +422,14 @@ runs:
      - name: Configure OpenShell gateway
        shell: bash
        run: |
@@ -78,7 +78,7 @@ index 9ed38708..e31382af 100644
          source "$GITHUB_ACTION_PATH/.github/scripts/openshell-version.sh"
          mkdir -p $HOME/.config/openshell/
          cat > $HOME/.config/openshell/gateway.env << EOF
-@@ -395,11 +419,28 @@ runs:
+@@ -425,11 +449,28 @@ runs:
  
      - name: Install OpenShell CLI
        shell: bash

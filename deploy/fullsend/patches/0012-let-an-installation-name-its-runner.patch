@@ -22,7 +22,7 @@ be sent upstream as-is. Add a DCO sign-off before submitting it as a
 human-authored change.
 
 diff --git a/internal/scaffold/render.go b/internal/scaffold/render.go
-index ec0d4c1..3358378 100644
+index fe982cc37..da1467103 100644
 --- a/internal/scaffold/render.go
 +++ b/internal/scaffold/render.go
 @@ -2,6 +2,7 @@ package scaffold
@@ -33,7 +33,7 @@ index ec0d4c1..3358378 100644
  	"strings"
  
  	"github.com/fullsend-ai/fullsend/internal/config"
-@@ -17,8 +18,21 @@ type RenderOptions struct {
+@@ -16,8 +17,20 @@ type RenderOptions struct {
  }
  
  // RenderOptionsForInstall builds render options from the --vendor flag.
@@ -44,11 +44,10 @@ index ec0d4c1..3358378 100644
 +// ever name DefaultGHRunner. An installation whose runners carry different
 +// labels then renders workflows that never get picked up, and the jobs sit
 +// queued indefinitely with nothing reporting why.
- func RenderOptionsForInstall(vendored, perRepo bool, upstreamRef, upstreamTag string) RenderOptions {
--	return RenderOptions{Vendored: vendored, PerRepo: perRepo, UpstreamRef: upstreamRef, UpstreamTag: upstreamTag}
+ func RenderOptionsForInstall(vendored bool, upstreamRef, upstreamTag string) RenderOptions {
+-	return RenderOptions{Vendored: vendored, UpstreamRef: upstreamRef, UpstreamTag: upstreamTag}
 +	return RenderOptions{
 +		Vendored:    vendored,
-+		PerRepo:     perRepo,
 +		UpstreamRef: upstreamRef,
 +		UpstreamTag: upstreamTag,
 +		RunnerImage: strings.TrimSpace(os.Getenv("FULLSEND_RUNNER_IMAGE")),
@@ -57,12 +56,12 @@ index ec0d4c1..3358378 100644
  
  // thinStageWorkflows lists thin caller paths and their stage markers. Keep in sync
 diff --git a/internal/scaffold/render_test.go b/internal/scaffold/render_test.go
-index 6533fcc..a7a722c 100644
+index 6723d57c0..8ffecdea0 100644
 --- a/internal/scaffold/render_test.go
 +++ b/internal/scaffold/render_test.go
-@@ -241,3 +241,30 @@ func TestRenderFallbackToDefaultRef(t *testing.T) {
- 	assert.Contains(t, out, "@main")
- 	assert.NotContains(t, out, "fullsend_ai_ref:")
+@@ -277,3 +277,30 @@ func TestRenderedTemplatesHaveNoSingleSpaceInlineComments(t *testing.T) {
+ 		assert.Contains(t, string(rendered), "@abc123def456  # v0.19.0", path)
+ 	}
  }
 +
 +// The RunnerImage field and resolvedRunner have always existed, but every
@@ -72,7 +71,7 @@ index 6533fcc..a7a722c 100644
 +// jobs sit queued with nothing reporting why.
 +func TestRenderOptionsForInstallHonoursTheRunnerImageEnv(t *testing.T) {
 +	t.Setenv("FULLSEND_RUNNER_IMAGE", "self-hosted-linux")
-+	opts := RenderOptionsForInstall(false, true, "", "")
++	opts := RenderOptionsForInstall(false, "", "")
 +	if opts.RunnerImage != "self-hosted-linux" {
 +		t.Fatalf("RunnerImage = %q, want the configured runner", opts.RunnerImage)
 +	}
@@ -83,7 +82,7 @@ index 6533fcc..a7a722c 100644
 +
 +func TestTheDefaultRunnerIsUnchangedWhenUnset(t *testing.T) {
 +	t.Setenv("FULLSEND_RUNNER_IMAGE", "")
-+	opts := RenderOptionsForInstall(false, true, "", "")
++	opts := RenderOptionsForInstall(false, "", "")
 +	if opts.RunnerImage != "" {
 +		t.Fatalf("RunnerImage = %q, want empty so the default applies", opts.RunnerImage)
 +	}

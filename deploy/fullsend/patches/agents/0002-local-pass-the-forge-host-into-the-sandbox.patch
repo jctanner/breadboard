@@ -1,0 +1,164 @@
+Subject: local: give the sandbox the forge host and an enterprise token placeholder
+
+NOT FOR UPSTREAM. Breadboard-local substitution, recorded under decision 3 of
+the Fullsend integration conformance plan. Replaces the upstream-bound
+0002-pass-the-forge-host-into-the-sandbox.patch, which upstream made
+unsendable.
+
+Inside the sandbox an agent reaches the forge through gh, which takes its
+host from GH_HOST and, for any host that is not github.com, its credential
+from GH_ENTERPRISE_TOKEN rather than GH_TOKEN. The old patch passed both
+through env.sandbox. Since fullsend-ai/agents#1407 (1271dab) no real forge
+token may be expanded into the sandbox: the github-* providers inject an
+opaque placeholder and the gateway substitutes the credential on egress to
+the profile's endpoints, and scripts/sandbox-credential-boundary-test.sh
+enforces it. Passing GH_ENTERPRISE_TOKEN through env.sandbox would put the
+real minted token back in the sandbox.
+
+So the token half moves into the provider. The github-code provider declares
+GH_ENTERPRISE_TOKEN as a second credential carrying the same minted token,
+and the fullsend-github-code profile accepts it as a stored key (OpenShell
+0.1.x rejects a provider credential its profile does not declare). The
+sandbox therefore sees a second placeholder, never the token. Only GH_HOST,
+which is not a secret, goes through env.sandbox, in the GitHub block of every
+harness that has one: triage, review, code, fix, prioritize and retro.
+Scribe has no GitHub sandbox access and is untouched.
+
+The github-ro provider, which triage, review, prioritize and retro use, is
+embedded in the fullsend binary; its half of this change is in fullsend
+patch 0016.
+
+On github.com GH_HOST expands empty, which gh treats as unset.
+
+Breadboard note: applied to the agents mirror by
+deploy/fullsend/seed/seed-upstream-agents.py.
+
+diff --git a/harness/code.yaml b/harness/code.yaml
+index d41762b..8eb1608 100644
+--- a/harness/code.yaml
++++ b/harness/code.yaml
+@@ -112,6 +112,12 @@ overlays:
+         ISSUE_NUMBER: "${ISSUE_NUMBER}"
+         ISSUE_URL: "${GITHUB_ISSUE_URL}"
+         FULLSEND_FORGE: github
++        # Breadboard-local: gh reads its host from GH_HOST, and for any host
++        # that is not github.com its credential from GH_ENTERPRISE_TOKEN. The
++        # token arrives as a provider placeholder (see the github-ro and
++        # github-code provider definitions); only the host, which is not a
++        # secret, is passed through here.
++        GH_HOST: "${GH_HOST}"
+   - when: 'runtime.forge == "gitlab"'
+     providers:
+       - providers/gitlab-code.yaml
+diff --git a/harness/fix.yaml b/harness/fix.yaml
+index 08184e8..2321935 100644
+--- a/harness/fix.yaml
++++ b/harness/fix.yaml
+@@ -123,6 +123,12 @@ forge:
+       sandbox:
+         PR_NUMBER: "${PR_NUMBER}"
+         FULLSEND_FORGE: github
++        # Breadboard-local: gh reads its host from GH_HOST, and for any host
++        # that is not github.com its credential from GH_ENTERPRISE_TOKEN. The
++        # token arrives as a provider placeholder (see the github-ro and
++        # github-code provider definitions); only the host, which is not a
++        # secret, is passed through here.
++        GH_HOST: "${GH_HOST}"
+   gitlab:
+     providers:
+       - providers/gitlab-code.yaml
+diff --git a/harness/prioritize.yaml b/harness/prioritize.yaml
+index 3979c62..cf22a2e 100644
+--- a/harness/prioritize.yaml
++++ b/harness/prioritize.yaml
+@@ -77,6 +77,12 @@ forge:
+       sandbox:
+         ISSUE_URL: "${GITHUB_ISSUE_URL}"
+         FULLSEND_FORGE: github
++        # Breadboard-local: gh reads its host from GH_HOST, and for any host
++        # that is not github.com its credential from GH_ENTERPRISE_TOKEN. The
++        # token arrives as a provider placeholder (see the github-ro and
++        # github-code provider definitions); only the host, which is not a
++        # secret, is passed through here.
++        GH_HOST: "${GH_HOST}"
+   gitlab:
+     providers:
+       - providers/gitlab-ro.yaml
+diff --git a/harness/retro.yaml b/harness/retro.yaml
+index 5667c89..4a24914 100644
+--- a/harness/retro.yaml
++++ b/harness/retro.yaml
+@@ -96,6 +96,12 @@ forge:
+         FULLSEND_FORGE: github
+       sandbox:
+         FULLSEND_FORGE: github
++        # Breadboard-local: gh reads its host from GH_HOST, and for any host
++        # that is not github.com its credential from GH_ENTERPRISE_TOKEN. The
++        # token arrives as a provider placeholder (see the github-ro and
++        # github-code provider definitions); only the host, which is not a
++        # secret, is passed through here.
++        GH_HOST: "${GH_HOST}"
+   gitlab:
+     providers:
+       - providers/gitlab-ro.yaml
+diff --git a/harness/review.yaml b/harness/review.yaml
+index d2ddd8f..a0d64a0 100644
+--- a/harness/review.yaml
++++ b/harness/review.yaml
+@@ -143,6 +143,12 @@ forge:
+         PR_NUMBER: "${PR_NUMBER}"
+         PR_URL: "${GITHUB_PR_URL}"
+         FULLSEND_FORGE: github
++        # Breadboard-local: gh reads its host from GH_HOST, and for any host
++        # that is not github.com its credential from GH_ENTERPRISE_TOKEN. The
++        # token arrives as a provider placeholder (see the github-ro and
++        # github-code provider definitions); only the host, which is not a
++        # secret, is passed through here.
++        GH_HOST: "${GH_HOST}"
+         REVIEW_RISK_ASSESSMENT_ENABLED: "true"
+         REVIEW_RISK_VERDICT_THRESHOLD: "4"
+   gitlab:
+diff --git a/harness/triage.yaml b/harness/triage.yaml
+index 6fa1eeb..0cda141 100644
+--- a/harness/triage.yaml
++++ b/harness/triage.yaml
+@@ -106,6 +106,12 @@ overlays:
+       sandbox:
+         ISSUE_URL: "${GITHUB_ISSUE_URL}"
+         FULLSEND_FORGE: github
++        # Breadboard-local: gh reads its host from GH_HOST, and for any host
++        # that is not github.com its credential from GH_ENTERPRISE_TOKEN. The
++        # token arrives as a provider placeholder (see the github-ro and
++        # github-code provider definitions); only the host, which is not a
++        # secret, is passed through here.
++        GH_HOST: "${GH_HOST}"
+   - when: '(has(event.source) && event.source.system == "gitlab") || (!has(event.source) && runtime.forge == "gitlab")'
+     providers:
+       - providers/gitlab-rw.yaml
+diff --git a/profiles/fullsend-github-code.yaml b/profiles/fullsend-github-code.yaml
+index 153d52e..bbbc766 100644
+--- a/profiles/fullsend-github-code.yaml
++++ b/profiles/fullsend-github-code.yaml
+@@ -9,7 +9,9 @@ category: source_control
+ credentials:
+   - name: api_token
+     description: GitHub token
+-    env_vars: [GH_TOKEN]
++    # Breadboard-local: GH_ENTERPRISE_TOKEN is accepted as a second stored
++    # key so the provider can inject it; see providers/github-code.yaml.
++    env_vars: [GH_TOKEN, GH_ENTERPRISE_TOKEN]
+     required: true
+ endpoints:
+   - host: api.github.com
+diff --git a/providers/github-code.yaml b/providers/github-code.yaml
+index 8698060..b9816fc 100644
+--- a/providers/github-code.yaml
++++ b/providers/github-code.yaml
+@@ -3,3 +3,7 @@ name: github-code
+ type: fullsend-github-code
+ credentials:
+   GH_TOKEN: "${GH_TOKEN}"
++  # Breadboard-local: the same minted token under the name gh reads on any
++  # host that is not github.com. Declared here, not in env.sandbox, so the
++  # sandbox only ever sees a placeholder the gateway resolves on egress.
++  GH_ENTERPRISE_TOKEN: "${GH_TOKEN}"

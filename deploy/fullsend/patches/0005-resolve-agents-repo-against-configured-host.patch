@@ -34,10 +34,10 @@ compilation. Written to be sent upstream as-is. Add a DCO sign-off before
 submitting it as a human-authored change.
 
 diff --git a/internal/cli/run.go b/internal/cli/run.go
-index ab143262..eceb406f 100644
+index 4cc3f36ff..683eb5167 100644
 --- a/internal/cli/run.go
 +++ b/internal/cli/run.go
-@@ -11,6 +11,7 @@ import (
+@@ -12,6 +12,7 @@ import (
  	"io"
  	"math"
  	"net/http"
@@ -53,7 +53,7 @@ index ab143262..eceb406f 100644
  	gl "github.com/fullsend-ai/fullsend/internal/forge/gitlab"
  	"github.com/fullsend-ai/fullsend/internal/gitfetch"
  	"github.com/fullsend-ai/fullsend/internal/harness"
-@@ -120,6 +120,33 @@ var remintForPostScriptTimeout = mintclient.MaxMintDuration
+@@ -144,6 +144,33 @@ var remintForPostScriptTimeout = mintclient.MaxMintDuration
  // from the agents repository. It is a var (not const) to allow test overrides.
  var defaultAgentsRepoURLPrefix = "https://raw.githubusercontent.com/fullsend-ai/agents/"
  
@@ -87,7 +87,20 @@ index ab143262..eceb406f 100644
  // defaultAgentsRepoKnownAgents lists first-party agents available in the
  // fullsend-ai/agents repository. Only these agents are eligible for the
  // runtime fallback — custom agents are never tried against the agents repo.
-@@ -645,7 +672,11 @@ func runAgent(ctx context.Context, agentName, fullsendDir, outputBase, targetRep
+@@ -167,7 +194,11 @@ var statusMintToken = mintclient.MintToken
+ // statusNewForgeClientFn constructs the GitHub client for status comments.
+ // Override in tests to capture status writes without calling GitHub.
+ var statusNewForgeClientFn = func(token string) forge.Client {
+-	return gh.New(token)
++	// A bare gh.New addresses api.github.com by name, so the status comment
++	// this run posts about itself would go to the public site rather than the
++	// forge the run is executing against. newGitHubLiveClient honours
++	// GITHUB_API_URL, as the agents fallback does.
++	return newGitHubLiveClient(token, "")
+ }
+ 
+ // agentWorkingDirExcludes lists fullsend-reserved directory patterns that
+@@ -663,7 +694,11 @@ func runAgent(ctx context.Context, agentName, fullsendDir, outputBase, targetRep
  	// fallback. Always create a GitHub client for the agents-repo fallback —
  	// fullsend-ai/agents is public, so unauthenticated requests work when no
  	// GitHub token is available (e.g., on GitLab pipelines).
@@ -100,20 +113,7 @@ index ab143262..eceb406f 100644
  	harnessPath, fetchDeps, err := resolveAgentSource(ctx, absFullsendDir, agentName, fallbackForgeClient, orgCfg, composeOpts, printer)
  	if err != nil {
  		return err
-@@ -4894,7 +4925,11 @@ func setupStatusNotifierGitHub(notifyCfg config.StatusNotificationConfig, owner,
- 		if os.Getenv("GITHUB_ACTIONS") == "true" {
- 			fmt.Fprintf(os.Stderr, "::add-mask::%s\n", result.Token)
- 		}
--		return tracker.NewForgeClient(gh.New(result.Token)), nil
-+		// Same reason as the agents fallback above: a bare gh.New addresses
-+		// api.github.com by name, so the status comment this run posts about
-+		// itself would go to the public site rather than the forge the run is
-+		// executing against.
-+		return tracker.NewForgeClient(newGitHubLiveClient(result.Token, "")), nil
- 	})
- 
- 	return n, nil
-@@ -5549,7 +5584,7 @@ func fetchPinnedAgentsRepoFile(ctx context.Context, relPath string, forgeClient
+@@ -7421,7 +7456,7 @@ func fetchPinnedAgentsRepoFile(ctx context.Context, relPath string, forgeClient
  		return "", none, false
  	}
  
@@ -123,7 +123,7 @@ index ab143262..eceb406f 100644
  	if harness.MatchingAllowedPrefixInList(rawURL, allowlist) == "" {
  		printer.StepWarn(fmt.Sprintf("Agents repo fallback skipped for %s: URL not in allowed_remote_resources", noun))
 diff --git a/internal/fetch/fetch.go b/internal/fetch/fetch.go
-index 3b15ad75..63191f82 100644
+index 3b15ad75f..63191f820 100644
 --- a/internal/fetch/fetch.go
 +++ b/internal/fetch/fetch.go
 @@ -17,6 +17,7 @@ import (

@@ -111,10 +111,24 @@ fi
 # Derived state: Fullsend re-imports them from the agents mirror on the next
 # run. Deleting is what makes that import actually replace rather than no-op.
 note "Deleting user-scoped fullsend provider profiles"
-PROFILES="$(runner_exec openshell provider list-profiles 2>/dev/null \
-  | awk '$3 == "user" { print $1 }' || true)"
+# JSON rather than the table: OpenShell 0.1.x renamed the command (was
+# `provider list-profiles`) and its CATEGORY column can contain a space.
+PROFILES="$(runner_exec openshell provider profile list -o json 2>/dev/null \
+  | jq -r '.[] | select(.source == "user") | .id' 2>/dev/null || true)"
 if [ -n "${PROFILES}" ]; then
+  # OpenShell 0.1.x refuses to delete a profile while a provider of that type
+  # exists. Fullsend recreates its providers on every run ("Ensuring
+  # provider"), so remove the providers of each profile about to go.
+  PROVIDERS_JSON="$(runner_exec openshell provider list -o json || true)"
   for id in ${PROFILES}; do
+    for provider in $(jq -r --arg t "${id}" \
+        '.providers[]? | select(.type == $t) | .name' <<<"${PROVIDERS_JSON}" 2>/dev/null); do
+      if runner_exec openshell provider delete "${provider}" >/dev/null 2>&1; then
+        note "  deleted provider ${provider} (type ${id})"
+      else
+        note "  WARNING: could not delete provider ${provider} (type ${id})"
+      fi
+    done
     if runner_exec openshell provider profile delete "${id}" >/dev/null 2>&1; then
       note "  deleted ${id}"
     else

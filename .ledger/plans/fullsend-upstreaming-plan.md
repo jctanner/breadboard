@@ -328,6 +328,9 @@ explicit go or pivot before the next begins.
 - **U3. Rebase report.** The patch set applied to current `main`, with a table of
   applies-clean / needs-rework / now-unnecessary. Runnable: the conformance
   stack still passes on the rebased patches.
+  Report against v0.52.0 (2026-10-29):
+  [Fullsend v0.52.0 patch rebase](../tasks/current/fullsend-v052-patch-rebase.md).
+  Conformance passes on the rebased set (run 1816).
 - **U4. First PR merged.** One patch through the whole pipeline — lint, tests,
   coverage, review, CODEOWNERS approval. Proves the process, not the patch.
 - **U5. Host-assumption cluster resolved** — merged, or rejected with a reason

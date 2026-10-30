@@ -26,7 +26,7 @@ merged. Written to be sent upstream as-is. Add a DCO sign-off before
 submitting it as a human-authored change.
 
 diff --git a/internal/config/config.go b/internal/config/config.go
-index 7ec2138..dce9e59 100644
+index 48687b901..52ee93d94 100644
 --- a/internal/config/config.go
 +++ b/internal/config/config.go
 @@ -2,6 +2,8 @@ package config
@@ -38,7 +38,7 @@ index 7ec2138..dce9e59 100644
  	"path"
  	"regexp"
  	"slices"
-@@ -440,12 +442,50 @@ func PerRepoDefaultRoles() []string {
+@@ -434,12 +436,50 @@ func PerRepoDefaultRoles() []string {
  }
  
  // DefaultAllowedRemoteResources returns the standard allowlist prefixes
@@ -92,10 +92,10 @@ index 7ec2138..dce9e59 100644
  
  // EnsureDefaultAllowedRemoteResources returns a new slice with default
 diff --git a/internal/config/config_test.go b/internal/config/config_test.go
-index 4dcf480..e6d6db1 100644
+index c6c2d68d3..a6867e5af 100644
 --- a/internal/config/config_test.go
 +++ b/internal/config/config_test.go
-@@ -2192,12 +2192,32 @@ func TestPerRepoConfig_Marshal_WithAgents(t *testing.T) {
+@@ -1000,12 +1000,37 @@ func TestPerRepoConfig_Marshal_WithAgents(t *testing.T) {
  // --- DefaultAllowedRemoteResources tests ---
  
  func TestDefaultAllowedRemoteResources(t *testing.T) {
@@ -125,6 +125,11 @@ index 4dcf480..e6d6db1 100644
 +	assert.Len(t, DefaultAllowedRemoteResources(), 2)
 +}
 +
- func TestNewOrgConfig_UsesDefaultAllowedRemoteResources(t *testing.T) {
- 	cfg := NewOrgConfig(nil, nil, nil, "", "")
- 	assert.Equal(t, DefaultAllowedRemoteResources(), cfg.AllowedResources())
++func TestPerRepoDefaults_UsesDefaultAllowedRemoteResources(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://ghe.example.internal")
++	assert.Equal(t, DefaultAllowedRemoteResources(), (&perRepoDefaults{}).AllowedResources())
++}
++
+ func TestPerRepoConfig_RoundTrip_WithAgents(t *testing.T) {
+ 	original := &perRepoConfig{
+ 		Version: "1",

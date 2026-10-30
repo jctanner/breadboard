@@ -44,7 +44,7 @@ assumption that 0005, 0007, 0008 and 0011 fix. Add a DCO sign-off before
 submitting it as a human-authored change.
 
 diff --git a/internal/cli/evalmeasure.go b/internal/cli/evalmeasure.go
-index f769600f..b0e36ceb 100644
+index 5c464d57c..36e89febd 100644
 --- a/internal/cli/evalmeasure.go
 +++ b/internal/cli/evalmeasure.go
 @@ -13,7 +13,6 @@ import (
@@ -55,7 +55,7 @@ index f769600f..b0e36ceb 100644
  	"github.com/fullsend-ai/fullsend/internal/harness"
  	"github.com/fullsend-ai/fullsend/internal/ui"
  )
-@@ -244,7 +243,7 @@ func evalMeasureFetchContext(fullsendDir string, offline bool, printer *ui.Print
+@@ -254,7 +253,7 @@ func evalMeasureFetchContext(fullsendDir string, offline bool, printer *ui.Print
  		AuditLogPath:  filepath.Join(abs, ".fullsend-cache", "fetch-audit.jsonl"),
  		OrgAllowlist:  orgAllowlist,
  		GitToken:      token,
@@ -65,7 +65,7 @@ index f769600f..b0e36ceb 100644
  
  func printMeasurementResults(printer *ui.Printer, results []evalmeasure.EvaluationResult, wroteOK bool) {
 diff --git a/internal/cli/evalmeasure_test.go b/internal/cli/evalmeasure_test.go
-index 726c4775..cf1ef650 100644
+index af1d1de48..5b5f7d24b 100644
 --- a/internal/cli/evalmeasure_test.go
 +++ b/internal/cli/evalmeasure_test.go
 @@ -13,6 +13,7 @@ import (
@@ -76,7 +76,7 @@ index 726c4775..cf1ef650 100644
  	"github.com/fullsend-ai/fullsend/internal/telemetry"
  	"github.com/fullsend-ai/fullsend/internal/ui"
  )
-@@ -565,3 +566,14 @@ func TestRunEvalMeasure_OTLPFailWarns(t *testing.T) {
+@@ -610,3 +611,14 @@ func TestRunEvalMeasure_OTLPFailWarns(t *testing.T) {
  	_, statErr := os.Stat(filepath.Join(out, evalmeasure.MeasurementsFile))
  	require.NoError(t, statErr, "local JSONL must still be written")
  }
@@ -92,7 +92,7 @@ index 726c4775..cf1ef650 100644
 +	assert.Equal(t, "https://ghes.example.com/api/v3", live.BaseURL())
 +}
 diff --git a/internal/cli/reconcilestatus.go b/internal/cli/reconcilestatus.go
-index 2e952407..905efcef 100644
+index 2318003d7..894a1cde9 100644
 --- a/internal/cli/reconcilestatus.go
 +++ b/internal/cli/reconcilestatus.go
 @@ -9,7 +9,6 @@ import (
@@ -121,10 +121,10 @@ index 2e952407..905efcef 100644
  var reconcileOrphaned = statuscomment.ReconcileOrphaned
  
 diff --git a/internal/cli/reconcilestatus_test.go b/internal/cli/reconcilestatus_test.go
-index 823086fa..9928e728 100644
+index b2cb69039..de7ca29a1 100644
 --- a/internal/cli/reconcilestatus_test.go
 +++ b/internal/cli/reconcilestatus_test.go
-@@ -777,3 +777,12 @@ func TestNewReconcileStatusCmd_NoEvent_FallsBackToForge(t *testing.T) {
+@@ -972,3 +972,12 @@ func TestNewReconcileStatusCmd_NoEvent_FallsBackToForge(t *testing.T) {
  	err := cmd.Execute()
  	require.NoError(t, err)
  }
@@ -138,10 +138,10 @@ index 823086fa..9928e728 100644
 +	assert.Equal(t, "https://ghes.example.com/api/v3", client.BaseURL())
 +}
 diff --git a/internal/cli/run.go b/internal/cli/run.go
-index ab143262..0cdf761c 100644
+index 120b10064..e84b7d4d4 100644
 --- a/internal/cli/run.go
 +++ b/internal/cli/run.go
-@@ -1190,7 +1190,7 @@ func runAgent(ctx context.Context, agentName, fullsendDir, outputBase, targetRep
+@@ -1389,7 +1389,7 @@ func runAgent(ctx context.Context, agentName, fullsendDir, outputBase, targetRep
  	// Non-fatal: if the check fails (e.g., non-installation token), log a
  	// warning and continue.
  	if ghToken := envGHToken(); ghToken != "" {
@@ -151,7 +151,7 @@ index ab143262..0cdf761c 100644
  			printer.StepWarn("Token scope check: " + err.Error())
  		} else if len(repos) > 0 {
 diff --git a/internal/cli/tokenscope.go b/internal/cli/tokenscope.go
-index 323adfac..8987fc2b 100644
+index 323adfacb..8987fc2b5 100644
 --- a/internal/cli/tokenscope.go
 +++ b/internal/cli/tokenscope.go
 @@ -4,6 +4,8 @@ import (
@@ -184,7 +184,7 @@ index 323adfac..8987fc2b 100644
  // GET /installation/repositories and returning the full_name of each
  // accessible repo. Returns (nil, nil) when the token is empty or not an
 diff --git a/internal/cli/tokenscope_test.go b/internal/cli/tokenscope_test.go
-index 702dbf40..a0dca2b8 100644
+index 702dbf403..a0dca2b89 100644
 --- a/internal/cli/tokenscope_test.go
 +++ b/internal/cli/tokenscope_test.go
 @@ -114,3 +114,16 @@ func TestFetchTokenScope_CancelledContext(t *testing.T) {

@@ -1,8 +1,8 @@
 # Fullsend compatibility profile
 
 Everything this deployment substitutes for Fullsend's production environment,
-in one place, so the substitutions can be reviewed without reading twelve patch
-headers and three seed scripts.
+in one place, so the substitutions can be reviewed without reading every patch
+header and three seed scripts.
 
 The rule this document answers to is decision 3 of the
 [Fullsend integration conformance plan](../.ledger/plans/fullsend-integration-conformance-plan.md):
@@ -58,6 +58,17 @@ version cannot inject a CA into sandbox pods. Uploading one afterwards does not
 help. Drop this the day the chart gains CA injection, or the forge is served by
 a publicly trusted certificate.
 
+From OpenShell 0.1.x (pinned since the v0.52.0 rebase) the supervisor runs in
+its own container and verifies upstream TLS against its own image's bundle, so
+the CA in the sandbox images no longer reaches it. `05i-build-fullsend.sh`
+therefore also builds `openshell-supervisor-local:k3s`, the pinned
+`ghcr.io/nvidia/openshell/supervisor` image with the internal CA appended
+(`deploy/openshell-supervisor-local/`), and `deploy/k8s/openshell-values.yaml`
+selects it. The chart's `upstreamProxy.caBundle` would be the supported route,
+but 0.1.4 rejects it without a proxy URL ("proxy_ca_bundle is set but no
+https_proxy is configured"). Whether the sandbox images still need the CA
+once the supervisor has it is untested.
+
 ## 2. `.local` routing and development CA handling
 
 Decision 3's second clause.
@@ -68,24 +79,37 @@ Decision 3's second clause.
   sandbox images (above) and trusted by the runner.
 - `NO_SSL_VERIFY=1` is set for the Breadboard dashboard, which talks to those
   emulator endpoints.
-- **Agents patch 0003** adds `github.local` to `fullsend-github-ro.yaml` and
-  `fullsend-github-code.yaml`. A provider profile is the sandbox's network
-  allowlist and Fullsend imports profiles verbatim, expanding no variables —
-  correct for a policy file, and the reason a host that varies per environment
-  can only be added by editing it. The read-only posture and the binary
-  allowlist are unchanged, `curl` still excluded. **Local-only; not for
-  upstream.**
+- **Agents patch 0003** and **Go patch 0016** add `github.local` to the two
+  GitHub profiles: 0003 to `fullsend-github-code.yaml` in the agents tree (code,
+  fix), 0016 to `fullsend-github-ro.yaml`, which since v0.52.0 is embedded in
+  the `fullsend` binary under a reserved id (triage, review, prioritize, retro).
+  A provider profile is the sandbox's network allowlist and Fullsend imports
+  profiles verbatim, expanding no variables — correct for a policy file, and
+  the reason a host that varies per environment can only be added by editing
+  it. The read-only posture and the binary allowlist are unchanged, `curl`
+  still excluded. **Local-only; not for upstream.**
+- **Agents patch 0002** and **Go patch 0016** let `gh` inside the sandbox
+  address the emulator. gh reads its host from `GH_HOST` and, on any host that
+  is not github.com, its credential from `GH_ENTERPRISE_TOKEN`. Since
+  fullsend-ai/agents#1407 no real forge token may be expanded into the sandbox,
+  so the `github-ro` and `github-code` providers declare `GH_ENTERPRISE_TOKEN`
+  as a second credential carrying the minted token, and their profiles accept
+  it; the sandbox sees a placeholder the gateway resolves on egress, as it does
+  for `GH_TOKEN`. Only `GH_HOST`, which is not a secret, is passed through
+  `env.sandbox`, in the GitHub block of the six harnesses that have one.
+  **Local-only; not for upstream.**
 - **Agents patch 0004** points the three harnesses at the CA-bearing local
   images described above. **Local-only; not for upstream.**
 
-Those two are the only patches in the whole set marked `NOT FOR UPSTREAM`.
+Those, agents 0002 to 0004 and Go 0016, are the only patches in the whole set
+marked `NOT FOR UPSTREAM`.
 
 ## 3. Patches that are fixes, not substitutions
 
 The rest of the patch set is upstream-bound: each is a real defect that would
 affect any GitHub Enterprise install, found here because an enterprise host is
 what this stack is. They are listed so a reader can tell them apart from the
-two substitutions above, not because they are deviations.
+substitutions above, not because they are deviations.
 
 **Go source, applied before the binary is compiled** (`05i-build-fullsend.sh`):
 
@@ -96,11 +120,11 @@ two substitutions above, not because they are deviations.
 | 0007 | parse enterprise raw-content URLs |
 | 0008 | scope the minted token on forges that are not github.com |
 | 0009 | load the harness environment for dummy behaviour ops |
-| 0010 | do not report success for a profile import that replaced nothing |
 | 0011 | address the configured forge in the `github` subcommands |
 | 0012 | let an installation name the runner its workflows target |
 | 0013 | allow the configured forge in the default remote-resource allowlist |
 | 0014 | address the configured forge in the three remaining GitHub clients: the post-job status reconciliation, the token-scope check, and the eval-measure manifest fetch |
+| 0015 | resolve the agents repo on the configured host in `fullsend dispatch --route`, `fullsend lint` and the offline cache scan |
 
 **Agents tree, applied to the mirror at seed time**
 (`seed-upstream-agents.py`):
@@ -108,7 +132,6 @@ two substitutions above, not because they are deviations.
 | patch | fixes |
 | --- | --- |
 | 0001 | accept an issue URL on the configured GitHub host (triage library) |
-| 0002 | pass the forge host into the sandbox — all six GitHub overlays |
 | 0005 | the same host assumption in the review, code and fix libraries |
 
 **Fullsend mirror, applied to files a workflow reads at run time**
@@ -127,6 +150,13 @@ silently. The lists say so where they are defined.
   one. The file is kept for the record; the gap in the numbering is deliberate.
 - Two earlier patches (sandbox-name length, sticky-comment forge URL) were
   dropped because upstream fixes both natively.
+- **Go patch 0010, "do not report success for a profile import that replaced
+  nothing"** — dropped in the v0.52.0 rebase: upstream now checks the gateway's
+  exported profile against the file before treating "already exists" as
+  success (#7973).
+- **Agents patch 0002, "pass the forge host into the sandbox"** — replaced in
+  the v0.52.0 rebase by the local-only patch of the same number above. It
+  passed the real minted token through `env.sandbox`, which agents#1407 forbids.
 
 ## 4. Emulated marketplace actions
 

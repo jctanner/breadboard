@@ -29,9 +29,11 @@ deploy/scripts/05i-build-fullsend.sh, and it applies on top of patch 0005.
 Written to be sent upstream as-is. Add a DCO sign-off before submitting it as a
 human-authored change.
 
+diff --git a/internal/fetch/fetch.go b/internal/fetch/fetch.go
+index 63191f820..6c4af7beb 100644
 --- a/internal/fetch/fetch.go
 +++ b/internal/fetch/fetch.go
-@@ -65,6 +65,18 @@
+@@ -65,6 +65,18 @@ type FetchPolicy struct {
  	// tests where the test server necessarily listens on 127.0.0.1.
  	// Set via NewTestPolicy.
  	skipIPCheck bool
@@ -50,7 +52,7 @@ human-authored change.
  }
  
  const (
-@@ -135,8 +147,56 @@
+@@ -135,8 +147,56 @@ func defaultAllowedDomains() []string {
  
  // DefaultPolicy is a sensible default policy allowing GitHub content hosts
  // and the configured forge.
@@ -107,7 +109,7 @@ human-authored change.
  	MaxSizeBytes:   10 * 1024 * 1024, // 10 MB
  	Timeout:        30 * time.Second,
  	// MaxRetries: nil → uses default (4 total attempts).
-@@ -204,7 +264,7 @@
+@@ -204,7 +264,7 @@ func FetchURL(ctx context.Context, rawURL string, policy FetchPolicy) ([]byte, e
  	}
  
  	// 6. Validate ALL resolved IPs.
@@ -116,9 +118,11 @@ human-authored change.
  		for _, addr := range addrs {
  			if netutil.IsInternal(addr.IP) {
  				return nil, fmt.Errorf("%w: %s resolved to %s", errInternalIP, hostname, addr.IP)
+diff --git a/internal/fetch/fetch_test.go b/internal/fetch/fetch_test.go
+index fe7980d06..a3e8e85b9 100644
 --- a/internal/fetch/fetch_test.go
 +++ b/internal/fetch/fetch_test.go
-@@ -649,3 +649,62 @@
+@@ -649,3 +649,62 @@ func TestComputeSHA256(t *testing.T) {
  		t.Fatalf("ComputeSHA256(%q) = %s, want known hash %s", input, got, knownHash)
  	}
  }

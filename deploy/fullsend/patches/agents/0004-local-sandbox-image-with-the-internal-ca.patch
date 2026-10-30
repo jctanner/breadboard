@@ -33,31 +33,31 @@ Breadboard note: applied to the agents mirror by
 deploy/fullsend/seed/seed-upstream-agents.py.
 
 diff --git a/harness/code.yaml b/harness/code.yaml
-index a58b6f0..8e7972b 100644
+index 5925de4..d41762b 100644
 --- a/harness/code.yaml
 +++ b/harness/code.yaml
-@@ -20,7 +20,11 @@ model: opus
+@@ -18,7 +18,11 @@ model: opus
  # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
  # when the model: above moves to a generation with a different default.
  effort: high
--image: ghcr.io/fullsend-ai/fullsend-code@sha256:623fc74588876062f12f40690ee759c6134ba516fabdd36e6dcfc4eeb9cd1d0b
+-image: ghcr.io/fullsend-ai/fullsend-code@sha256:7a020876eeab07d788d03d4313d24198332d7cbd7ec8dce809d53656e86296c6
 +# Breadboard-local: the same locally built image the review harness uses -
 +# they pin the same fullsend-code digest, so one build serves both. The
 +# build reads that digest from review.yaml's upstream line rather than
 +# repeating it anywhere.
 +image: fullsend-code-local:k3s
  policy: policies/base.yaml
- openshell:
-   profiles:
+ providers:
+   - vertex-ai
 diff --git a/harness/review.yaml b/harness/review.yaml
-index 4412a67..add757a 100644
+index ec9c665..d2ddd8f 100644
 --- a/harness/review.yaml
 +++ b/harness/review.yaml
 @@ -9,7 +9,13 @@ model: opus
  # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
  # when the model: above moves to a generation with a different default.
  effort: high
--image: ghcr.io/fullsend-ai/fullsend-code@sha256:623fc74588876062f12f40690ee759c6134ba516fabdd36e6dcfc4eeb9cd1d0b
+-image: ghcr.io/fullsend-ai/fullsend-code@sha256:7a020876eeab07d788d03d4313d24198332d7cbd7ec8dce809d53656e86296c6
 +# Breadboard-local: the image above, plus this cluster's internal CA, for
 +# the same reason as the triage harness. Review and code pin the same
 +# fullsend-code digest, so one local build serves both. Built by
@@ -67,16 +67,16 @@ index 4412a67..add757a 100644
 +image: fullsend-code-local:k3s
  policy: policies/base.yaml
  readonly_repo: true
- openshell:
+ providers:
 diff --git a/harness/triage.yaml b/harness/triage.yaml
-index 56f8cbd..bb5ae12 100644
+index c481835..6fa1eeb 100644
 --- a/harness/triage.yaml
 +++ b/harness/triage.yaml
 @@ -9,7 +9,13 @@ model: opus
  # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
  # when the model: above moves to a generation with a different default.
  effort: high
--image: ghcr.io/fullsend-ai/fullsend-sandbox@sha256:259605fea321353552fdefd3a6a55e8b5c260998dfc5a622ed143e41a429995a
+-image: ghcr.io/fullsend-ai/fullsend-sandbox@sha256:6e97f0f6536cf1af1706ef4577b19ae1187090712ee59670351e78b43d6906e4
 +# Breadboard-local: the image above, plus this cluster's internal CA. The
 +# sandbox supervisor reads its upstream TLS roots from the system bundle
 +# once at startup, and the conformance forge is served by a CA that exists
@@ -85,5 +85,5 @@ index 56f8cbd..bb5ae12 100644
 +# digest above, so this is that image plus one layer.
 +image: fullsend-sandbox-local:k3s
  policy: policies/base.yaml
- openshell:
-   profiles:
+ providers:
+   - vertex-ai

@@ -3,7 +3,8 @@
 
 set -euo pipefail
 
-PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 MANIFEST="${PROJECT_ROOT}/deploy/dependencies.json"
 
 if ! command -v jq >/dev/null 2>&1; then

@@ -46,8 +46,10 @@ UPSTREAM_BRANCH = "main"
 PATCH_DIR = ROOT / "deploy" / "fullsend" / "patches" / "agents"
 MIRROR_PATCHES = (
     "0001-accept-a-configured-github-host.patch",
-    "0002-pass-the-forge-host-into-the-sandbox.patch",
-    # Local substitution, not upstream-bound. See the patch header.
+    # Local substitutions, not upstream-bound. See each patch header. 0002
+    # replaced an upstream-bound patch that fullsend-ai/agents#1407 made
+    # unsendable: the sandbox now gets a token placeholder, never the token.
+    "0002-local-pass-the-forge-host-into-the-sandbox.patch",
     "0003-local-allow-the-emulator-in-the-github-profile.patch",
     "0004-local-sandbox-image-with-the-internal-ca.patch",
     "0005-address-the-configured-github-host-in-the-remaining-ops-libraries.patch",

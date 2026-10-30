@@ -28,7 +28,7 @@ Written to be sent upstream as-is. Add a DCO sign-off before submitting it as a
 human-authored change.
 
 diff --git a/scripts/lib/github-triage-ops.lib.sh b/scripts/lib/github-triage-ops.lib.sh
-index db7908e..9aef3e3 100755
+index 4d9b84e..9a9c326 100755
 --- a/scripts/lib/github-triage-ops.lib.sh
 +++ b/scripts/lib/github-triage-ops.lib.sh
 @@ -19,14 +19,26 @@ GITHUB_TRIAGE_OPS_SH_LOADED=1
@@ -61,7 +61,7 @@ index db7908e..9aef3e3 100755
  }
  
 diff --git a/scripts/post-triage.sh b/scripts/post-triage.sh
-index c2c4914..3119e55 100755
+index dbb26b5..5c59c0d 100755
 --- a/scripts/post-triage.sh
 +++ b/scripts/post-triage.sh
 @@ -65,14 +65,26 @@ GITHUB_TRIAGE_OPS_SH_LOADED=1
@@ -94,7 +94,7 @@ index c2c4914..3119e55 100755
  }
  
 diff --git a/scripts/pre-triage.sh b/scripts/pre-triage.sh
-index ee10d55..9f51f53 100755
+index 7a61811..6268ada 100755
 --- a/scripts/pre-triage.sh
 +++ b/scripts/pre-triage.sh
 @@ -61,14 +61,26 @@ GITHUB_TRIAGE_OPS_SH_LOADED=1

@@ -32,9 +32,11 @@ deploy/scripts/05i-build-fullsend.sh, and it applies on top of patches 0005
 and 0006. Written to be sent upstream as-is. Add a DCO sign-off before
 submitting it as a human-authored change.
 
+diff --git a/internal/forge/url.go b/internal/forge/url.go
+index 7e8644595..8fca3ab39 100644
 --- a/internal/forge/url.go
 +++ b/internal/forge/url.go
-@@ -3,6 +3,7 @@
+@@ -3,6 +3,7 @@ package forge
  import (
  	"fmt"
  	"net/url"
@@ -42,7 +44,7 @@ submitting it as a human-authored change.
  	"strings"
  )
  
-@@ -160,6 +161,24 @@
+@@ -160,6 +161,24 @@ func parseGitLabURL(segments []string) (*ForgeURLInfo, error) {
  	}, nil
  }
  
@@ -67,7 +69,7 @@ submitting it as a human-authored change.
  // hostnameToForge maps a forge hostname to its short name.
  func hostnameToForge(hostname string) string {
  	switch hostname {
-@@ -193,8 +212,25 @@
+@@ -193,8 +212,25 @@ func ParseRawContentURL(rawURL string) (*ForgeURLInfo, error) {
  	if u.Scheme != "https" {
  		return nil, fmt.Errorf("unsupported scheme %q: only https is accepted", u.Scheme)
  	}
@@ -95,7 +97,7 @@ submitting it as a human-authored change.
  	}
  
  	var segments []string
-@@ -204,14 +240,29 @@
+@@ -204,14 +240,29 @@ func ParseRawContentURL(rawURL string) (*ForgeURLInfo, error) {
  		}
  	}
  
@@ -128,7 +130,7 @@ submitting it as a human-authored change.
  
  	if owner == "" {
  		return nil, fmt.Errorf("empty owner in URL")
-@@ -224,12 +275,21 @@
+@@ -224,12 +275,21 @@ func ParseRawContentURL(rawURL string) (*ForgeURLInfo, error) {
  	}
  
  	var repoPath string
@@ -153,9 +155,11 @@ submitting it as a human-authored change.
  		Owner:    owner,
  		Repo:     repo,
  		Path:     repoPath,
+diff --git a/internal/forge/url_test.go b/internal/forge/url_test.go
+index ff3629ec4..500adfacd 100644
 --- a/internal/forge/url_test.go
 +++ b/internal/forge/url_test.go
-@@ -310,3 +310,87 @@
+@@ -310,3 +310,87 @@ func TestIsSupportedForge(t *testing.T) {
  		})
  	}
  }

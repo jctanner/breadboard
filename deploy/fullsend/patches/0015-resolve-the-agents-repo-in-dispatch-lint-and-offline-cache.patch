@@ -1,0 +1,197 @@
+Subject: fix(cli): resolve the agents repo on the configured host in dispatch and lint
+
+Patch 0005 moved fullsend run's agents-repo fallback onto the configured
+forge. Three later readers of the same fallback still assume github.com:
+
+- `fullsend dispatch --route`, which reusable-dispatch.yml runs for every CEL
+  route, resolves the agent's harness with a bare gh.New(""). On any other
+  forge the lookup fails, the harness role cannot be read, and the route's
+  authorization threshold fails closed to write without saying the harness
+  was never found.
+- `fullsend lint` builds the same fallback client with a bare gh.New.
+- The offline cache scan and the dispatch decision label match cached URLs
+  against defaultAgentsRepoURLPrefix, while the online path now pins them
+  under agentsRepoRawURLPrefix(). Offline, a harness the previous run cached
+  on an enterprise forge is never found.
+
+Use newGitHubLiveClient for both clients, which honours GITHUB_API_URL and
+keeps the token optional, and match against agentsRepoRawURLPrefix() in both
+scans. github.com keeps the public prefix, so behaviour there is unchanged.
+
+Breadboard note: patches Go source, so it belongs to the build patch list in
+deploy/scripts/05i-build-fullsend.sh. Found while rebasing the patch set onto
+v0.52.0: these call sites were added upstream after 0005 was written. Written
+to be sent upstream as-is, alongside 0005. Add a DCO sign-off before
+submitting it as a human-authored change.
+
+diff --git a/internal/cli/agents_repo_host_test.go b/internal/cli/agents_repo_host_test.go
+new file mode 100644
+index 000000000..fa304f866
+--- /dev/null
++++ b/internal/cli/agents_repo_host_test.go
+@@ -0,0 +1,78 @@
++package cli
++
++import (
++	"bytes"
++	"context"
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++
++	"github.com/fullsend-ai/fullsend/internal/config"
++	"github.com/fullsend-ai/fullsend/internal/fetch"
++	"github.com/fullsend-ai/fullsend/internal/forge"
++	"github.com/fullsend-ai/fullsend/internal/harness"
++	"github.com/fullsend-ai/fullsend/internal/ui"
++)
++
++func TestAgentsRepoRawURLPrefix(t *testing.T) {
++	for name, tc := range map[string]struct {
++		server string
++		want   string
++	}{
++		"unset":            {"", defaultAgentsRepoURLPrefix},
++		"github.com":       {"https://github.com", defaultAgentsRepoURLPrefix},
++		"github.com slash": {"https://github.com/", defaultAgentsRepoURLPrefix},
++		"enterprise":       {"https://ghe.example.internal/", "https://ghe.example.internal/fullsend-ai/agents/raw/"},
++	} {
++		t.Run(name, func(t *testing.T) {
++			t.Setenv("GITHUB_SERVER_URL", tc.server)
++			assert.Equal(t, tc.want, agentsRepoRawURLPrefix())
++		})
++	}
++}
++
++// The online fallback pins harnesses under agentsRepoRawURLPrefix, so on an
++// enterprise forge the offline scan must look for that prefix too; matching
++// only github.com's would never find what the previous online run cached.
++func TestTryAgentsRepoFallback_OfflineCacheHitOnEnterpriseForge(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://ghe.example.internal")
++	prefix := agentsRepoRawURLPrefix()
++	root := t.TempDir()
++	sha := strings.Repeat("d", 40)
++	rawURL := prefix + sha + "/harness/triage.yaml"
++	content := []byte("role: triage\n")
++	require.NoError(t, fetch.CachePut(root, rawURL, content))
++
++	var out bytes.Buffer
++	opts := harness.ComposeOpts{
++		WorkspaceRoot: root,
++		FetchPolicy:   fetch.FetchPolicy{Offline: true},
++		OrgAllowlist:  []string{prefix},
++	}
++	client := noGetRefClient{FakeClient: forge.NewFakeClient(), t: t}
++
++	_, deps, ok := tryAgentsRepoFallback(context.Background(), "Triage", client, opts, ui.New(&out))
++	require.True(t, ok, "expected offline cache hit; output: %s", out.String())
++	require.Len(t, deps, 1)
++	assert.Equal(t, rawURL, deps[0].URL)
++	assert.Contains(t, out.String(), sha[:12])
++}
++
++func TestRouteHarnessLabel_AgentsRepoOnEnterpriseForge(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://ghe.example.internal")
++	cfg := config.NewPerRepoConfig(nil, "fullsend-ai/demo")
++	sha := strings.Repeat("e", 40)
++	deps := []harness.Dependency{{URL: agentsRepoRawURLPrefix() + sha + "/harness/triage.yaml"}}
++	assert.Equal(t, "agents@"+sha[:12], routeHarnessLabel(cfg, "triage", deps))
++}
++
++// The dispatch route and lint resolve the agents repository through the same
++// fallback as fullsend run, so they must build their client the same way.
++func TestAgentsFallbackClientsHonourTheConfiguredAPIURL(t *testing.T) {
++	t.Setenv("GITHUB_API_URL", "https://ghe.example.internal/api/v3")
++	for _, token := range []string{"", "token"} {
++		assert.Equal(t, "https://ghe.example.internal/api/v3", newGitHubLiveClient(token, "").BaseURL())
++	}
++}
+diff --git a/internal/cli/dispatch_route.go b/internal/cli/dispatch_route.go
+index 96d9cf6a0..33a677c88 100644
+--- a/internal/cli/dispatch_route.go
++++ b/internal/cli/dispatch_route.go
+@@ -12,7 +12,6 @@ import (
+ 	"github.com/fullsend-ai/fullsend/internal/config"
+ 	"github.com/fullsend-ai/fullsend/internal/fetch"
+ 	"github.com/fullsend-ai/fullsend/internal/forge"
+-	gh "github.com/fullsend-ai/fullsend/internal/forge/github"
+ 	"github.com/fullsend-ai/fullsend/internal/harness"
+ 	"github.com/fullsend-ai/fullsend/internal/harnessdispatch"
+ 	"github.com/fullsend-ai/fullsend/internal/normevent"
+@@ -219,7 +218,11 @@ func routeBuiltinAgent(ctx context.Context, o routeOpts) (routeDecision, error)
+ 	}
+ 	forgeClient := o.forgeClient
+ 	if forgeClient == nil {
+-		forgeClient = gh.New("")
++		// Unauthenticated, as the agents repository is public, but on the
++		// configured host: a bare gh.New addresses api.github.com by name, so
++		// on any other forge the harness lookup fails and the route's
++		// authorization threshold silently fails closed.
++		forgeClient = newGitHubLiveClient("", "")
+ 	}
+ 	printer := o.printer
+ 	if printer == nil {
+@@ -295,8 +298,9 @@ func routeHarnessLabel(cfg config.ConfigReader, agent string, deps []harness.Dep
+ 	if entry := findConfigAgentEntry(cfg.AgentEntries(), agent); entry != nil && entry.Source != "" {
+ 		return "config:" + entry.Source
+ 	}
+-	if len(deps) > 0 && strings.HasPrefix(deps[0].URL, defaultAgentsRepoURLPrefix) {
+-		sha, _, _ := strings.Cut(strings.TrimPrefix(deps[0].URL, defaultAgentsRepoURLPrefix), "/")
++	prefix := agentsRepoRawURLPrefix()
++	if len(deps) > 0 && strings.HasPrefix(deps[0].URL, prefix) {
++		sha, _, _ := strings.Cut(strings.TrimPrefix(deps[0].URL, prefix), "/")
+ 		if len(sha) > 12 {
+ 			sha = sha[:12]
+ 		}
+diff --git a/internal/cli/lint.go b/internal/cli/lint.go
+index cd6e48b72..93c741130 100644
+--- a/internal/cli/lint.go
++++ b/internal/cli/lint.go
+@@ -10,7 +10,6 @@ import (
+ 
+ 	"github.com/fullsend-ai/fullsend/internal/config"
+ 	"github.com/fullsend-ai/fullsend/internal/fetch"
+-	gh "github.com/fullsend-ai/fullsend/internal/forge/github"
+ 	"github.com/fullsend-ai/fullsend/internal/harness"
+ 	"github.com/fullsend-ai/fullsend/internal/resolve"
+ 	"github.com/fullsend-ai/fullsend/internal/ui"
+@@ -95,7 +94,9 @@ func runLint(cmd *cobra.Command, fullsendDir, forgeFlag string, strict, offline
+ 	// Always create a GitHub client for the agents-repo fallback —
+ 	// fullsend-ai/agents is public, so unauthenticated requests work when
+ 	// no GitHub token is available (same as fullsend run).
+-	fallbackForgeClient := gh.New(composeGitToken)
++	// newGitHubLiveClient keeps the token optional while honouring
++	// GITHUB_API_URL, as fullsend run's fallback does.
++	fallbackForgeClient := newGitHubLiveClient(composeGitToken, "")
+ 
+ 	var errs []error
+ 	errDiags := 0
+diff --git a/internal/cli/run.go b/internal/cli/run.go
+index e84b7d4d4..f2f3e50b1 100644
+--- a/internal/cli/run.go
++++ b/internal/cli/run.go
+@@ -7582,9 +7582,12 @@ func cachedPinnedAgentsRepoFile(relPath string, composeOpts harness.ComposeOpts,
+ 	var none harness.Dependency
+ 	allowlist := composeOpts.OrgAllowlist
+ 
++	// The online path builds its URL from agentsRepoRawURLPrefix, so the
++	// cache is scanned for the same prefix rather than github.com's.
++	prefix := agentsRepoRawURLPrefix()
+ 	notAllowed := false
+ 	match := func(rawURL string) bool {
+-		rest, ok := strings.CutPrefix(rawURL, defaultAgentsRepoURLPrefix)
++		rest, ok := strings.CutPrefix(rawURL, prefix)
+ 		if !ok {
+ 			return false
+ 		}
+@@ -7637,7 +7640,7 @@ func cachedPinnedAgentsRepoFile(relPath string, composeOpts harness.ComposeOpts,
+ 		}
+ 	}
+ 
+-	sha, _, _ := strings.Cut(strings.TrimPrefix(entry.URL, defaultAgentsRepoURLPrefix), "/")
++	sha, _, _ := strings.Cut(strings.TrimPrefix(entry.URL, prefix), "/")
+ 	printer.StepDone(fmt.Sprintf("%s resolved from cache (%s/%s@%s, offline)", noun, defaultAgentsRepoOwner, defaultAgentsRepoName, sha[:12]))
+ 
+ 	return localPath, harness.Dependency{

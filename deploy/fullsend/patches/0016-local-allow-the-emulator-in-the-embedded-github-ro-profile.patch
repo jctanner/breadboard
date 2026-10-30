@@ -1,0 +1,122 @@
+Subject: local: allow the conformance emulator in the embedded GitHub read-only provider
+
+NOT FOR UPSTREAM. This is a Breadboard-local substitution, recorded under
+decision 3 of the Fullsend integration conformance plan.
+
+The read-only GitHub profile that backs triage and review used to live in
+fullsend-ai/agents, where agents patch 0003 added the emulator to it. Since
+v0.52.0 fullsend ships it embedded in the binary
+(internal/scaffold/fullsend-repo/profiles) under the reserved id
+fullsend-github-ro, and a repository copy can no longer override it. So the
+same two endpoints are added here, before the binary is compiled.
+
+A provider profile is the sandbox's network allowlist. Fullsend imports
+profiles verbatim and expands no variables in them, which is correct for a
+policy file, so a host that varies per environment can only be added by
+editing it. The posture is unchanged: read-only, enforced, and the binary
+allowlist still excludes curl.
+
+The same provider also declares GH_ENTERPRISE_TOKEN as a second credential
+carrying the minted token, and the profile accepts it as a stored key. gh
+reads that variable rather than GH_TOKEN on any host that is not github.com,
+and declaring it here makes it arrive in the sandbox as a placeholder the
+gateway resolves on egress, so no real token enters the sandbox. agents patch
+0002 passes the non-secret GH_HOST and makes the same change to github-code.
+TestScaffoldProviderCredentialsMatchProfiles pins this profile to GH_TOKEN
+alone so that a scaffold copy can share a gateway with the fleet copy of the
+same id; it is updated to the local shape, which is safe because the
+conformance gateway only ever holds this binary's profiles.
+
+Keep these entries in sync with agents patch 0003, which adds the same two to
+profiles/fullsend-github-code.yaml for the code and fix agents.
+
+If these profiles ever become templatable upstream, this patch should be
+dropped rather than rebased.
+
+Breadboard note: patches a file embedded at compile time, so it belongs to the
+build patch list in deploy/scripts/05i-build-fullsend.sh.
+
+diff --git a/internal/scaffold/fullsend-repo/profiles/fullsend-github-ro.yaml b/internal/scaffold/fullsend-repo/profiles/fullsend-github-ro.yaml
+index 2a584694b..782692947 100644
+--- a/internal/scaffold/fullsend-repo/profiles/fullsend-github-ro.yaml
++++ b/internal/scaffold/fullsend-repo/profiles/fullsend-github-ro.yaml
+@@ -6,7 +6,9 @@ category: source_control
+ credentials:
+   - name: api_token
+     description: GitHub token used by the gh CLI
+-    env_vars: [GH_TOKEN]
++    # Breadboard-local: GH_ENTERPRISE_TOKEN is accepted as a second stored
++    # key so the github-ro provider can inject it; see providers/github-ro.yaml.
++    env_vars: [GH_TOKEN, GH_ENTERPRISE_TOKEN]
+     required: true
+ endpoints:
+   - host: api.github.com
+@@ -25,6 +27,33 @@ endpoints:
+     protocol: rest
+     access: read-only
+     enforcement: enforce
++  # Breadboard-local: the conformance forge is a GitHub emulator on a cluster
++  # address, and this profile is the sandbox's network allowlist. Fullsend
++  # imports profiles verbatim and does not expand variables in them, which is
++  # correct for a policy file, so a host that varies per environment can only
++  # be added by editing it. That makes this a local substitution rather than
++  # something to send upstream.
++  #
++  # The read-only posture and the binary allowlist below are unchanged: curl
++  # stays excluded so the agent cannot make raw HTTP calls with the injected
++  # token, and these entries are enforced like the rest.
++  - host: github.local
++    port: 443
++    protocol: rest
++    access: read-only
++    enforcement: enforce
++  # github.com serves GraphQL from api.github.com/graphql. An enterprise host
++  # has no second hostname and serves it from the appliance at /api/graphql,
++  # which is the path gh posts to for any host that is not github.com. Copying
++  # the public entry's "/graphql" here allowed a path nothing asks for and
++  # denied the one that is used, so every GraphQL call the agent made was
++  # refused with policy_denied while the profile looked like it permitted them.
++  - host: github.local
++    port: 443
++    protocol: graphql
++    access: read-only
++    enforcement: enforce
++    path: "/api/graphql"
+ binaries:
+   - "**/gh"
+   - "**/node"
+diff --git a/internal/scaffold/fullsend-repo/providers/github-ro.yaml b/internal/scaffold/fullsend-repo/providers/github-ro.yaml
+index 54a50b4c2..990bfa654 100644
+--- a/internal/scaffold/fullsend-repo/providers/github-ro.yaml
++++ b/internal/scaffold/fullsend-repo/providers/github-ro.yaml
+@@ -3,3 +3,7 @@ name: github-ro
+ type: fullsend-github-ro
+ credentials:
+   GH_TOKEN: "${GH_TOKEN}"
++  # Breadboard-local: the same minted token under the name gh reads on any
++  # host that is not github.com. Declared here, not in env.sandbox, so the
++  # sandbox only ever sees a placeholder the gateway resolves on egress.
++  GH_ENTERPRISE_TOKEN: "${GH_TOKEN}"
+diff --git a/internal/scaffold/provider_profile_credentials_test.go b/internal/scaffold/provider_profile_credentials_test.go
+index 67741890d..732053a63 100644
+--- a/internal/scaffold/provider_profile_credentials_test.go
++++ b/internal/scaffold/provider_profile_credentials_test.go
+@@ -94,8 +94,17 @@ func TestScaffoldProviderCredentialsMatchProfiles(t *testing.T) {
+ 	// A scaffold copy that drifts from that shape cannot share a gateway with
+ 	// the fleet's. fullsend-github follows the same shape so that the coder
+ 	// role's provider and the read-only one stay interchangeable.
++	//
++	// Breadboard-local: fullsend-github-ro also accepts GH_ENTERPRISE_TOKEN so
++	// its provider can inject a placeholder under the name gh reads on a host
++	// that is not github.com. The conformance gateway holds only this binary's
++	// profiles, so the drift this guards against cannot arise there.
++	wantEnv := map[string][]string{
++		"fullsend-github-ro": {"GH_ENTERPRISE_TOKEN", "GH_TOKEN"},
++		"fullsend-github":    {"GH_TOKEN"},
++	}
+ 	for _, id := range []string{"fullsend-github-ro", "fullsend-github"} {
+-		assert.Equal(t, []string{"GH_TOKEN"}, profileEnv[id],
++		assert.Equal(t, wantEnv[id], profileEnv[id],
+ 			"profile %q must declare GH_TOKEN", id)
+ 		assert.True(t, profileRequired[id+"/GH_TOKEN"],
+ 			"profile %q must mark GH_TOKEN required", id)

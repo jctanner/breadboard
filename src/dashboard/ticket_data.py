@@ -306,6 +306,13 @@ class TicketAggregator:
                         break
                     for item in payload:
                         iid = item.get("iid", item.get("id", ""))
+                        default_path = (
+                            f"/{project_name}/-/"
+                            f"{'merge_requests' if type_name == 'merge_request' else 'issues'}/{iid}"
+                        )
+                        web_url = item.get("web_url", "")
+                        item_path = urlsplit(web_url).path if web_url else default_path
+                        item_path = item_path or default_path
                         tickets.append({
                             "source": "gitlab",
                             "type": "Merge request" if type_name == "merge_request" else "Issue",
@@ -322,10 +329,7 @@ class TicketAggregator:
                             "assignee": ((item.get("assignees") or [{}])[0]).get("username", "") if item.get("assignees") else "",
                             "created": item.get("created_at", ""),
                             "updated": item.get("updated_at", ""),
-                            "url": item.get("web_url") or (
-                                f"{self.gitlab_ui}/{project_name}/-/"
-                                f"{'merge_requests' if type_name == 'merge_request' else 'issues'}/{iid}"
-                            ),
+                            "url": f"{self.gitlab_ui}{item_path}",
                         })
                     if len(payload) < 100:
                         break

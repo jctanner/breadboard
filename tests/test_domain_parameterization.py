@@ -95,6 +95,30 @@ def test_ticket_data_collector_domain():
         assert collector.jira_ui == "https://jira.bb.internal"
         assert collector.gitlab_ui == "https://gitlab.bb.internal"
 
+        with mock.patch.object(
+            collector,
+            "_gitlab_projects",
+            return_value=[{"id": 1, "path_with_namespace": "admin/rhoai-model-controller"}],
+        ), mock.patch.object(
+            collector,
+            "_get",
+            side_effect=[
+                [
+                    {
+                        "id": 1,
+                        "iid": 1,
+                        "title": "Test GitLab issue",
+                        "state": "opened",
+                        "web_url": "https://gitlab-emulator.ai-pipeline.svc.cluster.local/ui/admin/rhoai-model-controller/issues/1",
+                    }
+                ],
+                [],
+            ],
+        ):
+            gl_tickets = collector._gitlab()
+            assert len(gl_tickets) == 1
+            assert gl_tickets[0]["url"] == "https://gitlab.bb.internal/ui/admin/rhoai-model-controller/issues/1"
+
 
 def test_job_scripts_allowed_hosts():
     with mock.patch.dict(os.environ, {}, clear=True):

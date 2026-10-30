@@ -702,6 +702,9 @@ lima-kubeconfig: ## Fetch K3s kubeconfig from Lima VM to ~/.kube/breadboard-lima
 	@chmod 600 $(HOME)/.kube/breadboard-lima.yaml
 	@echo "Saved $(HOME)/.kube/breadboard-lima.yaml. Test with: KUBECONFIG=~/.kube/breadboard-lima.yaml kubectl get nodes"
 
+lima-configure-dns: ## Configure Tailscale Split DNS responder (dnsmasq) inside Lima VM
+	limactl shell $(LIMA_INSTANCE) -- sudo PROJECT_ROOT="$(HOST_PROJECT_ROOT)" BREADBOARD_DOMAIN="$(BREADBOARD_DOMAIN)" bash "$(HOST_PROJECT_ROOT)/deploy/scripts/29-configure-tailscale-dns.sh"
+
 lima-validate: ## Run cluster and certificate validation tests inside Lima VM
 	limactl shell $(LIMA_INSTANCE) -- sudo PROJECT_ROOT="$(HOST_PROJECT_ROOT)" BREADBOARD_DOMAIN="$(BREADBOARD_DOMAIN)" bash -c 'cd "$(HOST_PROJECT_ROOT)/deploy/validation" && bash test-cluster.sh && bash test-certificates.sh'
 

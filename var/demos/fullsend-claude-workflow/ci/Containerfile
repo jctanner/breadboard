@@ -1,0 +1,13 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+USER root
+# The local CA is public. No environment or credential files enter this build.
+COPY ca-bundle.pem /etc/ssl/certs/ca-certificates.crt
+RUN apt-get update && apt-get install -y --no-install-recommends strace && rm -rf /var/lib/apt/lists/*
+# Match the candidate's qualified runtime and locked Python dependencies.
+RUN npm install -g @anthropic-ai/claude-code@2.1.296 && pip install --no-cache-dir --break-system-packages jsonschema==4.26.0 pyyaml==6.0.3 certifi==2026.4.22 diff-match-patch==20241021
+# Keep Claude's npm module and launcher unchanged. A trusted CI-side observer
+# collects syscalls without asking the sandbox agent to use ptrace.
+RUN claude --version | grep -F "2.1.296"
+# OpenShell starts the agent as sandbox under the unchanged filesystem policy.
+USER sandbox

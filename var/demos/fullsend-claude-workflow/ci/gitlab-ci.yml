@@ -1,0 +1,115 @@
+# Hardened Claude Workflow through native Fullsend and a job-owned OpenShell gateway.
+# Published to strat-pipeline branch feat/fullsend-claude-workflow by
+# var/demos/fullsend-claude-workflow/publish.py in Breadboard. Pipelines are
+# created explicitly through the API; pushes never start one.
+workflow:
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "push"
+    when: never
+  - when: always
+
+default:
+  # The GitLab emulator skips after_script when script fails, so the EXIT
+  # trap is the redaction guarantee; after_script repeats it where it runs.
+  before_script:
+  - trap 'rc=$?; trap - EXIT; if ! python3 ci-scripts/workflow-redact.py; then rm
+    -rf fullsend-ci-artifacts fullsend-run-output; exit 1; fi; exit "$rc"' EXIT
+  after_script:
+  - python3 ci-scripts/workflow-redact.py || { rm -rf fullsend-ci-artifacts fullsend-run-output;
+    exit 1; }
+
+stages:
+- strategy
+- trigger
+
+variables:
+  STRAT_CREATOR_REPO: https://github.com/jctanner-fullsend-ai/strat-creator.git
+  STRAT_CREATOR_BRANCH: feat/s1-workflow-hardening
+  STRAT_CREATOR_SHA: 6ed858b2294a29457153a90f187a801022c21e8b
+  ARCHITECTURE_CONTEXT_SHA: 7d61f097a9220aeb1280837b66b532177ec558b6
+  FULLSEND_VERSION: 0.47.1
+  FULLSEND_TARBALL_SHA256: 1c9cf127857a0e96e3237cd53cb01e793d583aba467ab2d1fd34aa60c7191ad3
+  # Shared with the script-led POC by decision (2026-10-07); each run adds its
+  # own timestamped RHAISTRAT/<run>/ directory.
+  RESULTS_REPO_URL: https://gitlab.local/redhat/rhel-ai/agentic-ci/strat-pipeline-data.git
+  RESULTS_GIT_USER: admin
+  ORG_PULSE_URL: https://orgpulse.local
+  WORKFLOW_MODEL: claude-opus-4-6
+  WORKFLOW_EFFORT: high
+  WORKFLOW_CONCURRENCY: "10"
+  STRAT_DRY_RUN: "0"
+  STRAT_PREVIOUS_PROGRESS: ""
+  STRATEGY_MODE: ''
+  RFE_KEY: ''
+  BATCH_SIZE: ''
+  BATCH_OFFSET: ''
+  BATCH_EXPECTED_KEYS: ''
+
+strat-single:
+  stage: strategy
+  environment: fullsend-claude-workflow
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags:
+  - aipcc-small-x86_64
+  timeout: 2h
+  resource_group: strat-batch
+  rules:
+  - if: $STRATEGY_MODE == "strat-single" && $RFE_KEY != ""
+  script:
+  - bash ci-scripts/workflow-source.sh
+  - bash ci-scripts/workflow-strategy.sh strat-single
+  artifacts:
+    when: always
+    paths:
+    - fullsend-ci-artifacts/
+    - fullsend-run-output/
+    expire_in: 30 days
+
+strat-batch:
+  stage: strategy
+  environment: fullsend-claude-workflow
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags:
+  - aipcc-small-x86_64
+  timeout: 5h
+  # Same group as strat-pipeline's native batch job: one batch at a time.
+  resource_group: strat-batch
+  rules:
+  - if: $STRATEGY_MODE == "strat-batch" && $RFE_KEY == ""
+  script:
+  - bash ci-scripts/workflow-source.sh
+  - bash ci-scripts/workflow-strategy.sh strat-batch
+  artifacts:
+    when: always
+    paths:
+    - fullsend-ci-artifacts/
+    - fullsend-run-output/
+    expire_in: 30 days
+
+# Rebuild the dashboard after the strategy job, as strat-pipeline's
+# build-dashboard does. Runs only if that job succeeded (on_success).
+build-dashboard:
+  stage: trigger
+  rules:
+  - if: $STRATEGY_MODE == "strat-single" && $RFE_KEY != ""
+  - if: $STRATEGY_MODE == "strat-batch" && $RFE_KEY == ""
+  trigger:
+    project: redhat/rhel-ai/agentic-ci/strat-dashboard
+    branch: main
+
+# Deliberately makes no model request and takes no Jira locks.
+workflow-preflight:
+  stage: strategy
+  environment: fullsend-claude-workflow
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags: [aipcc-small-x86_64]
+  timeout: 30m
+  rules:
+  - if: $STRATEGY_MODE == "preflight"
+  script:
+  - bash ci-scripts/workflow-source.sh
+  - bash ci-scripts/workflow-strategy.sh preflight
+  artifacts:
+    when: always
+    paths: [fullsend-ci-artifacts/, fullsend-run-output/]
+    expire_in: 30 days

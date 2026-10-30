@@ -29,8 +29,6 @@ spec:
     critical: true
     permitted:
       dnsDomains:
-        - "bb.internal"
-        - ".bb.internal"
         - "local"
         - ".local"
         - "svc.cluster.local"

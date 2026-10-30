@@ -32,10 +32,10 @@ def transform_manifest(content: str, domain: str) -> str:
     i = 0
     n = len(lines)
 
-    # 1. DNS name / host line in lists: - "*.local" or - github.local
-    # Notice: [\*a-zA-Z0-9_-]+ does NOT contain dots, preventing matching .svc.cluster.local
+    # 1. DNS name / host line in lists: - "*.local" or - github.local or - "local" or - ".local"
+    # Notice: [\*a-zA-Z0-9_-]* does NOT contain dots, preventing matching .svc.cluster.local
     dns_pattern = re.compile(
-        r"^(\s*-\s+)(\"?)([\*a-zA-Z0-9_-]+)\.local(\"?\s*)$"
+        r"^(\s*-\s+)(\"?)(\.?[\*a-zA-Z0-9_-]*\.?local)(\"?\s*)$"
     )
 
     # 2. Ingress host rule: "  - host: github.local"
@@ -60,9 +60,25 @@ def transform_manifest(content: str, domain: str) -> str:
     )
 
     last_env_name = None
+    in_certificate_doc = False
+    in_ingress_tls_block = False
+    ingress_tls_indent = 0
 
     while i < n:
         line = lines[i]
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip())
+
+        if stripped == "---":
+            in_certificate_doc = False
+            in_ingress_tls_block = False
+        elif re.match(r"^kind:\s*Certificate\s*$", stripped):
+            in_certificate_doc = True
+        elif re.match(r"^tls:\s*$", stripped):
+            in_ingress_tls_block = True
+            ingress_tls_indent = indent
+        elif in_ingress_tls_block and stripped and indent <= ingress_tls_indent and not stripped.startswith("-"):
+            in_ingress_tls_block = False
 
         # Track env name if present
         env_match = re.match(r"^\s*-\s*name:\s*([A-Za-z0-9_]+)", line)
@@ -130,12 +146,26 @@ def transform_manifest(content: str, domain: str) -> str:
             i = j
             continue
 
-        # Check DNS list entry: - "*.local" or - github.local
+        # Check DNS list entry: - "*.local", - github.local, - "local", - ".local"
         dns_match = dns_pattern.match(line)
         if dns_match and not line.strip().endswith(CLUSTER_SUFFIX):
-            out.append(line + "\n")
-            prefix, q1, name, q2 = dns_match.groups()
-            out.append(f"{prefix}{q1}{name}.{domain}{q2}\n")
+            prefix, q1, token, q2 = dns_match.groups()
+            if token == "local":
+                replaced = domain
+            elif token == ".local":
+                replaced = f".{domain}"
+            elif token.endswith(".local"):
+                replaced = f"{token[:-6]}.{domain}"
+            else:
+                replaced = token
+
+            if in_certificate_doc or in_ingress_tls_block:
+                # For Certificate resources (CA NameConstraints and leaf SANs) and Ingress tls.hosts,
+                # replace .local with .<domain> so constrained CAs never permit mDNS .local
+                out.append(f"{prefix}{q1}{replaced}{q2}\n")
+            else:
+                out.append(line + "\n")
+                out.append(f"{prefix}{q1}{replaced}{q2}\n")
             i += 1
             continue
 

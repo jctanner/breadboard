@@ -31,6 +31,7 @@ Mermaid `.mmd` files — render on GitHub or paste into [Mermaid Live Editor](ht
 
 - [model-relay.md](model-relay.md) — Model Relay endpoints at relay.local and relay-api.local, deployment, and admin key handling
 - [hooksink.md](hooksink.md) — hooksink, the webhook sink at hooksink.local: sender and consumer tokens, the admin console, filters, and which emulators deliver
+- [workflow-dojo.md](workflow-dojo.md) — optional dojo.local trainer for Claude workflow scripts, with a live Claude shell on a Model Relay key
 
 ## Fullsend Integration
 

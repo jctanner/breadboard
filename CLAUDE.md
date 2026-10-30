@@ -32,6 +32,13 @@ RFE -> quality gate -> strategy -> review -> epics -> investigation/codegen
   The documentation tree is for maintained product and architecture docs.
 - Before creating or updating anything in `.ledger/`, read
   `.ledger/agentic_work_ledger.md` for the full ledger instructions.
+- Use `checkouts/markovd/bin/markovd-cli` first for Markovd project sync/import,
+  run submission, status, waiting, and logs. Read the
+  [CLI usage notes](.ledger/notes/markovd-cli.md) before use, and run commands
+  from the repository root so the ignored `.markovd-cli-config.toml` supplies
+  authentication, TLS settings, and default mounts. Use direct API calls only
+  for missing CLI functionality or a confirmed CLI bug; avoid custom REST
+  launchers for operations the CLI already supports.
 - Do not commit `.env`, credentials, generated issue/workspace data, logs,
   runtime state, or ignored component checkouts.
 - Run `git diff --check` after documentation or code edits. Run the smallest
@@ -152,6 +159,7 @@ The active deployment includes:
 | Org Pulse | AI Engineering engineering dashboard (`rhai-org-pulse` on `org-pulse-core`) with its MongoDB, pointed at the emulators; see [`docs/org-pulse.md`](docs/org-pulse.md) |
 | Model Relay | Vertex/Anthropic Messages gateway with usage telemetry and managed upstream accounts (`checkouts/model-relay`); console at `relay.local`, inference at `relay-api.local`; see [`docs/model-relay.md`](docs/model-relay.md) |
 | Hooksink | Webhook sink: a durable receiver for emulator webhooks. Senders sign with sender tokens; consumers read events by cursor, filter or long-poll with consumer tokens; tokens are managed at `hooksink-admin.local` (`checkouts/hooksink`); see [`docs/hooksink.md`](docs/hooksink.md) |
+| Workflow Dojo (optional) | LeetCode-style trainer for Claude workflow scripts with a live Claude shell (`checkouts/workflow-dojo`) at `dojo.local`; not in `deploy-all.sh`; see [`docs/workflow-dojo.md`](docs/workflow-dojo.md) |
 | Traefik, cert-manager, and host proxy | Internal TLS and `*.local` service routing |
 
 Fullsend is GitHub-first. Its current development flow starts from the

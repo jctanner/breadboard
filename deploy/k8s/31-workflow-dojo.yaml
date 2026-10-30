@@ -1,0 +1,121 @@
+# Workflow Dojo: optional trainer for Claude Code workflow scripts with a live
+# Claude shell. Not applied by deploy-all.sh; use `make host-deploy-dojo`.
+# Claude runs in-process (PTY) as uid 1000 and reaches Model Relay with the
+# key in Secret workflow-dojo-relay (deploy/scripts/workflow-dojo-relay-key.py).
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: workflow-dojo-state
+  namespace: ai-pipeline
+  labels:
+    app: workflow-dojo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-path
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workflow-dojo
+  namespace: ai-pipeline
+  labels:
+    app: workflow-dojo
+spec:
+  selector:
+    app: workflow-dojo
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workflow-dojo
+  namespace: ai-pipeline
+  labels:
+    app: workflow-dojo
+spec:
+  replicas: 1  # live Claude sessions are in-process state
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: workflow-dojo
+  template:
+    metadata:
+      labels:
+        app: workflow-dojo
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+      containers:
+        - name: dojo
+          image: workflow-dojo:latest
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: ANTHROPIC_BASE_URL
+              value: http://model-relay.ai-pipeline.svc.cluster.local:8080
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: workflow-dojo-relay
+                  key: api-key
+            - name: DOJO_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: workflow-dojo-admin
+                  key: username
+            - name: DOJO_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workflow-dojo-admin
+                  key: password
+            - name: DOJO_MAX_SESSIONS
+              value: "4"
+            - name: DOJO_DEFAULT_MODEL
+              value: claude-haiku-5-5
+            - name: DOJO_SKIP_PERMISSIONS
+              value: "1"
+            - name: CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY
+              value: "1"
+          volumeMounts:
+            - name: state
+              mountPath: /home/node/dojo
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 3Gi
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: workflow-dojo-state

@@ -111,6 +111,10 @@ var routes = []Route{
 		Host:    "hooksink-admin.local",
 		Backend: "http://hooksink-admin.ai-pipeline.svc.cluster.local:80",
 	},
+	{
+		Host:    "dojo.local",
+		Backend: "http://workflow-dojo.ai-pipeline.svc.cluster.local:8080",
+	},
 }
 
 var (
@@ -147,7 +151,7 @@ func initProxies() {
 		}
 
 		proxy := httputil.NewSingleHostReverseProxy(backendURL)
-		proxy.Transport = sharedTransport
+		proxy.Transport = transportForHost(host)
 		proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
 			log.Printf("proxy error: %s -> %s: %v", req.Header.Get("X-Forwarded-Host"), req.URL.Host, err)
 			http.Error(w, "502 Bad Gateway", http.StatusBadGateway)
@@ -164,6 +168,33 @@ func getBackend(host string) string {
 		host = host[:idx]
 	}
 	return hostToBackend[strings.ToLower(host)]
+}
+
+func inferenceHost(host string) bool {
+	if idx := strings.Index(host, ":"); idx != -1 {
+		host = host[:idx]
+	}
+	switch strings.ToLower(host) {
+	case "relay-api.local", "model-relay.ai-pipeline.svc.cluster.local":
+		return true
+	default:
+		return false
+	}
+}
+
+func websocketUpgrade(r *http.Request) bool {
+	return strings.EqualFold(r.Header.Get("Upgrade"), "websocket")
+}
+
+func transportForHost(host string) *http.Transport {
+	if !inferenceHost(host) {
+		return sharedTransport
+	}
+	transport := sharedTransport.Clone()
+	// Nonstream inference can legitimately take minutes before its headers.
+	// The relay/provider owns inference timeouts; client cancellation propagates.
+	transport.ResponseHeaderTimeout = 0
+	return transport
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -184,6 +215,28 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("No cached proxy for backend: %s", backend)
 		http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
 		return
+	}
+
+	if inferenceHost(r.Host) {
+		// Server.WriteTimeout is an absolute response deadline, even for SSE
+		// with heartbeats. Clear it for the dedicated inference virtual hosts.
+		if err := http.NewResponseController(w).SetWriteDeadline(time.Time{}); err != nil {
+			log.Printf("Cannot clear inference response deadline: %v", err)
+			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if websocketUpgrade(r) {
+		// The server's Read/WriteTimeouts stay on a hijacked connection and
+		// would cut long-lived terminals (Workflow Dojo) after 30s/120s.
+		rc := http.NewResponseController(w)
+		if err := rc.SetReadDeadline(time.Time{}); err != nil {
+			log.Printf("Cannot clear websocket read deadline: %v", err)
+		}
+		if err := rc.SetWriteDeadline(time.Time{}); err != nil {
+			log.Printf("Cannot clear websocket write deadline: %v", err)
+		}
 	}
 
 	backendURL, _ := url.Parse(backend)

@@ -51,6 +51,20 @@ This will:
 
 ## Testing
 
+Run the proxy's HTTP/HTTPS streaming, delayed-response and cancellation tests:
+
+```bash
+go test -race ./...
+```
+
+The dedicated inference hosts, `relay-api.local` and
+`model-relay.ai-pipeline.svc.cluster.local`, allow responses beyond the normal
+120-second server write deadline, including SSE streams and nonstream model
+generations. Their upstream header deadline is also disabled. Model Relay and
+its providers retain responsibility for inference timeouts, and client
+cancellation still cancels the upstream request. Console and other service
+routes retain their existing deadlines.
+
 From your host machine (after port forwarding is set up):
 ```bash
 # Test GitHub emulator

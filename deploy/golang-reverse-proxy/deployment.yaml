@@ -130,6 +130,7 @@ spec:
     - relay-api.local
     - hooksink.local
     - hooksink-admin.local
+    - dojo.local
   issuerRef:
     name: internal-ca-issuer
     kind: Issuer

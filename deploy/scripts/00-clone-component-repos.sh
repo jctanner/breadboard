@@ -19,6 +19,7 @@ repos=(
   "fullsend-ai/agents|git@github.com:fullsend-ai/agents.git"
   "org-pulse-core|git@github.com:red-hat-data-services/org-pulse-core.git"
   "rhai-org-pulse|git@github.com:red-hat-data-services/rhai-org-pulse.git"
+  "workflow-dojo|git@github.com:jctanner/claude-workflow-dojo.git"
 )
 
 mkdir -p "${CHECKOUTS_DIR}"

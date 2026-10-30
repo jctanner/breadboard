@@ -523,6 +523,25 @@ host-hooksink-tokens: ## Print the webhook sink admin key and default tokens
 	  kubectl get secret hooksink-tokens -n ai-pipeline -o jsonpath="{.data.$$key}" | base64 -d; echo; \
 	done
 
+host-deploy-dojo: ## Build and deploy optional Workflow Dojo (dojo.local) on host
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05n-build-workflow-dojo.sh
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/28-deploy-workflow-dojo.sh
+	@echo "✓ Workflow Dojo deployed; run make host-rebuild-ingress-proxy once to add the dojo.local route"
+
+host-rebuild-dojo: ## Rebuild and redeploy Workflow Dojo on host
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05n-build-workflow-dojo.sh
+	bash deploy/scripts/workflow-dojo-admin-secret.sh
+	kubectl apply -f deploy/k8s/31-workflow-dojo.yaml
+	kubectl rollout restart deployment/workflow-dojo -n ai-pipeline
+	kubectl rollout status deployment/workflow-dojo -n ai-pipeline --timeout=180s
+	@echo "✓ Workflow Dojo rebuilt and redeployed"
+
+host-dojo-relay-key: ## Provision (or with ROTATE=1, rotate) the Workflow Dojo relay key Secret
+	python3 deploy/scripts/workflow-dojo-relay-key.py $(if $(ROTATE),--rotate,)
+
+host-logs-dojo: ## Follow Workflow Dojo logs on host
+	kubectl logs -n ai-pipeline -l app=workflow-dojo -f
+
 host-logs-dashboard: ## Follow dashboard logs on host
 	kubectl logs -n ai-pipeline -l app=pipeline-dashboard -f
 

@@ -1,12 +1,17 @@
 # Migrating Bash orchestration to Claude dynamic workflows
 
-Draft retrospective, 2026-10-28; rollout status updated October 29.
+Draft retrospective, 2026-10-28; rollout status updated October 29 (New York),
+observability implementation/review evidence updated October 30.
 Project: [AISDLC-52](https://redhat.atlassian.net/browse/AISDLC-52).
 
 The main lesson for this migration is that resilience became an application
 architecture project. JavaScript expressed the schedule; additional code had
 to establish what ran, what was received, what changed, what could safely be
-reused, and what the host was entitled to publish.
+reused, and what the host was entitled to publish. Useful operator visibility
+also required integration work: recovering progress that reached Fullsend
+but never reached its console meant adding a stateful display adapter. That
+adapter consumes undocumented Claude fields, so its correctness and upgrade
+compatibility need their own evidence.
 
 Moving strat-creator from Bash-orchestrated Claude batches to dynamic workflows
 required substantially more than translating a loop. The resulting
@@ -152,6 +157,17 @@ For a team deciding whether to migrate, that ongoing cost is a missing input,
 not a known quantity.
 [Dated accounting and method](strat-workflow-total-token-usage-20261018.md).
 
+The progress-display follow-up is additional work outside that strat-creator
+merge and accounting cutoff. At the October 30 readback,
+[Fullsend PR 8913](https://github.com/fullsend-ai/fullsend/pull/8913) spans
+**19 files, 1,929 insertions and eight deletions**, including Go adapter and
+renderer code, tests, documentation and file moves. Its size also reflects
+the owner-requested broader hook/session/permission/rate-limit notice coverage.
+This is a dated diff size, not a count of unique production logic or a minimum
+cost for every migration.
+The fix is open/unmerged at `a4c647466`; it is not part of the deployed
+Fullsend version used by the recorded scheduled qualification.
+
 Some expense was necessary to expose interactions that small tests could not:
 shared batch scope, full-size hooks, mixed recovery, provider compatibility,
 and actual sandbox/publication behavior. Some was avoidable. Earlier local
@@ -172,7 +188,15 @@ visibility. A log saying an agent ran is weaker than evidence of what its
 recipient received and what Jira retained.
 [Subsequent diagnosis](../bugs/open/fullsend-claude-workflow-progress-not-rendered.md)
 confirmed that Claude emitted structured phase/progress events, but Fullsend
-did not render them; this console gap was in the integration.
+did not render them; this console gap was in the integration. The resulting
+[upstream fix](https://github.com/fullsend-ai/fullsend/pull/8913) had to merge
+partial updates, reconcile task/run/agent identity, suppress stale and repeated
+snapshots, and redact/bound displayed metadata. Human review then found that
+an agent ID can appear after its stable index; treating both as the row key
+left an obsolete running row behind. Useful live visibility therefore became
+a compatibility and state-reconciliation feature, not just an extra print.
+The Workflow-specific payload and one summary message are undocumented Claude
+internals, which adds a producer-version maintenance obligation.
 [Archive work](../tasks/done/strat-workflow-run-data-archives.md),
 [remote reconstruction and capture limits](../tasks/done/strat-postmerge-single-smoke-20261027.md#reconstruction-of-the-quiet-console-interval).
 
@@ -191,6 +215,13 @@ schedule. Readback verified the cutover at 00:34 UTC October 30. Other/manual
 pipeline defaults remain legacy, and stable-1.x is retained as the fallback.
 [Qualification and limits](../tasks/done/strat-evening-workflow-qualification-20261029.md),
 [permanent schedule cutover](../tasks/done/strat-workflow-permanent-schedule-cutover-20261029.md).
+
+The console-progress repair is a separate delivery:
+[Fullsend PR 8913](https://github.com/fullsend-ai/fullsend/pull/8913) is still
+open/unmerged at the October 30 readback. The successful scheduled batch used
+Fullsend 0.47.1; it neither deployed nor live-qualified that new renderer.
+Passing local replay is useful evidence for the fix, but does not replace a
+future check of the released integration's actual CI output.
 
 The tested Workflow offers useful scheduling and separate agent contexts.
 The evidence does not establish a general simplicity, cost, or reliability
@@ -277,8 +308,8 @@ external orchestration.
 
 ### Runtime versions and revalidation
 
-The runtime analysis, native controls, and detailed handoff/replay findings in
-this retrospective were verified against **Claude Code 2.1.296**. They have
+The native fault controls and detailed handoff/replay experiments in this
+retrospective were verified against **Claude Code 2.1.296**. Those controls have
 **not been revalidated on 2.1.311 or later** in the investigation records cited
 here. The [Workflow Dojo record](../plans/workflow-dojo-plan.md) documents
 2.1.311 and a successful one-agent `hello-workflow` smoke. That demonstrates
@@ -293,6 +324,16 @@ historical evidence; whether a newer runtime retains each behavior is an open
 validation question. A newer installed version alone does not close the
 application's source-protection, external-write, or ownership requirements.
 [Versioned investigation index](../../scripts/claude_binary_analysis/docs/README.md).
+
+The progress-display follow-up inspected the **2.1.312 embedded emitter/schema**
+and added a reduced model of its queued/start/done sequence. It replayed the
+original **2.1.296** captured stream through the patched Fullsend code. This is
+narrow parser/display compatibility evidence, not a newly recorded live
+2.1.312 Workflow run or a rerun of the runtime fault controls above. In
+particular, `workflow_progress`/`workflow_agent` and `system/task_summary` are
+undocumented internal fields/messages, not stable public Agent SDK contracts;
+they may change or disappear in any Claude patch release.
+[Human review and qualification limits](https://github.com/fullsend-ai/fullsend/pull/8913#discussion_r4418019560).
 
 ## For engineers
 
@@ -387,6 +428,7 @@ claims about every later Claude release.
 | Enforcing checks within time limits | Hooks timed out, first allowing continuation and later blocking valid work | Blocking failure configuration, separate heavy checks, and full-size profiling | Partly: hook-based enforcement inside the agent session |
 | Handling one changed ticket | One stale RFE blocked five unchanged tickets | Per-ticket deferral, independent host accounting, filtered publication, and recovery evidence | No: batch isolation is general |
 | Deploying the selected path | A local pass did not prove sandbox, GitLab, or downstream compatibility | Harness materialization, provider/egress setup, CI parity tests, artifact export, and real runner qualification | Partly: specific to the Fullsend path, not to Workflow scheduling |
+| Making nested work visible | Heartbeats hid emitted progress; sparse metadata and late IDs complicated rendering | Fullsend event adapter, state reconciliation, redaction, bounded caches and archived-stream regressions | Fullsend/Claude integration-specific; redaction and correlation are general concerns |
 
 These responsibilities are not universally unique to workflows. Bash also
 needs idempotence, ownership, and freshness for safe recovery. The specific
@@ -559,6 +601,97 @@ to emit it.
 [Diagnosis and exact evidence](../bugs/open/fullsend-claude-workflow-progress-not-rendered.md).
 Upstream tracking: [Fullsend bug 8908](https://github.com/fullsend-ai/fullsend/issues/8908).
 
+#### The console fix became a state-reconciliation adapter
+
+The follow-up moved from diagnosis to a concrete fix in
+[Fullsend PR 8913](https://github.com/fullsend-ai/fullsend/pull/8913), with
+[latest reviewed code](https://github.com/jctanner-fullsend-ai/fullsend/commit/a4c6474662cc93b5d2401cfa0544f9d56d7b9faf).
+It remains open/unmerged at the October 30 readback. The PR description has
+before/after excerpts: before is the actual pre-fix CI heartbeat output;
+after is the patched parser/renderer replaying the same archived Claude
+stream, not a new live model run. No deployed-output improvement is claimed.
+
+For this integration, reaching a useful console meant contributing Go code to
+Fullsend as well as maintaining the JavaScript Workflow and its Python/host
+helpers. The adapter needed more than decoding an event and printing a label:
+
+| Producer behavior or display risk | Reconciliation the fix needed |
+| --- | --- |
+| Updates omit fields or explicitly clear them | Preserve known labels, phases and tool context; distinguish absent metadata from empty strings/false flags |
+| Error, blocked or cached flags can outlive their state | Preserve same-state context, but drop omitted transient metadata when state changes |
+| A terminal update is followed by a completion notification | Merge prior failure/tool context and avoid duplicate terminal lines that lose the error |
+| Run IDs can be absent; old snapshots can arrive after a restart | Reconcile late IDs and run ownership without reopening terminal work or redirecting the current run's updates |
+| A Workflow agent has an index before it has an agent ID | Key by task/run/index; retain the later ID as attribution without creating another running row |
+| Metadata is untrusted and snapshots repeat | Redact before truncation and retention, sanitize terminal/CI output, bound cached state and suppress unchanged displays |
+
+The human review's identity finding is particularly instructive. In the
+inspected 2.1.312 producer, Workflow entries replace each other by type/index.
+A queued entry has no `agentId`; the ID arrives when the agent starts. The
+first implementation keyed by both, leaving an index-only row running after
+the named row completed. Its unit tests and earlier independent model reviews
+had not established coverage of that lifecycle. A human reviewer supplied the
+producer sequence and a probe; the new regression failed before repair and
+then verified one running line, one completion, and one completed cached row.
+[Identity review](https://github.com/fullsend-ai/fullsend/pull/8913#discussion_r4418019549),
+[repair and evidence](../tasks/done/fullsend-8913-waynesun-review.md).
+
+This was an integration defect, not evidence that Claude emitted no progress
+or that all workflows inherently need this exact adapter. It does show why
+"the runner supports Workflow execution" and "the operator can observe useful
+Workflow progress" required separate qualification in this migration.
+
+#### Available events were not a stable public logging contract
+
+`workflow_progress`, its `workflow_agent` metadata, and `system/task_summary`
+are **undocumented internal Claude Code extensions**, not stable public Agent
+SDK message contracts in the inspected version. They can change or disappear
+without notice in a patch release. The fix now labels that explicitly and
+fails soft on unknown/malformed display shapes while retaining the raw stream.
+Inspecting a bundled emitter is compatibility evidence for that binary, not
+an upstream guarantee of the interface.
+[Protocol review](https://github.com/fullsend-ai/fullsend/pull/8913#discussion_r4418019560).
+
+There is also a producer boundary the Fullsend patch cannot repair. In the
+inspected 2.1.312 implementation, internal `workflow_log` entries are filtered
+out before SDK progress emission. Rendering received structured task metadata
+cannot restore those absent messages or turn tool summaries into complete
+nested tool stdout/stderr. Bash logging in the original design did not need
+this private event translation to print its own orchestration messages.
+That comparison does not mean Bash automatically supplies correlation,
+redaction or durable logs for every concurrent child process.
+
+#### What was checked for the display fix
+
+These were local checks of the Fullsend branch, separate from the live GitLab
+qualification of strat-creator:
+
+| Check | How it ran and what it established |
+| --- | --- |
+| Runtime parser/renderer tests | `go test -race -coverprofile=/tmp/fullsend-8913-wayne-runtime.cover ./internal/runtime -count=1`; passed, 93.3% package statement coverage |
+| CLI display consumer | `go test -race ./internal/cli -run '^TestIterationEventHandler' -count=1`; passed, checking rendering/redaction without adding model content or tool spans |
+| Repository checks | Stage changes, then `make lint`; Go vet, credential checks and Markdown links passed |
+| Original-stream replay | A temporary Go overlay test read the archived ZIP/member without changing it, verified the member hash, and passed the original stream through the patched parser/renderer |
+| Review-derived controls | Model-free regressions for partial fields, explicit clearing, recovery, optional run IDs, terminal/hidden guards and queued-to-named identity; the reported defects failed before their repairs |
+| Independent review | Read-only `claude-opus-5-5` reviews, followed by concrete fixes and re-review; useful additional scrutiny, not proof that every producer sequence was covered |
+
+The complete replay decoded **325 task/agent event occurrences**, including
+repeated snapshots, into **55 display lines**. These are not 325 distinct
+agents. The source archive is still the 2.1.296 run. The later 2.1.312 coverage
+uses embedded-schema/emitter inspection and a modeled sequence, not a new
+recorded live Workflow fixture. The earlier full `make go-test` attempt hit
+the CLI package's default ten-minute timeout; the active test passed in
+isolation on main and the patch, but a passing full repository suite is not
+claimed. The focused CLI checks above did pass, and no suite ceiling was
+raised.
+[Initial repair](../tasks/done/fullsend-8908-workflow-progress.md),
+[review repairs](../tasks/done/fullsend-8913-review-comments.md),
+[human review follow-up](../tasks/done/fullsend-8913-waynesun-review.md).
+
+Task completion, a session becoming idle, and a clean display are still
+separate from validated business completion. The display fix does not claim
+immutable execution, complete tool-output delivery, or a measured improvement
+in production failure rate.
+
 Production qualification should check rendering of these events as well as
 artifact capture. This finding does not establish that every nested tool's
 full stdout/stderr is exported or that displaying phase events alone supplies
@@ -649,16 +782,23 @@ it to the five unchanged tickets made the batch brittle.
 [scheduled failure](../tasks/done/first-scheduled-strat-workflow-batch-20261027.md),
 [post-fix evidence](../tasks/done/strat-placeholder-repair-live-batch-20261028.md).
 
-[PR 93](https://github.com/fullsend-ai/strat-creator/pull/93) adds per-ticket
+[PR 93](https://github.com/fullsend-ai/strat-creator/pull/93) added per-ticket
 deferral, independent host verification, filtered partial publication,
 diagnostic failure receipts, and retained recovery state. Its initial local
-suite passed 1,463 tests with six skips. Review then identified further edge
-cases involving push/label timing, create accounting, deferral reasons/history,
-and fully deferred reporting. Repairs for those cases are pushed, and the full
-suite then passed 1,503 tests with six skips. The PR is still under review,
-and neither test count establishes live qualification of the final repair.
+suite passed 1,463 tests with six skips. Subsequent review repairs grew the
+suite to **1,605 passing tests with six skips** on reviewed head `6334546`.
+The owner merged that head on October 29 at 17:09:11 UTC, as `e8f3e5b`.
 [Isolation implementation](../tasks/done/strat-batch-freshness-isolation.md),
-[review follow-up](../tasks/done/strat-pr93-review-followup.md).
+[final review repairs and merge evidence](../tasks/done/strat-pr93-push-and-publication-boundaries.md).
+
+The later native scheduled run passed four acquired RFEs, publication and the
+downstream dashboard, as recorded in the current rollout status above. It
+exercised normal/resume execution on merged source, not a live input-drift
+deferral. Those race cases retain their local fault-test evidence; neither
+the unit count nor the passing normal run demonstrates that a live deferral
+was exercised. The publication audit and content inspection also distinguish
+correct artifact delivery from independent agreement with strategy content.
+[Scheduled qualification and content limits](../tasks/done/strat-evening-workflow-qualification-20261029.md).
 
 ### A practical sequence for the next migration
 
@@ -669,7 +809,9 @@ and neither test count establishes live qualification of the final repair.
    outputs, and failure behavior before adding model-mediated handoffs.
 3. **Learn and pin the execution environment.** Review the JavaScript and
    runtime restrictions, plugin loading, effective tools, provider schemas,
-   concurrency, and background termination behavior.
+   concurrency, and background termination behavior. Classify undocumented
+   producer fields separately from public interfaces and retest their fixtures
+   when upgrading; a newer installed binary alone is not requalification.
 4. **Separate evidence of work from an agent's claim.** Persist target-bound
    progress and artifacts, verify real delivery and scope, and make final
    completion independently checkable.
@@ -684,7 +826,10 @@ and neither test count establishes live qualification of the final repair.
    possible. Distinguish stale tickets from shared failures.
 8. **Qualify each real boundary once it changes.** Use focused live handoff
    tests, then intended-provider batches, then Fullsend/OpenShell and real CI
-   delivery. A local benchmark and a real scheduled job prove different things.
+   delivery. Check actual operator output while work is in flight; retained
+   artifacts and elapsed-time heartbeats do not establish live observability.
+   A local benchmark, archived-stream replay and a real scheduled job prove
+   different things.
 9. **Retain a usable fallback.** Merge behind an exclusive executor switch,
    validate one pipeline at a time, inspect the first scheduled batch, and
    retain failed work/evidence on rollback.

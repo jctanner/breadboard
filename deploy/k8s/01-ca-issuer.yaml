@@ -25,6 +25,32 @@ spec:
   issuerRef:
     name: selfsigned-issuer
     kind: ClusterIssuer
+  nameConstraints:
+    critical: true
+    permitted:
+      dnsDomains:
+        - "bb.internal"
+        - ".bb.internal"
+        - "local"
+        - ".local"
+        - "svc.cluster.local"
+        - ".svc.cluster.local"
+        - "svc"
+        - ".svc"
+        - "ai-pipeline"
+        - ".ai-pipeline"
+        - "fullsend-dashboard"
+        - "fullsend-mint-dev"
+        - "github-emulator"
+        - "gitlab-emulator"
+        - "jira-emulator"
+        - "markovd"
+        - "model-relay"
+        - "org-pulse-frontend"
+        - "pipeline-dashboard"
+      ipRanges:
+        - "192.168.56.10/32"
+        - "100.115.60.69/32"
 ---
 # CA issuer that uses our internal CA to sign certificates
 # Using Issuer (namespace-scoped) instead of ClusterIssuer for easier secret access

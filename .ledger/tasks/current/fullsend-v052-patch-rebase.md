@@ -184,6 +184,19 @@ emulator is proven only by the conformance run.
   through `_provider_github_ro`, and Vertex `streamRawPredict` for
   `claude-haiku-4-5`.
 
+- 2026-10-30, after conformance: the first **code-stage** run on 0.1.4
+  (experiment/testrepo2 #5, run 1835) never got a sandbox. OpenShell 0.1.x's
+  Kubernetes `workspace-init` seeds `/sandbox` as uid 10001, and upstream's
+  `fullsend-code` image has `/sandbox/.cache/gopls` 0700 owned by uid 998:
+  `Permission denied (os error 13)`, sandbox stuck in Provisioning, `fullsend
+  run` kills `sandbox create` at its ready timeout (`signal: killed`). Fixed
+  locally with `chmod -R a+rX /sandbox` in `deploy/fullsend-sandbox-local/Containerfile`;
+  a code-image probe with `policies/base.yaml` then reached Ready. Recorded
+  in the compatibility profile §1; upstream draft
+  `docs/fullsend-issue-drafts/26-…`. Conformance covers triage only, which is
+  why it passed; the code stage end to end is still unverified until #5 is
+  re-triggered.
+
 ## Status
 
 Current — deployed and conformance passes. Open: the supervisor-local build

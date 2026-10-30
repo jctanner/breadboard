@@ -51,3 +51,11 @@ RUN /usr/sbin/update-ca-certificates \
 
 # Marks the one thing this layer changes, for anything that wants to assert it.
 ENV BREADBOARD_SANDBOX_CA=/usr/local/share/ca-certificates/breadboard-internal-ca.crt
+
+# OpenShell 0.1.x's Kubernetes driver seeds the image's /sandbox into the
+# workspace volume as uid 10001 (workspace-init, `openshell-sandbox
+# seed-workspace`). Upstream's fullsend-code image ships /sandbox/.cache/gopls
+# as 0700 owned by its sandbox user (uid 998), so the seed fails with
+# "Permission denied (os error 13)" and the sandbox never becomes Ready.
+# The seeded copy is owned by the runtime user either way.
+RUN chmod -R a+rX /sandbox

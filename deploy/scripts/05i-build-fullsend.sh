@@ -92,8 +92,15 @@ echo "==> Building Fullsend host launcher from ${FULLSEND_ROOT} (revision diagno
 echo "    fullsend  ${FULLSEND_REVISION}"
 echo "    openshell ${OPENSHELL_REVISION}"
 git -C "${FULLSEND_ROOT}" archive HEAD | tar -xf - -C "${FULLSEND_BUILD_ROOT}"
+# FULLSEND_SKIP_PATCHES (space-separated patch file names) leaves patches out,
+# for verifying an upstream fix that replaces them: check the fix out in the
+# Fullsend checkout and skip the local patch it supersedes.
 for patch in "${FULLSEND_PATCHES[@]}"; do
   patch_name="$(basename "${patch}")"
+  if [[ " ${FULLSEND_SKIP_PATCHES:-} " == *" ${patch_name} "* ]]; then
+    echo "==> Skipping Fullsend patch ${patch_name} (FULLSEND_SKIP_PATCHES)"
+    continue
+  fi
   if ! git -C "${FULLSEND_BUILD_ROOT}" apply --check --unidiff-zero "${patch}" 2>/dev/null; then
     echo "ERROR: patch ${patch_name} no longer applies against ${FULLSEND_ROOT} (${FULLSEND_REVISION})." >&2
     echo "       Rebase, replace, or drop it - see work package 1 in" >&2

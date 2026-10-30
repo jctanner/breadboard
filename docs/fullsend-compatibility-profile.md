@@ -30,13 +30,14 @@ what happened every time.
 
 ## 1. Local image builds
 
-Decision 3's first clause. Four images are built here rather than pulled.
+Decision 3's first clause. Five images are built here rather than pulled.
 
 | image | base | what the local layer adds |
 | --- | --- | --- |
 | `fullsend-runner-dev:k3s` | the emulator's Actions runner image | `gh`, `yq`, a Go toolchain, `gitleaks`, `pre-commit`, the `fullsend` and `openshell` binaries, the emulator's runner implementation |
-| `fullsend-sandbox-local:k3s` | `ghcr.io/fullsend-ai/fullsend-sandbox` at the digest `harness/triage.yaml` pins | `ca-certificates` and this cluster's internal CA |
-| `fullsend-code-local:k3s` | `ghcr.io/fullsend-ai/fullsend-code` at the digest `harness/review.yaml` pins | the same one layer; review and code pin the same digest |
+| `fullsend-sandbox-local:k3s` | `ghcr.io/fullsend-ai/fullsend-sandbox` at the digest `harness/triage.yaml` pins | `ca-certificates` and this cluster's internal CA; `/sandbox` made readable (below) |
+| `fullsend-code-local:k3s` | `ghcr.io/fullsend-ai/fullsend-code` at the digest `harness/review.yaml` pins | the same layer; review and code pin the same digest |
+| `openshell-supervisor-local:k3s` | `ghcr.io/nvidia/openshell/supervisor` at the tag `deploy/dependencies.json` pins | the internal CA appended to the supervisor's trust bundle (below) |
 | `fullsend-mint-dev:k3s` | built from `deploy/` | the development mint itself |
 
 Two properties keep these honest, both enforced by
@@ -68,6 +69,22 @@ selects it. The chart's `upstreamProxy.caBundle` would be the supported route,
 but 0.1.4 rejects it without a proxy URL ("proxy_ca_bundle is set but no
 https_proxy is configured"). Whether the sandbox images still need the CA
 once the supervisor has it is untested.
+
+The same local layer (`deploy/fullsend-sandbox-local/Containerfile`) also
+makes everything under `/sandbox` world-readable (`chmod -R a+rX /sandbox`).
+OpenShell 0.1.x's Kubernetes driver seeds the image's `/sandbox` into the
+workspace volume in a `workspace-init` init container that runs as the
+workload identity (uid 10001). Upstream's `fullsend-code` image ships
+`/sandbox/.cache/gopls` as 0700 owned by its own `sandbox` user (uid 998,
+created by `gopls version` in `images/code/Containerfile`), so the seed fails
+with `Permission denied (os error 13)`, the sandbox never becomes Ready, and
+`fullsend run` reports only `sandbox create failed: signal: killed` after its
+ready timeout. Triage's `fullsend-sandbox` image has no unreadable content,
+which is why triage-only conformance passed while the code stage failed
+(experiment/testrepo2 #5, 2026-10-30). The seeded copy is owned by the runtime
+user either way, so the agent sees the same files. Drop the `chmod` when the
+upstream image or OpenShell's seed handles it; the upstream issue draft is
+`docs/fullsend-issue-drafts/26-…`.
 
 ## 2. `.local` routing and development CA handling
 

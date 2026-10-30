@@ -198,9 +198,9 @@ spec:
     result = transform_manifest(sample, "bb.internal")
     assert '- "*.ai-pipeline.svc.cluster.local"' in result
     assert "- github-emulator.ai-pipeline.svc.cluster.local" in result
-    assert "- github.local" in result
+    assert "- github.local" not in result
     assert "- github.bb.internal" in result
-    assert '- "*.local"' in result
+    assert '- "*.local"' not in result
     assert '- "*.bb.internal"' in result
     # Invariant: cluster.local must NEVER be modified
     assert "github-emulator.ai-pipeline.svc.cluster.bb.internal" not in result
@@ -237,7 +237,7 @@ spec:
               number: 443
 """
     result = transform_manifest(sample, "bb.internal")
-    assert "- github.local" in result
+    assert "- github.local" not in result
     assert "- github.bb.internal" in result
     assert "- host: github.local" in result
     assert "- host: github.bb.internal" in result

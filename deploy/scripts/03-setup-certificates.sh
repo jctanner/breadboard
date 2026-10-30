@@ -10,7 +10,7 @@ echo "==> Setting up certificate infrastructure..."
 
 # Apply manifests in order
 kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/00-namespace.yaml"
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/01-ca-issuer.yaml"
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/01-ca-issuer.yaml"
 
 echo "==> Waiting for CA certificate to be ready..."
 # Wait for the internal-ca certificate to be issued first

@@ -9,10 +9,110 @@
 
 ## Current milestone
 
-- [PR93 review reproduction and repair](tasks/current/strat-pr93-review-followup.md):
-  owner authorized local fault reproduction and repairs to push-label races,
-  create accounting, deferral history/reasons and reporting. Preserve host
-  verification; no paid run, Jira write or schedule switch.
+- [Permanent scheduled Workflow cutover](tasks/done/strat-workflow-permanent-schedule-cutover-20261029.md):
+  owner authorized permanent fullsend on schedule 4222905; API readback
+  verified at 00:34 UTC October 30. Next run midnight New York; six-hour
+  cadence, cap ten, upstream main and owner unchanged. Project/manual default
+  remains legacy with stable-1.x fallback. No automatic rollback, host timer
+  or manually launched run.
+
+- [October 29 scheduled Workflow qualification](tasks/done/strat-evening-workflow-qualification-20261029.md):
+  Opus 4.6 batch passed in **48m04s**; four acquired RFEs completed/reviewed,
+  all approved by the numeric gate, publication and downstream dashboard pass.
+  No input-change deferral occurred, so this live run qualifies the normal
+  resume/publication path, not the drift race. Evidence retained; schedule
+  restored to inherited legacy before the midnight recurrence.
+  Content inspection finds valid metadata and retained SME text, but three
+  strategies have reviewer dissent and the coexistence G4 has a concrete
+  [wording inconsistency](bugs/open/strat-coexistence-webhook-criterion-wording.md).
+
+- [PR8913 waynesun09 review](tasks/done/fullsend-8913-waynesun-review.md):
+  index-based identity and private-protocol labeling fixed; race/lint/replay
+  and Opus 5.5 review pass. Signed-off a4c647466 pushed and exact PR head
+  verified; replay excerpt/private-protocol caveat refreshed in description.
+
+- [PR8913 review comments](tasks/done/fullsend-8913-review-comments.md):
+  sparse hook/agent metadata and run visibility defects reproduced/repaired;
+  organization/docs comments addressed. Runtime/CLI-path race, lint and
+  replay pass; Opus 5.5 verified the final recovery correction. Signed-off
+  8e1fd4028 pushed and verified as PR head. Wider scope retained per owner.
+
+- [Fullsend Opus 5.5 review fixes](tasks/done/fullsend-8908-claude-review-fixes.md):
+  actionable findings reproduced and repaired; runtime/CLI-path race, coverage,
+  lint and archived replay pass. Opus 5.5 verified final correction with no new
+  material finding. Owner-authorized signed-off 7f266ee9f pushed to the fork;
+  component checkout clean, no PR created.
+
+- [Evening schedule restored to legacy](tasks/done/restore-strat-schedule-legacy-20261029-evening.md):
+  October 29 scheduled pipeline 3006130966 / job 17591617217 passed;
+  Workflow job **48m04s**, downstream dashboard pipeline 3006261958 passed.
+  Removed only the temporary schedule override at 00:02 UTC October 30;
+  inherited legacy verified before midnight New York. Owner/ref/cron/source
+  and batch cap ten unchanged; no host automation or extra run launched.
+
+- [Fullsend Workflow event coverage audit](tasks/done/fullsend-8908-workflow-event-coverage-audit.md):
+  broader task lifecycle, hook, permission, session, notification and rate-limit
+  display implemented; runtime/CLI-path/other-package race checks and staged
+  lint pass. Version-bounded event matrix documented; staged, not published.
+
+- [Fullsend #8908 Workflow progress fix](tasks/done/fullsend-8908-workflow-progress.md):
+  local branch `fix/8908-claude-workflow-progress`; parser/display regression,
+  archived-stream replay, runtime race coverage and staged lint pass. Full
+  repository race run hit the CLI 10-minute timeout; the active existing test
+  passes on main and patch. Mintcore race suite passes. No commit/publication.
+
+- [PR93 push recovery and publication validation](tasks/done/strat-pr93-push-and-publication-boundaries.md):
+  four reports reproduced and repaired, plus Claude's follow-up corrections.
+  39 new cases; 154 focused checks and lint/schema pass. Final Opus 5.5 review
+  found no material defects; only a recorded import-format blank line changed
+  afterward. Full **1,605 pass/six skips**; archive verified 108 files plus
+  manifest, 34-file source/evidence credential scan zero. Signed-off **6334546**
+  pushed and verified as PR93's exact head; checkout clean. DCO/lint/Unicode
+  passed; latest review marks all four findings resolved, with no new code
+  findings. All CI green; nine addressed bot conversations resolved, zero
+  unresolved threads. Owner merged PR93 into upstream main as **e8f3e5b** at
+  2026-10-29 17:09 UTC; merged head 6334546 confirmed. Merge receipt verified
+  five files plus manifest. Delivery/thread receipts also retained.
+  [Scheduled qualification](tasks/done/strat-evening-workflow-qualification-20261029.md)
+  subsequently passed for four RFEs; no live drift race occurred.
+
+- [PR93 creation and recorder boundaries](tasks/done/strat-pr93-create-and-review-boundaries.md):
+  both new medium findings reproduced at 17a684f; initial repairs pass 95 focused
+  cases. Opus 5.5 confirmed both and found two related boundaries, now repaired
+  with 30 new cases. Final Opus 5.5 verification found no material defects; full
+  **1,566 pass/six skips**, lint/schema clean. Archive verified 89 files plus
+  manifest; 32-file source/receipt credential scan zero. Signed-off **e9bcdc3**
+  pushed and verified as PR93's exact head, source byte-identical and checkout
+  clean. All CI passed. Latest Fullsend review marks the two repaired findings
+  resolved but reports a new push-recording race plus three low items;
+  [refresh](bugs/open/strat-batch-freshness-failure-isolation.md). Publication
+  archive verified 16 files plus manifest. No merge, smoke or schedule change.
+
+- [PR93 independent proof and late human-gate repairs](tasks/done/strat-pr93-host-proof-and-human-gate.md):
+  both concerns and reproduced verification follow-ups fixed locally; 33 new
+  cases, full 1,536 pass/six skips, lint/type/schema clean. Opus 5.5 verified
+  the corrections; four review calls estimated $6. Archive verified 96 files
+  plus manifest; full 31-file PR credential scan zero. Signed-off **17a684f**
+  pushed and verified as PR93's exact head; clean checkout, DCO passed, CI/review
+  started. [Publication](tasks/done/strat-pr93-host-proof-publication.md): 12-file
+  receipt archive verified. No live smoke or schedule change. Parser/layout
+  limits and actor/journal assumptions remain tracked separately.
+
+- [PR93 independent local Claude review](tasks/done/strat-pr93-local-claude-review.md):
+  one Opus 4.6/high review of 13a4f71, 14m16s, CLI token estimate $2.84.
+  No high/medium findings. Conditional Jira display-name compatibility gap
+  tracked; conservative unavailable-history behavior retained. Four offline
+  checks confirmed both observations. Source unchanged; archive verified 20
+  files plus manifest with zero credential findings. No live smoke/cutover.
+
+- [PR93 review findings reproduced and repaired](tasks/done/strat-pr93-review-followup.md):
+  signed-off 13a4f71 pushed to existing PR93, exact remote head/files verified,
+  clean and mergeable. Push-label race, create/skip/pending accounting, missing
+  create receipt, reasons/reporting/CLI fixed. Reverts require host-pinned Jira
+  history proof; unprovable cases remain fail-closed. Forty added cases; full
+  1,503 pass/six skips, lint/types and Python 3.11/3.12 CI green. Automated review
+  in progress; protected-path approval is separate. Archive verified 27 files
+  plus manifest, full 28-file PR credential scan zero. No paid run or cutover.
 
 - [Batch freshness isolation PR #93](tasks/done/strat-batch-freshness-isolation.md):
   signed-off 6ad16b5 pushed on feat/isolate-stale-batch-tickets; upstream PR

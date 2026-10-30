@@ -1871,3 +1871,319 @@ version drift explicit. The cited fault investigations cover Claude 2.1.296;
 Dojo's documented 2.1.311 smoke is not revalidation of those controls.
 Linked the documented JavaScript learning effort. No runtime tests, model jobs,
 settings changes, or component edits; local documentation checks performed.
+
+## 2026-10-28: PR93 review follow-up
+
+Reproduced review boundary failures locally and pushed signed-off 13a4f71 to PR93. Repairs cover push/label races, partial creation and skip accounting, missing create handoffs, stable deferral reasons, externally proven reverted edits, reports and CLI errors. Forty added cases; full 1,503 passed/six skipped, lint/type and remote Python CI green. Full PR credential scan zero; evidence archived under var/run-data/20261028-strat-pr93-review-followup/. Automated review in progress; protected-path human approval remains separate. No paid smoke, live Jira write or schedule change.
+
+## 2026-10-28: Owner-requested local Claude review of PR93
+
+Ran claude -p with explicit Opus 4.6/high and read-only tools on 13a4f71. One
+invocation completed in 14m16s; CLI token estimate $2.84. No high/medium findings.
+Two low observations: conditional STRAT-history display-name normalization gap,
+and conservative early failure on unavailable RFE history. Four offline checks
+confirmed the behaviors; only the compatibility gap is tracked as a potential
+repair. Source tree unchanged. Retained prompt, patches, CLI stream/usage,
+review and assessment under var/run-data/20261028-strat-pr93-local-claude-review/;
+20 files plus manifest verified, zero credential findings. No public comment,
+source fix, commit/push, live Workflow smoke, Jira write or schedule change.
+
+## 2026-10-28: PR93 host proof, late gates and independent Opus 5.5 verification
+
+Owner authorized fixing both latest automated findings and local Claude review,
+then selected claude-opus-5-5. Reproduced actual host acceptance of forged STRAT
+snapshots and late gate failures. Repairs require independent host evidence and
+preserve ownership/link/shared/unreadable failures. Opus identified further old
+gate, own-SME-history, review-recovery, formatting and encoded-payload cases;
+all concrete normal-flow cases reproduced and corrected. Exact normal/stub ADF
+is now checked against current SME before remote mutations. Thirty-three added
+regressions; final full 1,536 passed/six skipped in 872.91s, lint/type/schema/diff
+clean. Final Opus 5.5 report verifies both output paths; four calls estimated
+$5.997457 total, with unchanged-source fingerprints for each review.
+
+Evidence: var/run-data/20261028-strat-pr93-host-proof/, 96 files plus manifest,
+copied hashes verified; all 31 pending PR source files and evidence scanned with
+zero credential findings. Source changes remain local/uncommitted on
+feat/isolate-stale-batch-tickets, parent 13a4f71. No push, PR comment, merge,
+live Workflow smoke, Jira mutation or schedule change. Pre-existing fence-aware
+extraction and standalone leading-SME layout issues are tracked separately;
+managed guards refuse unsafe writes. Actor attribution, journal trust and Jira
+CAS remain explicit boundaries. The batch bug stays open for delivery/merge
+and live qualification.
+
+## 2026-10-28: PR93 verified follow-up committed and pushed
+
+Owner authorized commit/push. Verified the exact 12 reviewed/tested files,
+unchanged remote parent 13a4f71 and open PR93, and scanned staged blobs for
+credentials. Signed-off 17a684f pushed normally to feat/isolate-stale-batch-tickets;
+upstream PR head/files and clean local checkout verified. The existing full
+1,536-pass/six-skip and Opus 5.5 evidence matches all committed contents. DCO
+passed; other CI/review checks started. Publication receipts archived under
+var/run-data/20261028-strat-pr93-host-proof-publication/, 12 files plus manifest,
+hashes verified; full 31-file PR source check zero credential findings. No merge,
+public review comment, paid smoke, Jira mutation or schedule change.
+
+## 2026-10-28: Retrospective comparison claims clarified
+
+Applied review B1/B2/M1 to the migration note. Distinguished the running Bash
+outer loop from a primary agent editing/relaunching Workflows; did not assert
+immutable incumbent source or Workflow VM hot-patching. Linked the 2/12
+handoff diagnosis directly and separated single-ticket repetitions from the
+one-per-design batch comparison and its scheduling confound. Fixed the moved
+PR93 review-task link. No runtime work or remote publication.
+
+## 2026-10-29: PR93 creation and recorder boundary repairs
+
+Reproduced both new automated findings at 17a684f. Early creation gates now
+defer only independently proven changed tickets while retaining other create
+records. Typed review/publication freshness reaches batch recovery instead of
+SystemExit. Opus 5.5 found two related cases, structured SME drift before first
+recording and a publication-read attention gate, also reproduced and fixed.
+Final Opus verification found no material defects. Thirty new cases; full suite
+1,566 passed/six skipped in 17m42s, lint/schema clean. Source unchanged since
+verification, local/uncommitted. Archive under
+var/run-data/20261029-strat-pr93-recorder-boundaries/ verified 89 files plus
+manifest, full 32-file source and receipt credential scan zero. One interrupted
+review capture is retained separately without a final cost; two completed
+reviews report $3.142846 total list-price estimate. No push, public PR mutation,
+paid Workflow smoke, live Jira write, deployment or schedule change.
+
+Owner authorized commit/push. Reverified source byte-for-byte against the
+1,566-pass/six-skip and Opus 5.5 archive; seven staged files and all 32 PR files
+scan clean. Signed-off e9bcdc3 pushed normally; PR93 exact head/files and clean
+local checkout verified. DCO/lint/Unicode passed; Python CI and automated review
+started. Publication archive verified 16 files plus manifest under
+var/run-data/20261029-strat-pr93-recorder-publication/. No merge, public review
+comment, live smoke, Jira write or schedule change.
+
+PR93 GET-only refresh at 04:04 UTC confirms e9bcdc3 and all CI green. Fullsend
+marks the previous two recorder issues resolved, but reports one medium push
+snapshot race and three low items (crafted ticket-key aliases, renamed deferred
+artifact copies, missing history-read retries). Initial code inspection only;
+no reproduction/fix or public mutation. Full snapshot and delta retained in
+/tmp/strat-pr93-review-refresh-20261029T040426Z/ and aggregate bug updated.
+
+## 2026-10-29: PR93 push recovery and publication validation repaired
+
+Reproduced/fixed all four new reports: push snapshot race, crafted evidence
+keys, renamed deferred artifacts (with regenerated receipts), and history
+read retries. Push isolates only independently proven ticket changes and
+retains unaffected snapshots; invalid/unrelated/shared failures stay fatal.
+Canonical completed-inventory publication and optional embedded/derived
+identity checks added. Opus 5.5 found raw Jira YAML parsing and an unbound
+STRAT-original slot; both reproduced/repaired. Synced bundled hook snapshots
+and corrected test setup/assertions; final Opus verification found no material
+defects. Three review calls estimated $4.0186196. Only a lint-required blank
+import separator changed afterward, with exact delta retained.
+
+39 new cases; 154 focused pass; final full suite 1,605 passed/six skipped in
+19m44s, lint/schema clean. Earlier interrupted runs retained, not counted as
+passing. Archive var/run-data/20261029-strat-pr93-push-publication/ verified
+108 files plus manifest; all 34 pending PR source files and evidence credential
+scanned, zero findings. Changes uncommitted on e9bcdc3. No push, PR comment,
+merge, paid Workflow batch, live Jira write, deployment or schedule change.
+
+Owner authorized commit/push. Exact source/receipt hashes rechecked against
+the 1,605-pass/six-skip archive; ten staged files and all 34 PR source files
+credential scan clean. Signed-off 6334546 pushed normally; PR93 exact head,
+expected files and clean local checkout verified. DCO/lint/Unicode passed;
+Python CI and automated review running at 16:09:43 UTC. Delivery receipts at
+var/run-data/20261029-strat-pr93-push-publication-delivery/ verified 16 files
+plus manifest. No merge, public review comment, live smoke or schedule change.
+
+PR93 GET-only refresh at 16:37 UTC: 6334546 unchanged, all CI green, and the
+latest Fullsend review marks all four prior findings resolved with no new code
+findings. No new inline comments. The unchanged protected-path approval
+requirement is the only remaining changes-requested item. Full snapshot/delta
+under /tmp/strat-pr93-review-refresh-20261029T163713Z/. No code/remote changes.
+
+Owner flagged an unresolved GitHub conversation. My prior refresh checked
+review-summary findings but missed thread flags. GraphQL found nine addressed
+bot conversations still unresolved. Verified unchanged bot-only content and
+older fixes, resolved those nine, and read back zero unresolved at 16:47 UTC;
+eight previously resolved threads unchanged. No comment/review posted,
+dismissal or merge. Latest bot review was already dismissed. GitHub still
+reports merge BLOCKED; org rules include code-owner/extra approval requirements,
+but the precise unmet rule is unconfirmed. Source unchanged at 6334546.
+Thread/rule receipts archived under
+var/run-data/20261029-strat-pr93-thread-resolution/ (21 files plus manifest,
+all hashes verified, zero configured credential findings).
+
+## 2026-10-29: PR93 merge confirmed
+
+Owner merged PR93 at 17:09:11 UTC. GitHub GET confirms head 6334546 merged into
+upstream main as e8f3e5b7722eb3c4f689b3da900bbfba2f4dd837. Five-file merge
+receipt plus manifest archived under var/run-data/20261029-strat-pr93-merge/;
+hashes verified and credential scan zero. Ledger updated; aggregate bug remains
+open for live qualification only. Recommend one supervised manual Workflow
+batch before changing the schedule. No job, Jira write, schedule change, local
+branch switch or remote mutation performed for this merge notification.
+
+## 2026-10-29: Existing 6 PM schedule temporarily selects fullsend
+
+Owner deferred batch testing until evening, then authorized setting the
+existing schedule to fullsend now and explicitly undoing it later tonight
+after the job. Owner rejected machine-level automation; no services/timers
+were installed and no automatic reset is configured.
+
+At 17:58:54 UTC, API readback verifies schedule 4222905 has the sole override
+STRAT_EXECUTOR=fullsend, next due 22:00 UTC / 6 PM New York (EDT), batch ten.
+Project executor override absent; default legacy; all unrelated settings,
+owner and cron unchanged. No manual pipeline/model run was launched.
+Seven-file receipt plus manifest archived under
+var/run-data/20261029-strat-workflow-evening-override/, hashes verified and
+configured credential scan zero. Pending task records explicit GitLab removal
+after tonight's completion, before the next midnight occurrence.
+
+## 2026-10-29 evening: scheduled Workflow batch passed; legacy restored
+
+Native schedule pipeline 3006130966 / job 17591617217 succeeded. Workflow job
+ran 48m04s (22:06:49–22:54:53 UTC); dashboard pipeline 3006261958 also succeeded.
+Opus 4.6/high, concurrency ten, source main 987a2005, Fullsend 0.47.1. Five
+RFEs discovered, four acquired: 896→1141, 3226→2636, 3516→3029, 3803→3084.
+All four completed/reviewed/approved by the numeric gate, zero errors/deferrals,
+Workflow and lock-release exit zero. Existing approved 1535→2405 skipped.
+Post-run published inventory, Jira clone links/rubric labels, review comments
+and dashboard checks pass. Native cost estimate $29.0947765. No live drift
+race occurred; snapshots are post-run and no new content judge was invoked.
+
+Owner-authorized rollback removed only the schedule override at 00:02:31 UTC
+October 30 (8:02 PM New York). Readback verifies inherited legacy, unchanged
+owner/ref/cron/source/batch cap and next midnight recurrence. First preflight
+refused before mutation due extra API metadata; GET reconciled it, corrected
+guard then performed one DELETE. No extra model launch, Jira write or host
+automation. Run evidence retained under
+var/run-data/20261029-real-gitlab-evening-workflow-batch/; rollback under
+var/run-data/20261029-strat-workflow-evening-rollback/ (ten files plus verified
+manifest, configured credential scan zero). Native artifacts retain available
+OTel/transcripts/debug/sandbox logs; raw API/syscalls/MLflow were not configured.
+
+Owner asked whether the correct files reached the data repo. GET-only audit
+at 00:06:55 UTC verifies main b78befbc and all 51 run files against archived
+bytes/Git blob IDs, all 50 publication checksums and 35 provenance references.
+Four STRAT/RFE identities match, no missing/unexpected artifacts; both live
+summary files include the four reviewed/approved pairs. Receipts archived in
+var/run-data/20261029-strat-data-publication-audit/. No remote changes or model
+calls were made.
+
+Owner asked about file structure and convincing content. Validated all four
+task/four combined-review frontmatters; confirmed normalized SME text retained
+on 1141, 2636 and 3029. Read strategy approaches/criteria/risks and reviewer
+findings: concrete, distinct drafts, with unresolved dissent on three of four
+(numeric-only approval policy intentional). Found a prose contradiction in
+2636 G4: blanket prohibition on matching Workspace resources conflicts with
+its own Workspace webhook discussion; tracked as an open generated-content
+bug. CSP needs more CI-feasible tests; OpenChamber still needs a concrete
+validation matrix and compatibility/streaming/browser failure coverage.
+Strategy/review length is a readability issue. Full assessment appended to
+the scheduled qualification task; no new model run or external mutation.
+
+## 2026-10-29 evening: permanent scheduled Workflow cutover
+
+Owner explicitly authorized permanent STRAT_EXECUTOR=fullsend. One POST added
+that variable to the existing GitLab batch schedule 4222905; readback at
+2026-10-30 00:34:23 UTC (8:34 PM New York October 29) verifies fullsend and all
+unrelated settings unchanged. Next run is midnight New York / 04:00 UTC;
+cadence remains every six hours, batch cap ten, source upstream main, owner
+jtanner1. Project executor override remains absent and CI/manual defaults
+remain legacy; stable-1.x is the fallback. No automatic rollback is intended.
+No manual model launch, Jira write or host automation. Before/intent/response/
+after and verification archived under
+var/run-data/20261029-strat-workflow-permanent-cutover/; rollout note updated.
+
+## 2026-10-28: Retrospective live stdout limitation
+
+Added the owner's observed Fullsend console limitation to the migration note:
+inner Workflow work surfaced only outer-agent running heartbeats, without
+useful ticket/phase/tool progress. Cited the single-smoke reconstruction and
+batch heartbeat evidence, separating post-run forensics from live visibility.
+Scope remains the tested integration, not all Workflow configurations/releases.
+Documentation only; no runtime changes or new model calls.
+
+## 2026-10-29: Workflow console gap traced to Fullsend parser
+
+Read the raw output.jsonl inside the existing GitLab single-smoke ZIP:
+135 system/task_progress events, 33 with workflow_progress snapshots including
+phase names and agent/tool state. Fullsend v0.47.1 preserves raw output but
+handles only init/api_retry system subtypes in its Claude parser, dropping
+Workflow progress from console rendering. Recorded the confirmed integration
+bug and corrected the retrospective's earlier unresolved attribution. Saved
+hashes and compact read-only extraction proof under /tmp. No inference,
+component edits, deployment, upstream issue, or paid test.
+
+## 2026-10-29: Claude independently reviewed Workflow console diagnosis
+
+Ran the owner-requested claude -p review on Opus 4.6/high, CLI 2.1.312.
+First source review confirmed the bug; a focused follow-up resolved command
+permission/source-snapshot gaps and independently recomputed the archived
+135 progress events and 33 snapshots. Verdict remains confirmed. Total CLI
+list-price estimate $1.793610 across 277.16s/47.21s invocations. Recorded raw
+reviews and usage under /tmp/strat-workflow-progress-claude-review-20261029/.
+Clarified static phase metadata versus live advancement and progress versus
+full tool output; documented incidental review-summary slips. No component
+edits, Workflow model batch, deployment, or upstream issue/comment.
+
+## 2026-10-29: Filed Fullsend Workflow progress bug upstream
+
+Owner authorized creating a detailed GitHub bug. Checked live issue-template
+configuration (blank issues; no dedicated bug form), followed recent human
+bug structure, and prepared a sanitized model-free event fixture and pinned
+source references. Created fullsend-ai/fullsend#8908 once, labeled bug, with
+no ready-to-code label. GET readback confirms exact title/body and open state.
+Linked it from the ledger bug and retrospective. Publication receipts under
+/tmp/fullsend-workflow-progress-issue-20261029/. No PR, implementation,
+comment, runtime change, or model job.
+
+
+## 2026-10-29 — Fullsend Workflow progress display expansion
+
+Extended the authorized local #8908 branch after auditing Claude 2.1.312's
+embedded emitter/schema. Useful lifecycle and advisory display events now
+have explicit handling, redaction/deduplication, tests, and a documented
+matrix. Runtime race suite, CLI display consumer race tests, all other
+main-module package race tests, staged lint/vet/links and original-stream
+replay pass. The earlier full CLI suite timeout remains documented; no
+suite timeout changes, model calls, commit, push or PR. See the
+[completed task](../tasks/done/fullsend-8908-workflow-event-coverage-audit.md).
+
+
+## 2026-10-29 — Fullsend progress review findings repaired
+
+Opus 5.5 implementation review identified actionable terminal-message,
+warning occurrence, request-status noise and optional run-ID issues. Each
+was reproduced in synthetic regressions and repaired. Independent follow-up
+found an anonymous-restart history edge; reproduced, repaired and re-reviewed
+by Opus 5.5 with no new material defect. Full runtime race suite (93.3%),
+CLI display-path race checks, staged lint/vet/links and original-stream replay
+pass. Fourteen component files staged, no commit/push/PR. The full CLI suite's
+earlier timeout and producer/cache qualification limits remain documented.
+[Completed task](../tasks/done/fullsend-8908-claude-review-fixes.md).
+
+
+## 2026-10-29 — PR8913 upstream review comments addressed
+
+Reproduced and repaired three behavioral comments (sparse hook identity,
+sparse agent metadata and cross-run hidden-state leakage), generated the
+synthetic scanner fixture and handled event/test/helper organization and doc
+comments. Preserved broader event handling per owner instruction. Independent
+Opus 5.5 follow-up raised stale transient flags after recovery; red regression,
+state-relative fix and final Opus review confirmed no new material defect.
+Runtime/CLI-path race, 93.3% runtime coverage, staged lint/vet/links, commit
+hooks and archived replay pass. Signed-off 8e1fd4028 pushed, remote/PR exact
+head verified, component clean. No review messages, labels, merge or deploy.
+[Completed task](../tasks/done/fullsend-8913-review-comments.md).
+
+
+## 2026-10-29 — PR8913 waynesun09 findings addressed
+
+Reproduced late-agentId row split before repair. Stable task/run/index keys,
+retained redacted ID attribution, ID-only display dedup and ID fallback
+isolation pass regressions. Docs and decoder comments explicitly identify
+workflow_progress/task_summary as undocumented internals with patch-release
+risk and distinguish embedded-schema evidence from live capture. Full runtime
+race 93.3%, CLI race, lint/vet/links, archive replay and read-only Opus 5.5
+review pass; only comment/test polish followed review. Signed-off a4c647466
+pushed, remote/PR head exact and component clean. PR replay example and
+protocol caveat updated/readback-verified. No new live Workflow, review replies,
+thread resolution, merge or deployment.
+[Completed task](../tasks/done/fullsend-8913-waynesun-review.md).

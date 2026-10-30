@@ -1,6 +1,7 @@
 # Migrating Bash orchestration to Claude dynamic workflows
 
-Draft retrospective, 2026-10-28. Project: [AISDLC-52](https://redhat.atlassian.net/browse/AISDLC-52).
+Draft retrospective, 2026-10-28; rollout status updated October 29.
+Project: [AISDLC-52](https://redhat.atlassian.net/browse/AISDLC-52).
 
 The main lesson for this migration is that resilience became an application
 architecture project. JavaScript expressed the schedule; additional code had
@@ -161,10 +162,17 @@ entire spend should not automatically be counted as an inherent workflow cost.
 Observability itself was work. The investigation used native state and journals,
 receiving-agent messages, transcripts, API captures, syscall traces, Jira
 snapshots, and checksummed host archives. Later remote GitLab runs did not
-have every local capture configured. Console heartbeats could hide long inner
-phases; a post-run transcript reconstruction was needed to explain the quiet
-interval. A log saying an agent ran is weaker than evidence of what its
+have every local capture configured. During inner Workflow execution, the
+observed Fullsend job's stdout offered repeated “Agent running…” heartbeats
+without useful phase, ticket, tool, or completion progress. Operators could
+not tell from those messages whether work was advancing or stalled. A post-run
+transcript reconstruction was needed to explain the quiet interval. Retained
+artifacts enabled investigation afterward; they did not provide live CI
+visibility. A log saying an agent ran is weaker than evidence of what its
 recipient received and what Jira retained.
+[Subsequent diagnosis](../bugs/open/fullsend-claude-workflow-progress-not-rendered.md)
+confirmed that Claude emitted structured phase/progress events, but Fullsend
+did not render them; this console gap was in the integration.
 [Archive work](../tasks/done/strat-workflow-run-data-archives.md),
 [remote reconstruction and capture limits](../tasks/done/strat-postmerge-single-smoke-20261027.md#reconstruction-of-the-quiet-console-interval).
 
@@ -173,8 +181,16 @@ recipient received and what Jira retained.
 The main Workflow migration and GitLab opt-in support are merged:
 https://github.com/fullsend-ai/strat-creator/pull/85 and
 https://gitlab.com/redhat/rhel-ai/agentic-ci/strat-pipeline/-/merge_requests/18.
-The placeholder fix is merged. Scheduled execution is back on legacy; batch
-isolation and its review follow-up remain under qualification.
+The placeholder and batch-isolation fixes are merged. The October 29 native
+scheduled Workflow batch passed for four acquired RFEs in 48 minutes, with
+verified Jira links/labels, complete publication and a passing downstream
+dashboard build. It did not encounter a live input-drift deferral; those race
+cases remain covered by local fault tests. After that qualification, the owner
+authorized permanently setting STRAT_EXECUTOR=fullsend on the existing batch
+schedule. Readback verified the cutover at 00:34 UTC October 30. Other/manual
+pipeline defaults remain legacy, and stable-1.x is retained as the fallback.
+[Qualification and limits](../tasks/done/strat-evening-workflow-qualification-20261029.md),
+[permanent schedule cutover](../tasks/done/strat-workflow-permanent-schedule-cutover-20261029.md).
 
 The tested Workflow offers useful scheduling and separate agent contexts.
 The evidence does not establish a general simplicity, cost, or reliability
@@ -497,6 +513,57 @@ mode. Small unit fixtures did not represent the deployed tree or full batch.
 [Fail-open timeout](../bugs/fixed/strat-structured-output-hooks-timeout-fail-open.md),
 [refinement profiling](../bugs/fixed/strat-refine-checkpoint-hook-timeout.md),
 [ten-ticket completion profiling](../bugs/fixed/strat-completion-hook-ten-ticket-timeout.md).
+
+### Live stdout did not show Workflow progress
+
+In the observed `fullsend run` integration, the useful CI output stopped at
+the outer-agent boundary while the Workflow ran in the background. Repeated
+“Agent running…” messages did not show which RFE was being processed, which
+stage or specialist was active, what a tool returned, or whether an inner
+failure had occurred. A heartbeat established neither business progress nor
+the absence of a stall. This was an operational limitation during the run,
+even when the work ultimately completed.
+
+An external Bash coordinator can print the command it is about to run and
+stream the output and exit status it receives. Equivalent visibility into
+nested Workflow agents was not available in these Fullsend job logs. Checking
+Jira separately supplied some live phase evidence; reconstructing the full
+sequence required collecting and joining native transcripts and journals
+afterward. The successful single-ticket smoke retained 15 timestamped
+transcripts and 19 journal entries, from which the investigation recovered
+157 tool calls and their results. Those records were useful forensic evidence,
+but the console had not streamed that activity live.
+[Single-smoke reconstruction](../tasks/done/strat-postmerge-single-smoke-20261027.md#reconstruction-of-the-quiet-console-interval),
+[batch heartbeat limitation](../tasks/done/strat-placeholder-repair-live-batch-20261028.md#live-status-and-external-input-edit-0125z).
+
+Read-only diagnosis on October 29 located the gap. The smoke's captured raw
+Claude `output.jsonl` contains **135 `system/task_progress` events**, of which
+**33 include `workflow_progress`** snapshots. They carry phase titles such as
+Read, Create, Refine, Push, Score, Review, and Result, along with agent state
+and tool progress. In Claude, `phase()` updates this structured progress
+channel; it does not necessarily print an ordinary stdout line.
+
+The phase-title list includes predeclared metadata, which alone does not prove
+execution reached each phase. Actual advancement is visible in changing
+descriptions and agent states, including `read input` moving from start to done
+before creation starts. The available phase/agent metadata would improve the
+live view; it would not expose every tool's full input or output.
+
+Fullsend v0.47.1 captures the raw stream before parsing, but its Claude parser
+handles only `init` and `api_retry` among `system` subtypes. It does not turn
+Workflow task/progress events into console output. Useful progress therefore
+reached Fullsend and survived in the artifact while being omitted from the
+live display. This is a confirmed Fullsend adapter/rendering gap for phase
+and progress visibility, rather than an inherent inability of Claude Workflows
+to emit it.
+[Diagnosis and exact evidence](../bugs/open/fullsend-claude-workflow-progress-not-rendered.md).
+Upstream tracking: [Fullsend bug 8908](https://github.com/fullsend-ai/fullsend/issues/8908).
+
+Production qualification should check rendering of these events as well as
+artifact capture. This finding does not establish that every nested tool's
+full stdout/stderr is exported or that displaying phase events alone supplies
+all diagnostics. The release-specific source inspection does not qualify an
+uninspected newer Fullsend/Claude combination.
 
 ### Fullsend integration added a separate qualification layer
 

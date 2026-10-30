@@ -38,3 +38,14 @@ Added an explicit version boundary: cited runtime investigations cover 2.1.296,
 with no recorded revalidation on 2.1.311 or later. Dojo's 2.1.311 one-agent smoke
 does not qualify those fault behaviors. Linked the documented JavaScript
 learning work. Documentation checks only; no runtime revalidation was launched.
+
+## External review clarification
+
+Reframed B1 around control of the already running Bash outer loop: edits do not
+hot-reload its parsed loop, while the observed primary Claude session could
+edit and relaunch a Workflow within one job. Neither source immutability nor
+hot-patching an existing Workflow VM is inferred. B2 now cites the handoff
+diagnosis directly and separates its 2/12 result from the self-edit incident.
+M1 distinguishes three successful single-RFE runs per design from one completed
+three-RFE batch per design and removes the ambiguous matched-cost claim.
+Updated a PR93 task link after that task moved to done. Documentation only.

@@ -18,7 +18,7 @@
   CA-bearing local supervisor image, emulator non-cone checkout). Conformance
   passed on run 1816.
 
-- [Lima VM and Tailnet DMZ environment](tasks/pending/lima-tailnet-environment.md):
+- [Lima VM and Tailnet DMZ environment](tasks/done/lima-tailnet-environment.md):
   replicate the Breadboard stack on Apple Silicon in an ARM64 Lima VM with
   Rosetta emulation, parameterized ingress domain (`BREADBOARD_DOMAIN`), and
   isolated Tailnet DMZ access (`tag:breadboard`). Plan: [lima-tailnet-environment-plan.md](plans/lima-tailnet-environment-plan.md);

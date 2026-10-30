@@ -261,6 +261,13 @@ echo ""
 bash test-application.sh
 echo ""
 
+# Configure Tailscale Split DNS if tailscale0 is present
+if ip link show dev tailscale0 >/dev/null 2>&1; then
+  echo "Tailscale interface detected, configuring Split DNS..."
+  bash "${SCRIPT_DIR}/29-configure-tailscale-dns.sh"
+  echo ""
+fi
+
 # Display access information
 echo "=========================================="
 echo "Deployment Complete!"

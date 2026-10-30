@@ -143,3 +143,18 @@ Next step: Draft `deploy/lima/breadboard-vm.yaml` and parameterize reverse proxy
   - Cluster and certificate validation suites passed (`test-cluster.sh`, `test-certificates.sh`).
   - Host kubeconfig verified (`make lima-kubeconfig` -> `~/.kube/breadboard-lima.yaml`), remote `kubectl get nodes` and `kubectl get pods -A` functional.
   - Ingress proxy responds HTTP 200/401 across all services (`dashboard`, `fullsend`, `github`, `jira`, `gitlab`, `markovd`, `observatory`, `orgpulse`, `relay`, `hooksink`, `mlflow`) for both `bb.internal` and `local`.
+
+### 2026-10-30 WP4 completed: Tailnet Split DNS Responder & DMZ Verification (bb-1sa.4)
+
+- Configured `breadboard-vm.tailc66a3b.ts.net` (`100.115.60.69`, tagged `tag:breadboard`) as persistent Split DNS responder:
+  - Added `dnsmasq` to package list in `deploy/lima/breadboard-vm.yaml`.
+  - Created `deploy/scripts/29-configure-tailscale-dns.sh` and `make lima-configure-dns` target in `Makefile`.
+  - Added automatic invocation in `deploy/scripts/deploy-all.sh` when `tailscale0` interface is detected.
+  - Configured `/etc/dnsmasq.d/breadboard.conf` listening on `100.115.60.69:53` (UDP + TCP) with `bind-dynamic` and `except-interface=lo`, non-conflicting with `systemd-resolved` on `127.0.0.53`.
+  - Handled `ubuntu-fan` configuration conflict with `bind-dynamic`.
+  - Automated extraction of internal cluster CA certificate to `deploy/certs/ca.crt`.
+  - Updated `deploy/lima/README.md` with node details, Split DNS instructions, and client CA trust instructions for macOS and Linux.
+- **Breakpoint B4 Verified**:
+  - DNS resolution verified for both UDP and TCP on `100.115.60.69:53` returning `100.115.60.69` for `dashboard.bb.internal` and `github.bb.internal`.
+  - HTTPS ingress over `100.115.60.69:443` verified with `--cacert deploy/certs/ca.crt` across all services (`dashboard`, `github`, `jira`, `gitlab`, `fullsend`, `relay`, `hooksink`) with valid TLS certificates.
+  - DMZ lateral movement isolation verified: outbound connection attempts from the VM to peer tailnet nodes (`100.100.21.61:22` titan, `100.79.217.7:22` deimos) are blocked / timed out by Tailscale ACL, while outbound public internet egress (`https://1.1.1.1`) succeeds.

@@ -2,7 +2,7 @@
 
 ## Status
 
-Pending
+Done, 2026-10-30.
 
 ## Context
 
@@ -10,10 +10,10 @@ Implement the plan defined in [lima-tailnet-environment-plan.md](../../plans/lim
 
 ## Work Packages
 
-- [ ] WP1: Lima VM definition (`deploy/lima/breadboard-vm.yaml`) with Rosetta binfmt
-- [ ] WP2: Ingress domain parameterization (`BREADBOARD_DOMAIN`) across reverse proxy, cert-manager, and dashboard
-- [ ] WP3: Full stack deployment inside Lima VM (`make host-deploy-all`)
-- [ ] WP4: Tailnet DMZ configuration (`tag:breadboard`), Split DNS routing, and remote browser verification
+- [x] WP1: Lima VM definition (`deploy/lima/breadboard-vm.yaml`) with Rosetta binfmt
+- [x] WP2: Ingress domain parameterization (`BREADBOARD_DOMAIN`) across reverse proxy, cert-manager, and dashboard
+- [x] WP3: Full stack deployment inside Lima VM (`make host-deploy-all`)
+- [x] WP4: Tailnet DMZ configuration (`tag:breadboard`), Split DNS routing, and remote browser verification
 
 ## Verification
 

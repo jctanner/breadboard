@@ -63,6 +63,8 @@ jobs:
       (github.event_name != 'pull_request_target' && github.event_name != 'pull_request_review') ||
       github.event.pull_request.state == 'open' || github.event.action == 'closed'
     uses: fullsend-ai/fullsend/.github/workflows/reusable-dispatch.yml@main
+    with:
+      event_action: ${{ github.event.action }}
     secrets: inherit
 """
 

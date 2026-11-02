@@ -4,7 +4,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
+PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 
 echo "==> Deploying GitHub Emulator to k3s..."
 
@@ -36,7 +36,7 @@ echo "--- Creating GitHub Emulator configuration ---"
 kubectl apply -f 09-github-emulator-config.yaml
 
 echo "--- Deploying GitHub Emulator ---"
-kubectl apply -f 10-github-emulator.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" 10-github-emulator.yaml
 
 echo ""
 echo "==> Deployment complete!"

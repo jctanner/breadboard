@@ -54,9 +54,9 @@ def transform_manifest(content: str, domain: str) -> str:
         r"^(\s*value:\s*)[\"']?local[\"']?(\s*)$"
     )
 
-    # 5. GITHUB_UI_URL value:
-    env_github_ui_pattern = re.compile(
-        r"^(\s*value:\s*)https://github\.local(\s*)$"
+    # 5. URL value containing .local (e.g., https://github.local, https://jira.local):
+    env_url_pattern = re.compile(
+        r"^(\s*value:\s*(?:https?|http)://[a-zA-Z0-9_-]+)\.local((?:/.*)?\s*)$"
     )
 
     last_env_name = None
@@ -94,14 +94,14 @@ def transform_manifest(content: str, domain: str) -> str:
                 i += 1
                 continue
 
-        # Check GITHUB_UI_URL env value
-        if last_env_name == "GITHUB_UI_URL":
-            gh_match = env_github_ui_pattern.match(line)
-            if gh_match:
-                out.append(f'{gh_match.group(1)}https://github.{domain}{gh_match.group(2)}\n')
-                last_env_name = None
-                i += 1
-                continue
+        # Check URL value containing .local (e.g. GITHUB_EMULATOR_URL, GITHUB_UI_URL, GITHUB_URL)
+        url_match = env_url_pattern.match(line)
+        if url_match:
+            prefix, path_suffix = url_match.groups()
+            out.append(f"{prefix}.{domain}{path_suffix}\n")
+            last_env_name = None
+            i += 1
+            continue
 
         # Check CoreDNS rewrite line
         core_match = coredns_pattern.match(line)

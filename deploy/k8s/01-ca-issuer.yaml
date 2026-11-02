@@ -49,6 +49,8 @@ spec:
       ipRanges:
         - "192.168.56.10/32"
         - "100.115.60.69/32"
+        - "100.89.90.31/32"
+        - "192.168.181.10/32"
 ---
 # CA issuer that uses our internal CA to sign certificates
 # Using Issuer (namespace-scoped) instead of ClusterIssuer for easier secret access

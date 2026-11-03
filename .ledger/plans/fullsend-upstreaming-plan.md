@@ -465,6 +465,25 @@ explicit go or pivot before the next begins.
   code.
 - **U5. Host-assumption cluster resolved**: each sub-issue fixed, declined
   with a reason recorded here, or obsoleted by upstream.
+  **Batch filed 2026-11-02 (CC-1):** after a two-model pre-filing review
+  (GLM + DeepSeek, see docs/fullsend-issue-drafts/cc-1-filing/reviews/), a
+  fresh duplicate search and a line-citation re-check against current
+  upstream main, every draft was filed except 24 (held: its premise may be
+  vacuous on github.com). Parent
+  [fullsend#9036](https://github.com/fullsend-ai/fullsend/issues/9036)
+  carries the cluster as sub-issues:
+  fullsend#9037 (02), fullsend#9038 (11), fullsend#9039 (13),
+  fullsend#9040 (14), fullsend#9041 (15), fullsend#9042 (16),
+  fullsend#9043 (19), agents#1865 (17), agents#1866 (18), agents#1868
+  (push remote, split out of 18 during review), plus the already-filed
+  fullsend#8952 (12). Standalone: agents#1864 (01), fullsend#9044 (20),
+  fullsend#9045 (21), fullsend#9046 (22), fullsend#9047 (23),
+  agents#1867 (25), fullsend#9048 (26). Review edits were folded back into
+  the drafts; the numbers are in
+  docs/fullsend-issue-drafts/cc-1-filing/filed-issues.json. Follow-up is
+  automated on rhlaptop (the "ralph loop": systemd user timer
+  fullsend-ralph-loop.timer checks the issues every 6 hours and classifies
+  changes).
 - **U6. Every upstream-bound defect has a terminal state**: fixed upstream and
   the local patch dropped, declined with reason, or obsoleted. The
   compatibility profile shrinks to the local-only substitutions (four patches

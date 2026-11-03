@@ -20,17 +20,12 @@ before it runs the agent. These steps have no `if:` condition on
 - `Configure OpenShell gateway` (line 404) writes
   `$HOME/.config/openshell/gateway.env` and `gateway.toml` with
   `compute_driver = "podman"`.
-- `Install OpenShell CLI` (line 424) runs `.github/scripts/install-openshell.sh`,
-  which pipes the upstream `install.sh` from `raw.githubusercontent.com`
-  into `sh`. The script's header says it needs sudo.
-- `Install validation dependencies` (line 428) runs
-  `pip install --quiet "jsonschema>=4.18.0"`.
 
 That is the right setup for a GitHub-hosted runner, which starts as a fresh
 virtual machine with none of it. It is the wrong setup for a runner that
 uses an OpenShell gateway running somewhere else. Fullsend already supports
 that arrangement: `ensureContainerGatewayOverride` in
-`internal/sandbox/gateway_endpoint.go` (line 60) respects an explicit
+`internal/sandbox/gateway_endpoint.go` (line 58) respects an explicit
 `OPENSHELL_GATEWAY_ENDPOINT` and does not change it. On such a runner:
 
 - Sandboxes are created on the remote gateway, so the runner does not need
@@ -39,19 +34,13 @@ that arrangement: `ensureContainerGatewayOverride` in
 - On a runner that is a container rather than a virtual machine, the Podman
   steps fail because `sudo usermod` and `systemctl --user` are not available.
   The job then fails before the agent starts.
-- The OpenShell CLI installer runs even when `openshell` is already on
-  `PATH`. It needs sudo and network access to reinstall what the image
-  already has.
-- `pip install` fails on an image whose Python is an externally managed
-  environment, even when `jsonschema` already imports.
 
 ### What should happen
 
 When the runner is configured for an existing OpenShell gateway
 (`OPENSHELL_GATEWAY_ENDPOINT` is set), the action does not install or
-configure a local container runtime or a local gateway. It does not reinstall
-tools that the runner already has. A runner that hosts its own sandboxes,
-such as a GitHub-hosted runner, works as it does today.
+configure a local container runtime or a local gateway. A runner that hosts
+its own sandboxes, such as a GitHub-hosted runner, works as it does today.
 
 ### How to reproduce
 

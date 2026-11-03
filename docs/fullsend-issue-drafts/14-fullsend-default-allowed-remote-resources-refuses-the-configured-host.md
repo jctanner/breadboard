@@ -8,7 +8,7 @@
 
 ### What happens
 
-`config.DefaultAllowedRemoteResources` (`internal/config/config.go:438`)
+`config.DefaultAllowedRemoteResources` (`internal/config/config.go:656`)
 returns two fixed prefixes, whatever host the run is configured for:
 
 ```
@@ -29,13 +29,13 @@ agents[0] (triage): URL "https://ghe.example.com/fullsend-ai/agents/raw/<sha>/ha
 The default is used in several places, so the refusal follows a deployment
 around:
 
-- `NewPerRepoConfig` (`config.go:763`) writes it into a newly scaffolded
+- `NewPerRepoConfig` (`config.go:974`) writes it into a newly scaffolded
   config, so a config created on such a host carries only the public
   prefixes.
-- `EnsureDefaultAllowedRemoteResources` (`config.go:451`) merges it into an
-  existing list at run time (`run.go:403`, `orgconfig.go`, `lock.go:200`).
-- It is the fallback allowlist when no config exists (`run.go:556`,
-  `lock.go:244`, `dispatch_route.go:208`, `harness/registry.go:34`,
+- `EnsureDefaultAllowedRemoteResources` (`config.go:669`) merges it into an
+  existing list at run time (`run.go:402`, `orgconfig.go`, `lock.go:201`).
+- It is the fallback allowlist when no config exists (`run.go:553`,
+  `lock.go:243`, `dispatch_route.go:223`, `harness/registry.go:34`,
   `harnessdispatch/enumerate.go:51`, `evalmeasure.go:227`).
 
 A deployment on such a host that takes these repositories from the host has

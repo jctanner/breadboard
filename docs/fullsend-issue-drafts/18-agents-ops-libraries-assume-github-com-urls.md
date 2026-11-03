@@ -16,17 +16,13 @@ ERROR: PR_URL does not match expected GitHub pattern: https://<host>/<owner>/<re
 ```
 
 The GitHub ops libraries under `scripts/lib/` write `https://github.com`
-into URL validation, URL parsing and the push remote. That causes three
-separate faults:
+into URL validation and URL parsing. That causes two separate faults:
 
 1. **Validation** matches `^https://github\.com/...` by name, so a valid
    URL on the configured host is rejected.
 2. **Parsing** strips the literal `https://github.com/` with `sed`. On
    another host nothing is stripped, so the repository becomes
    `https://<host>/<owner>/<repo>`.
-3. **Push remote:** `forge_set_push_remote` in the code and fix libraries
-   sets `origin` to `https://x-access-token:<token>@github.com/<repo>.git`.
-   By inspection, on another host this sends the push token to github.com.
 
 A related effect of (1): the host is not taken from the run, so with
 `GITHUB_SERVER_URL` set to another host, a `github.com` URL still passes
@@ -34,26 +30,24 @@ validation.
 
 The same libraries already use `${GITHUB_SERVER_URL:-https://github.com}`
 for their run links (`forge_get_workflow_run_url`,
-`github-code-ops.lib.sh:349`, `github-fix-ops.lib.sh:154`).
+`github-code-ops.lib.sh:346`, `github-fix-ops.lib.sh:151`).
 
 Sites on `main`:
 
 | Library | Line | Function | Fault |
 | --- | --- | --- | --- |
-| `github-review-ops.lib.sh` | 22 | `forge_validate_pr_url` | validation |
-| `github-review-ops.lib.sh` | 29 | `forge_parse_pr_url` | parsing |
-| `github-code-ops.lib.sh` | 29 | `forge_validate_issue_url` | validation |
-| `github-code-ops.lib.sh` | 37 | `forge_parse_issue_url` | parsing |
-| `github-code-ops.lib.sh` | 43 | `forge_extract_repo_from_url` | parsing |
-| `github-code-ops.lib.sh` | 241 | `forge_set_push_remote` | push remote |
-| `github-fix-ops.lib.sh` | 37 | `forge_validate_pr_url` | validation |
-| `github-fix-ops.lib.sh` | 45 | `forge_parse_pr_url` | parsing |
-| `github-fix-ops.lib.sh` | 106 | `forge_set_push_remote` | push remote |
-| `github-prioritize-ops.lib.sh` | 27 | `forge_validate_issue_url` | validation |
-| `github-prioritize-ops.lib.sh` | 34 | `forge_parse_issue_url` | parsing |
-| `github-retro-ops.lib.sh` | 22 | `forge_validate_originating_url` | validation |
-| `github-retro-ops.lib.sh` | 30 | `forge_parse_originating_url` | parsing |
-| `github-scribe-ops.lib.sh` | 107 | `forge_issue_url_base` | builds a `https://github.com/<repo>/issues` link |
+| `github-review-ops.lib.sh` | 21 | `forge_validate_pr_url` | validation |
+| `github-review-ops.lib.sh` | 28 | `forge_parse_pr_url` | parsing |
+| `github-code-ops.lib.sh` | 27 | `forge_validate_issue_url` | validation |
+| `github-code-ops.lib.sh` | 35 | `forge_parse_issue_url` | parsing |
+| `github-code-ops.lib.sh` | 41 | `forge_extract_repo_from_url` | parsing |
+| `github-fix-ops.lib.sh` | 35 | `forge_validate_pr_url` | validation |
+| `github-fix-ops.lib.sh` | 43 | `forge_parse_pr_url` | parsing |
+| `github-prioritize-ops.lib.sh` | 26 | `forge_validate_issue_url` | validation |
+| `github-prioritize-ops.lib.sh` | 33 | `forge_parse_issue_url` | parsing |
+| `github-retro-ops.lib.sh` | 21 | `forge_validate_originating_url` | validation |
+| `github-retro-ops.lib.sh` | 28 | `forge_parse_originating_url` | parsing |
+| `github-scribe-ops.lib.sh` | 105 | `forge_issue_url_base` | builds a `https://github.com/<repo>/issues` link |
 
 These are reached from `pre-review`/`post-review`, `pre-code`/`post-code`
 (`pre-code.src.sh:66` and `:71` use the validation and
@@ -64,9 +58,9 @@ These are reached from `pre-review`/`post-review`, `pre-code`/`post-code`
 ### What should happen
 
 Each GitHub stage accepts an issue or PR URL on the GitHub host the run is
-executing against, parses the repository as `<owner>/<repo>`, pushes to and
-links to that host, and rejects URLs on a different host. Behaviour on
-github.com is unchanged.
+executing against, parses the repository as `<owner>/<repo>`, links to that
+host, and rejects URLs on a different host. Behaviour on github.com is
+unchanged.
 
 ### How to reproduce
 
@@ -79,11 +73,6 @@ bash -c '_gha_sanitize(){ printf %s "$1"; }
   source scripts/lib/github-review-ops.lib.sh
   PR_URL=https://ghe.example.com/acme/widgets/pull/107 forge_validate_pr_url; echo "rc=$?"
   PR_URL=https://github.com/acme/widgets/pull/107 forge_validate_pr_url; echo "rc=$?"'
-
-bash -c 'source scripts/lib/github-code-ops.lib.sh
-  g=$(mktemp -d); git -C "$g" init -q; git -C "$g" remote add origin x
-  REPO_FULL_NAME=acme/widgets
-  (cd "$g" && forge_set_push_remote TOKEN && git remote get-url origin)'
 ```
 
 Output:
@@ -92,7 +81,6 @@ Output:
 ERROR: PR_URL does not match expected GitHub pattern: https://ghe.example.com/acme/widgets/pull/107
 rc=1
 rc=0
-https://x-access-token:TOKEN@github.com/acme/widgets.git
 ```
 
 The same calls against `github-fix-ops.lib.sh`, `github-prioritize-ops.lib.sh`,

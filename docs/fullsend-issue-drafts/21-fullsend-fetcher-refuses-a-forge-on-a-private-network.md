@@ -64,7 +64,7 @@ that remains once the host is allowed.
 Found while running Fullsend against a local GitHub API emulator on a
 private hostname. Once the host was allowed, every harness
 fetch failed with
-`resolved IP is internal/reserved: <host> resolved to 10.43.17.62`.
+`resolved IP is internal/reserved: <host> resolved to <private address>`.
 
 That is not a GitHub Enterprise Server, but self-hosted forges on internal
 networks are the normal GHES deployment, and by inspection the same check

@@ -21,15 +21,16 @@ A GitHub host other than github.com has no `raw.githubusercontent.com`. So
 any raw-content URL on such a host fails to parse, and every caller that
 needs the parse fails with it:
 
-- `fetchBaseSkillDir` (`internal/harness/compose.go:1979`) returns
+- `fetchBaseSkillDir` (`internal/harness/compose.go:2198`) returns
   `base <field>: parsing raw URL for skill directory fetch: not a raw.githubusercontent.com URL: <host>`,
   so a URL-based harness whose skills live on the configured host cannot
   load them.
 - The script-directory probe (`compose.go:1793`) treats the URL as
   unparseable and falls back to a single-file fetch, so companion files next
   to a pre/post script are not fetched.
-- `parseAgentSourceURL` (`internal/cli/agent.go:861`) and the lock path
-  (`internal/cli/lock.go:1211`) cannot parse an agent source on that host.
+- `parseAgentSourceURL` (`internal/cli/agent.go:859`) and the pin and
+  re-pin paths used when locking (`internal/cli/agent.go:571`, `:754`)
+  cannot parse an agent source on that host.
 
 When the parse succeeds it always labels the result `Forge: "github"`
 (line 232), which `CloneURL` (line 243) turns into `github.com`. By
@@ -53,7 +54,7 @@ https://{host}/{owner}/{repo}/raw/{ref}/{path...}
 ```
 
 The second form is the one `recognizedManifestSourcePath`
-(`internal/repos/managed_config.go:78`) already documents for github.com.
+(`internal/repos/managed_config.go:80`) already documents for github.com.
 
 Behaviour for `raw.githubusercontent.com` URLs, including the error message
 for other hosts, is unchanged.

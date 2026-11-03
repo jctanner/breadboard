@@ -17,12 +17,12 @@ to the sandbox correctly:
 ```
 
 The harness environment is not process state in the sandbox. `bootstrapEnv`
-(`internal/cli/run.go:3204`) writes it to `/sandbox/.env` once, during
-setup. `harnessEnvLines` (line 3633) adds the `.env.d/*.env` files that
+(`internal/cli/run.go:3877`) writes it to `/sandbox/.env` once, during
+setup. `harnessEnvLines` (line 3681) adds the `.env.d/*.env` files that
 `host_files` contributes and the `env.sandbox` exports. The real runtimes
 read this file before they run anything:
 
-- `buildRunCommandWithDigests` (`internal/runtime/claude.go:806`) reads it
+- `buildRunCommandWithDigests` (`internal/runtime/claude.go:808`) reads it
   through `claudeGuardedEnv`, which calls `envDataLoad`
   (`internal/runtime/claude_integrity.go:163`), for the Claude launch.
 - `checkSandboxGitHubConnectivity` (`internal/cli/preflight_github.go:77`)
@@ -30,17 +30,17 @@ read this file before they run anything:
   pre-flight.
 
 Every sandbox-side behaviour operation in `internal/runtime/dummy.go` runs
-through `sandbox.Exec`. Each call is a new `sh -c` (`internal/sandbox/sandbox.go:1540`)
+through `sandbox.Exec`. Each call is a new `sh -c` (`internal/sandbox/sandbox.go:1576`)
 and does not inherit anything from an earlier call. None of these
 operations reads `.env`. As a result, a scripted scenario runs with an
 environment that no real runtime sees.
 
 By inspection of `origin/main`, this affects the following operations:
 
-- `assert_env` (line 386) and `assert_not_jwt` (line 403) read the named
+- `assert_env` (line 388) and `assert_not_jwt` (line 405) read the named
   variable with `printenv`. A variable that only `env.sandbox` or a
   `host_files` env file delivers is reported as unset.
-- `http_probe` (`httpProbeCommand`, line 764) reads its `header_env`
+- `http_probe` (`httpProbeCommand`, line 768) reads its `header_env`
   variable from `process.env` in `node`.
 - `url_get` (`curl`), `assert_json` (`jq`), `read_file` and `assert_file`
   (`test -r`), and the in-sandbox part of `checkout_branch` (`git fetch` from

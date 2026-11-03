@@ -24,7 +24,8 @@ Error: resolving agent "triage": remote resource not allowed
 ```
 
 Each sub-issue below is one place where this happens. They share a cause, but
-each fails independently and can be fixed and verified on its own.
+each fails independently and can be fixed and verified on its own. The
+list is not exhaustive.
 
 ### What should happen
 

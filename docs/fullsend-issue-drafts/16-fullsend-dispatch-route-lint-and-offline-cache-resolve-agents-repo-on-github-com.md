@@ -13,26 +13,29 @@ of the `fullsend-ai/agents` fallback assume github.com. All points below are
 by inspection of origin/main.
 
 1. **`fullsend dispatch --route`.** `routeBuiltinAgent` builds its fallback
-   client with a bare `gh.New("")` (`internal/cli/dispatch_route.go:222`),
+   client with a bare `gh.New("")` (`internal/cli/dispatch_route.go:237`),
    which targets api.github.com regardless of `GITHUB_API_URL`. On another
    host the harness cannot be resolved, so its `role:` is never read. The
-   route then requires write access (`dispatch_route.go:228-248`) and skips
+   route then requires write access (`dispatch_route.go:240-262`) and skips
    any actor below write with reason `harness unavailable; actor below write`
-   (`:266`), including actors the harness role would have admitted. The
+   (`:284`), including actors the harness role would have admitted. The
    warning it logs, `Could not resolve the <agent> harness, requiring write
    access: <err>`, carries the api.github.com error, so it reads as a
    credential or network failure rather than a wrong host.
 2. **`fullsend lint`.** The fallback client is a bare
-   `gh.New(composeGitToken)` (`internal/cli/lint.go:98`), so lint resolves
+   `gh.New(composeGitToken)` (`internal/cli/lint.go:227`), so lint resolves
    the agents repo against api.github.com in the same way.
 3. **Offline cache scan and route label.** `cachedPinnedAgentsRepoFile`
-   (`internal/cli/run.go:7507`, `:7560`) and `routeHarnessLabel`
-   (`dispatch_route.go:298-299`) recognise an agents-repo harness only by
+   (`internal/cli/run.go:7570`) and `routeHarnessLabel`
+   (`dispatch_route.go:312`) recognise an agents-repo harness only by
    the literal prefix `https://raw.githubusercontent.com/fullsend-ai/agents/`
    (`defaultAgentsRepoURLPrefix`). They match what the online fallback
    fetches today, but on another host neither recognises a harness fetched
    from that host: offline resolution reports `No cached <noun> from
    fullsend-ai/agents`, and the decision log has no `agents@<sha>` label.
+   This only becomes visible once the online fallback itself addresses the
+   configured host (sibling sub-issue); today the online and offline paths
+   are consistent.
 
 `internal/cli` already has `newGitHubLiveClient`
 (`internal/cli/github_client.go:137`), which honours `forge.github.url` and

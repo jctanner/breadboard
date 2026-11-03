@@ -496,6 +496,15 @@ explicit go or pivot before the next begins.
   between failed only because the harness-dispatch job restored a CLI
   cached by run 1848 - **purge the runner's /runner-root/_cache before
   each verification build** (actions/cache wraps the CLI install).
+  **Revision verified same day:** a /fs-fix command (write permission)
+  with a self-contained instruction got the fix agent to push cbefdf78
+  "thread configured GitHub host into raw-content URL callers" within
+  ~10 minutes. Re-verified with both PR commits, 0007 and 0015 skipped
+  (0015's lint.go hunk conflicts with the fix's ComposeOpts change; its
+  intent was carried as a commit on the verify branch - the canonical
+  patch is untouched): conformance run 1860 passed. Result posted on the
+  PR. #9037 is fixed by the PR as of cbefdf78, pending merge; drop 0007
+  at the next rebase once it lands.
 - **U6. Every upstream-bound defect has a terminal state**: fixed upstream and
   the local patch dropped, declined with reason, or obsoleted. The
   compatibility profile shrinks to the local-only substitutions (four patches

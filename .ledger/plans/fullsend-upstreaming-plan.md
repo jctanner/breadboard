@@ -505,6 +505,19 @@ explicit go or pivot before the next begins.
   patch is untouched): conformance run 1860 passed. Result posted on the
   PR. #9037 is fixed by the PR as of cbefdf78, pending merge; drop 0007
   at the next rebase once it lands.
+  **Coordinated campaign (2026-11-03, CC-1):** all 14 upstream fix PRs
+  verified by a serial queue on rhlaptop (conformance-queue.json +
+  cc1_conformance.sh; one stack, canonical restored after every item,
+  runner CLI cache purged per run). Results: PASS 9053/9050/9055/9054/
+  1870/1871/1873/1872/1869/9051 (runs 1865-1915); FAIL 9049 (run 1873:
+  gateway conditioning works but the unconditional pip install fails on
+  the containerized gateway runner - externally-managed-environment) and
+  9056 (run 1915: URL construction works but fetch.DefaultPolicy still
+  refuses the configured host - 'domain not in allowlist'). Findings
+  posted on both. Two hand-carries: 9055 (DU conflict, files from after
+  the pin) and 9056 (0006 chained on 0005's fetch.go comment; 0005's
+  defaultAllowedDomains deliberately not carried so the PR was judged
+  alone). Patch-chain couplings found: 0006->0005 and 0015->0005.
 - **U6. Every upstream-bound defect has a terminal state**: fixed upstream and
   the local patch dropped, declined with reason, or obsoleted. The
   compatibility profile shrinks to the local-only substitutions (four patches

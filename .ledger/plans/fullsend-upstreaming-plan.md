@@ -484,6 +484,18 @@ explicit go or pivot before the next begins.
   automated on rhlaptop (the "ralph loop": systemd user timer
   fullsend-ralph-loop.timer checks the issues every 6 hours and classifies
   changes).
+  **First PR verification (2026-11-02, PR #9052 for #9037/draft 02):**
+  built from main with 0007 skipped and 84a9e92 cherry-picked (branch
+  verify/9052 in the checkout). Conformance run 1848 failed at exactly
+  the issue's symptom - harness base-chain skill fetch refused with
+  "not a raw.githubusercontent.com URL: github.local" - because the PR adds
+  ParseRawContentURLOnHost but threads no caller: fetchBaseSkillDir and
+  parseAgentSourceURL still call ParseRawContentURL with no host. Unit
+  tests for the new function pass. Control run 1855 on the canonical
+  build passed. Result posted on the PR (two comments). Run 1850 in
+  between failed only because the harness-dispatch job restored a CLI
+  cached by run 1848 - **purge the runner's /runner-root/_cache before
+  each verification build** (actions/cache wraps the CLI install).
 - **U6. Every upstream-bound defect has a terminal state**: fixed upstream and
   the local patch dropped, declined with reason, or obsoleted. The
   compatibility profile shrinks to the local-only substitutions (four patches

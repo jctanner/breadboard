@@ -22,6 +22,7 @@ Gap A1 of the Fullsend integration conformance plan.
 from __future__ import annotations
 
 import shutil
+import os
 import subprocess
 import sys
 import tempfile
@@ -142,7 +143,15 @@ def apply_mirror_patches(directory: Path) -> None:
     reaches for github.com, and the resulting failure appears several jobs
     later as an unexplained 401.
     """
+    # FULLSEND_MIRROR_SKIP_PATCHES (space-separated patch file names) leaves
+    # patches out, for verifying an upstream fix that replaces them: check the
+    # fix out in the Fullsend checkout and skip the local patch it supersedes
+    # (same contract as FULLSEND_SKIP_PATCHES in 05i-build-fullsend.sh).
+    skip = set(os.environ.get("FULLSEND_MIRROR_SKIP_PATCHES", "").split())
     for name in MIRROR_PATCHES:
+        if name in skip:
+            print(f"skipping mirror patch {name} (FULLSEND_MIRROR_SKIP_PATCHES)")
+            continue
         patch = PATCH_DIR / name
         if not patch.is_file():
             raise RuntimeError(f"mirror patch is missing: {patch}")

@@ -18,6 +18,10 @@
   CA-bearing local supervisor image, emulator non-cone checkout). Conformance
   passed on run 1816.
 
+- [Fullsend Upgrade and CVE Pilot](plans/fullsend-upgrade-and-cve-pilot-plan.md):
+  upgrade Fullsend to upstream main (Pi 1.3.0), reconcile enterprise patches,
+  rebuild sandbox/runner images on rhea, and build deterministic CVE Dependabot
+  fixture harness for DOMPurify #130 remediation pilot.
 - [Lima VM and Tailnet DMZ environment](tasks/done/lima-tailnet-environment.md):
   replicate the Breadboard stack on Apple Silicon in an ARM64 Lima VM with
   Rosetta emulation, parameterized ingress domain (`BREADBOARD_DOMAIN`), and

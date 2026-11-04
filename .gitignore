@@ -35,6 +35,7 @@ bin/
 
 # Vagrant
 .vagrant/
+.lima/
 
 # Symlinked external context directories
 architecture-context

@@ -65,6 +65,8 @@ jobs:
     uses: fullsend-ai/fullsend/.github/workflows/reusable-dispatch.yml@main
     with:
       event_action: ${{ github.event.action }}
+      mint_url: https://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080
+      runner_image: fullsend
     secrets: inherit
 """
 
@@ -126,8 +128,8 @@ def main() -> None:
         print(f"{HARNESS_PATH} already current")
 
     shim, s_sha = _get_file(SHIM_PATH)
-    if shim is None:
-        _put_file(SHIM_PATH, SHIM_WORKFLOW, "Install managed Fullsend event shim", None)
+    if shim != SHIM_WORKFLOW.strip():
+        _put_file(SHIM_PATH, SHIM_WORKFLOW.strip(), "Install managed Fullsend event shim", s_sha)
         print(f"wrote {SHIM_PATH}")
 
     raw, csha = _get_file(CONFIG_PATH)

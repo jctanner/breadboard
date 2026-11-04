@@ -92,6 +92,10 @@ spec:
             # succeeds.
             - name: NODE_EXTRA_CA_CERTS
               value: /etc/breadboard-ca/ca.crt
+            - name: FULLSEND_ALLOW_PRIVATE_FORGE
+              value: "1"
+            - name: FULLSEND_MINT_URL
+              value: https://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080
             - name: RUNNER_ALLOW_RUNASROOT
               value: "1"
           volumeMounts:

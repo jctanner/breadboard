@@ -17,6 +17,7 @@ Gap G28 of the Fullsend integration conformance plan.
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -24,7 +25,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from emulator import TOKEN, api_request, run_git
+from emulator import BASE_URL, TOKEN, api_request, run_git
 
 
 # deploy/fullsend/seed/seed-upstream-agents.py -> parents[3] is the project root.
@@ -139,8 +140,13 @@ def apply_mirror_patches(directory: Path) -> None:
         patch = PATCH_DIR / name
         if not patch.is_file():
             raise RuntimeError(f"mirror patch is missing: {patch}")
+        patch_text = patch.read_text()
+        domain = os.environ.get("BREADBOARD_DOMAIN", "local")
+        if domain != "local":
+            patch_text = patch_text.replace("github.local", f"github.{domain}")
         result = subprocess.run(
-            ["git", "apply", str(patch)],
+            ["git", "apply", "-"],
+            input=patch_text,
             cwd=directory, capture_output=True, text=True,
         )
         if result.returncode != 0:
@@ -159,7 +165,7 @@ def main() -> None:
     sources = collect_sources()
     revision = run_git(SOURCE, "rev-parse", "HEAD").stdout.strip()
     remote = (
-        f"https://x-access-token:{TOKEN}@github.local/"
+        f"{BASE_URL.replace('https://', f'https://x-access-token:{TOKEN}@')}/"
         f"{UPSTREAM_ORG}/{UPSTREAM_REPO}.git"
     )
 

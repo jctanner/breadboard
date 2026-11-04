@@ -38,7 +38,8 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 
-FORGE="${CONFORMANCE_FORGE:-https://github.local}"
+DOMAIN="${BREADBOARD_DOMAIN:-local}"
+FORGE="${CONFORMANCE_FORGE:-https://github.${DOMAIN}}"
 REPO="${CONFORMANCE_REPO:-fullsend-dev/triage-target}"
 TOKEN="${GITHUB_EMULATOR_TOKEN:-ghp_admin_default_token}"
 API="${FORGE}/api/v3/repos/${REPO}"

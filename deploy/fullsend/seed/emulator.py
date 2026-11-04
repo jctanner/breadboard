@@ -18,7 +18,8 @@ import subprocess
 from pathlib import Path
 
 
-BASE_URL = os.environ.get("GITHUB_EMULATOR_URL", "https://github.local").rstrip("/")
+DOMAIN = os.environ.get("BREADBOARD_DOMAIN", "local")
+BASE_URL = os.environ.get("GITHUB_EMULATOR_URL", f"https://github.{DOMAIN}").rstrip("/")
 API_URL = f"{BASE_URL}/api/v3"
 TOKEN = os.environ.get("GITHUB_EMULATOR_TOKEN", "ghp_admin_default_token")
 # The conformance target by default. A seeder that is also the right tool

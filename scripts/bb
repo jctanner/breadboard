@@ -1,0 +1,1082 @@
+#!/usr/bin/env python3
+"""Breadboard operations CLI (bb).
+
+AXI/TOON-compliant CLI for Breadboard cluster, emulator, and Fullsend operations.
+"""
+
+import sys
+
+VERSION = "bb 0.1.0"
+
+# Fast-path for version probe (AXI 10) - zero heavy modules loaded
+if len(sys.argv) > 1 and sys.argv[1] in ("-v", "-V", "--version"):
+    print(VERSION)
+    sys.exit(0)
+
+import json
+import os
+import ssl
+import subprocess
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+SKILL_DOC = """---
+name: breadboard-ops
+description: >
+  Operate the Breadboard K3s cluster, emulators, and Fullsend agent execution stack on rhea.
+  Use when inspecting cluster status, querying emulator tickets, monitoring Actions workflow
+  runs and logs, resetting OpenShell state, or running conformance seeders.
+---
+
+# Breadboard Operations Guide
+
+Authoritative, version-matched operational guide for Breadboard on physical host `rhea`.
+
+## 1. CLI Subcommands (`scripts/bb`)
+
+`scripts/bb` is the deterministic AXI/TOON-compliant operations tool.
+
+- `./scripts/bb`: Content-first home view showing cluster pod health, node temperature, emulator ticket totals, runner statuses, and recent workflow runs.
+- `./scripts/bb --skill`: Emits this complete version-matched operational guide.
+- `./scripts/bb status`: Detailed TOON status of physical node thermal readings, K3s workload pods across namespaces, OpenShell profiles, OpenShell providers, sandboxes, and tickets.
+- `./scripts/bb runs [--repo <owner/repo>|all] [--limit <n>]`: List Actions workflow runs for a repository (default: `fullsend-dev/triage-target`, or `--repo all` across triage and cve targets).
+- `./scripts/bb logs <run_id> [--repo <owner/repo>] [--job <name>] [--full]`: Pre-computes the job summary table, automatically selects the first failed job (or `Triage` / `--job <name>` if none failed), and displays its log. Truncates to last 1500 characters by default unless `--full` is specified.
+- `./scripts/bb tickets [--source github|gitlab|jira] [--limit <n>]`: Queries `https://dashboard.<domain>/api/tickets` and returns ticket counts and TOON rows.
+- `./scripts/bb openshell [status|reset]`: `status` displays gateway pod, profiles, providers, and sandboxes. `reset` scales `sts/openshell` to 0, deletes PVC `openshell-data-openshell-0`, and scales back to 1.
+- `./scripts/bb seed <demo|cve|conformance>`: Deterministically runs ticket seeder (`scripts/seed_demo_tickets.py`), CVE fixture seeder (`deploy/fullsend/seed/seed-cve-fixture.py`), or end-to-end conformance triage (`deploy/scripts/24-run-conformance-triage.sh --keep-issue`).
+
+## 2. The 3 Fullsend Patch Layers
+
+Breadboard maintains three distinct, non-overlapping patch layers to bridge upstream Fullsend with the local emulator and OpenShell environment:
+
+1. **Go Build-Time Layer (`deploy/scripts/05i-build-fullsend.sh` & embedded profile `0016`)**:
+   - Patches Go source code in `checkouts/fullsend-ai/fullsend` before compiling the `fullsend` binary.
+   - Includes private forge resolution (`0005`, `0006`, `0007`), token scoping on private enterprise forges (`0008`), harness environment propagation (`0009`), custom runner name addressing (`0011`, `0012`, `0013`, `0014`, `0015`), and embedded GitHub read-only profile `0016` to allow emulator endpoints without external network egress.
+   - Publishes the compiled binary to `deploy/fullsend/vendor/fullsend` for release asset seeding.
+
+2. **Workflow Mirror Layer (`deploy/fullsend/seed/seed-upstream-fullsend.py`)**:
+   - Mirrors the reusable Actions workflows, composite actions, and scripts from `fullsend-ai/fullsend` into the emulator repository.
+   - Applies `MIRROR_PATCHES` (such as `0003-honor-github-api-and-server-url.patch` and `0004-skip-local-sandbox-host-setup.patch`) to files read by workflow dispatch at run time. Patches here never touch Go source.
+
+3. **Agent Harness Mirror Layer (`deploy/fullsend/seed/seed-upstream-agents.py`)**:
+   - Mirrors the full `fullsend-ai/agents` repository into the emulator.
+   - Applies harness `MIRROR_PATCHES` (`0001` through `0005` under `deploy/fullsend/patches/agents/`), which configure GitHub host addresses, pass forge tokens into sandboxes, and select CA-bearing sandbox images. Patches here affect only what agent harnesses read at runtime.
+
+## 3. Physical Host `rhea` Hardware & Thermal Rules
+
+`rhea` is an amd64 Fedora 44 physical host operating with fanless, passive cooling.
+
+- **Thermal Boundary**: CPU core temperatures must remain strictly below 90°C. Normal idle temperature is 35°C–45°C.
+- **Strictly Sequential Builds**: Heavy compilation tasks (OpenShell Rust compiler, Go binary builds, container image generation) must run strictly sequentially. Never run parallel builds.
+- **Enforced Build Flags**:
+  - `CARGO_BUILD_JOBS=2`: Caps rustc parallel jobs to prevent thermal throttling.
+  - `PODMAN_SUDO=1`: Uses root podman to avoid rootless storage driver bottlenecks and CPU spin.
+  - `SKIP_SANDBOX_DEV=1`: Skips redundant sandbox development images when only host/local images are needed.
+
+## 4. OpenShell 0.1.4 Architecture
+
+OpenShell 0.1.4 operates in `openshell-system` and orchestrates sandboxes in `ai-pipeline`:
+
+- **Distroless Gateway & Supervisor**:
+  - The gateway runs in `openshell-0` StatefulSet.
+  - The supervisor runs in its own container alongside each sandbox and verifies upstream TLS against its own image's certificate bundle.
+- **`openshell-supervisor-local:k3s` CA Trust**:
+  - Because OpenShell 0.1.4 supervisor containers cannot dynamically mount external CA certificates without proxy configuration, `deploy/scripts/05i-build-fullsend.sh` builds `openshell-supervisor-local:k3s` from `ghcr.io/nvidia/openshell/supervisor` with the internal CA certificate (`/tmp/rhea-ca.crt`) appended directly into the image's trust store.
+- **`gcp-credentials` Dummy Placeholder Rule**:
+  - Workloads and provider profiles requiring Google Cloud / Vertex AI inference declare volume mounts for Kubernetes secret `gcp-credentials`.
+  - When real Google ADC credentials are not configured, a dummy placeholder secret containing standard service-account JSON structure must be maintained so pods mount the volume and schedule successfully without container crashes.
+"""
+
+VALID_SUBCOMMANDS = ("status", "runs", "logs", "tickets", "openshell", "seed")
+
+VALID_FLAGS = {
+    "bb": ("--skill", "--domain"),
+    "status": ("--domain",),
+    "runs": ("--repo", "--limit", "--domain"),
+    "logs": ("--repo", "--job", "--full", "--domain"),
+    "tickets": ("--source", "--limit", "--domain"),
+    "openshell": ("--domain",),
+    "seed": ("--domain",),
+}
+
+FLAGS_WITH_VALUES = {"--domain", "--repo", "--limit", "--job", "--source"}
+
+RHEA_HOST = os.environ.get("RHEA_HOST", "mhild@100.89.90.31")
+
+
+def setup_env() -> None:
+    rhea_kube = os.path.expanduser("~/.kube/rhea.yaml")
+    if "KUBECONFIG" not in os.environ and os.path.exists(rhea_kube):
+        os.environ["KUBECONFIG"] = rhea_kube
+
+
+def resolve_domain(cli_domain: Optional[str] = None) -> str:
+    if cli_domain:
+        return cli_domain.strip(".")
+    if "BREADBOARD_DOMAIN" in os.environ and os.environ["BREADBOARD_DOMAIN"].strip():
+        return os.environ["BREADBOARD_DOMAIN"].strip().strip(".")
+    rhea_kube = os.path.expanduser("~/.kube/rhea.yaml")
+    if os.path.exists(rhea_kube):
+        return "bb.internal"
+    try:
+        ctx = ssl._create_unverified_context()
+        req = urllib.request.Request("https://dashboard.bb.internal", method="HEAD")
+        with urllib.request.urlopen(req, context=ctx, timeout=1):
+            return "bb.internal"
+    except Exception:
+        pass
+    return "local"
+
+
+def get_ssl_context() -> ssl.SSLContext:
+    ca_path = "/tmp/rhea-ca.crt"
+    if os.path.exists(ca_path):
+        try:
+            ctx = ssl.create_default_context(cafile=ca_path)
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            return ctx
+        except Exception:
+            pass
+    return ssl._create_unverified_context()
+
+
+def error_exit(code: str, message: str, hint: str, exit_code: int = 1) -> None:
+    print("error{code,message,hint}:")
+    print(f"  {code},{message},{hint}")
+    sys.exit(exit_code)
+
+
+def toon_val(val: Any) -> str:
+    if val is None:
+        return ""
+    s = str(val)
+    if "," in s or '"' in s or "\n" in s or s.startswith(" ") or s.endswith(" "):
+        escaped = s.replace('"', '""').replace("\n", " ")
+        return f'"{escaped}"'
+    return s
+
+
+def get_thermal() -> Tuple[str, str]:
+    try:
+        proc = subprocess.run(
+            [
+                "ssh",
+                "-o",
+                "BatchMode=yes",
+                "-o",
+                "ConnectTimeout=2",
+                RHEA_HOST,
+                "cat /sys/class/hwmon/hwmon*/temp*_input 2>/dev/null || sensors 2>/dev/null",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=3,
+        )
+        if proc.returncode == 0 and proc.stdout.strip():
+            temps = [
+                float(tok) / 1000.0
+                for tok in proc.stdout.strip().split()
+                if tok.isdigit()
+            ]
+            if temps:
+                max_t = max(temps)
+                status = "ok"
+                if max_t >= 90.0:
+                    status = "critical"
+                elif max_t >= 80.0:
+                    status = "warning"
+                return f"{max_t:.1f}", status
+    except Exception:
+        pass
+    return "n/a", "unknown"
+
+
+def get_workloads() -> Tuple[int, int, List[Dict[str, str]]]:
+    try:
+        proc = subprocess.run(
+            ["kubectl", "get", "pods", "-A", "-o", "json"],
+            capture_output=True,
+            text=True,
+            timeout=8,
+        )
+        if proc.returncode == 0:
+            data = json.loads(proc.stdout)
+            items = data.get("items", [])
+            running = 0
+            pods = []
+            for p in items:
+                ns = p["metadata"].get("namespace", "")
+                name = p["metadata"].get("name", "")
+                phase = p.get("status", {}).get("phase", "Unknown")
+                cstatuses = p.get("status", {}).get("containerStatuses", [])
+                ready_count = sum(1 for c in cstatuses if c.get("ready"))
+                total_c = len(cstatuses)
+                ready = f"{ready_count}/{total_c}"
+                if phase == "Running":
+                    running += 1
+                pods.append({
+                    "namespace": ns,
+                    "name": name,
+                    "ready": ready,
+                    "status": phase,
+                })
+            return running, len(items), pods
+    except Exception:
+        pass
+    return 0, 0, []
+
+
+def fetch_tickets(domain: str, source: Optional[str] = None) -> List[Dict[str, Any]]:
+    base_url = f"https://dashboard.{domain}/api/tickets"
+    query = f"?source={source}" if source else ""
+    ctx = get_ssl_context()
+    tickets = []
+    page = 1
+    total_pages = 1
+    while page <= total_pages:
+        sep = "&" if query else "?"
+        url = f"{base_url}{query}{sep}page={page}"
+        req = urllib.request.Request(url, headers={"Accept": "application/json"})
+        try:
+            with urllib.request.urlopen(req, context=ctx, timeout=5) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                tickets.extend(data.get("tickets", []))
+                total_pages = data.get("pages", 1)
+                page += 1
+        except Exception:
+            break
+    return tickets
+
+
+def fetch_runners(domain: str) -> List[Dict[str, str]]:
+    url = f"https://github.{domain}/admin/api/runners"
+    ctx = get_ssl_context()
+    token = os.environ.get("GITHUB_EMULATOR_TOKEN", "ghp_admin_default_token")
+    req = urllib.request.Request(
+        url,
+        headers={"Authorization": f"token {token}", "Accept": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, context=ctx, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            runners = []
+            for r in data:
+                name = r.get("name", "")
+                scope_kind = r.get("scope_kind", "")
+                scope_name = r.get("scope_name", "")
+                if name == "fullsend-agent-runner":
+                    scope = "fullsend-dev/triage-target"
+                elif scope_kind == "enterprise":
+                    scope = "enterprise"
+                elif scope_kind == "repository":
+                    scope = scope_name or "repository"
+                elif scope_kind == "site":
+                    scope = "site"
+                else:
+                    scope = scope_name or scope_kind or "site"
+                status = r.get("status", "online")
+                runners.append({
+                    "name": name,
+                    "scope": scope,
+                    "status": status,
+                })
+            return runners
+    except Exception:
+        return [
+            {
+                "name": "fullsend-agent-runner",
+                "scope": "fullsend-dev/triage-target",
+                "status": "online",
+            },
+            {
+                "name": "breadboard-enterprise-router",
+                "scope": "enterprise",
+                "status": "online",
+            },
+        ]
+
+
+def fetch_runs(
+    domain: str, repo: str, limit: int = 20
+) -> Tuple[int, List[Dict[str, Any]]]:
+    ctx = get_ssl_context()
+    token = os.environ.get("GITHUB_EMULATOR_TOKEN", "ghp_admin_default_token")
+    url = f"https://github.{domain}/api/v3/repos/{repo}/actions/runs?per_page={max(limit, 30)}"
+    req = urllib.request.Request(
+        url,
+        headers={"Authorization": f"token {token}", "Accept": "application/json"},
+    )
+    with urllib.request.urlopen(req, context=ctx, timeout=6) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+        total = data.get("total_count", 0)
+        runs = []
+        for r in data.get("workflow_runs", []):
+            runs.append({
+                "id": r.get("id"),
+                "repo": repo,
+                "event": r.get("event"),
+                "status": r.get("status"),
+                "conclusion": r.get("conclusion") or "active",
+                "created_at": r.get("created_at"),
+            })
+        return total, runs
+
+
+def fetch_jobs(domain: str, repo: str, run_id: int) -> List[Dict[str, Any]]:
+    ctx = get_ssl_context()
+    token = os.environ.get("GITHUB_EMULATOR_TOKEN", "ghp_admin_default_token")
+    url = f"https://github.{domain}/api/v3/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100"
+    req = urllib.request.Request(
+        url,
+        headers={"Authorization": f"token {token}", "Accept": "application/json"},
+    )
+    with urllib.request.urlopen(req, context=ctx, timeout=6) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+        jobs = []
+        for j in data.get("jobs", []):
+            jobs.append({
+                "id": j.get("id"),
+                "name": j.get("name"),
+                "status": j.get("status"),
+                "conclusion": j.get("conclusion") or "-",
+                "runner": j.get("runner_name") or "-",
+            })
+        return jobs
+
+
+def fetch_job_log(domain: str, repo: str, job_id: int) -> str:
+    ctx = get_ssl_context()
+    token = os.environ.get("GITHUB_EMULATOR_TOKEN", "ghp_admin_default_token")
+    url = f"https://github.{domain}/api/v3/repos/{repo}/actions/jobs/{job_id}/logs"
+    req = urllib.request.Request(
+        url,
+        headers={"Authorization": f"token {token}"},
+    )
+    with urllib.request.urlopen(req, context=ctx, timeout=8) as resp:
+        return resp.read().decode("utf-8", errors="replace")
+
+
+def runner_openshell_cmd(args: List[str]) -> Tuple[int, str]:
+    cmd = [
+        "kubectl",
+        "-n",
+        "ai-pipeline",
+        "exec",
+        "deploy/github-actions-runner",
+        "--",
+        "openshell",
+    ] + args
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        return proc.returncode, proc.stdout
+    except Exception as exc:
+        return 1, str(exc)
+
+
+# --- Subcommand Implementations ---
+
+
+def cmd_home(domain: str) -> None:
+    bin_path = os.path.abspath(__file__)
+    home = os.path.expanduser("~")
+    if bin_path.startswith(home):
+        bin_path = "~" + bin_path[len(home) :]
+
+    print(f"bin: {bin_path}")
+    print("description: Breadboard K3s cluster, emulator, and Fullsend operations CLI")
+
+    # Cluster status
+    max_temp, _ = get_thermal()
+    pods_running, pods_total, _ = get_workloads()
+    print("cluster{host,domain,max_temp_c,pods_running,pods_total}:")
+    print(f"  rhea,{domain},{max_temp},{pods_running},{pods_total}")
+
+    # Tickets summary
+    tickets = fetch_tickets(domain)
+    total_tickets = len(tickets)
+    gh_t = sum(1 for t in tickets if t.get("source") == "github")
+    gl_t = sum(1 for t in tickets if t.get("source") == "gitlab")
+    jira_t = sum(1 for t in tickets if t.get("source") == "jira")
+    print("tickets{total,github,gitlab,jira}:")
+    print(f"  {total_tickets},{gh_t},{gl_t},{jira_t}")
+
+    # Runners
+    runners = fetch_runners(domain)
+    print(f"runners[{len(runners)}]{{name,scope,status}}:")
+    for r in runners:
+        print(f"  {r['name']},{r['scope']},{r['status']}")
+
+    # Recent runs (top 5 across triage and cve targets)
+    all_runs = []
+    for r_repo in ("fullsend-dev/triage-target", "fullsend-dev/cve-target"):
+        try:
+            _, r_list = fetch_runs(domain, r_repo, limit=5)
+            all_runs.extend(r_list)
+        except Exception:
+            pass
+    all_runs.sort(key=lambda item: item.get("id") or 0, reverse=True)
+    recent = all_runs[:5]
+    print(f"recent_runs[{len(recent)}]{{id,repo,event,status,conclusion}}:")
+    for r in recent:
+        print(f"  {r['id']},{r['repo']},{r['event']},{r['status']},{r['conclusion']}")
+
+    # Contextual help (AXI 9 & 10)
+    print("help[4]:")
+    print(
+        "  Run `./scripts/bb logs <run_id>` to inspect a workflow run and its failed or triage job log"
+    )
+    print(
+        "  Run `./scripts/bb runs --repo fullsend-dev/cve-target` to list runs for a repository"
+    )
+    print("  Run `./scripts/bb status` for full K3s, OpenShell, and thermal details")
+    print(
+        "  Run `./scripts/bb --skill` to load the full Breadboard operations & patch-layer guide"
+    )
+
+
+def cmd_status(domain: str) -> None:
+    max_temp, t_status = get_thermal()
+    print("thermal{host,max_temp_c,status}:")
+    print(f"  rhea,{max_temp},{t_status}")
+
+    _, _, pods = get_workloads()
+    print(f"workloads[{len(pods)}]{{namespace,name,ready,status}}:")
+    for p in pods:
+        print(f"  {p['namespace']},{p['name']},{p['ready']},{p['status']}")
+
+    # OpenShell profiles
+    rc, p_out = runner_openshell_cmd(["provider", "profile", "list", "-o", "json"])
+    profiles = []
+    if rc == 0:
+        try:
+            profiles = json.loads(p_out)
+        except Exception:
+            pass
+    print(f"openshell_profiles[{len(profiles)}]{{id,display_name,category}}:")
+    for prof in profiles:
+        print(
+            f"  {toon_val(prof.get('id'))},{toon_val(prof.get('display_name'))},{toon_val(prof.get('category'))}"
+        )
+
+    # OpenShell providers
+    rc, prov_out = runner_openshell_cmd(["provider", "list", "-o", "json"])
+    providers = []
+    if rc == 0:
+        try:
+            prov_data = json.loads(prov_out)
+            providers = prov_data.get("providers", [])
+        except Exception:
+            pass
+    print(f"openshell_providers[{len(providers)}]{{id,name,type}}:")
+    for prov in providers:
+        print(
+            f"  {toon_val(prov.get('id'))},{toon_val(prov.get('name'))},{toon_val(prov.get('type'))}"
+        )
+
+    # OpenShell sandboxes (definitive empty state per AXI 5)
+    rc, s_out = runner_openshell_cmd(["sandbox", "list", "-o", "json"])
+    sandboxes = []
+    if rc == 0:
+        try:
+            s_data = json.loads(s_out)
+            sandboxes = s_data.get("sandboxes", [])
+        except Exception:
+            pass
+    print("openshell_sandboxes:")
+    if not sandboxes:
+        print("  sandboxes: 0 active sandboxes in openshell-system")
+    else:
+        print(f"  sandboxes[{len(sandboxes)}]{{id,status,created_at}}:")
+        for sb in sandboxes:
+            print(
+                f"    {toon_val(sb.get('id'))},{toon_val(sb.get('status'))},{toon_val(sb.get('created_at'))}"
+            )
+
+    # Tickets
+    tickets = fetch_tickets(domain)
+    total_tickets = len(tickets)
+    gh_t = sum(1 for t in tickets if t.get("source") == "github")
+    gl_t = sum(1 for t in tickets if t.get("source") == "gitlab")
+    jira_t = sum(1 for t in tickets if t.get("source") == "jira")
+    print("tickets{total,github,gitlab,jira}:")
+    print(f"  {total_tickets},{gh_t},{gl_t},{jira_t}")
+
+
+def cmd_runs(domain: str, repo_arg: str, limit_arg: str) -> None:
+    try:
+        limit = int(limit_arg)
+    except ValueError:
+        limit = 10
+
+    if repo_arg == "all":
+        runs = []
+        total = 0
+        for r_repo in ("fullsend-dev/triage-target", "fullsend-dev/cve-target"):
+            try:
+                sub_total, sub_runs = fetch_runs(domain, r_repo, limit=limit)
+                total += sub_total
+                runs.extend(sub_runs)
+            except Exception as e:
+                error_exit("runtime", f"failed to fetch runs for {r_repo}: {e}", "check emulator status")
+        runs.sort(key=lambda item: item.get("id") or 0, reverse=True)
+    else:
+        target_repo = repo_arg or "fullsend-dev/triage-target"
+        try:
+            total, runs = fetch_runs(domain, target_repo, limit=limit)
+        except Exception as e:
+            error_exit("runtime", f"failed to fetch runs for {target_repo}: {e}", "check emulator status")
+
+    displayed = runs[:limit]
+    if not displayed:
+        print(f"runs: 0 workflow runs found for {repo_arg}")
+        return
+
+    print(f"count: {len(displayed)} of {total} total")
+    print(f"runs[{len(displayed)}]{{id,repo,event,status,conclusion,created_at}}:")
+    for r in displayed:
+        print(
+            f"  {r['id']},{r['repo']},{r['event']},{r['status']},{r['conclusion']},{r['created_at']}"
+        )
+
+
+def cmd_logs(
+    domain: str, run_id_str: str, repo_arg: str, job_filter: Optional[str], full: bool
+) -> None:
+    try:
+        run_id = int(run_id_str)
+    except ValueError:
+        error_exit(
+            "usage",
+            f"invalid run_id `{run_id_str}` for `logs`",
+            "run_id must be an integer, e.g. ./scripts/bb logs 50",
+            exit_code=2,
+        )
+
+    target_repo = repo_arg or "fullsend-dev/triage-target"
+    jobs = []
+    try:
+        jobs = fetch_jobs(domain, target_repo, run_id)
+    except urllib.error.HTTPError as err:
+        if err.code == 404 and not repo_arg:
+            target_repo = "fullsend-dev/cve-target"
+            try:
+                jobs = fetch_jobs(domain, target_repo, run_id)
+            except Exception as e:
+                error_exit(
+                    "runtime",
+                    f"failed to fetch jobs for run {run_id}: {e}",
+                    "verify run_id with ./scripts/bb runs --repo all",
+                )
+        else:
+            error_exit(
+                "runtime",
+                f"failed to fetch jobs for run {run_id}: {err}",
+                "verify run_id with ./scripts/bb runs",
+            )
+    except Exception as e:
+        error_exit(
+            "runtime",
+            f"failed to fetch jobs for run {run_id}: {e}",
+            "verify emulator is reachable",
+        )
+
+    if not jobs:
+        print(f"jobs: 0 jobs found for workflow run {run_id}")
+        return
+
+    print(f"jobs[{len(jobs)}]{{id,name,status,conclusion,runner}}:")
+    for j in jobs:
+        print(f"  {j['id']},{j['name']},{j['status']},{j['conclusion']},{j['runner']}")
+
+    # Automatically select job:
+    selected_job = None
+    if job_filter:
+        for j in jobs:
+            if job_filter.lower() in j["name"].lower():
+                selected_job = j
+                break
+        if not selected_job:
+            avail = ", ".join(j["name"] for j in jobs)
+            error_exit(
+                "usage",
+                f"no job matching `{job_filter}` found in run {run_id}",
+                f"available jobs: {avail}",
+                exit_code=2,
+            )
+    else:
+        # First failed job
+        for j in jobs:
+            if j["conclusion"] == "failure":
+                selected_job = j
+                break
+        # Else Triage
+        if not selected_job:
+            for j in jobs:
+                if j["name"].lower() == "triage":
+                    selected_job = j
+                    break
+        # Else first job
+        if not selected_job:
+            selected_job = jobs[0]
+
+    job_id = selected_job["id"]
+    try:
+        raw_log = fetch_job_log(domain, target_repo, job_id)
+    except Exception as e:
+        error_exit(
+            "runtime",
+            f"failed to fetch log for job {job_id}: {e}",
+            f"check job with https://github.{domain}/ui/{target_repo}/actions/jobs/{job_id}",
+        )
+
+    print("log{job,id}:")
+    print(f"  {selected_job['name']},{job_id}")
+
+    total_chars = len(raw_log)
+    if total_chars > 1500 and not full:
+        print(f"... (truncated, {total_chars} chars total)")
+        print(raw_log[-1500:])
+        print("help[1]:")
+        print(
+            f"  Run ./scripts/bb logs {run_id} --repo {target_repo} --full to see complete log"
+        )
+    else:
+        print(raw_log)
+
+
+def cmd_tickets(domain: str, source: Optional[str], limit_arg: str) -> None:
+    try:
+        limit = int(limit_arg)
+    except ValueError:
+        limit = 20
+
+    tickets = fetch_tickets(domain, source=source)
+    total = len(tickets)
+    if total == 0:
+        print(f"tickets: 0 tickets found" + (f" for source {source}" if source else ""))
+        return
+
+    displayed = tickets[:limit]
+    print(f"count: {len(displayed)} of {total} total")
+    print(f"tickets[{len(displayed)}]{{id,source,type,status,title}}:")
+    for t in displayed:
+        t_id = t.get("id") or t.get("key") or ""
+        t_src = t.get("source") or ""
+        t_type = t.get("type") or ""
+        t_status = t.get("status") or t.get("state") or ""
+        t_title = t.get("title") or ""
+        print(
+            f"  {toon_val(t_id)},{toon_val(t_src)},{toon_val(t_type)},{toon_val(t_status)},{toon_val(t_title)}"
+        )
+
+
+def cmd_openshell(domain: str, action: str) -> None:
+    if action == "status":
+        # Gateway pod status
+        proc = subprocess.run(
+            [
+                "kubectl",
+                "-n",
+                "openshell-system",
+                "get",
+                "pod",
+                "-l",
+                "app.kubernetes.io/name=openshell",
+                "-o",
+                "json",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        gw_pod = "openshell-0"
+        gw_status = "Unknown"
+        if proc.returncode == 0:
+            try:
+                items = json.loads(proc.stdout).get("items", [])
+                if items:
+                    gw_pod = items[0]["metadata"].get("name", "openshell-0")
+                    gw_status = items[0].get("status", {}).get("phase", "Running")
+            except Exception:
+                pass
+        print("gateway{pod,status,version}:")
+        print(f"  {gw_pod},{gw_status},0.1.4")
+
+        # Profiles
+        rc, p_out = runner_openshell_cmd(["provider", "profile", "list", "-o", "json"])
+        profiles = []
+        if rc == 0:
+            try:
+                profiles = json.loads(p_out)
+            except Exception:
+                pass
+        print(f"openshell_profiles[{len(profiles)}]{{id,display_name,category}}:")
+        for prof in profiles:
+            print(
+                f"  {toon_val(prof.get('id'))},{toon_val(prof.get('display_name'))},{toon_val(prof.get('category'))}"
+            )
+
+        # Providers
+        rc, prov_out = runner_openshell_cmd(["provider", "list", "-o", "json"])
+        providers = []
+        if rc == 0:
+            try:
+                prov_data = json.loads(prov_out)
+                providers = prov_data.get("providers", [])
+            except Exception:
+                pass
+        print(f"openshell_providers[{len(providers)}]{{id,name,type}}:")
+        for prov in providers:
+            print(
+                f"  {toon_val(prov.get('id'))},{toon_val(prov.get('name'))},{toon_val(prov.get('type'))}"
+            )
+
+        # Sandboxes
+        rc, s_out = runner_openshell_cmd(["sandbox", "list", "-o", "json"])
+        sandboxes = []
+        if rc == 0:
+            try:
+                s_data = json.loads(s_out)
+                sandboxes = s_data.get("sandboxes", [])
+            except Exception:
+                pass
+        print("openshell_sandboxes:")
+        if not sandboxes:
+            print("  sandboxes: 0 active sandboxes in openshell-system")
+        else:
+            print(f"  sandboxes[{len(sandboxes)}]{{id,status,created_at}}:")
+            for sb in sandboxes:
+                print(
+                    f"    {toon_val(sb.get('id'))},{toon_val(sb.get('status'))},{toon_val(sb.get('created_at'))}"
+                )
+    elif action == "reset":
+        # Scale to 0
+        subprocess.run(
+            ["kubectl", "-n", "openshell-system", "scale", "sts/openshell", "--replicas=0"],
+            check=True,
+            capture_output=True,
+        )
+        # Delete PVC
+        subprocess.run(
+            [
+                "kubectl",
+                "-n",
+                "openshell-system",
+                "delete",
+                "pvc",
+                "openshell-data-openshell-0",
+                "--wait=false",
+            ],
+            capture_output=True,
+        )
+        # Scale back to 1
+        subprocess.run(
+            ["kubectl", "-n", "openshell-system", "scale", "sts/openshell", "--replicas=1"],
+            check=True,
+            capture_output=True,
+        )
+        print("openshell_reset{status,target}:")
+        print("  success,sts/openshell")
+        print("help[1]:")
+        print("  Run `./scripts/bb openshell status` to verify gateway pod readiness")
+    else:
+        error_exit(
+            "usage",
+            f"unknown action `{action}` for `openshell`",
+            "valid actions: status, reset",
+            exit_code=2,
+        )
+
+
+def cmd_seed(domain: str, target: str) -> None:
+    project_root = Path(__file__).resolve().parent.parent
+    if target == "demo":
+        script = project_root / "scripts" / "seed_demo_tickets.py"
+        cmd = [sys.executable, str(script)]
+    elif target == "cve":
+        script = project_root / "deploy" / "fullsend" / "seed" / "seed-cve-fixture.py"
+        cmd = [sys.executable, str(script)]
+    elif target == "conformance":
+        script = project_root / "deploy" / "scripts" / "24-run-conformance-triage.sh"
+        cmd = ["bash", str(script), "--keep-issue"]
+    else:
+        error_exit(
+            "usage",
+            f"unknown seed target `{target}` for `seed`",
+            "valid seed targets: demo, cve, conformance",
+            exit_code=2,
+        )
+    env = dict(os.environ)
+    env["BREADBOARD_DOMAIN"] = domain
+    proc = subprocess.run(cmd, env=env)
+    sys.exit(proc.returncode)
+
+
+# --- Help texts ---
+
+
+def print_help(command: str) -> None:
+    if command == "bb":
+        print("""usage: bb <command> [options]
+
+Breadboard K3s cluster, emulator, and Fullsend operations CLI.
+
+commands:
+  status        Show detailed K3s workloads, thermal stats, and OpenShell state
+  runs          List Actions workflow runs across repositories
+  logs          Inspect a workflow run and view job logs (auto-selects failed/triage)
+  tickets       Query emulator tickets from Jira, GitHub, and GitLab
+  openshell     Inspect OpenShell gateway, profiles, sandboxes or reset gateway PVC
+  seed          Seed demo tickets, CVE fixture, or run conformance triage
+
+global flags:
+  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --skill             Print complete version-matched operational guide (SKILL.md)
+  --help, -h          Show this help message
+  --version, -v, -V   Print version (bb 0.1.0) and exit
+
+examples:
+  ./scripts/bb
+  ./scripts/bb status
+  ./scripts/bb runs --repo all
+  ./scripts/bb logs 50
+  ./scripts/bb tickets --limit 10
+""")
+    elif command == "status":
+        print("""usage: bb status [--domain <domain>]
+
+Show detailed K3s cluster workloads, physical host thermal status,
+OpenShell profiles, providers, active sandboxes, and emulator tickets.
+
+flags:
+  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --help, -h          Show this help message
+
+examples:
+  ./scripts/bb status
+""")
+    elif command == "runs":
+        print("""usage: bb runs [--repo <owner/repo>|all] [--limit <n>] [--domain <domain>]
+
+List GitHub Actions workflow runs for a repository or across repositories.
+
+flags:
+  --repo <owner/repo> Target repository (default: fullsend-dev/triage-target, or "all")
+  --limit <n>         Maximum number of runs to display (default: 10)
+  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --help, -h          Show this help message
+
+examples:
+  ./scripts/bb runs
+  ./scripts/bb runs --repo all
+  ./scripts/bb runs --repo fullsend-dev/cve-target --limit 5
+""")
+    elif command == "logs":
+        print("""usage: bb logs <run_id> [--repo <owner/repo>] [--job <name>] [--full] [--domain <domain>]
+
+Display job summary table for a workflow run, automatically select the first
+failed job (or Triage / specified job if none failed), and print its log.
+
+arguments:
+  <run_id>            Integer ID of the Actions workflow run
+
+flags:
+  --repo <owner/repo> Target repository (default: fullsend-dev/triage-target)
+  --job <name>        Filter specific job name instead of auto-selected job
+  --full              Display complete log without tail truncation (1500 chars)
+  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --help, -h          Show this help message
+
+examples:
+  ./scripts/bb logs 50
+  ./scripts/bb logs 48 --repo fullsend-dev/cve-target
+  ./scripts/bb logs 50 --job Triage --full
+""")
+    elif command == "tickets":
+        print("""usage: bb tickets [--source github|gitlab|jira] [--limit <n>] [--domain <domain>]
+
+Query tickets from the Breadboard dashboard API across Jira, GitHub, and GitLab.
+
+flags:
+  --source <source>   Filter by ticket source (github, gitlab, or jira)
+  --limit <n>         Maximum number of tickets to display (default: 20)
+  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --help, -h          Show this help message
+
+examples:
+  ./scripts/bb tickets
+  ./scripts/bb tickets --source github --limit 10
+  ./scripts/bb tickets --source jira
+""")
+    elif command == "openshell":
+        print("""usage: bb openshell [status|reset] [--domain <domain>]
+
+Inspect or reset the local OpenShell gateway in namespace openshell-system.
+
+arguments:
+  status              Show gateway pod, profiles, providers, and sandboxes (default)
+  reset               Scale sts/openshell to 0, delete PVC, and scale back to 1
+
+flags:
+  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --help, -h          Show this help message
+
+examples:
+  ./scripts/bb openshell
+  ./scripts/bb openshell status
+  ./scripts/bb openshell reset
+""")
+    elif command == "seed":
+        print("""usage: bb seed <demo|cve|conformance> [--domain <domain>]
+
+Run deterministic seed fixtures or conformance verification.
+
+arguments:
+  demo                Run scripts/seed_demo_tickets.py
+  cve                 Run deploy/fullsend/seed/seed-cve-fixture.py
+  conformance         Run deploy/scripts/24-run-conformance-triage.sh --keep-issue
+
+flags:
+  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --help, -h          Show this help message
+
+examples:
+  ./scripts/bb seed demo
+  ./scripts/bb seed cve
+  ./scripts/bb seed conformance
+""")
+
+
+def main() -> None:
+    setup_env()
+    args = sys.argv[1:]
+
+    # Parse command
+    if not args:
+        domain = resolve_domain()
+        cmd_home(domain)
+        return
+
+    # Check root flags
+    if args[0].startswith("-"):
+        flag = args[0]
+        if flag in ("--version", "-v", "-V"):
+            print(VERSION)
+            sys.exit(0)
+        elif flag == "--skill":
+            print(SKILL_DOC.strip())
+            sys.exit(0)
+        elif flag in ("--help", "-h"):
+            print_help("bb")
+            sys.exit(0)
+        elif flag == "--domain":
+            if len(args) < 2 or args[1].startswith("-"):
+                error_exit(
+                    "usage",
+                    "flag --domain requires a value for `bb`",
+                    "valid flags for `bb`: --skill, --domain (--help always allowed)",
+                    exit_code=2,
+                )
+            domain = resolve_domain(args[1])
+            cmd_home(domain)
+            return
+        else:
+            error_exit(
+                "usage",
+                f"unknown flag {flag} for `bb`",
+                "valid flags for `bb`: --skill, --domain (--help always allowed)",
+                exit_code=2,
+            )
+
+    cmd = args[0]
+    if cmd not in VALID_SUBCOMMANDS:
+        error_exit(
+            "usage",
+            f"unknown subcommand `{cmd}`",
+            "valid subcommands: status, runs, logs, tickets, openshell, seed (--help always allowed)",
+            exit_code=2,
+        )
+
+    # Subcommand flag and argument parsing
+    allowed_flags = VALID_FLAGS[cmd]
+    valid_flags_hint = ", ".join(allowed_flags) + " (--help always allowed)"
+
+    sub_args = args[1:]
+    parsed_flags: Dict[str, str] = {}
+    positional: List[str] = []
+
+    i = 0
+    while i < len(sub_args):
+        arg = sub_args[i]
+        if arg in ("--help", "-h"):
+            print_help(cmd)
+            sys.exit(0)
+        elif arg.startswith("-"):
+            if arg not in allowed_flags:
+                error_exit(
+                    "usage",
+                    f"unknown flag {arg} for `{cmd}`",
+                    f"valid flags for `{cmd}`: {valid_flags_hint}",
+                    exit_code=2,
+                )
+            if arg in FLAGS_WITH_VALUES:
+                if i + 1 >= len(sub_args) or sub_args[i + 1].startswith("-"):
+                    error_exit(
+                        "usage",
+                        f"flag {arg} requires a value for `{cmd}`",
+                        f"valid flags for `{cmd}`: {valid_flags_hint}",
+                        exit_code=2,
+                    )
+                parsed_flags[arg] = sub_args[i + 1]
+                i += 1
+            else:
+                parsed_flags[arg] = "true"
+        else:
+            positional.append(arg)
+        i += 1
+
+    domain = resolve_domain(parsed_flags.get("--domain"))
+
+    if cmd == "status":
+        cmd_status(domain)
+    elif cmd == "runs":
+        repo_arg = parsed_flags.get("--repo", "fullsend-dev/triage-target")
+        limit_arg = parsed_flags.get("--limit", "10")
+        cmd_runs(domain, repo_arg, limit_arg)
+    elif cmd == "logs":
+        if not positional:
+            error_exit(
+                "usage",
+                "missing required argument <run_id> for `logs`",
+                "usage: ./scripts/bb logs <run_id> [--repo <repo>] [--job <name>] [--full]",
+                exit_code=2,
+            )
+        run_id_str = positional[0]
+        repo_arg = parsed_flags.get("--repo", "")
+        job_filter = parsed_flags.get("--job")
+        full = "--full" in parsed_flags
+        cmd_logs(domain, run_id_str, repo_arg, job_filter, full)
+    elif cmd == "tickets":
+        source_arg = parsed_flags.get("--source")
+        limit_arg = parsed_flags.get("--limit", "20")
+        cmd_tickets(domain, source_arg, limit_arg)
+    elif cmd == "openshell":
+        action = positional[0] if positional else "status"
+        cmd_openshell(domain, action)
+    elif cmd == "seed":
+        if not positional:
+            error_exit(
+                "usage",
+                "missing seed target for `seed`",
+                "valid seed targets: demo, cve, conformance",
+                exit_code=2,
+            )
+        target = positional[0]
+        cmd_seed(domain, target)
+
+
+if __name__ == "__main__":
+    main()

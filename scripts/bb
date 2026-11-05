@@ -45,7 +45,7 @@ Authoritative, version-matched operational guide for Breadboard on physical host
 - `./scripts/bb logs <run_id> [--repo <owner/repo>] [--job <name>] [--full]`: Pre-computes the job summary table, automatically selects the first failed job (or `Triage` / `--job <name>` if none failed), and displays its log. Truncates to last 1500 characters by default unless `--full` is specified.
 - `./scripts/bb tickets [--source github|gitlab|jira] [--limit <n>]`: Queries `https://dashboard.<domain>/api/tickets` and returns ticket counts and TOON rows.
 - `./scripts/bb openshell [status|reset]`: `status` displays gateway pod, profiles, providers, and sandboxes. `reset` scales `sts/openshell` to 0, deletes PVC `openshell-data-openshell-0`, and scales back to 1.
-- `./scripts/bb seed <demo|cve|conformance>`: Deterministically runs ticket seeder (`scripts/seed_demo_tickets.py`), CVE fixture seeder (`deploy/fullsend/seed/seed-cve-fixture.py`), or end-to-end conformance triage (`deploy/scripts/24-run-conformance-triage.sh --keep-issue`).
+- `./scripts/bb seed <demo|cve|conformance>`: Deterministically runs ticket seeder (`deploy/scripts/seed_demo_tickets.py`), CVE fixture seeder (`deploy/fullsend/seed/seed-cve-fixture.py`), or end-to-end conformance triage (`deploy/scripts/24-run-conformance-triage.sh --keep-issue`).
 
 ## 2. The 3 Fullsend Patch Layers
 
@@ -794,7 +794,7 @@ def cmd_openshell(domain: str, action: str) -> None:
 def cmd_seed(domain: str, target: str) -> None:
     project_root = Path(__file__).resolve().parent.parent
     if target == "demo":
-        script = project_root / "scripts" / "seed_demo_tickets.py"
+        script = project_root / "deploy" / "scripts" / "seed_demo_tickets.py"
         cmd = [sys.executable, str(script)]
     elif target == "cve":
         script = project_root / "deploy" / "fullsend" / "seed" / "seed-cve-fixture.py"
@@ -935,7 +935,7 @@ examples:
 Run deterministic seed fixtures or conformance verification.
 
 arguments:
-  demo                Run scripts/seed_demo_tickets.py
+  demo                Run deploy/scripts/seed_demo_tickets.py
   cve                 Run deploy/fullsend/seed/seed-cve-fixture.py
   conformance         Run deploy/scripts/24-run-conformance-triage.sh --keep-issue
 

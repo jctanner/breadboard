@@ -658,3 +658,12 @@ This repository supplies three skills used by that path:
 ## Documentation
 
 See [docs/README.md](docs/README.md) for the documentation index covering architecture, deployment, and reference material.
+
+## License
+
+Breadboard is licensed under the [Apache License 2.0](LICENSE).
+
+The patches under `deploy/fullsend/patches/` modify
+[Fullsend](https://github.com/fullsend-ai/fullsend) and are provided under
+Fullsend's license, which is also Apache-2.0. Component repositories under
+`checkouts/` carry their own licenses.

@@ -40,7 +40,7 @@ index 5925de4..d41762b 100644
  # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
  # when the model: above moves to a generation with a different default.
  effort: high
--image: ghcr.io/fullsend-ai/fullsend-code@sha256:7a020876eeab07d788d03d4313d24198332d7cbd7ec8dce809d53656e86296c6
+-image: ghcr.io/fullsend-ai/fullsend-code@sha256:8c5953b8bf88d681a66e2435cde5397bcac704f06fca5dc782f2206bcce91718
 +# Breadboard-local: the same locally built image the review harness uses -
 +# they pin the same fullsend-code digest, so one build serves both. The
 +# build reads that digest from review.yaml's upstream line rather than
@@ -57,7 +57,7 @@ index ec9c665..d2ddd8f 100644
  # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
  # when the model: above moves to a generation with a different default.
  effort: high
--image: ghcr.io/fullsend-ai/fullsend-code@sha256:7a020876eeab07d788d03d4313d24198332d7cbd7ec8dce809d53656e86296c6
+-image: ghcr.io/fullsend-ai/fullsend-code@sha256:8c5953b8bf88d681a66e2435cde5397bcac704f06fca5dc782f2206bcce91718
 +# Breadboard-local: the image above, plus this cluster's internal CA, for
 +# the same reason as the triage harness. Review and code pin the same
 +# fullsend-code digest, so one local build serves both. Built by
@@ -76,7 +76,7 @@ index c481835..6fa1eeb 100644
  # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
  # when the model: above moves to a generation with a different default.
  effort: high
--image: ghcr.io/fullsend-ai/fullsend-sandbox@sha256:6e97f0f6536cf1af1706ef4577b19ae1187090712ee59670351e78b43d6906e4
+-image: ghcr.io/fullsend-ai/fullsend-sandbox@sha256:8e17e6120e17debdcabff5eb331a7cb7757b09ec3d586010c9d7956fd1fc5633
 +# Breadboard-local: the image above, plus this cluster's internal CA. The
 +# sandbox supervisor reads its upstream TLS roots from the system bundle
 +# once at startup, and the conformance forge is served by a CA that exists

@@ -60,9 +60,10 @@ it on the reasoning that the sandbox simply does not set that variable. That
 reasoning was wrong, and so was dropping it. The assertion failed because
 behaviour operations ran without the harness environment loaded at all, which
 is also why GH_HOST failed for the entire life of this script. With that fixed
-upstream (patch 0009), the variable is delivered and the assertion is
-meaningful: on a non-github.com host it is the variable gh actually reads, so
-it is the one that proves the minted credential is what an agent would use.
+upstream (fullsend#9055; formerly local patch 0009), the variable is
+delivered and the assertion is meaningful: on a non-github.com host it is the
+variable gh actually reads, so it is the one that proves the minted credential
+is what an agent would use.
 
 The embedded result is validated against the real schema before anything is
 written, because the schema's top-level `required` is not the whole story: an

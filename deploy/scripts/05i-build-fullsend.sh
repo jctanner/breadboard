@@ -19,8 +19,10 @@ OPENSHELL_ROOT="${PROJECT_ROOT}/checkouts/openshell"
 # 0010 (do not cache a profile import that replaced nothing) was dropped in
 # the v0.52.0 rebase: upstream now verifies the gateway's exported profile
 # against the file before treating "already exists" as success (#7973), which
-# closes the same hole. 0016 is a local substitution, not upstream-bound; see
-# its header.
+# closes the same hole. 0009 (load the harness environment for behaviour
+# ops) was dropped on 2026-11-07: upstream merged the same fix as
+# fullsend#9055 (#9046, commit 877c381b5, DummyRuntime.harnessEnvCommand).
+# 0016 is a local substitution, not upstream-bound; see its header.
 # These patch Go source before the binary is compiled. Patches that change
 # files a workflow reads at run time belong to MIRROR_PATCHES in
 # deploy/fullsend/seed/seed-upstream-fullsend.py instead; a patch in the wrong
@@ -30,7 +32,6 @@ FULLSEND_PATCHES=(
   "${PROJECT_ROOT}/deploy/fullsend/patches/0006-allow-a-privately-reachable-forge.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0007-parse-enterprise-raw-content-urls.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0008-scope-the-minted-token-on-enterprise-forges.patch"
-  "${PROJECT_ROOT}/deploy/fullsend/patches/0009-load-the-harness-environment-for-behaviour-ops.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0011-address-the-configured-forge-in-the-github-commands.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0012-let-an-installation-name-its-runner.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0013-allow-the-configured-forge-in-the-default-remote-resources.patch"

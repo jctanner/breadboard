@@ -32,9 +32,8 @@ deploy/scripts/05i-build-fullsend.sh rather than the mirror list; the mirror
 patches files a workflow reads at run time, and these do not survive
 compilation. Written to be sent upstream as-is. Add a DCO sign-off before
 submitting it as a human-authored change.
-
 diff --git a/internal/cli/run.go b/internal/cli/run.go
-index 4cc3f36ff..683eb5167 100644
+index e063eeb9e..875241170 100644
 --- a/internal/cli/run.go
 +++ b/internal/cli/run.go
 @@ -12,6 +12,7 @@ import (
@@ -51,8 +50,8 @@ index 4cc3f36ff..683eb5167 100644
  	"github.com/fullsend-ai/fullsend/internal/forge"
 -	gh "github.com/fullsend-ai/fullsend/internal/forge/github"
  	gl "github.com/fullsend-ai/fullsend/internal/forge/gitlab"
+ 	"github.com/fullsend-ai/fullsend/internal/forge/jira"
  	"github.com/fullsend-ai/fullsend/internal/gitfetch"
- 	"github.com/fullsend-ai/fullsend/internal/harness"
 @@ -144,6 +144,33 @@ var remintForPostScriptTimeout = mintclient.MaxMintDuration
  // from the agents repository. It is a var (not const) to allow test overrides.
  var defaultAgentsRepoURLPrefix = "https://raw.githubusercontent.com/fullsend-ai/agents/"
@@ -100,7 +99,7 @@ index 4cc3f36ff..683eb5167 100644
  }
  
  // agentWorkingDirExcludes lists fullsend-reserved directory patterns that
-@@ -663,7 +694,11 @@ func runAgent(ctx context.Context, agentName, fullsendDir, outputBase, targetRep
+@@ -664,7 +695,11 @@ func runAgent(ctx context.Context, agentName, fullsendDir, outputBase, targetRep
  	// fallback. Always create a GitHub client for the agents-repo fallback —
  	// fullsend-ai/agents is public, so unauthenticated requests work when no
  	// GitHub token is available (e.g., on GitLab pipelines).
@@ -113,7 +112,7 @@ index 4cc3f36ff..683eb5167 100644
  	harnessPath, fetchDeps, err := resolveAgentSource(ctx, absFullsendDir, agentName, fallbackForgeClient, orgCfg, composeOpts, printer)
  	if err != nil {
  		return err
-@@ -7421,7 +7456,7 @@ func fetchPinnedAgentsRepoFile(ctx context.Context, relPath string, forgeClient
+@@ -7648,7 +7683,7 @@ func fetchPinnedAgentsRepoFile(ctx context.Context, relPath string, forgeClient
  		return "", none, false
  	}
  
@@ -123,10 +122,10 @@ index 4cc3f36ff..683eb5167 100644
  	if harness.MatchingAllowedPrefixInList(rawURL, allowlist) == "" {
  		printer.StepWarn(fmt.Sprintf("Agents repo fallback skipped for %s: URL not in allowed_remote_resources", noun))
 diff --git a/internal/fetch/fetch.go b/internal/fetch/fetch.go
-index 3b15ad75f..63191f820 100644
+index 7e2816e1a..258babe31 100644
 --- a/internal/fetch/fetch.go
 +++ b/internal/fetch/fetch.go
-@@ -17,6 +17,7 @@ import (
+@@ -16,6 +16,7 @@ import (
  	"net"
  	"net/http"
  	"net/url"

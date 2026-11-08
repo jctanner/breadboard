@@ -376,6 +376,23 @@ host-rebuild-fullsend-dashboard: ## Rebuild and redeploy Fullsend dashboard on h
 	kubectl rollout status deployment/fullsend-dashboard -n ai-pipeline --timeout=60s
 	@echo "✓ Fullsend dashboard rebuilt and redeployed"
 
+# Fullsend's behaviour-test suite against the emulator and the dev mint
+# (.ledger/plans/fullsend-behaviour-tests-plan.md). bt-seed is idempotent:
+# the pool org and its App installations, then the mint's allowlists from
+# deploy/fullsend/behaviour/pool.env (applying the manifest restarts the mint
+# only when they changed). bt-run options: FEATURES (godog paths under
+# e2e/behaviour), TAGS, CONCURRENCY, FULLSEND_REF (non-vendored at that ref).
+bt-seed: ## Seed the Fullsend behaviour-test pool org and mint allowlists
+	python3 deploy/fullsend/seed/seed-behaviour-pool.py
+	python3 deploy/fullsend/behaviour/mint-pool.py write
+	kubectl apply -f deploy/k8s/24-fullsend-mint-dev.yaml
+	kubectl rollout status deployment/fullsend-mint-dev -n ai-pipeline --timeout=120s
+
+bt-run: ## Run Fullsend behaviour tests against the stack (FEATURES=, TAGS=, FULLSEND_REF=)
+	PROJECT_ROOT=$(HOST_PROJECT_ROOT) BT_FEATURES="$(FEATURES)" BT_TAGS="$(TAGS)" \
+	  BT_CONCURRENCY="$(or $(CONCURRENCY),1)" BT_FULLSEND_REF="$(FULLSEND_REF)" \
+	  bash deploy/fullsend/behaviour/run.sh
+
 host-build-agent: ## Build agent image on host
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05b-build-agent.sh
 

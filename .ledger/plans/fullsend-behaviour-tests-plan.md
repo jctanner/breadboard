@@ -237,6 +237,7 @@ New emulator gaps (file against github-emulator, fix there):
 | --- | --- |
 | BT-E1 | A local reusable-workflow call (`./.github/workflows/x.yml`) leaves `called_full_name` empty in `_resolve_reusable_workflow` (`src/app/services/workflow_service.py:307`), so the OIDC `job_workflow_ref` has no `owner/repo` and the job's `_workflow_repository` is empty. GitHub reports `owner/repo/.github/workflows/x.yml@refs/heads/<ref>`. |
 | BT-E2 | The triage artifact uploads under the literal name `${{ inputs.artifact-name \|\| format('fullsend-{0}', inputs.agent) }}`; the expression is not evaluated. The suite's CI driver selects artifacts by `fullsend-<agent>`, so every artifact assertion would miss. |
+| BT-E3 | The emulator reuses the ids of deleted rows (SQLite without `AUTOINCREMENT`). Found in B3: after the suite deletes a slot repository, the next run in the recreated slot gets the same run and job ids. See `.ledger/bugs/open/conformance-bt-e3-emulator-reuses-deleted-ids.md`. Open; fix before B4 raises concurrency. |
 
 Both are fixed in github-emulator `dd2588f` (2026-11-07). That commit
 deploys through `make host-rebuild-github` for the server and through
@@ -304,3 +305,56 @@ Still open, for later tiers (BT-H5): `steps/bot_actors.go` and
 `steps/mint_probe_workflow.yml` call api.github.com, and `base_dispatch.go`
 and `url_dispatch.go` build raw.githubusercontent.com URLs. T1 (triage) uses
 none of them.
+
+### 2026-11-07 BT-B3: T1 green in both modes
+
+`make bt-seed` then `make bt-run FEATURES=features/triage/triage.feature`
+(vendored; the pull-request path) and the same with `FULLSEND_REF=main`
+(non-vendored; the stage path). Each passes, 1 scenario and 9 of 9 steps,
+against the emulator, the dev mint and the `fullsend` runners. The suite
+creates and deletes the slot repository and the `e2e-lock` repository itself.
+
+| Run | Mode | Slot | Result |
+| --- | --- | --- | --- |
+| 1 | vendored | `halfsend/test-repo-01` | pass, 7m25s |
+| 2 | `--fullsend-ref main` | `halfsend/test-repo-01` | pass, 6m38s |
+| 3 | vendored, final `run.sh`, default workdir | `halfsend/test-repo-03` | pass, 7m11s |
+
+What B3 added:
+
+- **`deploy/fullsend/behaviour/pool.env`.** The pool is `halfsend` with 4
+  slots.
+- **`deploy/fullsend/behaviour/mint-pool.py`** (`check`/`write`). It writes
+  the pool into the mint manifest's `FULLSEND_ALLOWED_ORGS` and
+  `FULLSEND_WORKFLOW_HOST_REPOS`, as upstream's `mint_groups.go` does.
+  Non-pool entries are kept.
+- **`deploy/fullsend/seed/seed-behaviour-pool.py`.** It creates the org and
+  installs the eight role Apps on it, all repositories, with each App's
+  public permissions. It is idempotent.
+- **`deploy/fullsend/behaviour/run.sh`.** It creates a worktree of the
+  Fullsend checkout and applies the patches in order: the 05i build list
+  (read from 05i), then the mirror list, then 0017–0019. It commits them,
+  combines the system CA bundle with the stack CA, and runs
+  `go test -tags behaviour` with `ENVIRONMENT=external`. It holds a lock per
+  workdir.
+- **Patch `0019-local-select-behaviour-features-from-the-environment`.** It
+  adds `BEHAVIOUR_FEATURES`, because the triage scenario has no tag and
+  feature files stay unedited.
+- **Make targets `bt-seed` and `bt-run`.** `bt-run` takes `FEATURES`, `TAGS`,
+  `CONCURRENCY` and `FULLSEND_REF`.
+
+Findings:
+
+- **Go VCS stamping fails in a worktree under `/tmp`.** The host has an
+  empty `/tmp/.git` (not ours, left in place), and Go's VCS stamping picks
+  it as the repository root. `run.sh` sets `-buildvcs=false`; nothing reads
+  the stamp.
+- **BT-E3.** The emulator reuses the ids of deleted rows: runs 1 and 2 both
+  got workflow run 1962 and jobs 8510 onwards. Filed as
+  `.ledger/bugs/open/conformance-bt-e3-emulator-reuses-deleted-ids.md`; fix
+  before B4.
+
+Codex review: round 1 found that a relative `BT_WORKDIR` broke
+`git -C worktree add`, and that concurrent runs removed each other's
+worktree. Both are fixed (an absolute workdir and `flock`); round 2 found
+nothing.

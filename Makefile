@@ -378,10 +378,12 @@ host-rebuild-fullsend-dashboard: ## Rebuild and redeploy Fullsend dashboard on h
 
 # Fullsend's behaviour-test suite against the emulator and the dev mint
 # (.ledger/plans/fullsend-behaviour-tests-plan.md). bt-seed is idempotent:
-# the pool org and its App installations, then the mint's allowlists from
+# the pool org, its App installations and the test actors (tokens in the
+# ignored deploy/fullsend/behaviour/.env.actors), then the mint's allowlists from
 # deploy/fullsend/behaviour/pool.env (applying the manifest restarts the mint
 # only when they changed). bt-run options: FEATURES (godog paths under
-# e2e/behaviour), TAGS, CONCURRENCY, FULLSEND_REF (non-vendored at that ref).
+# e2e/behaviour), TAGS, CONCURRENCY, FULLSEND_REF (non-vendored at that ref),
+# TIMEOUT (go test timeout, default 45m).
 bt-seed: ## Seed the Fullsend behaviour-test pool org and mint allowlists
 	python3 deploy/fullsend/seed/seed-behaviour-pool.py
 	python3 deploy/fullsend/behaviour/mint-pool.py write
@@ -391,6 +393,7 @@ bt-seed: ## Seed the Fullsend behaviour-test pool org and mint allowlists
 bt-run: ## Run Fullsend behaviour tests against the stack (FEATURES=, TAGS=, FULLSEND_REF=)
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) BT_FEATURES="$(FEATURES)" BT_TAGS="$(TAGS)" \
 	  BT_CONCURRENCY="$(or $(CONCURRENCY),1)" BT_FULLSEND_REF="$(FULLSEND_REF)" \
+	  BT_TIMEOUT="$(or $(TIMEOUT),45m)" \
 	  bash deploy/fullsend/behaviour/run.sh
 
 host-build-agent: ## Build agent image on host

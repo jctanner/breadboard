@@ -238,6 +238,8 @@ New emulator gaps (file against github-emulator, fix there):
 | BT-E1 | A local reusable-workflow call (`./.github/workflows/x.yml`) leaves `called_full_name` empty in `_resolve_reusable_workflow` (`src/app/services/workflow_service.py:307`), so the OIDC `job_workflow_ref` has no `owner/repo` and the job's `_workflow_repository` is empty. GitHub reports `owner/repo/.github/workflows/x.yml@refs/heads/<ref>`. |
 | BT-E2 | The triage artifact uploads under the literal name `${{ inputs.artifact-name \|\| format('fullsend-{0}', inputs.agent) }}`; the expression is not evaluated. The suite's CI driver selects artifacts by `fullsend-<agent>`, so every artifact assertion would miss. |
 | BT-E3 | The emulator reuses the ids of deleted rows (SQLite without `AUTOINCREMENT`). Found in B3: after the suite deletes a slot repository, the next run in the recreated slot gets the same run and job ids. Fixed in github-emulator `b987b79` (migration 0016) and deployed; see `.ledger/bugs/fixed/conformance-bt-e3-emulator-reuses-deleted-ids.md`. |
+| BT-E4 | No organization roles; org membership granted no repository permission, and the permission endpoint answered `push`/`pull`. Fixed in github-emulator `e330ef0` (migration 0017) and deployed; see `.ledger/bugs/fixed/conformance-bt-e4-emulator-has-no-organization-roles.md`. |
+| BT-E5 | GraphQL `createPullRequest` rejects `headRepositoryId`, so no fork pull request can be opened. Open: `.ledger/bugs/open/conformance-bt-e5-emulator-graphql-cross-repo-pull-request.md`. |
 
 Both are fixed in github-emulator `dd2588f` (2026-11-07). That commit
 deploys through `make host-rebuild-github` for the server and through
@@ -357,3 +359,43 @@ Codex review: round 1 found that a relative `BT_WORKDIR` broke
 `git -C worktree add`, and that concurrent runs removed each other's
 worktree. Both are fixed (an absolute workdir and `flock`); round 2 found
 nothing.
+
+### 2026-11-07 BT-B4 (in progress): T2 without actors, itemised
+
+**Run.** `make bt-run TIMEOUT=4h FEATURES="…"` ran the T2 features that need
+no human actor, vendored, at concurrency 1:
+
+- base-dispatch, dispatch, fork-bash-routing, fork-dispatch, hooks-loaded,
+  reaction-notifications, url-dispatch, runner-secret-overlay-guard.
+
+It took 84 minutes. **1 of 19 scenarios passed:** "An overlay that reads a
+shadowed .event is refused". The failures:
+
+| Cause | Scenarios | Gap |
+| --- | --- | --- |
+| Harness builds `raw.githubusercontent.com` URLs for remote harnesses and bases | url-dispatch (4), base-dispatch (2) | BT-H5 (known) |
+| Emulator GraphQL rejects `headRepositoryId` | fork-dispatch (4), fork-bash-routing (1) | BT-E5 |
+| Harness acts as `admin` locally; `issues: opened` then routes to triage, which the scenario never scripted | dispatch: issue label, disabled harness; overlay on runtime.forge (3) | BT-H7 |
+| "Harness run (<agent>)" job never runs: the job is skipped and named `Harness run ()`, so the harness agent is not found | dispatch: PR label (pr-ping), hooks-loaded, reaction-notifications (3) | open: the dispatch step succeeds silently; job outputs and the `fromJSON(...).include[0]` condition need a targeted run (BT-U1) |
+| `TEST_ACTOR_WRITE_PAT not set` | dispatch: PR review (1) | BT-E4, now fixed |
+
+Two failing runs that sit outside the scenarios' own failures are also
+noted:
+
+- run 1977, Review: "read-only repo enforcement failed" (BT-U2);
+- runs 1986 and 1993, Code: result validation failed after triage handed off
+  with `ready-to-code` (BT-U3, likely a consequence of BT-H7).
+
+**Notes.**
+
+- **BT-E4.** Organization roles are fixed and deployed. `make bt-seed` now
+  seeds `bt-write-actor` (`all_repo_write`), `bt-triage-actor`
+  (`all_repo_triage`) and `bt-outsider` (outside the org). Their tokens are
+  in the gitignored `deploy/fullsend/behaviour/.env.actors`, which `run.sh`
+  exports.
+- **`TIMEOUT=`.** `bt-run` gained it (`BT_TIMEOUT`), because a tier at
+  concurrency 1 outlasts upstream's 45-minute budget.
+- **Lost log.** Editing `run.sh` while a run executes it makes bash resume at
+  a shifted offset. This run's `behaviour-test.log` was overwritten by a
+  second, token-less `go test` as a result; the captured `make` output kept
+  the full log. Do not edit `run.sh` during a run.

@@ -23,6 +23,8 @@
 #                    (default: every feature)
 #   BT_TAGS          GODOG_TAGS expression
 #   BT_CONCURRENCY   GODOG_CONCURRENCY (default 1)
+#   BT_TIMEOUT       go test -timeout (default 45m, upstream's CI budget;
+#                    a whole tier at concurrency 1 needs longer)
 #   BT_FULLSEND_REF  install non-vendored at this ref (the stage path);
 #                    unset installs vendored (the pull-request path)
 #   BT_SOURCE        Fullsend checkout to test (default: checkouts/fullsend-ai/fullsend)
@@ -59,6 +61,20 @@ CA_FILE="${PROJECT_ROOT}/deploy/fullsend-sandbox-local/internal-ca.crt"
 
 # shellcheck source=/dev/null
 source "${PROJECT_ROOT}/deploy/fullsend/behaviour/pool.env"
+
+# The human test actors' tokens (TEST_ACTOR_WRITE_PAT, _TRIAGE_PAT,
+# _OUTSIDER_PAT), written by `make bt-seed`. Without them the scenarios that
+# act as those users fail with "TEST_ACTOR_..._PAT not set".
+ACTORS_ENV="${PROJECT_ROOT}/deploy/fullsend/behaviour/.env.actors"
+unset TEST_ACTOR_WRITE_PAT TEST_ACTOR_TRIAGE_PAT TEST_ACTOR_OUTSIDER_PAT
+if [[ -f "${ACTORS_ENV}" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "${ACTORS_ENV}"
+  set +a
+else
+  echo "WARNING: ${ACTORS_ENV} is missing; run \`make bt-seed\` for the test actors" >&2
+fi
 
 python3 "${PROJECT_ROOT}/deploy/fullsend/behaviour/mint-pool.py" check
 
@@ -153,7 +169,7 @@ env -u GITHUB_ACTIONS -u GITHUB_TOKEN -u E2E_GCP_PROJECT_ID \
   SSL_CERT_FILE="${CA_BUNDLE}" \
   GOTOOLCHAIN=auto \
   GOFLAGS="${GOFLAGS:+${GOFLAGS} }-buildvcs=false" \
-  go test -tags behaviour -race -v -count=1 -timeout 45m ./e2e/behaviour/ 2>&1 | tee "${LOG}"
+  go test -tags behaviour -race -v -count=1 -timeout "${BT_TIMEOUT:-45m}" ./e2e/behaviour/ 2>&1 | tee "${LOG}"
 status=${PIPESTATUS[0]}
 set -e
 echo "==> Log: ${LOG}"

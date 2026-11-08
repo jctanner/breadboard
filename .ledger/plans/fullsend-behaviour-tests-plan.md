@@ -122,15 +122,26 @@ Each stops with something runnable or visible; wait for go or pivot.
   logs in the Fullsend dashboard. Pivot point: if `--direct`/`--vendor` cannot
   work here, decide between fixing it (new findings) and a Breadboard install
   driver that uses the onboarding path instead.
-- **BT-B2 — harness patches.** Write BT-H1–H4 as patches: `GITHUB_API_URL` in
-  `NewLiveClient` and the raw cleanup URLs; an `ENVIRONMENT` value (e.g.
-  `external`) selecting `RepoPoolExternalMint`; a pool org name and count from
-  env. Unit tests pass (`go test ./pkg/behaviourtest/... ./internal/e2etest/...`).
+- **BT-B2 — harness patches (local).** Write as patches in the existing
+  stack; none is offered upstream as a Breadboard feature:
+  - BT-H1/H2: `GITHUB_API_URL` in `NewLiveClient` and the raw cleanup and
+    repo-check URLs. These are host-assumption defects in their own right;
+    whether they go upstream as problem-only issues is the campaign's call;
+  - BT-H3: an `ENVIRONMENT` value (e.g. `external`) selecting
+    `RepoPoolExternalMint`, with the install mode chosen the upstream way —
+    vendored by default (the PR path, built from the tree under test), and
+    `--fullsend-ref <ref>` on request (the stage path);
+  - BT-H4: pool org name(s) and count from env;
+  - pass the runner label (`FULLSEND_RUNNER_IMAGE`, S3) through to setup.
+  Unit tests pass (`go test ./pkg/behaviourtest/... ./internal/e2etest/...`).
   Codex review before commit. *Show:* the patches and test output.
-- **BT-B3 — T1 green.** Seed script for the pool org, Apps, mint allowlist
-  and runner preset; run `GODOG_TAGS` limited to the triage scenario at
-  `GODOG_CONCURRENCY=1`. *Show:* godog output, the run's artifacts, the slot
-  repo created and deleted.
+- **BT-B3 — T1 green, both modes.** Seed script for the pool org(s), Apps and
+  runner preset that also generates the mint's `FULLSEND_WORKFLOW_HOST_REPOS`
+  from the pool layout (as `mint_groups.go` does upstream). One entry point
+  (e.g. `make bt-run`) builds the tree under test and runs a `GODOG_TAGS`
+  selection. Run the triage scenario at `GODOG_CONCURRENCY=1`, vendored, then
+  with `--fullsend-ref main`. *Show:* godog output for each mode, the run's
+  artifacts, the slot repo created and deleted.
 - **BT-B4 — T2 green or itemised.** Add actors (S4), run T2 at concurrency 1
   then 4 (S5). Every failure is a bug file (harness, emulator, stack or
   upstream) with its tier and scenario. *Show:* a pass/fail table per
@@ -188,3 +199,67 @@ its own tracking.
 - **Run 1936 passed**: success on `fullsend-agent-runner`, labels
   `documentation` and `triaged` by `fullsend-triage[bot]`, minted triage token,
   114 KB artifact. Evidence: `var/conformance/run-1936`.
+
+### 2026-11-07 BT-B1: install spike
+
+Spike repos `experiment/bt-spike-01` (vendored) and `experiment/bt-spike-02`
+(non-vendored), created in an org the mint already admits and where the role
+Apps are installed org-wide, so no mint or manifest change. Setup ran from the
+host with the patched binary, `GH_TOKEN`=emulator admin token,
+`GITHUB_API_URL`/`GITHUB_SERVER_URL`, and `SSL_CERT_FILE` set to
+`deploy/fullsend-sandbox-local/internal-ca.crt`. The older
+`deploy/pipeline-agent/internal-ca.crt` no longer verifies `github.local`.
+
+- **S1 answered.** `github setup --direct --vendor --runtime dummy --app-set
+  fullsend` works against the emulator (46 files, 5 variables;
+  `FULLSEND_REVIEW_CLIENT_ID` resolved via `GET /apps/{slug}`). `--vendor`
+  needs `--fullsend-source` (a dev build cannot fetch its own source); in a
+  suite run that is the checkout, so it must carry Breadboard's patches.
+  `--fullsend-ref main` (non-vendored) needs no source tree and pushes 3 files.
+- **S3 answered.** The default render targets `ubuntu-24.04`, which no Breadboard
+  runner serves. `FULLSEND_RUNNER_IMAGE=fullsend` (patch 0012) renders
+  `runs-on: fullsend`. The suite must pass it through to setup.
+- **S2 answered, vendored fails.** Runs 1941 and 1942 failed at "Mint triage
+  token" with 403s. The mint audit says `job_workflow_ref does not reference an
+  allowed workflow host repo`, and the ref was
+  `/.github/workflows/reusable-dispatch.yml@refs/heads/main`. Two causes:
+  - the mint's `FULLSEND_WORKFLOW_HOST_REPOS` lists only `triage-target`;
+  - an emulator bug, BT-E1.
+- **Non-vendored passes.** Runs 1943/1944: Route, Triage and Harness dispatch
+  succeed. Every behaviour op succeeds, `metrics.json` reports `runtime: dummy`
+  from the repo config, and `fullsend-triage[bot]` labels and comments.
+  The dispatch uses the emulator's patched `fullsend-ai/fullsend` mirror at
+  `main`, which the mint always admits.
+
+New emulator gaps (file against github-emulator, fix there):
+
+| ID | Gap |
+| --- | --- |
+| BT-E1 | A local reusable-workflow call (`./.github/workflows/x.yml`) leaves `called_full_name` empty in `_resolve_reusable_workflow` (`src/app/services/workflow_service.py:307`), so the OIDC `job_workflow_ref` has no `owner/repo` and the job's `_workflow_repository` is empty. GitHub reports `owner/repo/.github/workflows/x.yml@refs/heads/<ref>`. |
+| BT-E2 | The triage artifact uploads under the literal name `${{ inputs.artifact-name \|\| format('fullsend-{0}', inputs.agent) }}`; the expression is not evaluated. The suite's CI driver selects artifacts by `fullsend-<agent>`, so every artifact assertion would miss. |
+
+Both are fixed in github-emulator `dd2588f` (2026-11-07). That commit
+deploys through `make host-rebuild-github` for the server and through
+`05i-build-fullsend.sh` plus a `github-actions-runner` restart for the runner,
+whose image embeds `runner.py`. Live checks:
+
+- **BT-E1.** bt-spike-01 runs 1949/1950 still fail at "Mint triage token", but
+  the mint now sees
+  `experiment/bt-spike-01/.github/workflows/reusable-dispatch.yml@refs/heads/main`.
+  It refuses only because of the host list.
+- **BT-E2.** bt-spike-02 run 1952 uploads its triage artifact as
+  `fullsend-triage`.
+
+With BT-E1 fixed, the vendored path (b) is blocked only by the mint's
+`FULLSEND_WORKFLOW_HOST_REPOS`.
+
+**Decision (B1 pivot, 2026-11-07): both, vendored first.** Upstream CI runs
+the suite in two modes: vendored on pull requests (dev; the PR's own build
+installed into each slot) and `--fullsend-ref main` on push to main (stage).
+Both deploy their own mint and set its `WORKFLOW_HOST_REPOS` to every pool
+repo (`mint_groups.go`). Vendored is the path that tests a change (the
+tree under test is what gets installed), so it comes first; non-vendored is
+the cheap stage-parity check. The host list is generated from the pool
+layout, as upstream does, rather than edited by hand. B2 below is rewritten
+to match. The harness work stays local patches: this is Breadboard's way of
+running the suite, not a proposal to Fullsend.

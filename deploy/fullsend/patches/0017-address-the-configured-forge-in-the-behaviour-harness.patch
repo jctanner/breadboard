@@ -1,0 +1,158 @@
+Subject: address the configured forge in the behaviour-test harness
+
+The behaviour suite's own forge calls name api.github.com directly:
+e2etest.NewLiveClient builds gh.New(token) with no base URL, and the cleanup
+and lock helpers send raw requests to https://api.github.com/... (five in
+cleanup.go, one in testutil.go). The CLI under test already resolves its
+forge from GITHUB_API_URL, so against an enterprise server or an emulator the
+install lands on one forge while the harness creates, checks and deletes
+slot repositories on another, with credentials not meant for it.
+
+The harness now takes the API root from GITHUB_API_URL when it is set, and
+api.github.com otherwise, for both the client and the raw requests. On an
+Actions runner GITHUB_API_URL is already https://api.github.com, so hosted
+runs are unchanged.
+
+Gaps BT-H1 and BT-H2 of .ledger/plans/fullsend-behaviour-tests-plan.md.
+These are host-assumption defects in their own right; whether they go
+upstream as problem-only issues is the conformance campaign's decision.
+
+Breadboard note: test-only. Nothing here is compiled into the fullsend
+binary, so it is not in the build list in deploy/scripts/05i-build-fullsend.sh;
+the behaviour-test run applies it on top of that list.
+
+diff --git a/internal/e2etest/apibase_test.go b/internal/e2etest/apibase_test.go
+new file mode 100644
+index 000000000..1415da3bb
+--- /dev/null
++++ b/internal/e2etest/apibase_test.go
+@@ -0,0 +1,43 @@
++package e2etest
++
++import (
++	"context"
++	"net/http"
++	"net/http/httptest"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestGitHubAPIBaseURL_DefaultsToGitHubCom(t *testing.T) {
++	t.Setenv("GITHUB_API_URL", "")
++	assert.Equal(t, "https://api.github.com", githubAPIBaseURL())
++	assert.Equal(t, "https://api.github.com", NewLiveClient("token").BaseURL())
++}
++
++func TestGitHubAPIBaseURL_HonoursGitHubAPIURL(t *testing.T) {
++	t.Setenv("GITHUB_API_URL", " https://github.example/api/v3/ ")
++	assert.Equal(t, "https://github.example/api/v3", githubAPIBaseURL())
++	assert.Equal(t, "https://github.example/api/v3", NewLiveClient("token").BaseURL())
++}
++
++// The harness's raw REST calls follow GITHUB_API_URL too, not only the
++// forge client.
++func TestRawRequestsUseGitHubAPIURL(t *testing.T) {
++	var gotPath, gotAuth string
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		gotPath, gotAuth = r.URL.Path, r.Header.Get("Authorization")
++		w.Header().Set("Content-Type", "application/json")
++		_, _ = w.Write([]byte(`{"created_at":"2026-11-07T12:00:00Z"}`))
++	}))
++	defer server.Close()
++	t.Setenv("GITHUB_API_URL", server.URL+"/api/v3")
++
++	created, err := getRepoCreatedAt(context.Background(), "token", "org", "repo")
++	require.NoError(t, err)
++	assert.Equal(t, "/api/v3/repos/org/repo", gotPath)
++	assert.Equal(t, "Bearer token", gotAuth)
++	assert.True(t, created.Equal(time.Date(2026, 11, 7, 12, 0, 0, 0, time.UTC)))
++}
+diff --git a/internal/e2etest/cleanup.go b/internal/e2etest/cleanup.go
+index 3d734e5b7..e4a255504 100644
+--- a/internal/e2etest/cleanup.go
++++ b/internal/e2etest/cleanup.go
+@@ -171,7 +171,7 @@ func listOrgRepoNames(ctx context.Context, token, org string, t *testing.T) []st
+ 	var names []string
+ 	page := 1
+ 	for {
+-		url := fmt.Sprintf("https://api.github.com/orgs/%s/repos?per_page=100&page=%d&type=all", org, page)
++		url := githubAPIBaseURL() + fmt.Sprintf("/orgs/%s/repos?per_page=100&page=%d&type=all", org, page)
+ 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+ 		if err != nil {
+ 			t.Logf("[cleanup] Warning: could not list org repos: %v", err)
+@@ -217,7 +217,7 @@ func listOrgRepoNames(ctx context.Context, token, org string, t *testing.T) []st
+ // Idempotent: 404 is ignored.
+ func deleteRepoVariable(ctx context.Context, token, org, repo, name string, t *testing.T) {
+ 	t.Helper()
+-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/actions/variables/%s", org, repo, name)
++	url := githubAPIBaseURL() + fmt.Sprintf("/repos/%s/%s/actions/variables/%s", org, repo, name)
+ 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
+ 	if err != nil {
+ 		t.Logf("[cleanup] Warning: could not create variable delete request: %v", err)
+@@ -248,7 +248,7 @@ func deleteRepoVariable(ctx context.Context, token, org, repo, name string, t *t
+ func deleteBranch(ctx context.Context, token, org, repo, branch string, log cleanupLogger) {
+ 	log.Helper()
+ 	branchRef := "heads/" + branch
+-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/git/refs/%s", org, repo, branchRef)
++	url := githubAPIBaseURL() + fmt.Sprintf("/repos/%s/%s/git/refs/%s", org, repo, branchRef)
+ 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
+ 	if err != nil {
+ 		log.Logf("[cleanup] Warning: could not create branch delete request: %v", err)
+@@ -280,7 +280,7 @@ func deleteShimWorkflow(ctx context.Context, token, org, repo string, log cleanu
+ 	shimPath := ".github/workflows/fullsend.yaml"
+ 
+ 	// Get the file's SHA (required for deletion).
+-	getURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", org, repo, shimPath)
++	getURL := githubAPIBaseURL() + fmt.Sprintf("/repos/%s/%s/contents/%s", org, repo, shimPath)
+ 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, getURL, nil)
+ 	if err != nil {
+ 		log.Logf("[cleanup] Warning: could not create request to check shim file: %v", err)
+@@ -351,7 +351,7 @@ func deleteShimWorkflow(ctx context.Context, token, org, repo string, log cleanu
+ // closePR closes a pull request using the GitHub API directly.
+ func closePR(ctx context.Context, token, org, repo string, number int, log cleanupLogger) {
+ 	log.Helper()
+-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls/%d", org, repo, number)
++	url := githubAPIBaseURL() + fmt.Sprintf("/repos/%s/%s/pulls/%d", org, repo, number)
+ 	body := strings.NewReader(`{"state":"closed"}`)
+ 	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, url, body)
+ 	if err != nil {
+diff --git a/internal/e2etest/testutil.go b/internal/e2etest/testutil.go
+index bf54efecf..ad8fdc580 100644
+--- a/internal/e2etest/testutil.go
++++ b/internal/e2etest/testutil.go
+@@ -470,16 +470,29 @@ func loadEnvConfig(t *testing.T) envConfig {
+ 	}
+ }
+ 
+-// newLiveClient creates a GitHub API client from the token.
++// newLiveClient creates a GitHub API client from the token, addressed to
++// githubAPIBaseURL.
+ func newLiveClient(token string) *gh.LiveClient {
+-	return gh.New(token)
++	return gh.New(token).WithBaseURL(githubAPIBaseURL())
++}
++
++// githubAPIBaseURL is the GitHub REST API root the harness talks to:
++// GITHUB_API_URL when it is set, as it is on every Actions runner and on
++// an enterprise server or emulator, and api.github.com otherwise. The CLI
++// under test resolves its forge the same way, so the harness and the
++// install it drives address one forge.
++func githubAPIBaseURL() string {
++	if base := strings.TrimRight(strings.TrimSpace(os.Getenv("GITHUB_API_URL")), "/"); base != "" {
++		return base
++	}
++	return "https://api.github.com"
+ }
+ 
+ // getRepoCreatedAt fetches a repo's created_at timestamp directly from the
+ // GitHub REST API. This is intentionally NOT added to forge.Client since it's
+ // only needed for e2e lock management.
+ func getRepoCreatedAt(ctx context.Context, token, org, repo string) (time.Time, error) {
+-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s", org, repo)
++	url := githubAPIBaseURL() + fmt.Sprintf("/repos/%s/%s", org, repo)
+ 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+ 	if err != nil {
+ 		return time.Time{}, fmt.Errorf("creating request: %w", err)

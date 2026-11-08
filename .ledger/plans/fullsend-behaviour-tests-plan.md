@@ -263,3 +263,44 @@ the cheap stage-parity check. The host list is generated from the pool
 layout, as upstream does, rather than edited by hand. B2 below is rewritten
 to match. The harness work stays local patches: this is Breadboard's way of
 running the suite, not a proposal to Fullsend.
+
+### 2026-11-07 BT-B2: harness patches
+
+Two test-only patches under `deploy/fullsend/patches/`, written on upstream
+`1d00009b1` plus the build list (0005–0016):
+
+| Patch | Gap | Change |
+| --- | --- | --- |
+| `0017-address-the-configured-forge-in-the-behaviour-harness` | BT-H1, BT-H2 | `NewLiveClient` and the six raw REST calls (`cleanup.go`, `testutil.go`) take the API root from `GITHUB_API_URL`, else api.github.com. Hosted runs are unchanged, because Actions sets it to api.github.com. |
+| `0018-local-run-the-behaviour-suite-against-an-external-mint` | BT-H3 | `ENVIRONMENT=external` selects `RepoPoolExternalMint` (`FULLSEND_MINT_URL`) with the one-org stage layout. Install is vendored by default, or `--fullsend-ref $BEHAVIOUR_FULLSEND_REF` when that is set; `--app-set $BEHAVIOUR_APP_SET` is passed when set. |
+
+Findings that shrank the patch set:
+
+- **BT-H4 needs no patch.** `external` uses the single `halfsend` org;
+  `BEHAVIOUR_POOL_SIZE` already sets the slot count. B3 seeds an emulator
+  org named `halfsend`.
+- **The runner label needs no patch.** The CLI subprocess inherits the
+  environment (`testutil.go`), so `FULLSEND_RUNNER_IMAGE=fullsend` and
+  `GITHUB_API_URL` reach `github setup` as they are.
+- **`--fullsend-source` is not needed.** The suite runs inside the checkout,
+  so the vendored install auto-detects its source. B1 needed the flag only
+  because it ran outside one.
+- **TLS needs no code.** Go honours `SSL_CERT_FILE`; B3 points it at the
+  stack CA.
+
+Neither patch is in the build list in `05i-build-fullsend.sh`, because
+nothing in them is compiled into the binary. The B3 entry point applies them
+on top of that list. Checks:
+
+- `git apply --check` passes on the stack, and the result is identical to the
+  authored tree;
+- `go test ./pkg/behaviourtest/... ./internal/e2etest/...` passes, including
+  new tests for the base URL, `external` selection, the layout and the
+  install options;
+- the suite compiles (`go vet -tags behaviour ./e2e/behaviour/`);
+- Codex review: no findings.
+
+Still open, for later tiers (BT-H5): `steps/bot_actors.go` and
+`steps/mint_probe_workflow.yml` call api.github.com, and `base_dispatch.go`
+and `url_dispatch.go` build raw.githubusercontent.com URLs. T1 (triage) uses
+none of them.

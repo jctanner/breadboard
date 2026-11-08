@@ -50,3 +50,30 @@ also confusing to read, because two runs' artifacts share a directory name
   raises concurrency)
 - Fix belongs in `checkouts/github-emulator` (filed and fixed there, like
   BT-E1 and BT-E2)
+
+## Resolution
+
+Fixed 2026-11-07 in github-emulator `b987b79` ("Never hand out the id of a
+deleted row"); the emulator's record is
+`docs/bugs/fixed/deleted-rows-ids-are-handed-out-again.md`.
+
+- **Models.** Every model table is declared `sqlite_autoincrement`
+  (`app/models/__init__.py`).
+- **Migration 0016.** It rebuilds each existing table that lacked
+  `AUTOINCREMENT`, as 0011 did for `repositories`.
+
+Deployed with `make host-rebuild-github`. The live database went from 0015
+to 0016 at startup. Every table except `gists` (string ids) is
+`AUTOINCREMENT`, and `PRAGMA integrity_check` is `ok`. Before deploying, a
+backup was taken to `/data/github_emulator.pre-0016.db` in the emulator
+volume. A copy of that database upgraded with identical reflected schema
+and row counts.
+
+Live check, with two consecutive `make bt-run
+FEATURES=features/triage/triage.feature`:
+
+- run 1 got workflow run 1962 and jobs 8510 onwards. 1962 had been deleted
+  before the migration, above the highest id left (1956), so it could not
+  be protected; the record says so.
+- run 2, after run 1's slot repository was deleted, got run 1971 and jobs
+  8600 onwards. Before the fix it would have taken the deleted ids again.

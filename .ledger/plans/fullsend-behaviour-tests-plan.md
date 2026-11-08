@@ -237,7 +237,7 @@ New emulator gaps (file against github-emulator, fix there):
 | --- | --- |
 | BT-E1 | A local reusable-workflow call (`./.github/workflows/x.yml`) leaves `called_full_name` empty in `_resolve_reusable_workflow` (`src/app/services/workflow_service.py:307`), so the OIDC `job_workflow_ref` has no `owner/repo` and the job's `_workflow_repository` is empty. GitHub reports `owner/repo/.github/workflows/x.yml@refs/heads/<ref>`. |
 | BT-E2 | The triage artifact uploads under the literal name `${{ inputs.artifact-name \|\| format('fullsend-{0}', inputs.agent) }}`; the expression is not evaluated. The suite's CI driver selects artifacts by `fullsend-<agent>`, so every artifact assertion would miss. |
-| BT-E3 | The emulator reuses the ids of deleted rows (SQLite without `AUTOINCREMENT`). Found in B3: after the suite deletes a slot repository, the next run in the recreated slot gets the same run and job ids. See `.ledger/bugs/open/conformance-bt-e3-emulator-reuses-deleted-ids.md`. Open; fix before B4 raises concurrency. |
+| BT-E3 | The emulator reuses the ids of deleted rows (SQLite without `AUTOINCREMENT`). Found in B3: after the suite deletes a slot repository, the next run in the recreated slot gets the same run and job ids. Fixed in github-emulator `b987b79` (migration 0016) and deployed; see `.ledger/bugs/fixed/conformance-bt-e3-emulator-reuses-deleted-ids.md`. |
 
 Both are fixed in github-emulator `dd2588f` (2026-11-07). That commit
 deploys through `make host-rebuild-github` for the server and through
@@ -350,9 +350,8 @@ Findings:
   it as the repository root. `run.sh` sets `-buildvcs=false`; nothing reads
   the stamp.
 - **BT-E3.** The emulator reuses the ids of deleted rows: runs 1 and 2 both
-  got workflow run 1962 and jobs 8510 onwards. Filed as
-  `.ledger/bugs/open/conformance-bt-e3-emulator-reuses-deleted-ids.md`; fix
-  before B4.
+  got workflow run 1962 and jobs 8510 onwards. Fixed afterwards in
+  github-emulator `b987b79`; two later runs got runs 1962 and 1971.
 
 Codex review: round 1 found that a relative `BT_WORKDIR` broke
 `git -C worktree add`, and that concurrent runs removed each other's

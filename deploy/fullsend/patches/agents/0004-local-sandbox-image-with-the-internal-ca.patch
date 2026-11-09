@@ -13,11 +13,18 @@ roots are read once.
 The OpenShell chart at the deployed version exposes no way to inject a CA into
 sandbox pods, so the CA has to be in the image.
 
-Two images need it, because the harnesses do not share one. Triage runs on
-fullsend-sandbox; review and code both pin the same fullsend-code digest, so
-one local build covers both, and all three harnesses are substituted here. Each local image is built FROM the exact digest
-the harness pins, adding only ca-certificates and the cluster CA — that image
-plus one recorded layer, not a substitute assembled elsewhere.
+Two images need it, because the harnesses do not share one. Triage,
+prioritize, retro and scribe pin the same fullsend-sandbox digest; code,
+review and fix pin the same fullsend-code digest. One local build covers each
+group, and all seven harnesses are substituted here. Each local image is
+built FROM the exact digest the harnesses pin, adding only ca-certificates and
+the cluster CA — that image plus one recorded layer, not a substitute
+assembled elsewhere.
+
+A harness left on its upstream digest does not fall back to a pull: OpenShell
+creates sandbox pods with imagePullPolicy Never, so the pod waits in
+ErrImageNeverPull until sandbox creation times out. Retro did exactly that in
+the behaviour-test T2 tier, three attempts of 130 s each.
 
 deploy/scripts/05i-build-fullsend.sh reads each base digest out of the
 harness file that pins it rather than repeating it, so a harness that moves to
@@ -33,7 +40,7 @@ Breadboard note: applied to the agents mirror by
 deploy/fullsend/seed/seed-upstream-agents.py.
 
 diff --git a/harness/code.yaml b/harness/code.yaml
-index 5925de4..d41762b 100644
+index abfd7193..b82b979c 100644
 --- a/harness/code.yaml
 +++ b/harness/code.yaml
 @@ -18,7 +18,11 @@ model: opus
@@ -49,8 +56,65 @@ index 5925de4..d41762b 100644
  policy: policies/base.yaml
  providers:
    - vertex-ai
+diff --git a/harness/fix.yaml b/harness/fix.yaml
+index 9d5e306d..7a0bb2f5 100644
+--- a/harness/fix.yaml
++++ b/harness/fix.yaml
+@@ -18,7 +18,13 @@ model: opus
+ # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
+ # when the model: above moves to a generation with a different default.
+ effort: high
+-image: ghcr.io/fullsend-ai/fullsend-code@sha256:8c5953b8bf88d681a66e2435cde5397bcac704f06fca5dc782f2206bcce91718
++# Breadboard-local: the image above, plus this cluster's internal CA. The
++# sandbox supervisor reads its upstream TLS roots from the system bundle
++# once at startup, and the conformance forge is served by a CA that exists
++# only here, so without it every proxied HTTPS request to the forge fails
++# its handshake. Built by deploy/scripts/05i-build-fullsend.sh FROM the
++# digest above, so this is that image plus one layer.
++image: fullsend-code-local:k3s
+ policy: policies/base.yaml
+ providers:
+   - vertex-ai
+diff --git a/harness/prioritize.yaml b/harness/prioritize.yaml
+index 1aea9ced..8cc66226 100644
+--- a/harness/prioritize.yaml
++++ b/harness/prioritize.yaml
+@@ -9,7 +9,13 @@ model: opus
+ # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
+ # when the model: above moves to a generation with a different default.
+ effort: high
+-image: ghcr.io/fullsend-ai/fullsend-sandbox@sha256:8e17e6120e17debdcabff5eb331a7cb7757b09ec3d586010c9d7956fd1fc5633
++# Breadboard-local: the image above, plus this cluster's internal CA. The
++# sandbox supervisor reads its upstream TLS roots from the system bundle
++# once at startup, and the conformance forge is served by a CA that exists
++# only here, so without it every proxied HTTPS request to the forge fails
++# its handshake. Built by deploy/scripts/05i-build-fullsend.sh FROM the
++# digest above, so this is that image plus one layer.
++image: fullsend-sandbox-local:k3s
+ policy: policies/base.yaml
+ providers:
+   - vertex-ai
+diff --git a/harness/retro.yaml b/harness/retro.yaml
+index 8ae2a8ed..e0621dea 100644
+--- a/harness/retro.yaml
++++ b/harness/retro.yaml
+@@ -9,7 +9,13 @@ model: opus
+ # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
+ # when the model: above moves to a generation with a different default.
+ effort: high
+-image: ghcr.io/fullsend-ai/fullsend-sandbox@sha256:8e17e6120e17debdcabff5eb331a7cb7757b09ec3d586010c9d7956fd1fc5633
++# Breadboard-local: the image above, plus this cluster's internal CA. The
++# sandbox supervisor reads its upstream TLS roots from the system bundle
++# once at startup, and the conformance forge is served by a CA that exists
++# only here, so without it every proxied HTTPS request to the forge fails
++# its handshake. Built by deploy/scripts/05i-build-fullsend.sh FROM the
++# digest above, so this is that image plus one layer.
++image: fullsend-sandbox-local:k3s
+ policy: policies/base.yaml
+ providers:
+   - vertex-ai
 diff --git a/harness/review.yaml b/harness/review.yaml
-index ec9c665..d2ddd8f 100644
+index 7bc8ebe7..050accfe 100644
 --- a/harness/review.yaml
 +++ b/harness/review.yaml
 @@ -9,7 +9,13 @@ model: opus
@@ -68,8 +132,27 @@ index ec9c665..d2ddd8f 100644
  policy: policies/base.yaml
  readonly_repo: true
  providers:
+diff --git a/harness/scribe.yaml b/harness/scribe.yaml
+index 70dcad51..8d4cd78f 100644
+--- a/harness/scribe.yaml
++++ b/harness/scribe.yaml
+@@ -9,7 +9,13 @@ model: opus
+ # effort is unset (internal/runtime/pi_run.go piDefaultThinking). Revisit
+ # when the model: above moves to a generation with a different default.
+ effort: high
+-image: ghcr.io/fullsend-ai/fullsend-sandbox@sha256:8e17e6120e17debdcabff5eb331a7cb7757b09ec3d586010c9d7956fd1fc5633
++# Breadboard-local: the image above, plus this cluster's internal CA. The
++# sandbox supervisor reads its upstream TLS roots from the system bundle
++# once at startup, and the conformance forge is served by a CA that exists
++# only here, so without it every proxied HTTPS request to the forge fails
++# its handshake. Built by deploy/scripts/05i-build-fullsend.sh FROM the
++# digest above, so this is that image plus one layer.
++image: fullsend-sandbox-local:k3s
+ policy: policies/base.yaml
+ providers:
+   - vertex-ai
 diff --git a/harness/triage.yaml b/harness/triage.yaml
-index c481835..6fa1eeb 100644
+index acc83537..4e2e2c74 100644
 --- a/harness/triage.yaml
 +++ b/harness/triage.yaml
 @@ -9,7 +9,13 @@ model: opus

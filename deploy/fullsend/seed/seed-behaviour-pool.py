@@ -30,6 +30,19 @@ git; development credentials for the local emulator only) as
 TEST_ACTOR_WRITE_PAT, TEST_ACTOR_TRIAGE_PAT and TEST_ACTOR_OUTSIDER_PAT,
 which deploy/fullsend/behaviour/run.sh exports. A token that still
 authenticates as its actor is kept, so reseeding does not pile up tokens.
+
+Finally it seeds the suite's own identity. In CI the harness acts as the
+production fullsend-ai-e2e App's bot, through an org-wide installation token
+the mint issues for the role e2e; dispatch routes on that (a bot's issue does
+not start triage, a bot's pull request goes straight to review). Run locally,
+the harness would otherwise act as whoever GH_TOKEN names, here the site
+admin. So an App with that slug is created and installed on the organization
+for every repository. `seed-behaviour-pool.py e2e-token` prints an
+installation token for it, which run.sh issues at the start of every run and
+passes as GH_TOKEN; it is not stored. The token comes from the emulator's
+admin route, which can issue one for longer than GitHub's hour: a whole tier
+at concurrency 1 takes longer than that, and the harness keeps one token per
+organization for the whole run.
 """
 
 from __future__ import annotations
@@ -50,6 +63,25 @@ ACTORS = (
     ("TEST_ACTOR_TRIAGE_PAT", "bt-triage-actor", "all_repo_triage"),
     ("TEST_ACTOR_OUTSIDER_PAT", "bt-outsider", None),
 )
+
+# The e2e App: the harness's own identity (see above). Permissions are what
+# the suite does with its org-wide token: create, configure and delete the
+# slot repositories and the e2e-lock repository; push content and workflows;
+# open issues and pull requests; set repository and organization variables
+# and secrets; dispatch and read Actions runs; read the organization's
+# memberships and App installations.
+E2E_APP = {
+    "app_id": "1009", "name": "Fullsend AI E2E", "slug": "fullsend-ai-e2e",
+    "permissions": {
+        "administration": "write", "contents": "write", "workflows": "write",
+        "issues": "write", "pull_requests": "write", "actions": "write",
+        "actions_variables": "write", "secrets": "write", "checks": "read",
+        "statuses": "read", "metadata": "read", "members": "read",
+        "organization_actions_variables": "write", "organization_secrets": "write",
+        "organization_administration": "read",
+    },
+}
+E2E_TOKEN_LIFETIME = 12 * 3600
 
 # Role App ids, as created by deploy/scripts/18-deploy-fullsend-mint-dev.sh.
 ROLE_APPS = {
@@ -96,6 +128,53 @@ def ensure_org(org: str) -> None:
     status, payload = api_request("POST", "/orgs", {"login": org, "name": org})
     if status not in (201, 422):
         sys.exit(f"creating organisation {org} failed: HTTP {status}: {payload}")
+
+
+def ensure_e2e_app() -> None:
+    status, payload = api_request("POST", "/admin/apps", E2E_APP)
+    if status not in (201, 409):
+        sys.exit(f"creating the e2e App failed: HTTP {status}: {payload}")
+    status, payload = api_request("PATCH", f"/admin/apps/{E2E_APP['app_id']}", {
+        "name": E2E_APP["name"], "slug": E2E_APP["slug"],
+        "permissions": E2E_APP["permissions"], "sync_installations": True,
+    })
+    if status != 200:
+        sys.exit(f"reconciling the e2e App failed: HTTP {status}: {payload}")
+
+
+def installation_id(org: str, app_id: str) -> int:
+    # Retry a while on 5xx or no answer: just after an emulator rollout the
+    # proxy can answer 502 for a few seconds, which read as "no installation".
+    import time
+    import urllib.error
+
+    status, app = 0, None
+    for _ in range(30):
+        try:
+            status, app = admin("GET", f"/apps/{app_id}")
+        except urllib.error.URLError:
+            status, app = 0, None
+        if 0 < status < 500:
+            break
+        time.sleep(2)
+    if status != 200 or not isinstance(app, dict):
+        sys.exit(f"looking up App {app_id} failed: HTTP {status}")
+    for installation in app.get("installations") or []:
+        if installation.get("owner") == org:
+            return int(installation["id"])
+    sys.exit(f"App {app_id} has no installation on {org}; run `make bt-seed`")
+
+
+def issue_e2e_token(org: str) -> str:
+    status, payload = api_request(
+        "POST", f"/admin/apps/{E2E_APP['app_id']}/installations/{installation_id(org, E2E_APP['app_id'])}/access_tokens",
+        {"expires_in": E2E_TOKEN_LIFETIME},
+    )
+    token = payload.get("token") if status == 201 and isinstance(payload, dict) else None
+    if not token:
+        sys.exit(f"issuing the e2e installation token failed: HTTP {status}; "
+                 "the emulator needs its admin installation-token route")
+    return token
 
 
 def ensure_installation(org: str, app_id: str) -> str:
@@ -238,10 +317,17 @@ def ensure_actors(org: str) -> dict[str, dict[str, str]]:
 
 def main() -> None:
     org = pool_org()
+    if sys.argv[1:] == ["e2e-token"]:
+        print(issue_e2e_token(org))
+        return
+    if sys.argv[1:]:
+        sys.exit("usage: seed-behaviour-pool.py [e2e-token]")
     ensure_org(org)
     result = {role: ensure_installation(org, app_id) for role, app_id in ROLE_APPS.items()}
+    ensure_e2e_app()
+    e2e = ensure_installation(org, E2E_APP["app_id"])
     actors = ensure_actors(org)
-    print(json.dumps({"organisation": org, "role_apps": result, "actors": actors}, indent=2))
+    print(json.dumps({"organisation": org, "role_apps": result, "e2e_app": e2e, "actors": actors}, indent=2))
 
 
 if __name__ == "__main__":

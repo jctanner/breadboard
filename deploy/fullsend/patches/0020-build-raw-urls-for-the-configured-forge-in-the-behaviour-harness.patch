@@ -1,0 +1,149 @@
+Subject: build raw URLs for the configured forge in the behaviour harness
+
+The URL-dispatch and base-dispatch steps host a harness in a repository of
+the pool organization and point the slot at it by URL. They build that URL,
+and the allowed_remote_resources prefix that admits it, for
+raw.githubusercontent.com only. Against an enterprise server or an emulator
+the slot then names a host the forge is not on, the harness's own
+unauthenticated reachability check fails ("raw URL ... not accessible"), and
+all six scenarios stop there.
+
+The CLI under test already reads the appliance form when GITHUB_SERVER_URL
+names the forge (patch 0007):
+
+  https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}
+  https://{host}/{owner}/{repo}/raw/{ref}/{path}
+
+The two steps now build the second form, and a {server}/{owner}/{repo}/
+prefix, when GITHUB_SERVER_URL names a forge other than github.com; on
+github.com, or with the variable unset, nothing changes.
+
+Gap BT-H5 of .ledger/plans/fullsend-behaviour-tests-plan.md.
+
+Breadboard note: test-only, like 0017; applied by the behaviour-test run
+(deploy/fullsend/behaviour/run.sh), not by deploy/scripts/05i-build-fullsend.sh.
+
+diff --git a/pkg/behaviourtest/steps/base_dispatch.go b/pkg/behaviourtest/steps/base_dispatch.go
+index 598fff95e..c65150bc9 100644
+--- a/pkg/behaviourtest/steps/base_dispatch.go
++++ b/pkg/behaviourtest/steps/base_dispatch.go
+@@ -123,8 +123,7 @@ func givenURLSourcedBaseHarness(w *world.World, name, doc string) error {
+ 	hash := fmt.Sprintf("%x", sha256.Sum256(content))
+ 
+ 	// Build the raw URL with integrity hash.
+-	rawURL := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s#sha256=%s",
+-		hostOwner, hostRepo, defaultBranch, harnessPath, hash)
++	rawURL := rawContentURL(hostOwner, hostRepo, defaultBranch, harnessPath) + "#sha256=" + hash
+ 
+ 	// Verify the raw URL is publicly accessible.
+ 	if err := verifyRawURLAccessible(rawURL); err != nil {
+@@ -149,7 +148,7 @@ func givenURLSourcedBaseHarness(w *world.World, name, doc string) error {
+ 
+ 	// Add hosting repo URL prefix to allowed_remote_resources so
+ 	// LoadWithBase can fetch the base at dispatch time.
+-	urlPrefix := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/", hostOwner, hostRepo)
++	urlPrefix := rawContentPrefix(hostOwner, hostRepo)
+ 	cfgPath := path.Join(".fullsend", "config.yaml")
+ 	cfgData, err := w.SCM.GetFileContent(ctx, w.Org, w.RepoName, cfgPath)
+ 	if err != nil {
+diff --git a/pkg/behaviourtest/steps/raw_url.go b/pkg/behaviourtest/steps/raw_url.go
+new file mode 100644
+index 000000000..58be3e233
+--- /dev/null
++++ b/pkg/behaviourtest/steps/raw_url.go
+@@ -0,0 +1,46 @@
++package steps
++
++import (
++	"fmt"
++	"net/url"
++	"os"
++	"strings"
++)
++
++// rawContentURL is the URL a remote harness or base is fetched from: the
++// public raw host on github.com, or, on the forge GITHUB_SERVER_URL names
++// when that is not github.com (an enterprise server or an emulator), the
++// appliance's own raw path. The CLI under test parses both forms
++// (forge.ParseRawContentURL).
++//
++//	https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}
++//	https://{host}/{owner}/{repo}/raw/{ref}/{path}
++func rawContentURL(owner, repo, ref, filePath string) string {
++	if server := configuredForgeServer(); server != "" {
++		return fmt.Sprintf("%s/%s/%s/raw/%s/%s", server, owner, repo, ref, filePath)
++	}
++	return fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s", owner, repo, ref, filePath)
++}
++
++// rawContentPrefix is the allowed_remote_resources entry covering every
++// rawContentURL of owner/repo.
++func rawContentPrefix(owner, repo string) string {
++	if server := configuredForgeServer(); server != "" {
++		return fmt.Sprintf("%s/%s/%s/", server, owner, repo)
++	}
++	return fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/", owner, repo)
++}
++
++// configuredForgeServer returns GITHUB_SERVER_URL without a trailing slash
++// when it names a forge other than github.com, and "" otherwise.
++func configuredForgeServer() string {
++	server := strings.TrimRight(strings.TrimSpace(os.Getenv("GITHUB_SERVER_URL")), "/")
++	if server == "" {
++		return ""
++	}
++	parsed, err := url.Parse(server)
++	if err != nil || parsed.Hostname() == "" || strings.EqualFold(parsed.Hostname(), "github.com") {
++		return ""
++	}
++	return server
++}
+diff --git a/pkg/behaviourtest/steps/raw_url_test.go b/pkg/behaviourtest/steps/raw_url_test.go
+new file mode 100644
+index 000000000..e3d7b8929
+--- /dev/null
++++ b/pkg/behaviourtest/steps/raw_url_test.go
+@@ -0,0 +1,21 @@
++package steps
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestRawContentURL_GitHubCom(t *testing.T) {
++	for _, server := range []string{"", "https://github.com", "https://github.com/"} {
++		t.Setenv("GITHUB_SERVER_URL", server)
++		assert.Equal(t, "https://raw.githubusercontent.com/o/r/main/a/b.yaml", rawContentURL("o", "r", "main", "a/b.yaml"))
++		assert.Equal(t, "https://raw.githubusercontent.com/o/r/", rawContentPrefix("o", "r"))
++	}
++}
++
++func TestRawContentURL_ConfiguredForge(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://github.example/")
++	assert.Equal(t, "https://github.example/o/r/raw/main/a/b.yaml", rawContentURL("o", "r", "main", "a/b.yaml"))
++	assert.Equal(t, "https://github.example/o/r/", rawContentPrefix("o", "r"))
++}
+diff --git a/pkg/behaviourtest/steps/url_dispatch.go b/pkg/behaviourtest/steps/url_dispatch.go
+index b0daa4571..23f6f574c 100644
+--- a/pkg/behaviourtest/steps/url_dispatch.go
++++ b/pkg/behaviourtest/steps/url_dispatch.go
+@@ -329,7 +329,7 @@ func givenURLSourcedCustomHarness(w *world.World, name, doc string, opts urlHarn
+ 	}
+ 
+ 	// Build the raw.githubusercontent.com URL with integrity hash.
+-	rawURL := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s#sha256=%s", hostOwner, hostRepo, defaultBranch, harnessPath, hash)
++	rawURL := rawContentURL(hostOwner, hostRepo, defaultBranch, harnessPath) + "#sha256=" + hash
+ 
+ 	// Verify the raw URL is accessible without authentication.
+ 	// The Contents API uses an authenticated token, but production
+@@ -346,7 +346,7 @@ func givenURLSourcedCustomHarness(w *world.World, name, doc string, opts urlHarn
+ 	}
+ 
+ 	// Build the URL prefix for the allowlist.
+-	urlPrefix := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/", hostOwner, hostRepo)
++	urlPrefix := rawContentPrefix(hostOwner, hostRepo)
+ 
+ 	// Snapshot the current allowed_remote_resources and agents before any
+ 	// modification so CleanupScenario can restore them when the slot is

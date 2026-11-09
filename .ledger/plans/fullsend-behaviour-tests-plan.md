@@ -399,3 +399,41 @@ noted:
   a shifted offset. This run's `behaviour-test.log` was overwritten by a
   second, token-less `go test` as a result; the captured `make` output kept
   the full log. Do not edit `run.sh` during a run.
+
+### 2026-11-08 BT-B4 (part 2): T2 with actors, every failure closed
+
+**Full T2.** With the actors seeded, BT-H7 fixed (the harness acts as the e2e
+App's bot, `seed-behaviour-pool.py e2e-token`), BT-E5 and BT-H5 (patch 0020)
+in, and BT-U1 traced to the emulator, **22 of 34 scenarios passed**. The 7
+features holding the 12 failures were rerun after each round of fixes:
+
+| Round | Result | Causes found |
+| --- | --- | --- |
+| 1 | 6/16 | step outcome (emulator), retro host (agents 0006), review chown (0022) |
+| 2 | 15/16 | issue.pull_request, rendered job logs, forwarded secrets, PR close via the Issues API (emulator), harness images (agents 0004) |
+| 3–5 | 16/16 | unexpanded matrix name, review event state, `join()` (emulator) |
+
+**Fixes.**
+
+- Emulator, local commit `c1190a9`, on top of the unpushed `316dc3c` and
+  `cac7be3`. It holds eight fidelity fixes, each recorded in the emulator's
+  `docs/bugs/fixed/`. Full suite: 1066 passed.
+- Agents 0006: the retro and prioritize ops libraries address the
+  configured GitHub host.
+- Agents 0004: all seven harnesses run on the CA-bearing local images, and
+  05i fails on a pinned-digest mismatch. See
+  `.ledger/bugs/fixed/fullsend-harness-images-not-preloaded.md`.
+- Patch 0021: build patch; the CLI accepts the configured forge as the
+  Actions OIDC token service.
+- Patch 0022: local workaround, so `readonly_repo` runs `chown` only as
+  root. OpenShell's Kubernetes driver execs as uid 10001. The problem goes
+  upstream as an issue. A problem-only draft is in
+  `.ledger/bugs/open/fullsend-readonly-repo-chown-kubernetes-driver.md`;
+  it is not filed and awaits review.
+
+**Still to do.**
+
+- A whole-tier T2 run on the final stack. The 12 scenarios outside the 7
+  rerun features passed in the full run, before these fixes.
+- T2 at concurrency 4.
+- Pushing the emulator and bb commits, on the owner's go.

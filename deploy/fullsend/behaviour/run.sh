@@ -8,7 +8,7 @@
 #   1. the build list in deploy/scripts/05i-build-fullsend.sh (0005-0016);
 #   2. the mirror list in deploy/fullsend/seed/seed-upstream-fullsend.py
 #      (0003, 0004), which the emulator's fullsend-ai/fullsend mirror carries;
-#   3. BT_PATCHES below (0017-0019), which only the harness uses.
+#   3. BT_PATCHES below (0017-0020), which only the harness uses.
 #
 # The result is committed in the worktree. Two things depend on that: the
 # vendored install copies the tree under test into each slot, and the
@@ -29,6 +29,7 @@
 #                    unset installs vendored (the pull-request path)
 #   BT_SOURCE        Fullsend checkout to test (default: checkouts/fullsend-ai/fullsend)
 #   BT_WORKDIR       scratch directory (default: ${TMPDIR:-/tmp}/breadboard-bt)
+#   BT_GITHUB_TOKEN  act as this token's user instead of the e2e App's bot
 set -euo pipefail
 
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
@@ -50,6 +51,7 @@ BT_PATCHES=(
   "${PATCH_DIR}/0017-address-the-configured-forge-in-the-behaviour-harness.patch"
   "${PATCH_DIR}/0018-local-run-the-behaviour-suite-against-an-external-mint.patch"
   "${PATCH_DIR}/0019-local-select-behaviour-features-from-the-environment.patch"
+  "${PATCH_DIR}/0020-build-raw-urls-for-the-configured-forge-in-the-behaviour-harness.patch"
 )
 
 # The stack's endpoints, as the host proxy and the cluster name them. The
@@ -77,6 +79,31 @@ else
 fi
 
 python3 "${PROJECT_ROOT}/deploy/fullsend/behaviour/mint-pool.py" check
+
+# The harness's own identity. In CI it acts as the e2e App's bot through an
+# org-wide installation token, and dispatch routes on that: a bot's issue
+# does not start triage, a bot's pull request goes straight to review. So it
+# acts as the same App here (seeded by `make bt-seed`), with a token issued
+# for this run, unless BT_GITHUB_TOKEN names someone else.
+if [[ -n "${BT_GITHUB_TOKEN:-}" ]]; then
+  HARNESS_TOKEN="${BT_GITHUB_TOKEN}"
+else
+  HARNESS_TOKEN="$(python3 "${PROJECT_ROOT}/deploy/fullsend/seed/seed-behaviour-pool.py" e2e-token)"
+fi
+
+# The sandbox image the features' custom harnesses name. OpenShell creates
+# sandbox pods with imagePullPolicy Never, so an image missing from k3s's
+# store fails every harness run with ErrImageNeverPull after a two-minute
+# wait. Serve it from the image the stack's own triage harness uses: the
+# upstream sandbox plus the internal CA (deploy/fullsend-sandbox-local),
+# built by 05i.
+BT_SANDBOX_IMAGE="ghcr.io/fullsend-ai/fullsend-sandbox:latest"
+LOCAL_SANDBOX_IMAGE="docker.io/library/fullsend-sandbox-local:k3s"
+if ! sudo -n k3s ctr images tag --force "${LOCAL_SANDBOX_IMAGE}" "${BT_SANDBOX_IMAGE}" >/dev/null; then
+  echo "tagging ${LOCAL_SANDBOX_IMAGE} as ${BT_SANDBOX_IMAGE} in k3s failed;" \
+    "run deploy/scripts/05i-build-fullsend.sh, and allow sudo for k3s ctr" >&2
+  exit 1
+fi
 
 # --- The tree under test -----------------------------------------------------
 if git -C "${BT_SOURCE}" worktree list --porcelain | grep -qx "worktree ${TREE}"; then
@@ -155,7 +182,7 @@ env -u GITHUB_ACTIONS -u GITHUB_TOKEN -u E2E_GCP_PROJECT_ID \
   ENVIRONMENT=external \
   GITHUB_API_URL="${GITHUB_URL}/api/v3" \
   GITHUB_SERVER_URL="${GITHUB_URL}" \
-  GH_TOKEN="${BT_GITHUB_TOKEN:-ghp_admin_default_token}" \
+  GH_TOKEN="${HARNESS_TOKEN}" \
   FULLSEND_MINT_URL="${MINT_URL}" \
   FULLSEND_RUNNER_IMAGE=fullsend \
   BEHAVIOUR_APP_SET=fullsend \

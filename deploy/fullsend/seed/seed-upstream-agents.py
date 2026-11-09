@@ -54,6 +54,7 @@ MIRROR_PATCHES = (
     "0003-local-allow-the-emulator-in-the-github-profile.patch",
     "0004-local-sandbox-image-with-the-internal-ca.patch",
     "0005-address-the-configured-github-host-in-the-remaining-ops-libraries.patch",
+    "0006-address-the-configured-github-host-in-the-retro-and-prioritize-ops.patch",
 )
 
 

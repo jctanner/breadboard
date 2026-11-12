@@ -57,7 +57,7 @@ BT_PATCHES=(
 # The stack's endpoints, as the host proxy and the cluster name them. The
 # mint URL is written into each slot's repository variables, so it is the
 # in-cluster name the runners reach.
-GITHUB_URL="https://github.local"
+GITHUB_URL="${GITHUB_EMULATOR_URL:-https://github.${BREADBOARD_DOMAIN:-local}}"
 MINT_URL="https://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080"
 CA_FILE="${PROJECT_ROOT}/deploy/fullsend-sandbox-local/internal-ca.crt"
 

@@ -17,15 +17,14 @@ Gap G28 of the Fullsend integration conformance plan.
 
 from __future__ import annotations
 
-import shutil
 import os
-import subprocess
+import re
 import sys
 import tempfile
 import time
 from pathlib import Path
 
-from emulator import TOKEN, api_request, run_git
+from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git, seed_source_path, clear_mirror_worktree, copy_mirror_source, mirror_destination
 
 
 # deploy/fullsend/seed/seed-upstream-agents.py -> parents[3] is the project root.
@@ -109,20 +108,17 @@ def ensure_upstream_repo() -> None:
 
 
 def collect_sources() -> list[tuple[Path, str]]:
-    """Every tracked file, taken from git rather than the working tree."""
+    """Tracked filenames from Git, with content from the trusted working tree."""
     if not (SOURCE / ".git").exists():
         raise RuntimeError(
             f"Fullsend agents checkout is missing: {SOURCE}. "
             "Clone fullsend-ai/agents into checkouts/fullsend-ai/ first."
         )
-    listed = subprocess.run(
-        ["git", "ls-files", "-z"],
-        cwd=SOURCE, capture_output=True, check=True,
-    ).stdout.decode()
+    listed = run_git(SOURCE, "ls-files", "-z").stdout
     collected = []
     for relative in filter(None, listed.split("\0")):
-        path = SOURCE / relative
-        if path.is_file():
+        path = seed_source_path(SOURCE, relative, allow_final_symlink=True)
+        if path.is_symlink() or path.is_file():
             collected.append((path, relative))
     if not collected:
         raise RuntimeError(f"no tracked files found in {SOURCE}")
@@ -149,10 +145,16 @@ def apply_mirror_patches(directory: Path) -> None:
         patch = PATCH_DIR / name
         if not patch.is_file():
             raise RuntimeError(f"mirror patch is missing: {patch}")
-        result = subprocess.run(
-            ["git", "apply", str(patch)],
-            cwd=directory, capture_output=True, text=True,
-        )
+        patch_text = patch.read_text()
+        domain = os.environ.get("BREADBOARD_DOMAIN", "local")
+        if len(domain) > 230 or not all(re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?", label) for label in domain.split(".")):
+            raise RuntimeError("Invalid BREADBOARD_DOMAIN")
+        if domain != "local":
+            patch_text = "".join(
+                line.replace("github.local", f"github.{domain}") if line.startswith("+") else line
+                for line in patch_text.splitlines(keepends=True)
+            )
+        result = run_git(directory, "apply", "-", input_text=patch_text, check=False)
         if result.returncode != 0:
             raise RuntimeError(
                 f"mirror patch {name} does not apply to the current agents "
@@ -168,10 +170,7 @@ def main() -> None:
 
     sources = collect_sources()
     revision = run_git(SOURCE, "rev-parse", "HEAD").stdout.strip()
-    remote = (
-        f"https://x-access-token:{TOKEN}@github.local/"
-        f"{UPSTREAM_ORG}/{UPSTREAM_REPO}.git"
-    )
+    remote = git_remote(UPSTREAM_ORG, UPSTREAM_REPO)
 
     with tempfile.TemporaryDirectory(prefix="fullsend-agents-mirror-") as temp:
         directory = Path(temp)
@@ -194,19 +193,12 @@ def main() -> None:
         # "already exists in working directory" on every later run, and a file
         # deleted upstream stayed in the mirror forever. The history is kept -
         # only the checked-out files go.
-        for entry in directory.iterdir():
-            if entry.name == ".git":
-                continue
-            if entry.is_dir() and not entry.is_symlink():
-                shutil.rmtree(entry)
-            else:
-                entry.unlink()
+        clear_mirror_worktree(directory)
 
         for origin, relative in sources:
-            destination = directory / relative
+            destination = mirror_destination(directory, relative)
             destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(origin, destination)
-            destination.chmod(origin.stat().st_mode & 0o777)
+            copy_mirror_source(SOURCE, relative, destination)
 
         apply_mirror_patches(directory)
 

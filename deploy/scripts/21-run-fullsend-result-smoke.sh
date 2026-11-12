@@ -55,7 +55,7 @@ awk '
   print "  post-triage.sh: |"
   print "    #!/bin/sh"
   print "    set -eu"
-  print "    api=\"${GITHUB_API_URL:-http://github.local/api/v3}\""
+  print "    api=\"${GITHUB_API_URL:-http://github.${BREADBOARD_DOMAIN:-local}/api/v3}\""
   print "    repo=\"${FULLSEND_STATUS_REPO:?FULLSEND_STATUS_REPO is required}\""
   print "    number=\"${FULLSEND_STATUS_NUMBER:?FULLSEND_STATUS_NUMBER is required}\""
   print "    token=\"${GITHUB_TOKEN:?GITHUB_TOKEN is required}\""
@@ -107,7 +107,7 @@ mkdir -p "${ARTIFACTS_DIR}"
 kubectl -n ai-pipeline cp "${POD}:/artifacts" "${ARTIFACTS_DIR}" --container=artifact-holder --retries=2
 STATUS="$(kubectl -n ai-pipeline exec "${POD}" -c artifact-holder -- cat /artifacts/.fullsend-status)"
 
-GITHUB_URL="${GITHUB_EMULATOR_URL:-https://github.local}"
+GITHUB_URL="${GITHUB_EMULATOR_URL:-https://github.${BREADBOARD_DOMAIN:-local}}"
 GITHUB_API="${GITHUB_URL%/}/api/v3"
 GITHUB_TOKEN="${GITHUB_EMULATOR_TOKEN:-ghp_admin_default_token}"
 COMMENTS="$(curl --silent --show-error --fail --insecure \

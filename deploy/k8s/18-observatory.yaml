@@ -161,3 +161,4 @@ spec:
       - name: gcp-credentials
         secret:
           secretName: gcp-credentials
+          optional: true

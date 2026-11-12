@@ -1,0 +1,118 @@
+# Lima VM Configuration for Breadboard on Apple Silicon (ARM64)
+# Provides Ubuntu 24.04 on Apple Virtualization (vz) with Rosetta binfmt emulation.
+
+vmType: vz
+
+rosetta:
+  enabled: true
+  binfmt: true
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+
+cpus: 8
+memory: "20GiB"
+disk: "100GiB"
+
+mountType: virtiofs
+
+# make lima-up supplies --mount-only <repository>:w (Lima 2+).
+# Direct creation defaults to no host mounts.
+mounts: []
+
+portForwards:
+  - guestPort: 80
+    guestIP: "0.0.0.0"
+    guestIPMustBeZero: false
+    hostIP: "127.0.0.1"
+  - guestPort: 443
+    guestIP: "0.0.0.0"
+    guestIPMustBeZero: false
+    hostIP: "127.0.0.1"
+  - guestPort: 5000
+    guestIP: "0.0.0.0"
+    guestIPMustBeZero: false
+    hostIP: "127.0.0.1"
+  - guestPort: 6443
+    guestIP: "0.0.0.0"
+    guestIPMustBeZero: false
+    hostIP: "127.0.0.1"
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      export DEBIAN_FRONTEND=noninteractive
+
+      echo "==> Updating package cache and installing prerequisites..."
+      apt-get update
+      apt-get install -y \
+        curl \
+        wget \
+        git \
+        vim \
+        jq \
+        ca-certificates \
+        gnupg \
+        lsb-release \
+        net-tools \
+        dnsutils \
+        iputils-ping \
+        python3-pip \
+        python3-venv \
+        build-essential \
+        docker.io \
+        docker-buildx
+
+      echo "==> Enabling and starting Docker..."
+      systemctl enable --now docker
+
+      echo "==> Adding users to docker group..."
+      for u in "{{.User}}" lima; do
+        if id "$u" &>/dev/null; then
+          usermod -aG docker "$u"
+        fi
+      done
+
+      echo "==> Installing Tailscale..."
+      curl -fsSL https://tailscale.com/install.sh | sh
+      systemctl enable --now tailscaled || true
+
+      echo "==> Installing Go..."
+      if ! command -v go &>/dev/null; then
+        curl -fsSL https://go.dev/dl/go1.24.1.linux-arm64.tar.gz | tar -C /usr/local -xz
+        ln -sfn /usr/local/go/bin/go /usr/local/bin/go
+        ln -sfn /usr/local/go/bin/gofmt /usr/local/bin/gofmt
+      fi
+
+      echo "==> Installing Rust toolchain..."
+      if ! command -v cargo &>/dev/null; then
+        export RUSTUP_HOME=/opt/rust/rustup CARGO_HOME=/opt/rust/cargo
+        curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
+        ln -sfn /opt/rust/cargo/bin/* /usr/local/bin/
+        cat << "EOF" > /etc/profile.d/rust.sh
+export RUSTUP_HOME=/opt/rust/rustup
+export CARGO_HOME=/opt/rust/cargo
+export PATH="/opt/rust/cargo/bin:$PATH"
+EOF
+        chmod 644 /etc/profile.d/rust.sh
+        cat << "EOF" >> /etc/environment
+RUSTUP_HOME="/opt/rust/rustup"
+CARGO_HOME="/opt/rust/cargo"
+EOF
+      fi
+
+
+  - mode: user
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+
+      echo "==> Installing uv..."
+      curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      if ! grep -q '\.local/bin' "$HOME/.bashrc" 2>/dev/null; then
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+      fi

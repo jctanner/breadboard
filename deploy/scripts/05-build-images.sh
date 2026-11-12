@@ -3,7 +3,9 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
+PROJECT_ROOT="$(cd -- "${PROJECT_ROOT}" >/dev/null && pwd -P)"
 
 # Use docker or podman
 if command -v docker &> /dev/null; then
@@ -18,11 +20,19 @@ fi
 
 echo "==> Building container images with ${CONTAINER_CMD}..."
 
+image_in_k3s() {
+  local img="$1"
+  sudo k3s ctr images ls -q 2>/dev/null | grep -Fx -e "docker.io/library/${img}" -e "localhost/${img}" >/dev/null
+}
+FORCE_REBUILD="${FORCE_REBUILD:-1}"
+
 # Build the pipeline dashboard image (Flask web UI)
 echo "--- Building pipeline-dashboard image (web UI) ---"
 cd ${PROJECT_ROOT}
 
-if [ -f deploy/dashboard/Dockerfile ]; then
+if [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "pipeline-dashboard:latest"; then
+  echo "  pipeline-dashboard:latest already in k3s, skipping (set FORCE_REBUILD=1 to rebuild)"
+elif [ -f deploy/dashboard/Dockerfile ]; then
   ${CONTAINER_CMD} build -f deploy/dashboard/Dockerfile -t pipeline-dashboard:latest .
   # Import into k3s (remove old image first so containerd doesn't skip the import)
   echo "  Importing pipeline-dashboard image into k3s..."
@@ -40,19 +50,35 @@ echo ""
 echo "--- Building pipeline-agent image (job runner with Claude CLI) ---"
 cd ${PROJECT_ROOT}
 
-if [ -f deploy/pipeline-agent/Dockerfile ]; then
+if [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "pipeline-agent:latest"; then
+  echo "  pipeline-agent:latest already in k3s, skipping (set FORCE_REBUILD=1 to rebuild)"
+elif [ -f deploy/pipeline-agent/Dockerfile ]; then
   # Extract internal CA cert from ConfigMap so it can be baked into the image
   echo "  Extracting CA certificate from ConfigMap..."
-  CA_CERT=$(kubectl get configmap internal-ca-cert \
-    -n ai-pipeline \
-    -o jsonpath='{.data.ca\.crt}' 2>/dev/null || true)
-  if [ -z "$CA_CERT" ]; then
-    echo "  WARNING: Could not extract CA cert from ConfigMap, using empty placeholder"
-    echo "" > internal-ca.crt
-  else
-    echo "$CA_CERT" > internal-ca.crt
-    echo "  CA certificate extracted successfully"
+  if ! CA_CERT=$(kubectl get configmap internal-ca-cert \
+    -n ai-pipeline -o jsonpath='{.data.ca\.crt}'); then
+    echo "ERROR: Could not read internal-ca-cert; refusing to build a CA-less agent" >&2
+    exit 1
   fi
+  if [ -z "$CA_CERT" ]; then
+    echo "ERROR: internal-ca-cert is empty; refusing to build a CA-less agent" >&2
+    exit 1
+  fi
+  command -v openssl >/dev/null || { echo "ERROR: openssl is required to validate the CA" >&2; exit 1; }
+  CA_CONTEXT_FILE="${PWD}/internal-ca.crt"
+  trap 'rm -f "${CA_CONTEXT_FILE}"' EXIT
+  CERT_COUNT=$(printf '%s\n' "$CA_CERT" | grep -c -- '-----BEGIN CERTIFICATE-----' || true)
+  ALL_CERT_COUNT=$(printf '%s\n' "$CA_CERT" | grep -Ec -- '-----BEGIN (TRUSTED |X509 )?CERTIFICATE-----' || true)
+  if [ "$CERT_COUNT" != "1" ] || [ "$ALL_CERT_COUNT" != "1" ]; then
+    echo "ERROR: internal-ca-cert must contain exactly one certificate" >&2
+    exit 1
+  fi
+  # Serialize only the public X509 certificate; discard any appended PEM data.
+  if ! printf '%s\n' "$CA_CERT" | openssl x509 -out internal-ca.crt; then
+    echo "ERROR: internal-ca-cert is not a valid X509 certificate" >&2
+    exit 1
+  fi
+  echo "  CA certificate extracted and validated successfully"
 
   ${CONTAINER_CMD} build -f deploy/pipeline-agent/Dockerfile -t pipeline-agent:latest .
   rm -f internal-ca.crt
@@ -111,7 +137,9 @@ fi
 echo ""
 
 # Build github-emulator if the repo exists
-if [ -d ${PROJECT_ROOT}/checkouts/github-emulator ]; then
+if [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "github-emulator:k3s"; then
+  echo "--- github-emulator:k3s already in k3s, skipping ---"
+elif [ -d ${PROJECT_ROOT}/checkouts/github-emulator ]; then
   echo "--- Building github-emulator image for k3s ---"
   cd ${PROJECT_ROOT}/checkouts/github-emulator
 
@@ -130,7 +158,9 @@ else
 fi
 
 # Build jira-emulator if the repo exists
-if [ -d ${PROJECT_ROOT}/checkouts/jira-emulator ]; then
+if [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "jira-emulator:k3s"; then
+  echo "--- jira-emulator:k3s already in k3s, skipping ---"
+elif [ -d ${PROJECT_ROOT}/checkouts/jira-emulator ]; then
   echo "--- Building jira-emulator image for k3s ---"
   cd ${PROJECT_ROOT}/checkouts/jira-emulator
 
@@ -149,7 +179,9 @@ else
 fi
 
 # Build observatory if the repo exists
-if [ -d ${PROJECT_ROOT}/checkouts/observatory ]; then
+if [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "observatory:latest"; then
+  echo "--- observatory:latest already in k3s, skipping ---"
+elif [ -d ${PROJECT_ROOT}/checkouts/observatory ]; then
   echo "--- Building observatory image for k3s ---"
   cd ${PROJECT_ROOT}/checkouts/observatory
 
@@ -163,7 +195,9 @@ else
 fi
 
 # Build gitlab-emulator if the repo exists
-if [ -d ${PROJECT_ROOT}/checkouts/gitlab-emulator ]; then
+if [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "gitlab-emulator:latest"; then
+  echo "--- gitlab-emulator:latest already in k3s, skipping ---"
+elif [ -d ${PROJECT_ROOT}/checkouts/gitlab-emulator ]; then
   echo "--- Building gitlab-emulator image for k3s ---"
   cd ${PROJECT_ROOT}/checkouts/gitlab-emulator
 
@@ -177,21 +211,18 @@ else
 fi
 
 # Build markovd if the repo exists
-if [ -d ${PROJECT_ROOT}/checkouts/markovd ]; then
-  echo "--- Building markovd image for k3s ---"
-  cd ${PROJECT_ROOT}/checkouts/markovd
-
-  ${CONTAINER_CMD} build -t markovd:latest .
-  sudo k3s ctr images rm docker.io/library/markovd:latest localhost/markovd:latest 2>/dev/null || true
-  ${CONTAINER_CMD} save markovd:latest | sudo k3s ctr images import -
-  sudo k3s ctr images tag localhost/markovd:latest docker.io/library/markovd:latest 2>/dev/null || true
-  echo "Successfully built and imported markovd:latest"
+if [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "markovd:latest"; then
+  echo "--- markovd:latest already in k3s, skipping ---"
+elif [ -d ${PROJECT_ROOT}/checkouts/markovd ]; then
+  bash "${SCRIPT_DIR}/05c-build-markovd.sh"
 else
   echo "WARNING: markovd repo not found at ${PROJECT_ROOT}/checkouts/markovd"
 fi
 
 # Build the Markov job image used by markovd workflow runs
-if [ -d ${PROJECT_ROOT}/checkouts/markov ]; then
+if [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "markov:latest"; then
+  echo "--- markov:latest already in k3s, skipping ---"
+elif [ -d ${PROJECT_ROOT}/checkouts/markov ]; then
   echo "--- Building Markov job image for k3s ---"
   cd ${PROJECT_ROOT}/checkouts/markov
 

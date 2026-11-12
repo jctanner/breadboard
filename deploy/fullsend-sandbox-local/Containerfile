@@ -8,8 +8,8 @@
 # does not help: the roots are read once.
 #
 # The base is the exact digest a Fullsend harness pins, so the result is that
-# image plus one recorded layer, not a substitute assembled from somewhere
-# else. Bump the digest when the harness moves.
+# image plus the local public CA, workspace readability and policy compatibility
+# fixes. Bump the digest when the harness moves.
 #
 # Two harness images need this treatment and differ only in their base:
 # fullsend-sandbox for triage, and fullsend-code for review and code. They get
@@ -44,13 +44,18 @@ RUN if command -v apt-get >/dev/null 2>&1; then \
 # the cluster's internal-ca-cert ConfigMap. Public certificate only.
 COPY internal-ca.crt /usr/local/share/ca-certificates/breadboard-internal-ca.crt
 # /usr/sbin is not on this image's PATH, so call it by path rather than name.
-RUN /usr/sbin/update-ca-certificates \
+RUN chmod 0644 /usr/local/share/ca-certificates/breadboard-internal-ca.crt \
+    && /usr/sbin/update-ca-certificates \
     && openssl x509 -in /usr/local/share/ca-certificates/breadboard-internal-ca.crt \
          -noout -subject \
     && grep -c "BEGIN CERTIFICATE" /etc/ssl/certs/ca-certificates.crt
 
-# Marks the one thing this layer changes, for anything that wants to assert it.
+# Expose the added public CA path for runtime trust checks.
 ENV BREADBOARD_SANDBOX_CA=/usr/local/share/ca-certificates/breadboard-internal-ca.crt
+
+# Keep the harness-pinned base image runtime unless explicitly testing an override.
+ARG PI_VERSION=
+RUN if [ -n "$PI_VERSION" ]; then npm install -g --ignore-scripts "@earendil-works/pi-coding-agent@$PI_VERSION" && npm cache clean --force && [ "$(pi --version)" = "$PI_VERSION" ]; fi
 
 # OpenShell 0.1.x's Kubernetes driver seeds the image's /sandbox into the
 # workspace volume as uid 10001 (workspace-init, `openshell-sandbox
@@ -59,3 +64,11 @@ ENV BREADBOARD_SANDBOX_CA=/usr/local/share/ca-certificates/breadboard-internal-c
 # "Permission denied (os error 13)" and the sandbox never becomes Ready.
 # The seeded copy is owned by the runtime user either way.
 RUN chmod -R a+rX /sandbox
+
+# Fullsend's pinned base policy uses the obsolete tls: terminate spelling.
+# Generated from that exact base without executing it; the empty/default spelling
+# retains automatic TLS termination in the pinned OpenShell 0.1.4 parser.
+COPY image-policy.yaml /etc/openshell/policy.yaml
+RUN chmod 0644 /etc/openshell/policy.yaml
+# See the pinned OpenShell policy l7_validate.rs (empty -> Unspecified) and
+# supervisor-network/src/l7/mod.rs (empty -> Auto), never TLS skip/passthrough.

@@ -3,7 +3,9 @@
 
 set -euo pipefail
 
-PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
+python3 "${SCRIPT_DIR}/check_ca_compatibility.py"
 
 echo "==> Deploying GitHub Emulator to k3s..."
 
@@ -15,10 +17,10 @@ echo "--- Creating namespace ---"
 kubectl apply -f 00-namespace.yaml
 
 echo "--- Setting up certificate infrastructure ---"
-kubectl apply -f 01-ca-issuer.yaml
+PROJECT_ROOT="${PROJECT_ROOT}" bash "${SCRIPT_DIR}/03-setup-certificates.sh"
 
 echo "--- Creating certificates ---"
-kubectl apply -f 02-certificates.yaml
+# Shared setup above issued the service certificates and published the public root.
 
 echo "--- Waiting for certificates to be ready ---"
 kubectl wait --for=condition=ready certificate/github-emulator-tls -n ai-pipeline --timeout=120s || {
@@ -35,7 +37,7 @@ echo "--- Creating GitHub Emulator configuration ---"
 kubectl apply -f 09-github-emulator-config.yaml
 
 echo "--- Deploying GitHub Emulator ---"
-kubectl apply -f 10-github-emulator.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" 10-github-emulator.yaml
 
 echo ""
 echo "==> Deployment complete!"

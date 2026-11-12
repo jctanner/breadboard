@@ -1,5 +1,5 @@
 # ── Stage 1: Build arch-query with embedded architecture data ────
-FROM golang:1.25-bookworm AS arch-query-builder
+FROM docker.io/library/golang:1.25-bookworm AS arch-query-builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*
 
@@ -11,49 +11,69 @@ RUN git clone --depth 1 https://github.com/opendatahub-io/architecture-context.g
 
 
 # ── Stage 2: Build OpenCode from its source repository ──────────
-FROM oven/bun:1.3.14-debian AS opencode-builder
+FROM docker.io/oven/bun:1.3.14-debian AS opencode-builder
 
-ARG OPENCODE_REPO=https://github.com/anomalyco/opencode.git
-ARG OPENCODE_REF=dev
+# Pin the integration source: upstream dev no longer has packages/opencode.
+ARG OPENCODE_REPO=https://github.com/jctanner/opencode.git
+ARG OPENCODE_REF=9f55fe01b9304cc34534dbf1e69b0f8c4bfc8c77
 
-RUN apt-get update && apt-get install -y --no-install-recommends git python3 make g++ && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --branch "${OPENCODE_REF}" "${OPENCODE_REPO}" .
+RUN git init . \
+    && git remote add origin "${OPENCODE_REPO}" \
+    && git fetch --depth 1 -- origin "${OPENCODE_REF}" \
+    && git checkout --detach FETCH_HEAD
 
 RUN bun install --frozen-lockfile || bun install
 ENV OPENCODE_CHANNEL=latest
 ENV OPENCODE_VERSION=0.0.0-local
-RUN cd packages/opencode && bun run script/build.ts --single --skip-embed-web-ui
+# Use the conservative x64 artifact even when building on a newer CPU.
+RUN case "$(uname -m)" in \
+      x86_64) ARCH=x64-baseline; set -- --baseline ;; \
+      aarch64) ARCH=arm64; set -- ;; \
+      *) echo "Unsupported OpenCode build architecture" >&2; exit 1 ;; \
+    esac \
+    && cd packages/opencode \
+    && bun run script/build.ts --single --skip-embed-web-ui "$@" \
+    && cp "dist/opencode-linux-${ARCH}/bin/opencode" /build/opencode \
+    && /build/opencode --version
 
-RUN ARCH=$(uname -m | sed 's/x86_64/x64/' | sed 's/aarch64/arm64/') \
-    && cp packages/opencode/dist/opencode-linux-${ARCH}/bin/opencode /build/opencode
 
+FROM docker.io/library/node:24-bookworm-slim AS node-runtime
 
 # ── Stage 3: Pipeline agent ─────────────────────────────────────
-FROM python:3.13-slim
+FROM docker.io/library/python:3.13-slim
+
+# Use a supported Node runtime for the Claude CLI (declares Node >=22).
+COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     iproute2 \
     curl \
-    nodejs \
-    npm \
     ca-certificates \
     strace \
     && npm install -g @anthropic-ai/claude-code \
+    && python --version && node --version && claude --version \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy OpenCode binary built from local source
 COPY --from=opencode-builder /build/opencode /usr/local/bin/opencode
-RUN chmod +x /usr/local/bin/opencode
+RUN chmod +x /usr/local/bin/opencode && opencode --version
 
 WORKDIR /app
 
 # Inject internal CA certificate (extracted at build time by 05b-build-agent.sh)
 COPY internal-ca.crt /usr/local/share/ca-certificates/internal-ca.crt
-RUN update-ca-certificates
+RUN chmod 0644 /usr/local/share/ca-certificates/internal-ca.crt \
+    && openssl x509 -in /usr/local/share/ca-certificates/internal-ca.crt -noout \
+    && update-ca-certificates
+ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/internal-ca.crt
 
 # Copy arch-query binary from builder stage
 COPY --from=arch-query-builder /build/arch-query /usr/local/bin/arch-query

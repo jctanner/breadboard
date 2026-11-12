@@ -3,7 +3,12 @@
 
 set -euo pipefail
 
+export PATH="/opt/rust/cargo/bin:/usr/local/go/bin:${PATH}"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "${SCRIPT_DIR}/render_domain_manifest.py" /dev/null "${BREADBOARD_DOMAIN:-local}" >/dev/null
+# The forge domain is baked into profiles; reject drift before building/importing.
+python3 "${SCRIPT_DIR}/check_ca_compatibility.py"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 FULLSEND_ROOT="${PROJECT_ROOT}/checkouts/fullsend-ai/fullsend"
 OPENSHELL_ROOT="${PROJECT_ROOT}/checkouts/openshell"
@@ -66,10 +71,16 @@ LOCAL_SANDBOX_IMAGES=(
   "${CODE_LOCAL_IMAGE}|review.yaml|ghcr.io/fullsend-ai/fullsend-code"
 )
 
-if command -v docker >/dev/null 2>&1; then
-  CONTAINER_CMD=docker
+if [[ -n "${CONTAINER_CMD:-}" ]]; then
+  read -r -a CONTAINER_CMD_ARR <<< "${CONTAINER_CMD}"
+elif command -v docker >/dev/null 2>&1; then
+  CONTAINER_CMD_ARR=(docker)
 elif command -v podman >/dev/null 2>&1; then
-  CONTAINER_CMD=podman
+  if [[ "${PODMAN_SUDO:-}" == "1" ]]; then
+    CONTAINER_CMD_ARR=(sudo podman)
+  else
+    CONTAINER_CMD_ARR=(podman)
+  fi
 else
   echo "ERROR: docker or podman is required" >&2
   exit 1
@@ -108,14 +119,22 @@ for patch in "${FULLSEND_PATCHES[@]}"; do
     echo "==> Skipping Fullsend patch ${patch_name} (FULLSEND_SKIP_PATCHES)"
     continue
   fi
-  if ! git -C "${FULLSEND_BUILD_ROOT}" apply --check --unidiff-zero "${patch}" 2>/dev/null; then
+  patch_file="${patch}"
+  if [[ "${BREADBOARD_DOMAIN:-local}" != "local" ]]; then
+    patch_tmp="$(mktemp /tmp/fullsend-patch.XXXXXX)"
+    sed "/^+/s/github\.local/github.${BREADBOARD_DOMAIN}/g" "${patch}" > "${patch_tmp}"
+    patch_file="${patch_tmp}"
+  fi
+  if ! git -C "${FULLSEND_BUILD_ROOT}" apply --check --unidiff-zero "${patch_file}" 2>/dev/null; then
     echo "ERROR: patch ${patch_name} no longer applies against ${FULLSEND_ROOT} (${FULLSEND_REVISION})." >&2
     echo "       Rebase, replace, or drop it - see work package 1 in" >&2
     echo "       .ledger/plans/fullsend-integration-conformance-plan.md." >&2
+    [[ "${patch_file}" != "${patch}" ]] && rm -f "${patch_file}"
     exit 1
   fi
   echo "==> Applying Fullsend patch ${patch_name}"
-  git -C "${FULLSEND_BUILD_ROOT}" apply --unidiff-zero "${patch}"
+  git -C "${FULLSEND_BUILD_ROOT}" apply --unidiff-zero "${patch_file}"
+  [[ "${patch_file}" != "${patch}" ]] && rm -f "${patch_file}"
 done
 (cd "${FULLSEND_BUILD_ROOT}" && GOTOOLCHAIN=auto go build -buildvcs=false -trimpath -ldflags '-s -w' -o "${BUILD_CONTEXT}/fullsend" ./cmd/fullsend)
 
@@ -219,11 +238,28 @@ drift_check "pre-commit version" \
   "$(sed -n 's/.*pre-commit==\([0-9][0-9.]*\)".*/\1/p' "${PRECOMMIT_LIB}" | head -1)" \
   "$(containerfile_arg PRECOMMIT_VERSION)" "${PRECOMMIT_LIB}"
 
-echo "==> Building ${RUNNER_IMAGE}"
-"${CONTAINER_CMD}" build -f "${RUNNER_CONTEXT}/Containerfile" -t "${RUNNER_IMAGE}" "${BUILD_CONTEXT}"
+BUILD_ARCH="$(uname -m)"
+case "${BUILD_ARCH}" in
+  x86_64) TARGETARCH=amd64 ;;
+  aarch64|arm64) TARGETARCH=arm64 ;;
+  *) TARGETARCH=amd64 ;;
+esac
 
-echo "==> Building ${SANDBOX_IMAGE}"
-"${CONTAINER_CMD}" build -f "${SANDBOX_CONTEXT}/Containerfile" -t "${SANDBOX_IMAGE}" "${SANDBOX_CONTEXT}"
+echo "==> Building ${RUNNER_IMAGE} (arch: ${TARGETARCH})"
+"${CONTAINER_CMD_ARR[@]}" build --build-arg TARGETARCH="${TARGETARCH}" -f "${RUNNER_CONTEXT}/Containerfile" -t "${RUNNER_IMAGE}" "${BUILD_CONTEXT}"
+
+IMPORT_IMAGES=("${RUNNER_IMAGE}" "${SANDBOX_LOCAL_IMAGE}" "${CODE_LOCAL_IMAGE}" "${SUPERVISOR_LOCAL_IMAGE}")
+if [[ "${SKIP_SANDBOX_DEV:-}" != "1" ]]; then
+  if ! "${CONTAINER_CMD_ARR[@]}" image inspect pipeline-agent:latest >/dev/null 2>&1; then
+    echo "ERROR: pipeline-agent:latest is required in the container engine; build it first or explicitly set SKIP_SANDBOX_DEV=1." >&2
+    exit 1
+  fi
+  echo "==> Building ${SANDBOX_IMAGE} (arch: ${TARGETARCH})"
+  "${CONTAINER_CMD_ARR[@]}" build --build-arg TARGETARCH="${TARGETARCH}" -f "${SANDBOX_CONTEXT}/Containerfile" -t "${SANDBOX_IMAGE}" "${SANDBOX_CONTEXT}"
+  IMPORT_IMAGES+=("${SANDBOX_IMAGE}")
+else
+  echo "==> Skipping ${SANDBOX_IMAGE} (SKIP_SANDBOX_DEV=1)"
+fi
 
 # The conformance sandboxes are Fullsend's own pinned images plus this
 # cluster's internal CA. The supervisor reads its upstream TLS roots once at
@@ -270,11 +306,19 @@ for entry in "${LOCAL_SANDBOX_IMAGES[@]}"; do
     echo "       Agents patch 0004 substitutes ${local_image} for all of them; split the image or update the patch." >&2
     exit 1
   fi
+  # Pinned Fullsend images still spell automatic TLS termination as
+  # tls: terminate, which the pinned OpenShell rejects. Read the image without
+  # executing it, migrate only that value to the equivalent empty/default spelling, and keep generated inputs temporary.
+  policy_context="$(mktemp -d "${BUILD_CONTEXT}/sandbox-policy.XXXXXX")"
+  cp "${CA_OUT}" "${policy_context}/internal-ca.crt"
+  cp "${SANDBOX_LOCAL_CONTEXT}/Containerfile" "${policy_context}/Containerfile"
+  python3 "${SCRIPT_DIR}/prepare_sandbox_policy.py" "${base_repo}@${base_digest}" \
+    "${policy_context}/image-policy.yaml" "${CONTAINER_CMD_ARR[@]}"
   echo "==> Building ${local_image} FROM ${base_repo}@${base_digest} (pinned by ${harness_file})"
-  "${CONTAINER_CMD}" build -f "${SANDBOX_LOCAL_CONTEXT}/Containerfile" \
+  "${CONTAINER_CMD_ARR[@]}" build -f "${policy_context}/Containerfile" \
     --build-arg "BASE_REPO=${base_repo}" \
     --build-arg "BASE_DIGEST=${base_digest}" \
-    -t "${local_image}" "${SANDBOX_LOCAL_CONTEXT}"
+    -t "${local_image}" "${policy_context}"
 done
 
 # From OpenShell 0.1.x the supervisor, which verifies upstream TLS, runs in
@@ -284,15 +328,14 @@ supervisor_tag="$(jq -er '.dependencies[] | select(.name == "openshell") | .supe
   "${PROJECT_ROOT}/deploy/dependencies.json")"
 cp "${CA_OUT}" "${SUPERVISOR_LOCAL_CONTEXT}/internal-ca.crt"
 echo "==> Building ${SUPERVISOR_LOCAL_IMAGE} FROM ghcr.io/nvidia/openshell/supervisor:${supervisor_tag}"
-"${CONTAINER_CMD}" build -f "${SUPERVISOR_LOCAL_CONTEXT}/Containerfile" \
+"${CONTAINER_CMD_ARR[@]}" build -f "${SUPERVISOR_LOCAL_CONTEXT}/Containerfile" \
   --build-arg "SUPERVISOR_IMAGE=ghcr.io/nvidia/openshell/supervisor:${supervisor_tag}" \
   -t "${SUPERVISOR_LOCAL_IMAGE}" "${SUPERVISOR_LOCAL_CONTEXT}"
 
-for image in "${RUNNER_IMAGE}" "${SANDBOX_IMAGE}" "${SANDBOX_LOCAL_IMAGE}" "${CODE_LOCAL_IMAGE}" \
-    "${SUPERVISOR_LOCAL_IMAGE}"; do
+for image in "${IMPORT_IMAGES[@]}"; do
   echo "==> Importing ${image} into k3s"
   sudo k3s ctr images rm "docker.io/library/${image}" "localhost/${image}" 2>/dev/null || true
-  "${CONTAINER_CMD}" save "${image}" | sudo k3s ctr images import -
+  "${CONTAINER_CMD_ARR[@]}" save "${image}" | sudo k3s ctr images import -
   sudo k3s ctr images tag "localhost/${image}" "docker.io/library/${image}" 2>/dev/null || true
 done
 

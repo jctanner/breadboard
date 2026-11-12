@@ -3,7 +3,9 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
+python3 "${SCRIPT_DIR}/check_ca_compatibility.py"
 
 echo "==> Deploying Jira Emulator to k3s..."
 
@@ -15,10 +17,10 @@ echo "--- Creating namespace ---"
 kubectl apply -f 00-namespace.yaml
 
 echo "--- Setting up certificate infrastructure ---"
-kubectl apply -f 01-ca-issuer.yaml
+PROJECT_ROOT="${PROJECT_ROOT}" bash "${SCRIPT_DIR}/03-setup-certificates.sh"
 
 echo "--- Creating certificates ---"
-kubectl apply -f 02-certificates.yaml
+# Shared setup above issued the service certificates and published the public root.
 
 echo "--- Waiting for certificates to be ready ---"
 kubectl wait --for=condition=ready certificate/jira-emulator-tls -n ai-pipeline --timeout=120s || {
@@ -35,7 +37,7 @@ echo "--- Creating Jira Emulator configuration ---"
 kubectl apply -f 11-jira-emulator-config.yaml
 
 echo "--- Deploying Jira Emulator ---"
-kubectl apply -f 12-jira-emulator.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" 12-jira-emulator.yaml
 
 echo ""
 echo "==> Deployment complete!"

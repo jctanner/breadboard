@@ -62,24 +62,25 @@ class TicketAggregator:
         self.errors: list[dict[str, str]] = []
         self.not_deployed: list[str] = []
 
+        domain = os.getenv("BREADBOARD_DOMAIN", "local").strip().strip(".") or "local"
         jira = os.getenv(
             "BREADBOARD_JIRA_URL",
             "https://jira-emulator.ai-pipeline.svc.cluster.local",
         )
         self.jira_url = _base_url(jira, "/rest/api/2", "/rest/api/3")
-        self.jira_ui = os.getenv("JIRA_UI_URL", "https://jira.local").rstrip("/")
+        self.jira_ui = os.getenv("JIRA_UI_URL", f"https://jira.{domain}").rstrip("/")
 
         self.github_api = os.getenv(
             "GITHUB_API_URL",
             "https://github-emulator.ai-pipeline.svc.cluster.local/api/v3",
         ).rstrip("/")
-        self.github_ui = os.getenv("GITHUB_UI_URL", "https://github.local").rstrip("/")
+        self.github_ui = os.getenv("GITHUB_UI_URL", f"https://github.{domain}").rstrip("/")
 
         self.gitlab_api = os.getenv(
             "GITLAB_API_URL",
             "https://gitlab-emulator.ai-pipeline.svc.cluster.local/api/v4",
         ).rstrip("/")
-        self.gitlab_ui = os.getenv("GITLAB_UI_URL", "https://gitlab.local").rstrip("/")
+        self.gitlab_ui = os.getenv("GITLAB_UI_URL", f"https://gitlab.{domain}").rstrip("/")
 
         self.github_token = os.getenv("GITHUB_TOKEN", "")
         self.gitlab_token = os.getenv("GITLAB_TOKEN", "")
@@ -305,6 +306,19 @@ class TicketAggregator:
                         break
                     for item in payload:
                         iid = item.get("iid", item.get("id", ""))
+                        default_path = (
+                            f"/{project_name}/-/"
+                            f"{'merge_requests' if type_name == 'merge_request' else 'issues'}/{iid}"
+                        )
+                        web_url = item.get("web_url", "")
+                        try:
+                            parsed_web_url = urlsplit(web_url)
+                            if parsed_web_url.scheme not in ("http", "https") or not parsed_web_url.hostname:
+                                web_url = ""
+                        except ValueError:
+                            web_url = ""
+                        item_path = urlsplit(web_url).path if web_url else default_path
+                        item_path = item_path or default_path
                         tickets.append({
                             "source": "gitlab",
                             "type": "Merge request" if type_name == "merge_request" else "Issue",
@@ -321,10 +335,9 @@ class TicketAggregator:
                             "assignee": ((item.get("assignees") or [{}])[0]).get("username", "") if item.get("assignees") else "",
                             "created": item.get("created_at", ""),
                             "updated": item.get("updated_at", ""),
-                            "url": item.get("web_url") or (
-                                f"{self.gitlab_ui}/{project_name}/-/"
-                                f"{'merge_requests' if type_name == 'merge_request' else 'issues'}/{iid}"
-                            ),
+                            "url": (f"{self.gitlab_ui}{item_path}"
+                                    if not web_url or urlsplit(web_url).hostname == "gitlab-emulator.ai-pipeline.svc.cluster.local"
+                                    else web_url),
                         })
                     if len(payload) < 100:
                         break

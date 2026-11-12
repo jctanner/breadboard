@@ -34,7 +34,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from emulator import API_URL, TOKEN, api_request
+from emulator import API_URL, TOKEN, api_request, ssl_context
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -47,7 +47,18 @@ UPSTREAM_BRANCH = "main"
 # The action matches ``^v[0-9]+\\.[0-9]+\\.[0-9]+$`` and takes the highest.
 TAG = os.environ.get("FULLSEND_RELEASE_TAG", "v0.0.1")
 VERSION = TAG.removeprefix("v")
-ASSET_NAME = f"fullsend_{VERSION}_linux_amd64.tar.gz"
+def binary_arch(path: Path) -> str:
+    """Read the ELF machine rather than mislabelling a native binary."""
+    with path.open("rb") as handle:
+        header = handle.read(20)
+    if len(header) != 20 or header[:6] != b"\x7fELF\x02\x01":
+        raise RuntimeError("Fullsend release binary must be a little-endian ELF64 executable")
+    machine = int.from_bytes(header[18:20], "little")
+    if machine not in (62, 183):
+        raise RuntimeError(f"Unsupported ELF machine: {machine}")
+    return {62: "amd64", 183: "arm64"}[machine]
+
+
 REPO_PATH = f"/repos/{UPSTREAM_ORG}/{UPSTREAM_REPO}"
 
 
@@ -84,7 +95,7 @@ def upload_asset(release_id: int, name: str, content: bytes) -> dict:
         },
         method="POST",
     )
-    context = ssl._create_unverified_context()
+    context = ssl_context()
     try:
         with urllib.request.urlopen(request, context=context) as response:
             return json.loads(response.read())
@@ -118,6 +129,7 @@ def main() -> None:
             f"no Fullsend binary at {BINARY}. Run deploy/scripts/05i-build-fullsend.sh "
             "first, or point FULLSEND_VENDOR_BINARY at one."
         )
+    asset_name = f"fullsend_{VERSION}_linux_{binary_arch(BINARY)}.tar.gz"
     binary_digest = digest(BINARY)
     marker = f"binary sha256: {binary_digest}"
     head = head_sha()
@@ -125,7 +137,7 @@ def main() -> None:
     status, existing = api_request("GET", f"{REPO_PATH}/releases/tags/{TAG}")
     if status == 200 and isinstance(existing, dict):
         asset_names = [asset.get("name") for asset in existing.get("assets") or []]
-        if tag_sha() == head and marker in (existing.get("body") or "") and ASSET_NAME in asset_names:
+        if tag_sha() == head and marker in (existing.get("body") or "") and asset_names == [asset_name]:
             print(
                 f"release {TAG} already current on {UPSTREAM_ORG}/{UPSTREAM_REPO} "
                 f"(commit {head[:8]}, sha256 {binary_digest[:12]})"
@@ -160,10 +172,10 @@ def main() -> None:
         raise RuntimeError(f"could not create release {TAG}: {status} {release}")
 
     content = tarball(BINARY)
-    asset = upload_asset(release["id"], ASSET_NAME, content)
+    asset = upload_asset(release["id"], asset_name, content)
     print(
         f"released {TAG} on {UPSTREAM_ORG}/{UPSTREAM_REPO} at {head[:8]} with "
-        f"{ASSET_NAME} ({len(content) // (1024 * 1024)} MiB, asset {asset['id']}, "
+        f"{asset_name} ({len(content) // (1024 * 1024)} MiB, asset {asset['id']}, "
         f"sha256 {binary_digest[:12]})"
     )
 

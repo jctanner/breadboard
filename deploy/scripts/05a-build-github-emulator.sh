@@ -3,7 +3,8 @@
 
 set -euo pipefail
 
-PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 
 # Use docker or podman
 if command -v docker &> /dev/null; then

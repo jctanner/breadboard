@@ -5,7 +5,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "${SCRIPT_DIR}/render_domain_manifest.py" /dev/null "${BREADBOARD_DOMAIN:-local}" >/dev/null
 export PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
+export BREADBOARD_DOMAIN="${BREADBOARD_DOMAIN:-local}"
+if [ -z "${KUBECONFIG:-}" ] && [ -f /etc/rancher/k3s/k3s.yaml ]; then
+  export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+fi
 
 echo "=========================================="
 echo "AI-First Pipeline K3s Deployment"
@@ -17,6 +22,7 @@ if [ "$EUID" -ne 0 ]; then
   echo "This script should be run as root (use sudo)"
   exit 1
 fi
+
 
 # .env is optional: model credentials are managed by Model Relay, and every
 # value 06-create-secrets.sh reads from it has a default.
@@ -35,6 +41,9 @@ else
   bash "${SCRIPT_DIR}/01-install-k3s.sh"
 fi
 echo ""
+
+# K3s is available now; refuse incompatible existing CA before changing services.
+python3 "${SCRIPT_DIR}/check_ca_compatibility.py"
 
 # Step 2: Install cert-manager
 echo "Step 2/19: Installing cert-manager..."
@@ -58,15 +67,49 @@ echo ""
 
 # Step 6: Build images
 echo "Step 6/19: Building container images..."
+image_in_k3s() {
+  local img="$1"
+  sudo k3s ctr images ls -q 2>/dev/null | grep -Fx -e "docker.io/library/${img}" -e "localhost/${img}" >/dev/null
+}
+FORCE_REBUILD="${FORCE_REBUILD:-1}"
+
+# The grouped builder also handles emulator, Markov and Observatory images.
+# Let its per-image checks resume partial builds; two core images do not prove
+# every image in that group was built/imported successfully.
 bash "${SCRIPT_DIR}/05-build-images.sh"
-bash "${SCRIPT_DIR}/05g-build-github-actions-runner.sh"
-bash "${SCRIPT_DIR}/05k-build-github-actions-real-runner.sh"
-bash "${SCRIPT_DIR}/05h-build-fullsend-mint-dev.sh"
-bash "${SCRIPT_DIR}/05i-build-fullsend.sh"
-bash "${SCRIPT_DIR}/05j-build-fullsend-dashboard.sh"
-bash "${SCRIPT_DIR}/05l-build-org-pulse.sh"
-bash "${SCRIPT_DIR}/05m-build-model-relay.sh"
-bash "${SCRIPT_DIR}/05n-build-hooksink.sh"
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "github-emulator-actions-runner:k3s"; then
+  bash "${SCRIPT_DIR}/05g-build-github-actions-runner.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "github-emulator-actions-real-runner:k3s"; then
+  bash "${SCRIPT_DIR}/05k-build-github-actions-real-runner.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "fullsend-mint-dev:k3s"; then
+  bash "${SCRIPT_DIR}/05h-build-fullsend-mint-dev.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "fullsend-runner-dev:k3s" || ! image_in_k3s "fullsend-sandbox-local:k3s"; then
+  bash "${SCRIPT_DIR}/05i-build-fullsend.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "fullsend-dashboard:latest"; then
+  bash "${SCRIPT_DIR}/05j-build-fullsend-dashboard.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "org-pulse-backend:k3s" || ! image_in_k3s "org-pulse-frontend:k3s"; then
+  bash "${SCRIPT_DIR}/05l-build-org-pulse.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "model-relay:latest"; then
+  bash "${SCRIPT_DIR}/05m-build-model-relay.sh"
+fi
+
+if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "hooksink:latest"; then
+  bash "${SCRIPT_DIR}/05n-build-hooksink.sh"
+fi
+
 echo ""
 
 # Step 7: Deploy storage
@@ -98,7 +141,7 @@ echo ""
 
 # Step 12: Deploy pipeline dashboard
 echo "Step 12/19: Deploying pipeline dashboard..."
-kubectl apply -f ${PROJECT_ROOT}/deploy/k8s/20-pipeline-dashboard.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/20-pipeline-dashboard.yaml"
 bash "${SCRIPT_DIR}/23-deploy-fullsend-dashboard.sh"
 echo ""
 
@@ -205,6 +248,13 @@ echo ""
 bash test-application.sh
 echo ""
 
+# Configure Tailscale Split DNS if tailscale0 is present
+if [ "${BREADBOARD_SPLIT_DNS:-0}" = 1 ]; then
+  echo "Split DNS explicitly requested, configuring responder..."
+  bash "${SCRIPT_DIR}/29-configure-tailscale-dns.sh"
+  echo ""
+fi
+
 # Display access information
 echo "=========================================="
 echo "Deployment Complete!"
@@ -215,57 +265,63 @@ echo ""
 
 # Get LoadBalancer IP for ingress proxy
 INGRESS_IP=$(kubectl get svc ingress-proxy -n ai-pipeline -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "pending")
+DOMAIN="${BREADBOARD_DOMAIN:-local}"
 
 echo "All services are accessible via Ingress Proxy:"
 echo "  LoadBalancer IP: ${INGRESS_IP}"
+echo "  Domain: ${DOMAIN}"
+echo ""
+echo "Resolve the service names below to ${INGRESS_IP} for verified HTTPS."
+echo "For curl, use --cacert <public-ca.crt> --resolve <service>.${DOMAIN}:443:${INGRESS_IP}"
+echo "with https://<service>.${DOMAIN}; a Host header alone does not set the TLS server name."
 echo ""
 
 echo "Pipeline Dashboard:"
-echo "  - http://${INGRESS_IP} -H 'Host: dashboard.local'"
+echo "  - http://${INGRESS_IP} -H 'Host: dashboard.${DOMAIN}'"
 echo "  - http://localhost:5000 (Vagrantfile port forward)"
 echo ""
 
 echo "Fullsend Operations Dashboard:"
-echo "  - https://${INGRESS_IP} -H 'Host: fullsend.local'"
+echo "  - https://fullsend.${DOMAIN}"
 echo ""
 
 echo "GitHub Emulator:"
-echo "  - http://${INGRESS_IP} -H 'Host: github.local'"
-echo "  - https://${INGRESS_IP} -H 'Host: github.local' (TLS)"
+echo "  - http://${INGRESS_IP} -H 'Host: github.${DOMAIN}'"
+echo "  - https://github.${DOMAIN} (TLS)"
 echo ""
 
 echo "Jira Emulator:"
-echo "  - http://${INGRESS_IP} -H 'Host: jira.local'"
-echo "  - https://${INGRESS_IP} -H 'Host: jira.local' (TLS)"
+echo "  - http://${INGRESS_IP} -H 'Host: jira.${DOMAIN}'"
+echo "  - https://jira.${DOMAIN} (TLS)"
 echo "  - Default credentials: admin / admin"
 echo ""
 
 echo "MLflow Tracking Server:"
-echo "  - http://${INGRESS_IP} -H 'Host: mlflow.local'"
-echo "  - https://${INGRESS_IP} -H 'Host: mlflow.local' (TLS)"
+echo "  - http://${INGRESS_IP} -H 'Host: mlflow.${DOMAIN}'"
+echo "  - https://mlflow.${DOMAIN} (TLS)"
 echo ""
 
 echo "Observatory:"
-echo "  - http://${INGRESS_IP} -H 'Host: observatory.local'"
-echo "  - https://${INGRESS_IP} -H 'Host: observatory.local' (TLS)"
+echo "  - http://${INGRESS_IP} -H 'Host: observatory.${DOMAIN}'"
+echo "  - https://observatory.${DOMAIN} (TLS)"
 echo ""
 
 echo "GitLab Emulator:"
-echo "  - http://${INGRESS_IP} -H 'Host: gitlab.local'"
-echo "  - https://${INGRESS_IP} -H 'Host: gitlab.local' (TLS)"
+echo "  - http://${INGRESS_IP} -H 'Host: gitlab.${DOMAIN}'"
+echo "  - https://gitlab.${DOMAIN} (TLS)"
 echo ""
 
 echo "Org Pulse (demo mode):"
-echo "  - https://${INGRESS_IP} -H 'Host: orgpulse.local' (TLS)"
+echo "  - https://orgpulse.${DOMAIN} (TLS)"
 echo ""
 
 echo "Model Relay:"
-echo "  - https://${INGRESS_IP} -H 'Host: relay.local' (admin console, TLS)"
-echo "  - https://${INGRESS_IP} -H 'Host: relay-api.local' (inference, TLS)"
+echo "  - https://relay.${DOMAIN} (admin console, TLS)"
+echo "  - https://relay-api.${DOMAIN} (inference, TLS)"
 echo ""
 
 echo "Webhook sink:"
-echo "  - https://${INGRESS_IP} -H 'Host: hooksink.local' (events, TLS)"
+echo "  - https://hooksink.${DOMAIN} (events, TLS)"
 echo ""
 
 echo "Internal Service URLs (from pods):"

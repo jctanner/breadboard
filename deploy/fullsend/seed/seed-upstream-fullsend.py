@@ -21,15 +21,13 @@ Gap A1 of the Fullsend integration conformance plan.
 
 from __future__ import annotations
 
-import shutil
 import os
-import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
 
-from emulator import TOKEN, api_request, run_git
+from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git, seed_source_path, clear_mirror_worktree, copy_mirror_source, mirror_destination
 
 
 # deploy/fullsend/seed/seed-upstream-fullsend.py -> parents[3] is the project root.
@@ -108,13 +106,13 @@ def collect_sources() -> list[tuple[Path, str]]:
         )
     collected: list[tuple[Path, str]] = []
     for relative in MIRRORED_PATHS:
-        origin = SOURCE / relative
-        if origin.is_file():
+        origin = seed_source_path(SOURCE, relative, allow_final_symlink=True)
+        if origin.is_symlink() or origin.is_file():
             collected.append((origin, relative))
         elif origin.is_dir():
             for path in sorted(origin.rglob("*")):
-                if path.is_file() and _wanted(str(path.relative_to(SOURCE))):
-                    collected.append((path, str(path.relative_to(SOURCE))))
+                if (path.is_symlink() or seed_source_path(SOURCE, str(path.relative_to(SOURCE.resolve()))).is_file()) and _wanted(str(path.relative_to(SOURCE.resolve()))):
+                    collected.append((path, str(path.relative_to(SOURCE.resolve()))))
         else:
             raise RuntimeError(f"required Fullsend path is missing: {origin}")
     return collected
@@ -155,12 +153,7 @@ def apply_mirror_patches(directory: Path) -> None:
         patch = PATCH_DIR / name
         if not patch.is_file():
             raise RuntimeError(f"mirror patch is missing: {patch}")
-        result = subprocess.run(
-            ["git", "apply", str(patch)],
-            cwd=directory,
-            capture_output=True,
-            text=True,
-        )
+        result = run_git(directory, "apply", str(patch), check=False)
         if result.returncode != 0:
             raise RuntimeError(
                 f"mirror patch {name} does not apply to the current Fullsend "
@@ -177,10 +170,7 @@ def main() -> None:
 
     sources = collect_sources()
     revision = run_git(SOURCE, "rev-parse", "HEAD").stdout.strip()
-    remote = (
-        f"https://x-access-token:{TOKEN}@github.local/"
-        f"{UPSTREAM_ORG}/{UPSTREAM_REPO}.git"
-    )
+    remote = git_remote(UPSTREAM_ORG, UPSTREAM_REPO)
 
     with tempfile.TemporaryDirectory(prefix="fullsend-upstream-mirror-") as temp:
         directory = Path(temp)
@@ -197,19 +187,14 @@ def main() -> None:
                 break
             time.sleep(2)
 
-        # The tree reflects the collection exactly: a file mirrored before and
-        # not collected now is removed rather than left behind from the fetch.
-        for relative in MIRRORED_PATHS:
-            target = directory / relative
-            if target.is_dir():
-                shutil.rmtree(target)
-            elif target.is_file():
-                target.unlink()
+        # Drop the fetched working tree, including symlinks, before copying.
+        # Never traverse fetched parent links while removing selected subtrees.
+        clear_mirror_worktree(directory)
+
         for origin, relative in sources:
-            destination = directory / relative
+            destination = mirror_destination(directory, relative)
             destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(origin, destination)
-            destination.chmod(origin.stat().st_mode & 0o777)
+            copy_mirror_source(SOURCE, relative, destination)
 
         apply_mirror_patches(directory)
 

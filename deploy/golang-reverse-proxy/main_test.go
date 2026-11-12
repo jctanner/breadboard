@@ -49,7 +49,7 @@ func mockProxy(t *testing.T, host string, tls bool, upstream http.Handler, http2
 
 func TestInferenceStreamOutlivesFrontendWriteDeadline(t *testing.T) {
 	for _, protocol := range []string{"http", "https", "http2"} {
-		for _, host := range []string{"relay-api.local", "RELAY-API.LOCAL:443", "model-relay.ai-pipeline.svc.cluster.local"} {
+		for _, host := range []string{"relay-api.local", "RELAY-API.LOCAL:443", "relay-api.bb.internal", "model-relay.ai-pipeline.svc.cluster.local"} {
 			t.Run(protocol+"/"+host, func(t *testing.T) {
 				server, client := mockProxy(t, host, protocol != "http", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.Header().Set("Content-Type", "text/event-stream")
@@ -147,5 +147,53 @@ func TestInferenceClientCancellationReachesUpstream(t *testing.T) {
 	case <-cancelled:
 	case <-time.After(time.Second):
 		t.Fatal("cancelled client left the upstream model request running")
+	}
+}
+
+func TestGetBackend(t *testing.T) {
+	previousHosts, previousCache, previousTransport := hostToBackend, proxyCache, sharedTransport
+	t.Cleanup(func() { hostToBackend, proxyCache, sharedTransport = previousHosts, previousCache, previousTransport })
+	// 1. Verify default domain ("local")
+	t.Setenv("BREADBOARD_DOMAIN", "")
+	initProxies()
+
+	if backend := getBackend("dashboard.local"); backend == "" {
+		t.Errorf("expected dashboard.local to resolve by default, got empty")
+	}
+	if backend := getBackend("dashboard.bb.internal"); backend != "" {
+		t.Errorf("expected dashboard.bb.internal to NOT resolve by default, got %q", backend)
+	}
+
+	// 2. Verify with BREADBOARD_DOMAIN=bb.internal
+	t.Setenv("BREADBOARD_DOMAIN", "bb.internal")
+	initProxies()
+
+	if backend := getBackend("dashboard.local"); backend == "" {
+		t.Errorf("expected dashboard.local to resolve when BREADBOARD_DOMAIN=bb.internal, got empty")
+	}
+	if backend := getBackend("dashboard.bb.internal"); backend == "" {
+		t.Errorf("expected dashboard.bb.internal to resolve when BREADBOARD_DOMAIN=bb.internal, got empty")
+	}
+
+	expectedBackend := "http://pipeline-dashboard.ai-pipeline.svc.cluster.local:5000"
+	if backend := getBackend("dashboard.bb.internal"); backend != expectedBackend {
+		t.Errorf("expected %q, got %q", expectedBackend, backend)
+	}
+
+	// Verify all other external services also resolve with bb.internal and local
+	services := []string{
+		"github", "jira", "dashboard", "fullsend", "mlflow", "markovd",
+		"observatory", "gitlab", "orgpulse", "relay-api", "relay",
+		"hooksink", "hooksink-admin", "dojo",
+	}
+	for _, svc := range services {
+		localHost := svc + ".local"
+		bbHost := svc + ".bb.internal"
+		if getBackend(localHost) == "" {
+			t.Errorf("expected %s to resolve", localHost)
+		}
+		if getBackend(bbHost) == "" {
+			t.Errorf("expected %s to resolve", bbHost)
+		}
 	}
 }

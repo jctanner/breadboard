@@ -78,7 +78,7 @@ import json
 import sys
 from pathlib import Path
 
-from emulator import ORG, REPO, api_request
+from emulator import FULLSEND_SHIM_PATH, ORG, REPO, api_request
 
 
 # deploy/fullsend/seed/seed-behaviour-script.py -> parents[3] is the project root.
@@ -156,16 +156,16 @@ ops:
     op: assert_env
     args: FULLSEND_FORGE
 
-  - description: The target repository was copied into the sandbox
+  - description: The seeded workflow shim was copied with the target repository into the sandbox
     op: assert_file
-    args: target-repo/README.md
+    args: target-repo/%(checkout_path)s
 
   - description: >-
       The same file is readable at the path an agent would use. read_file
       resolves against the target repository rather than the workspace, so
       this asserts the base the agent's own tooling works from.
     op: read_file
-    args: README.md
+    args: %(checkout_path)s
 
   - description: >-
       Write the agent result. This is the artifact that has to survive schema
@@ -193,7 +193,7 @@ ops:
 def render() -> str:
     body = json.dumps(TRIAGE_RESULT, indent=2)
     indented = "\n".join("      " + line for line in body.splitlines())
-    return BEHAVIOUR_SCRIPT % {"result": indented}
+    return BEHAVIOUR_SCRIPT % {"result": indented, "checkout_path": FULLSEND_SHIM_PATH}
 
 
 def main() -> None:

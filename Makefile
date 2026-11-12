@@ -301,18 +301,20 @@ vagrant-reset: ## Delete namespace and reinstall (WARNING: destructive)
 # Deploy scripts use PROJECT_ROOT to find project files.
 
 HOST_PROJECT_ROOT := $(shell pwd)
+BREADBOARD_DOMAIN ?= local
+BREADBOARD_SPLIT_DNS ?= 0
+BREADBOARD_UPDATE_HOSTS ?= 0
+FORCE_REBUILD ?= 1
+export BREADBOARD_DOMAIN BREADBOARD_SPLIT_DNS BREADBOARD_UPDATE_HOSTS FORCE_REBUILD
 
 host-install-k3s: ## Install K3s on host with /data auto-detection
 	sudo bash deploy/scripts/01-install-k3s-host.sh
 
-host-kubeconfig: ## Copy k3s kubeconfig to ~/.kube/config for non-sudo kubectl
-	sudo cp /etc/rancher/k3s/k3s.yaml $(HOME)/.kube/config
-	sudo chown $(shell id -u):$(shell id -g) $(HOME)/.kube/config
-	chmod 600 $(HOME)/.kube/config
-	@echo "✓ kubeconfig updated — kubectl should work without sudo"
+host-kubeconfig: ## Install protected user kubeconfig and configure Bash selection
+	bash deploy/scripts/host-kubeconfig.sh
 
 host-deploy-all: ## Run full deployment from scratch on host
-	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/deploy-all.sh
+	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) BREADBOARD_DOMAIN="$${BREADBOARD_DOMAIN}" BREADBOARD_SPLIT_DNS="$${BREADBOARD_SPLIT_DNS}" BREADBOARD_UPDATE_HOSTS="$${BREADBOARD_UPDATE_HOSTS}" FORCE_REBUILD="$${FORCE_REBUILD}" bash deploy/scripts/deploy-all.sh
 
 host-rebuild-prereqs: ## Install cert-manager, namespace, CA, secrets, storage, and RBAC on host
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/02-install-cert-manager.sh
@@ -331,7 +333,7 @@ host-conformance: ## Run the Fullsend conformance triage and leave an evidence f
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/24-run-conformance-triage.sh
 
 host-conformance-all: ## Deploy, reset conformance state, then run the triage (prompts)
-	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/deploy-all.sh
+	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) BREADBOARD_DOMAIN="$${BREADBOARD_DOMAIN}" BREADBOARD_SPLIT_DNS="$${BREADBOARD_SPLIT_DNS}" BREADBOARD_UPDATE_HOSTS="$${BREADBOARD_UPDATE_HOSTS}" FORCE_REBUILD="$${FORCE_REBUILD}" bash deploy/scripts/deploy-all.sh
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/25-reset-conformance.sh
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/24-run-conformance-triage.sh
 
@@ -362,7 +364,7 @@ host-build-dashboard: ## Build dashboard image on host
 host-rebuild-dashboard: ## Rebuild and redeploy dashboard on host
 	@echo "==> Rebuilding dashboard image..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05a-build-dashboard.sh
-	kubectl apply -f deploy/k8s/20-pipeline-dashboard.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/20-pipeline-dashboard.yaml
 	kubectl delete pod -n ai-pipeline -l app=pipeline-dashboard --wait=false
 	@echo "==> Waiting for dashboard pod to be ready..."
 	kubectl wait --for=condition=ready pod -n ai-pipeline -l app=pipeline-dashboard --timeout=60s || true
@@ -371,7 +373,7 @@ host-rebuild-dashboard: ## Rebuild and redeploy dashboard on host
 host-rebuild-fullsend-dashboard: ## Rebuild and redeploy Fullsend dashboard on host
 	@echo "==> Rebuilding Fullsend dashboard image..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05j-build-fullsend-dashboard.sh
-	kubectl apply -f deploy/k8s/26-fullsend-dashboard.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/26-fullsend-dashboard.yaml
 	kubectl rollout restart deployment/fullsend-dashboard -n ai-pipeline
 	kubectl rollout status deployment/fullsend-dashboard -n ai-pipeline --timeout=60s
 	@echo "✓ Fullsend dashboard rebuilt and redeployed"
@@ -387,7 +389,7 @@ host-rebuild-fullsend-dashboard: ## Rebuild and redeploy Fullsend dashboard on h
 bt-seed: ## Seed the Fullsend behaviour-test pool org and mint allowlists
 	python3 deploy/fullsend/seed/seed-behaviour-pool.py
 	python3 deploy/fullsend/behaviour/mint-pool.py write
-	kubectl apply -f deploy/k8s/24-fullsend-mint-dev.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/24-fullsend-mint-dev.yaml
 	kubectl rollout status deployment/fullsend-mint-dev -n ai-pipeline --timeout=120s
 
 bt-run: ## Run Fullsend behaviour tests against the stack (FEATURES=, TAGS=, FULLSEND_REF=)
@@ -412,7 +414,7 @@ host-rebuild-jira: ## Rebuild and redeploy Jira emulator on host
 	@echo "==> Rebuilding Jira emulator..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05b-build-jira-emulator.sh
 	kubectl apply -f deploy/k8s/11-jira-emulator-config.yaml
-	kubectl apply -f deploy/k8s/12-jira-emulator.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/12-jira-emulator.yaml
 	kubectl rollout restart deployment/jira-emulator -n ai-pipeline
 	kubectl rollout status deployment/jira-emulator -n ai-pipeline --timeout=60s
 	@echo "✓ Jira emulator rebuilt and redeployed"
@@ -421,7 +423,7 @@ host-rebuild-github: ## Rebuild and redeploy GitHub emulator on host
 	@echo "==> Rebuilding GitHub emulator..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05a-build-github-emulator.sh
 	kubectl apply -f deploy/k8s/09-github-emulator-config.yaml
-	kubectl apply -f deploy/k8s/10-github-emulator.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/10-github-emulator.yaml
 	kubectl rollout restart deployment/github-emulator -n ai-pipeline
 	kubectl rollout status deployment/github-emulator -n ai-pipeline --timeout=60s
 	@echo "✓ GitHub emulator rebuilt and redeployed"
@@ -429,7 +431,7 @@ host-rebuild-github: ## Rebuild and redeploy GitHub emulator on host
 host-rebuild-gitlab: ## Rebuild and redeploy GitLab emulator on host
 	@echo "==> Rebuilding GitLab emulator..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05f-build-gitlab-emulator.sh
-	kubectl apply -f deploy/k8s/19-gitlab-emulator.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/19-gitlab-emulator.yaml
 	kubectl rollout restart deployment/gitlab-emulator -n ai-pipeline
 	kubectl rollout status deployment/gitlab-emulator -n ai-pipeline --timeout=60s
 	@echo "✓ GitLab emulator rebuilt and redeployed"
@@ -498,7 +500,7 @@ host-rebuild-org-pulse: ## Rebuild and redeploy Org Pulse on host
 	@echo "==> Building Org Pulse images..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05l-build-org-pulse.sh
 	@echo "==> Applying manifest and restarting Org Pulse..."
-	kubectl apply -f deploy/k8s/28-org-pulse.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/28-org-pulse.yaml
 	kubectl rollout restart deployment/org-pulse-backend deployment/org-pulse-frontend -n ai-pipeline
 	kubectl rollout status deployment/org-pulse-backend -n ai-pipeline --timeout=180s
 	kubectl rollout status deployment/org-pulse-frontend -n ai-pipeline --timeout=120s
@@ -646,7 +648,7 @@ host-rebuild-markovd: ## Rebuild and redeploy markovd on host
 	@echo "==> Building markovd image..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05c-build-markovd.sh
 	@echo "==> Restarting markovd..."
-	kubectl apply -f deploy/k8s/15-markovd.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/15-markovd.yaml
 	kubectl rollout restart deployment/markovd -n ai-pipeline
 	kubectl rollout status deployment/markovd -n ai-pipeline --timeout=60s
 	@echo "✓ markovd rebuilt and redeployed"
@@ -689,7 +691,46 @@ host-reset: ## Delete namespace and reinstall on host (WARNING: destructive)
 	@echo "WARNING: This will delete the ai-pipeline namespace and all resources!"
 	@read -p "Are you sure? (yes/no): " confirm && [ "$$confirm" = "yes" ]
 	kubectl delete namespace ai-pipeline || true
-	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/deploy-all.sh
+	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) BREADBOARD_DOMAIN="$${BREADBOARD_DOMAIN}" BREADBOARD_SPLIT_DNS="$${BREADBOARD_SPLIT_DNS}" BREADBOARD_UPDATE_HOSTS="$${BREADBOARD_UPDATE_HOSTS}" FORCE_REBUILD="$${FORCE_REBUILD}" bash deploy/scripts/deploy-all.sh
+
+##@ Lima: Apple Silicon VM (vz + Rosetta)
+
+LIMA_INSTANCE ?= breadboard
+LIMA_CONFIG   ?= deploy/lima/breadboard-vm.yaml
+
+export LIMA_INSTANCE LIMA_CONFIG
+
+lima-up: ## Start Lima with only the repository mounted writable
+	python3 scripts/lima.py up
+
+lima-halt: ## Stop Lima
+	python3 scripts/lima.py halt
+
+lima-shell: ## Open the Lima guest shell
+	python3 scripts/lima.py shell
+
+lima-status: ## Show Lima status
+	python3 scripts/lima.py status
+
+lima-install-k3s: ## Install K3s in Lima
+	python3 scripts/lima.py install-k3s
+
+lima-deploy-all: ## Deploy inside Lima
+	python3 scripts/lima.py deploy-all
+
+lima-kubeconfig: ## Fetch kubeconfig atomically with mode 600
+	python3 scripts/lima.py kubeconfig
+
+lima-configure-dns: ## Explicitly configure Split DNS in Lima
+	python3 scripts/lima.py configure-dns
+
+lima-validate: ## Validate the Lima cluster
+	python3 scripts/lima.py validate
+
+lima-delete: ## Delete the VM after confirmation
+	python3 scripts/lima.py delete
+
+lima-stop: lima-halt ## Alias for lima-halt
 
 ##@ Local Development (no Vagrant)
 

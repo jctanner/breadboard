@@ -20,11 +20,48 @@ spec:
   duration: 87600h # 10 years
   renewBefore: 8760h # 1 year
   privateKey:
+    rotationPolicy: Never # Root key changes require an explicit maintenance migration
     algorithm: RSA
     size: 4096
   issuerRef:
     name: selfsigned-issuer
     kind: ClusterIssuer
+  nameConstraints:
+    critical: true
+    permitted:
+      dnsDomains:
+        - "github.local"
+        - "gitlab.local"
+        - "jira.local"
+        - "dashboard.local"
+        - "fullsend.local"
+        - "mint.local"
+        - "markovd.local"
+        - "observatory.local"
+        - "mlflow.local"
+        - "orgpulse.local"
+        - "relay.local"
+        - "relay-api.local"
+        - "hooksink.local"
+        - "hooksink-admin.local"
+        - "dojo.local"
+        - "svc.cluster.local"
+        - ".svc.cluster.local"
+        - "svc"
+        - ".svc"
+        - "ai-pipeline"
+        - ".ai-pipeline"
+        - "fullsend-dashboard"
+        - "fullsend-mint-dev"
+        - "github-emulator"
+        - "gitlab-emulator"
+        - "jira-emulator"
+        - "markovd"
+        - "model-relay"
+        - "org-pulse-frontend"
+        - "pipeline-dashboard"
+      ipRanges:
+        - "192.168.56.10/32"
 ---
 # CA issuer that uses our internal CA to sign certificates
 # Using Issuer (namespace-scoped) instead of ClusterIssuer for easier secret access

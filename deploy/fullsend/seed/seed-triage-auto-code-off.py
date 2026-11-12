@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import os
 import ssl
 import sys
 import urllib.request
@@ -29,11 +30,14 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from emulator import BASE_URL, ORG, REPO, api_request  # noqa: E402
+from emulator import BASE_URL, FULLSEND_SHIM_PATH, ORG, REPO, api_request, ensure_org, ensure_repo  # noqa: E402
 
 AGENTS_REPO = "fullsend-ai/agents"
 HARNESS_PATH = ".fullsend/triage.yaml"
 CONFIG_PATH = ".fullsend/config.yaml"
+SHIM_PATH = FULLSEND_SHIM_PATH
+from emulator import FULLSEND_SHIM as SHIM_WORKFLOW
+
 
 
 def _get_file(path: str) -> tuple[str | None, str | None]:
@@ -61,15 +65,15 @@ def _mirror_pin() -> tuple[str, str]:
         raise RuntimeError(f"cannot read {AGENTS_REPO} main: HTTP {status}")
     sha = commit["sha"]
     url = f"{BASE_URL}/{AGENTS_REPO}/raw/{sha}/harness/triage.yaml"
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
+    ctx = ssl.create_default_context(cafile=os.getenv("BREADBOARD_CA_FILE") or None)
     with urllib.request.urlopen(url, context=ctx) as resp:
         raw = resp.read()
     return sha, hashlib.sha256(raw).hexdigest()
 
 
 def main() -> None:
+    ensure_org()
+    ensure_repo()
     sha, digest = _mirror_pin()
     harness = (
         "# Conformance target: triage classifies and labels, and never promotes to\n"
@@ -90,10 +94,21 @@ def main() -> None:
     else:
         print(f"{HARNESS_PATH} already current")
 
+    shim, s_sha = _get_file(SHIM_PATH)
+    if (shim or "").strip() != SHIM_WORKFLOW.strip():
+        _put_file(SHIM_PATH, SHIM_WORKFLOW.strip(), "Install managed Fullsend event shim", s_sha)
+        print(f"wrote {SHIM_PATH}")
+
     raw, csha = _get_file(CONFIG_PATH)
     if raw is None:
-        raise RuntimeError(f"{CONFIG_PATH} not found; install the per-repo scaffold first")
-    config = yaml.safe_load(raw) or {}
+        config = {
+            "version": "1",
+            "runtime": "dummy",
+            "roles": ["triage"],
+            "agents": [],
+        }
+    else:
+        config = yaml.safe_load(raw) or {}
     agents = list(config.get("agents") or [])
     entry = {"name": "triage", "source": "triage.yaml"}
     existing = next((a for a in agents if isinstance(a, dict) and a.get("name") == "triage"), None)

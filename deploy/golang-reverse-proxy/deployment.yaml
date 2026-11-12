@@ -40,6 +40,10 @@ spec:
       labels:
         app: ingress-proxy
     spec:
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "2"
       containers:
       - name: proxy
         image: ingress-proxy:latest
@@ -58,6 +62,8 @@ spec:
           value: /etc/tls/tls.crt
         - name: TLS_KEY_FILE
           value: /etc/tls/tls.key
+        - name: BREADBOARD_DOMAIN
+          value: "local"
 
         volumeMounts:
         # Mount TLS certificate (we'll use a wildcard cert or SNI)
@@ -106,7 +112,6 @@ spec:
   secretName: ingress-proxy-tls
   dnsNames:
     - "*.ai-pipeline.svc.cluster.local"
-    - "*.local"
     - github-emulator.ai-pipeline.svc.cluster.local
     - jira-emulator.ai-pipeline.svc.cluster.local
     - dashboard.ai-pipeline.svc.cluster.local

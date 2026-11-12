@@ -3,7 +3,8 @@
 
 set -euo pipefail
 
-PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 CHECKOUTS_DIR="${PROJECT_ROOT}/checkouts"
 
 repos=(
@@ -25,8 +26,8 @@ repos=(
 mkdir -p "${CHECKOUTS_DIR}"
 
 for repo in "${repos[@]}"; do
-  name="${repo%%|*}"
-  url="${repo#*|}"
+  name="$(echo "${repo}" | cut -d'|' -f1)"
+  url="$(echo "${repo}" | cut -d'|' -f2)"
   destination="${CHECKOUTS_DIR}/${name}"
 
   if [ -d "${destination}/.git" ]; then

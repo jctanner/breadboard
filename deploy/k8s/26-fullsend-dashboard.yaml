@@ -74,6 +74,8 @@ spec:
             - name: http
               containerPort: 5000
           env:
+            - name: BREADBOARD_DOMAIN
+              value: "local"
             - name: GITHUB_API_URL
               value: https://github-emulator.ai-pipeline.svc.cluster.local/api/v3
             - name: GITHUB_REPOS

@@ -566,3 +566,110 @@ This deployment is designed for **local development and testing only**. For prod
 ## License
 
 This deployment configuration is part of the ai-first-pipeline project.
+
+## Existing CA and custom-domain upgrades
+
+The deployment preflight refuses to change an existing CA's name constraints or
+external domain. This applies to host, Vagrant, Lima, and component rebuild targets,
+including the default `local` domain. An existing unconstrained CA requires a planned
+manual migration before upgrading; deployment does not rotate root keys or migrate
+leaf certificates automatically. Follow the CA/leaf/image/client-trust maintenance
+runbook in [the Lima deployment guide](lima/README.md#domain-trust-and-upgrade-notes),
+which also applies to Linux and Vagrant installations. Use a disposable cluster to
+qualify the migration first. The certificate validation script checks issued chains
+against the public ConfigMap CA; inspect hostnames and trust constraints separately.
+
+## Pipeline-agent OpenCode builder
+
+The OpenCode builder defaults to the maintainer integration fork at immutable commit
+`9f55fe01b9304cc34534dbf1e69b0f8c4bfc8c77`, retaining its SDK/MLflow integration fixes
+and the `packages/opencode` build layout. Upstream's moving `dev` branch no longer
+has that layout, so fresh builds cannot use it with the current build recipe.
+`OPENCODE_REPO` and `OPENCODE_REF` remain build overrides; the ref may be a full commit,
+branch or tag. The default fetch verifies HTTPS. Docker Hub base-image names are qualified so
+unattended Podman builds do not depend on distribution short-name aliases. The CLI
+is smoke-checked in both builder and final runtime images. The final image copies
+the official Node 24 runtime rather than the distribution Node 20 package, because
+the current Claude CLI declares Node 22 or newer in its package engines. Its version
+is also checked during the build. Node explicitly trusts the injected CA through
+`NODE_EXTRA_CA_CERTS`; agent builds require exactly one parseable X.509 certificate in a PEM
+`CERTIFICATE` block and reject bundles, unavailable input or empty input. These
+input guards do not check expiry or CA policy; use the deployment certificate
+validation for those checks.
+Public certificate permissions are set explicitly for non-root readers. The x64
+builder selects the baseline artifact, and unsupported architectures fail closed.
+
+Use `FORCE_REBUILD=1` after source or CA changes: optional image reuse checks tags,
+not source/CA fingerprints. This includes upgrading images made by older builders
+that permitted an empty CA placeholder. After an interrupted image import, a
+tag-only resume can also miss an unfinished image alias; use `FORCE_REBUILD=1`
+to rebuild and reconcile its tags.
+
+This pins the source, not every build input: the existing Bun/uv lockfile fallback,
+other moving source refs and package downloads still limit full image reproducibility.
+The selected OpenCode source currently needs its Bun lockfile reconciled before that
+fallback can be removed; its frozen install reports a lockfile mismatch. Keeping the
+fork commit reachable/protected is a maintainer follow-up; it is currently reachable
+from the existing integration branch, and an unavailable ref fails the build closed.
+
+## Host operator kubeconfig
+
+Run `make host-kubeconfig` as the ordinary operator user. It installs the user copy
+at `~/.kube/config` with mode 0600, backs up a differing existing config with mode
+0600, and keeps the server copy protected. New interactive Bash shells select the
+user copy only when `KUBECONFIG` is unset. For the current terminal or other shells,
+select it explicitly:
+
+```bash
+export KUBECONFIG="$HOME/.kube/config"
+```
+
+An explicitly set `KUBECONFIG` is preserved; the target refuses `sudo make`.
+
+## Fullsend bootstrap failure recovery
+
+Fullsend Mint bootstrap reconciles eight role Apps in sequence. It may remove an
+old repository-selected installation before creating its organization-wide
+replacement. If bootstrap fails, earlier valid changes remain, and the failed role
+may have no installation. Fix the reported cause and rerun bootstrap; it writes the
+combined role-App secret only after all eight verifications succeed.
+
+Sudo seeders assume a trusted single operator who already has full sudo and
+controls the integration checkouts. Do not seed as root from repositories writable
+by untrusted users. The temporary exact-path Git trust is not a sanitizer for an
+untrusted repository's local configuration or attributes.
+
+Upstream mirrors preserve final source symlinks as link text, without reading
+those targets on the seed host. Linked parents and escaping source/destination
+paths are rejected. Mirrored links retain upstream semantics inside a later
+consumer's environment; they are not sanitized or rewritten for that consumer.
+Actions remain disabled on the agents mirror.
+
+## Fullsend image policy compatibility
+
+`05i-build-fullsend.sh` prepares each local sandbox/code wrapper from the exact
+harness-pinned base image. It copies the public `/etc/openshell/policy.yaml`
+without starting the image and generates a temporary build context containing the
+Containerfile, public CA and `image-policy.yaml`. Manual wrapper builds need those
+same generated inputs; using the source directory alone is insufficient.
+
+The pinned OpenShell 0.1.4 rejects legacy `tls: terminate`. The helper changes only
+that scalar to `tls: ""`, preserving every other content byte and policy rule; the public file is installed
+as root:root mode 0644. The pinned
+[policy validator](https://github.com/NVIDIA/OpenShell/blob/5a7728c304b5528e954e9ae900cf21f84e1a12b1/crates/openshell-policy/src/l7_validate.rs)
+maps empty to Unspecified; the
+[network runtime](https://github.com/NVIDIA/OpenShell/blob/5a7728c304b5528e954e9ae900cf21f84e1a12b1/crates/openshell-supervisor-network/src/l7/mod.rs)
+maps it to automatic TLS termination, not skip. Policies with anchors/aliases/explicit tags or block-style legacy TLS values,
+invalid structure, oversized data, non-regular archive entries or only a legacy policy
+path fail closed and need an explicit migration. The helper uses the host PyYAML
+dependency already declared by the project.
+
+The Fullsend runner allows five minutes for sandbox readiness through
+`FULLSEND_SANDBOX_READY_TIMEOUT`. Cold startup on the qualified physical host took
+135–180 seconds, exceeding the CLI's 120-second default plus its 10-second context
+buffer. An explicit harness
+[`sandbox_timeout_seconds`](https://github.com/fullsend-ai/fullsend/blob/1d00009b1e10bdea36a5760ef5c67a687a3bbfec/internal/harness/harness.go)
+takes precedence; the pinned
+[timeout/retry implementation](https://github.com/fullsend-ai/fullsend/blob/1d00009b1e10bdea36a5760ef5c67a687a3bbfec/internal/sandbox/sandbox.go)
+still caps readiness at ten minutes and retains its bounded retry count. This
+changes the startup budget, not agent execution timeouts or sandbox enforcement.

@@ -1,0 +1,100 @@
+{
+  "unit_result": "success",
+  "run_id": "9",
+  "conclusion": "success",
+  "runner": "fullsend-agent-runner",
+  "breadboard_commit": "227674c6d7017505b7a4142a71e518c19215068d",
+  "strict_conformance_passed": true,
+  "operations_total": 10,
+  "operations_passed": 10,
+  "agent_and_run_exit_codes": [
+    0,
+    0
+  ],
+  "comment_authors": [
+    "fullsend-triage[bot]"
+  ],
+  "label_actors": [
+    "fullsend-triage[bot]"
+  ],
+  "artifact_present": true,
+  "final_image_policy_sha256": "2054e6982dd47351ec1cea23ed07aa34703030ae086b5a626a8331757b1cbea3",
+  "fresh_sandbox_and_code_images_configuration_accepted": true,
+  "final_verified_https_get": 200,
+  "final_read_only_https_post": 403,
+  "focused_tests_passed": 190,
+  "live_tests_skipped": 5,
+  "images": [
+    {
+      "image": "docker.io/library/fullsend-sandbox-local:k3s",
+      "base": "ghcr.io/fullsend-ai/fullsend-sandbox@sha256:8e17e6120e17debdcabff5eb331a7cb7757b09ec3d586010c9d7956fd1fc5633",
+      "image_id": "2db627ecc6e78584d286b10803a8eb1dd41207935a0e3d8dec183f032b6859a2",
+      "expected_policy_sha256": "2054e6982dd47351ec1cea23ed07aa34703030ae086b5a626a8331757b1cbea3",
+      "baked_policy_sha256": "2054e6982dd47351ec1cea23ed07aa34703030ae086b5a626a8331757b1cbea3"
+    },
+    {
+      "image": "docker.io/library/fullsend-code-local:k3s",
+      "base": "ghcr.io/fullsend-ai/fullsend-code@sha256:8c5953b8bf88d681a66e2435cde5397bcac704f06fca5dc782f2206bcce91718",
+      "image_id": "b0d099aa76e7fc6ebd056cbabc0b564300d9ab98768b2b6463e3a7c26ab36845",
+      "expected_policy_sha256": "2054e6982dd47351ec1cea23ed07aa34703030ae086b5a626a8331757b1cbea3",
+      "baked_policy_sha256": "2054e6982dd47351ec1cea23ed07aa34703030ae086b5a626a8331757b1cbea3"
+    }
+  ],
+  "image_policy_note": "The distinct pinned bases independently produce byte-identical migrated policies; each expected/baked hash was checked separately.",
+  "provenance": {
+    "run_id": "9",
+    "issue": 5,
+    "work_item": "fullsend-dev/triage-target#5",
+    "telemetry_archive_member": "fs-tri-62799a8f3b5b/run-telemetry.jsonl",
+    "operations_archive_member": "fs-tri-62799a8f3b5b/iteration-1/output/behaviour-results.json",
+    "sandbox_create_seconds": 137.541943461,
+    "sandbox_create_status_ok": true,
+    "telemetry_matches_issue_and_workflow": true,
+    "new_sandbox_workspace": true,
+    "runner_ready_timeout": "5m",
+    "harness_timeout_override_seconds": 0,
+    "effective_budget_exceeds_default_130_seconds_proven": true
+  },
+  "network_enforcement": {
+    "provider_free": true,
+    "authorization_header_sent": false,
+    "certificate_verification_enabled": true,
+    "endpoint": "https://github.w530.local/",
+    "verified_get": 200,
+    "direct_origin_post": 405,
+    "readonly_post_before": 403,
+    "readwrite_post": 405,
+    "readonly_post_after": 403,
+    "only_changed_property": "the audit endpoint access preset",
+    "audit_sandbox_deleted": true,
+    "supplemental_log_export": "Automatic review rejected log export for credential/session risk; independent A/B/A request outcomes prove policy causation without exporting logs.",
+    "policy_fingerprints": {
+      "readonly": "b4726a5d4e59",
+      "readwrite": "61968290e542",
+      "restored_readonly": "b4726a5d4e59"
+    }
+  },
+  "final_cluster_certificate_dns_validation_passed": true,
+  "legacy_conformance_harness_deferrals": [
+    "Run selection does not filter by issue; this audit independently bound telemetry work_item and pipeline ID to issue 5/run 9 and checked issue-specific actors. General concurrent-run selection hardening is a separate follow-up.",
+    "The shell checker does not parse operation JSON itself; this audit independently required 10/10 operation successes and both telemetry exit codes 0 from the exact run9 artifact. Automating that additional check is a separate follow-up; existing strict checks were retained.",
+    "Capture Kubernetes pod imageID before automatic sandbox cleanup in future runs. The current run and audit pods are deleted; per-image local IDs, immutable bases, exact policy hashes and the unchanged image-tag history are recorded, but pod imageID is not retained."
+  ],
+  "artifact_binding": {
+    "run_id": 9,
+    "workflow_head_sha": "573bdd2347242d2a291cd4a751481f2f5d3bee4a",
+    "evidence_zip_sha256": "fe68f185a04523237066ec5b44766442ca713dcb0723af070cc8b603219accd8",
+    "scenario_at_workflow_head_matches_committed_render": true,
+    "scenario_sha256": "0e7f60898e4f3186ba1d573d3b6575047cda5ca0c2ced618ce3769d7654ad613",
+    "conformance_checker_sha256": "249b5828970bac4b606b1aac8713995844af687953b41d1594309bc608228f54",
+    "checker_unchanged_across_host_fast_forward": true,
+    "breadboard_revision_at_evidence_collection": "227674c6d7017505b7a4142a71e518c19215068d",
+    "source_binding_note": "Breadboard metadata was fast-forwarded during the run after verifying our working patches. Tested image payloads and rendered scenario were unchanged; the conformance checker was unchanged. The workflow head SHA belongs to the emulator target repo, not Breadboard.",
+    "pod_image_id_limitation": "Run9 and audit pods were deleted after validation, so their pod imageID was not retained. Both local image IDs and exact policy hashes were recorded separately; no image rebuilds or tag changes occurred during run9 or the A/B/A audit. Capture pod imageID before cleanup in future automated evidence."
+  },
+  "source_commits": {
+    "image_policy_fix": "f349aaf7ceec82dc7af903a965c5e93e165290e0",
+    "readiness_budget_fix": "352f463",
+    "checkout_fixture_fix": "227674c6d7017505b7a4142a71e518c19215068d"
+  }
+}

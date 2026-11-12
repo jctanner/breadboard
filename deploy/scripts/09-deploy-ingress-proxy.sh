@@ -4,6 +4,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "${SCRIPT_DIR}/render_domain_manifest.py" /dev/null "${BREADBOARD_DOMAIN:-local}" >/dev/null
 PROJECT_ROOT="${SCRIPT_DIR}/../.."
 
 echo "==> Deploying Go Reverse Proxy (Ingress Controller)..."
@@ -31,7 +32,7 @@ sudo k3s ctr images tag localhost/ingress-proxy:latest docker.io/library/ingress
 
 # Deploy to cluster
 echo "  Deploying to Kubernetes..."
-kubectl apply -f deployment.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" deployment.yaml
 
 # Restart pods to pick up the new image
 echo "  Restarting pods..."
@@ -55,19 +56,37 @@ done
 # Get LoadBalancer IP
 LB_IP=$(kubectl get svc -n ai-pipeline ingress-proxy -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "pending")
 
+DOMAIN="${BREADBOARD_DOMAIN:-local}"
+
+# Ensure /etc/hosts has entries for all local services so scripts inside the VM/host resolve them
+HOSTS_LINE="127.0.0.1 dashboard.local fullsend.local github.local gitlab.local jira.local markovd.local observatory.local orgpulse.local relay.local relay-api.local hooksink.local hooksink-admin.local mlflow.local"
+if [ "${DOMAIN}" != "local" ]; then
+  HOSTS_LINE="${HOSTS_LINE} dashboard.${DOMAIN} fullsend.${DOMAIN} github.${DOMAIN} gitlab.${DOMAIN} jira.${DOMAIN} markovd.${DOMAIN} observatory.${DOMAIN} orgpulse.${DOMAIN} relay.${DOMAIN} relay-api.${DOMAIN} hooksink.${DOMAIN} hooksink-admin.${DOMAIN} mlflow.${DOMAIN}"
+fi
+
+MARKER="# Breadboard services"
+if [ "${BREADBOARD_UPDATE_HOSTS:-0}" = 1 ]; then
+if grep -q "${MARKER}" /etc/hosts 2>/dev/null; then
+  sed -i "s/^.*${MARKER}.*$/${HOSTS_LINE} ${MARKER}/" /etc/hosts 2>/dev/null || true
+elif [ -w /etc/hosts ]; then
+  echo "${HOSTS_LINE} ${MARKER}" >> /etc/hosts
+fi
+
+fi
+
 echo "==> Ingress proxy deployed successfully"
 echo ""
 echo "LoadBalancer IP: ${LB_IP}"
 echo ""
 echo "Access services via:"
-echo "  - GitHub:    http://${LB_IP} -H 'Host: github.local'"
-echo "  - GitLab:    http://${LB_IP} -H 'Host: gitlab.local'"
-echo "  - Jira:      http://${LB_IP} -H 'Host: jira.local'"
-echo "  - Dashboard: http://${LB_IP} -H 'Host: dashboard.local'"
-echo "  - Fullsend:  http://${LB_IP} -H 'Host: fullsend.local'"
-echo "  - MLflow:    http://${LB_IP} -H 'Host: mlflow.local'"
-echo "  - Org Pulse: http://${LB_IP} -H 'Host: orgpulse.local'"
-echo "  - Relay:     http://${LB_IP} -H 'Host: relay.local'"
-echo "  - Webhooks:  http://${LB_IP} -H 'Host: hooksink.local'"
-echo "  - Webhooks admin: http://${LB_IP} -H 'Host: hooksink-admin.local'"
+echo "  - GitHub:    http://${LB_IP} -H 'Host: github.${DOMAIN}'"
+echo "  - GitLab:    http://${LB_IP} -H 'Host: gitlab.${DOMAIN}'"
+echo "  - Jira:      http://${LB_IP} -H 'Host: jira.${DOMAIN}'"
+echo "  - Dashboard: http://${LB_IP} -H 'Host: dashboard.${DOMAIN}'"
+echo "  - Fullsend:  http://${LB_IP} -H 'Host: fullsend.${DOMAIN}'"
+echo "  - MLflow:    http://${LB_IP} -H 'Host: mlflow.${DOMAIN}'"
+echo "  - Org Pulse: http://${LB_IP} -H 'Host: orgpulse.${DOMAIN}'"
+echo "  - Relay:     http://${LB_IP} -H 'Host: relay.${DOMAIN}'"
+echo "  - Webhooks:  http://${LB_IP} -H 'Host: hooksink.${DOMAIN}'"
+echo "  - Webhooks admin: http://${LB_IP} -H 'Host: hooksink-admin.${DOMAIN}'"
 echo ""

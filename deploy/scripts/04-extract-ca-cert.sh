@@ -9,9 +9,9 @@ echo "==> Extracting CA certificate..."
 sleep 5
 
 # Extract the CA certificate from the issued certificate
-CA_CERT=$(kubectl get secret github-emulator-tls \
+CA_CERT=$(kubectl get secret internal-ca-secret \
   -n ai-pipeline \
-  -o jsonpath='{.data.ca\.crt}' | base64 -d)
+  -o jsonpath='{.data.tls\.crt}' | base64 -d)
 
 if [ -z "$CA_CERT" ]; then
   echo "ERROR: Could not extract CA certificate from Secret"

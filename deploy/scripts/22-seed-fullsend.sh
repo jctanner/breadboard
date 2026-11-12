@@ -14,8 +14,21 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "${SCRIPT_DIR}/render_domain_manifest.py" /dev/null "${BREADBOARD_DOMAIN:-local}" >/dev/null
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 export PYTHONPATH="${PROJECT_ROOT}/deploy/fullsend/seed"
+export GITHUB_EMULATOR_URL="${GITHUB_EMULATOR_URL:-https://github.${BREADBOARD_DOMAIN:-local}}"
+
+# Bootstrap verified seed transport from the CA selected by this kubeconfig,
+# without changing the host trust store. An explicit operator CA takes precedence.
+if [ -z "${BREADBOARD_CA_FILE:-}" ]; then
+  SEED_CA="$(mktemp /tmp/breadboard-seed-ca.XXXXXX)"
+  trap 'rm -f "${SEED_CA}"' EXIT
+  kubectl get configmap internal-ca-cert -n ai-pipeline \
+    -o jsonpath='{.data.ca\.crt}' > "${SEED_CA}"
+  openssl x509 -in "${SEED_CA}" -noout >/dev/null
+  export BREADBOARD_CA_FILE="${SEED_CA}"
+fi
 
 # The per-repo shim calls a reusable workflow in fullsend-ai/fullsend, so
 # that repository has to exist in the emulator before any dispatch can

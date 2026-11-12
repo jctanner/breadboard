@@ -17,6 +17,10 @@
 
 ## Current milestone
 
+- [CC-61: PR #8 manual merge preparation](tasks/done/cc61-pr8.md): isolated
+  fallback [PR #10](https://github.com/jctanner/breadboard/pull/10) is ready for manual merge after reviewed fixes and passing W530 strict conformance.
+  Nonblocking [conformance evidence automation](bugs/open/conformance-evidence-automation.md) remains a follow-up.
+
 - [Fullsend v0.52.0 patch rebase](tasks/current/fullsend-v052-patch-rebase.md):
   both checkouts fast-forwarded (fullsend 2,616 and agents 620 commits);
   fullsend 0010 dropped as fixed upstream, 0015 added (dispatch/lint fallback
@@ -25,6 +29,16 @@
   tokens in the sandbox); OpenShell 0.1.4 deployed (fresh gateway DB,
   CA-bearing local supervisor image, emulator non-cone checkout). Conformance
   passed on run 1816.
+
+- [Fullsend Upgrade and CVE Pilot](plans/fullsend-upgrade-and-cve-pilot-plan.md):
+  verify Fullsend v0.52.0 / OpenShell 0.1.4 / Pi 1.3.0 on physical host `rhea`
+  (`BREADBOARD_DOMAIN=bb.internal`), and build deterministic CVE Dependabot
+  fixture harness (`seed-cve-fixture.py`) for DOMPurify #130 remediation pilot.
+- [Lima VM and Tailnet DMZ environment](tasks/done/lima-tailnet-environment.md):
+  replicate the Breadboard stack on Apple Silicon in an ARM64 Lima VM with
+  Rosetta emulation, parameterized ingress domain (`BREADBOARD_DOMAIN`), and
+  isolated Tailnet DMZ access (`tag:breadboard`). Plan: [lima-tailnet-environment-plan.md](plans/lima-tailnet-environment-plan.md);
+  ADR: [ADR-0014](decisions/ADR-0014-lima-tailnet-dmz-environment.md).
 
 - [Permanent scheduled Workflow cutover](tasks/done/strat-workflow-permanent-schedule-cutover-20261029.md):
   owner authorized permanent fullsend on schedule 4222905; API readback

@@ -2,8 +2,13 @@
 
 Original author: @durandom (Marcel Hild). Original head:
 `3b18b726d143efc210b101d9d84267dcc5f6f42c`; merge base `5142f2f1c5`.
-Work is isolated under `/tmp/cc61-pr8`. The live install is never edited or deployed.
+Work is isolated under `/tmp/cc61-pr8`. The live corsair install is never edited or deployed; the later W530 deployment is explicitly authorized.
 Fallback branch: `pr8-breadboard-domain-lima`. Original commits remain unchanged.
+
+**Final qualification: ready for manual merge.** Codex and Claude approve the
+source with no blockers. W530 strict conformance run 9 passes all 10 operations,
+agent/root exits 0/0, minted-bot identity and artifact checks. See the final section
+and [sanitized evidence](cc61-w530-final-evidence.json). No merge was performed.
 
 ## Round 1
 
@@ -334,8 +339,8 @@ not publish new fixture commits or execute models.
 
 The stricter canonical-grant/repository-selection bootstrap succeeds against the
 real cluster-selected public CA. A repeat run also succeeds with existing org-wide grants (both systemd runs exit 0).
-End-to-end sandbox activation remains blocked as documented in
-[the open qualification bug](../bugs/open/w530-openshell-configuration-activation.md).
+At that round, end-to-end sandbox activation remained blocked; see
+[the now-fixed qualification bug](../bugs/fixed/w530-openshell-configuration-activation.md).
 
 
 | Wider follow-up round | Codex verdict | Claude verdict | Closure |
@@ -358,3 +363,116 @@ confirmed by executing the actual stage_files, not a copied test implementation.
 
 No fork-main push, force-push, merge, PR comment/review, label or closure occurred.
 The replacement PR stays work in progress for integration despite source approval.
+
+
+## OpenShell activation repair
+
+The user resumed the activation investigation. A new provider-free probe's
+redacted supervisor diagnostics identified an invalid baked image policy; the
+pinned CLI reported unknown tls value terminate. Migrating that legacy value
+made the probe ConfigurationAccepted/Ready. The durable source fix is f349aaf:
+read the canonical public policy from the exact digest without starting the
+image, replace only legacy TLS scalar spans with the empty/default value, and
+copy the generated public policy into each local sandbox/code wrapper.
+
+| Activation review round | Codex verdict | Claude verdict | Closure |
+| --- | --- | --- | --- |
+| 1 | Fix identified; probe activates | No source blocker; YAML/CP/TLS evidence concerns | Syntax-preserving edits, archive-only copy, canonical path and runtime enforcement probe |
+| 2 | Source hardened | No blocker; scalar/cleanup/diagnostic should-fixes | Reject tagged/block TLS values, named rm -v cleanup, UTF8, diagnostics and archive regressions |
+| 3 | Source approved | Approve; no required should-fixes | 188 focused tests pass, 5 live tests skipped; exact final images activate and read-only HTTPS enforcement passes |
+
+Both affected images build/import successfully. Their baked policy matches the
+final helper's output byte for byte (SHA256
+2054e6982dd47351ec1cea23ed07aa34703030ae086b5a626a8331757b1cbea3).
+Fresh sandboxes from both exact final images reach ConfigurationAccepted/Ready
+without a policy override. The final triage image passes verified HTTPS GET200
+and denies POST403 under an enforced read-only L7 rule. The final code image also
+executes a command successfully through the boundary. Diagnostic sandboxes are
+removed after testing. This closes review E1 for the literal empty TLS spelling.
+Strict Fullsend conformance run 9 now passes; the final qualification below closes the integration gate.
+
+Accepted deferrals: trusted digest-pinned image cp uses temporary disk before
+archive-size validation; future untrusted images should impose an in-flight
+stream/disk quota. Tight syntax-only splicing and exact-content regressions guard
+semantic preservation; malformed YAML/tar failures may still use tracebacks.
+The public file is intentionally root-owned0644. Non-regular archive members
+are refused without extraction; an engine may resolve a policy link inside its
+container before archiving, which cannot follow it into host files. Only05i
+builds this wrapper in the repository; manual-build context requirements are now
+documented. Portable RUN chmod remains for classic builder compatibility.
+
+
+## Final W530 qualification
+
+The source follow-up commits are f349aaf (legacy image-policy migration), 352f463
+(bounded five-minute cold-start budget) and 227674c (honest seeded checkout witness).
+Both Codex and Claude approve these source changes with no blockers. Readiness
+configuration and fixture reviews also approve; producer/idempotence tests and
+pinned-source citations close their nonblocking suggestions.
+
+The earlier run 6 was green at workflow level but strict conformance correctly
+failed because the fresh target has no README. Structured operation results and
+nonzero telemetry exits established a genuine scenario failure. The shell's
+strict agent-success checks were never removed or relaxed. The replacement
+witness is the managed event shim that already exists in the fresh target.
+
+Final strict conformance run **9**, issue **5**, passes with **10/10 operations**,
+agent/root telemetry exits **0/0**, expected fullsend-agent-runner, minted
+fullsend-triage[bot] comments/labels and an uploaded artifact. Telemetry binds its
+work item to fullsend-dev/triage-target#5 and its pipeline to run 9 on committed
+source 227674c. The successful cold sandbox_create span is **137.542 seconds**,
+which exceeds the prior 130-second hard deadline and confirms the five-minute
+budget reached the real launcher. The harness override is zero.
+
+Per-image immutable bases, final IDs and independently checked expected/baked
+policy hashes are recorded in cc61-w530-final-evidence.json. The migrated policies
+are byte-identical across these distinct bases. Both final images automatically
+reach ConfigurationAccepted/Ready; code execution passes. Verified credential-free
+HTTPS GET returns 200. An explicit test-only A/B/A policy replacement produces
+POST403 (read-only), POST405 (read-write, same as the direct origin), and POST403
+again after restoring read-only. This proves policy-layer method enforcement
+without exporting the supplemental supervisor log that automatic review rejected
+for credential/session risk. All diagnostic sandboxes are deleted.
+
+The final focused suite passes **190 tests**, with **5 opt-in live tests skipped**.
+Shell syntax and PR whitespace checks pass. Final cluster health, certificate
+validation and custom-domain pod DNS all pass. The test host tracks the reviewed
+committed source and preserves its ignored runtime/configuration state. The live
+corsair install is untouched. No fork-main push, force-push, merge, PR comment,
+review, label or closure occurred; original #8 remains open.
+
+Accepted follow-ups are explicit: trusted cp temporary-disk bounds, faithful
+upstream link targets within consumer isolation, and the pre-existing generic
+conformance run-selection/structured-evidence automation gap. This run independently
+closes the latter's provenance and operation-result checks; see the open follow-up
+card. Real model inference, client DNS/trust-store enrollment and macOS Lima/ARM
+remain unqualified. The successful end-to-end path is explicitly the deterministic
+dummy runtime, not a claim of model-backed execution.
+
+**Ready for manual merge: yes**, using Create a merge commit on PR #10 to preserve
+durandom's original commits and authorship. Applying this fix elsewhere requires
+rebuilding the Fullsend sandbox/code wrappers and applying the runner's readiness
+environment setting; merging source does not redeploy the live corsair install.
+
+
+### Final independent evidence review
+
+| Review | Codex | Claude | Disposition |
+| --- | --- | --- | --- |
+| Readiness setting | Approve | Approve | Existing bounded setting; pinned parser/field/retry citations and real 137.542s successful startup |
+| Checkout fixture | Approve | Approve | Producer execution/idempotence regression added; real .github witness passes |
+| Combined source/evidence | No source blockers | Approve source; evidence requests | Per-image bases/IDs/hashes, A/B/A causal test, startup span and issue/run provenance attached |
+| Evidence addendum | No blockers | Evidence closes gaps; no remaining blockers | Log receipt deferred for privacy; A/B/A accepted; generic harness automation and pre-cleanup pod imageID capture remain nonblocking follow-ups |
+
+The successful archive SHA256 is
+fe68f185a04523237066ec5b44766442ca713dcb0723af070cc8b603219accd8.
+Its scenario at emulator workflow head 573bdd2347242d2a291cd4a751481f2f5d3bee4a
+matches the committed render (SHA256
+0e7f60898e4f3186ba1d573d3b6575047cda5ca0c2ced618ce3769d7654ad613).
+Breadboard's 227674c is the revision captured when collecting evidence, not the
+emulator workflow checkout. The host's own patches were verified and fast-forwarded
+during the run; tested image/configuration/scenario payloads were unchanged, and
+the conformance checker is byte-identical across that fast-forward. This distinction
+and the unretained deleted-pod imageID limitation are explicit in the evidence.
+No supplemental supervisor log was exported after its automatic-review rejection;
+the safer A/B/A method established the policy-layer denial without it.

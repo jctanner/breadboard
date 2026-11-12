@@ -11,13 +11,24 @@ GITHUB_TOKEN="${GITHUB_EMULATOR_TOKEN:-ghp_admin_default_token}"
 API="${GITHUB_URL%/}/api/v3"
 FULLSEND_ORG="${FULLSEND_GITHUB_ORG:-fullsend-dev}"
 
+# Bootstrap with the selected cluster's public CA; never bypass TLS for credentials.
+if [ -z "${BREADBOARD_CA_FILE:-}" ]; then
+  SEED_CA=$(mktemp /tmp/breadboard-mint-ca.XXXXXX)
+  trap 'rm -f "${SEED_CA}"' EXIT
+  kubectl get configmap internal-ca-cert -n ai-pipeline \
+    -o jsonpath='{.data.ca\.crt}' > "${SEED_CA}"
+  export BREADBOARD_CA_FILE="${SEED_CA}"
+fi
+openssl x509 -in "${BREADBOARD_CA_FILE}" -noout >/dev/null
+
+
 ensure_app() {
   local app_id="$1"
   local name="$2"
   local slug="$3"
   local permissions="$4"
   local app_status
-  app_status="$(curl --silent --show-error --insecure \
+  app_status="$(curl --silent --show-error --cacert "${BREADBOARD_CA_FILE}" \
     -o /dev/null -w '%{http_code}' \
     -X POST "${API}/admin/apps" \
     -H "Authorization: token ${GITHUB_TOKEN}" \
@@ -32,7 +43,7 @@ ensure_app() {
   fi
 
   local reconcile_status
-  reconcile_status="$(curl --silent --show-error --insecure \
+  reconcile_status="$(curl --silent --show-error --cacert "${BREADBOARD_CA_FILE}" \
     -o /dev/null -w '%{http_code}' \
     -X PATCH "${API}/admin/apps/${app_id}" \
     -H "Authorization: token ${GITHUB_TOKEN}" \
@@ -77,7 +88,7 @@ mint_pat() {
   local scopes="$2"
   local login="$3"
   local response
-  response="$(curl --silent --show-error --fail --insecure \
+  response="$(curl --silent --show-error --fail --cacert "${BREADBOARD_CA_FILE}" \
     -X POST "${API}/admin/tokens" \
     -H "Authorization: token ${GITHUB_TOKEN}" \
     -H 'Content-Type: application/json' \
@@ -120,37 +131,61 @@ echo "==> Installing the role Apps on ${FULLSEND_ORG} and collecting their keys 
 # The Apps' private keys go to a Secret the mint mounts as one file, and the
 # mint signs a ten-minute JWT per exchange for a one-hour installation token.
 ROLE_APPS="$(python3 - "${API}" "${GITHUB_URL%/}" "${GITHUB_TOKEN}" "${FULLSEND_ORG}" <<'PY'
-import json, ssl, sys, urllib.error, urllib.request
+import json, os, ssl, sys, urllib.error, urllib.request
 api, base, token, org = sys.argv[1:5]
-ctx = ssl.create_default_context(); ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
+ctx = ssl.create_default_context(cafile=os.environ["BREADBOARD_CA_FILE"])
+def decode(payload):
+    try:
+        return json.loads(payload) if payload else None
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None
+
 def call(url, body=None, method=None):
     req = urllib.request.Request(url, data=json.dumps(body).encode() if body is not None else None,
                                  headers={"Authorization": "token " + token, "Content-Type": "application/json",
                                           "Accept": "application/vnd.github+json"}, method=method)
     try:
         with urllib.request.urlopen(req, context=ctx) as r:
-            payload = r.read(); return r.status, (json.loads(payload) if payload else None)
+            payload = r.read(); return r.status, decode(payload)
     except urllib.error.HTTPError as e:
-        payload = e.read(); return e.code, (json.loads(payload) if payload else None)
+        payload = e.read(); return e.code, decode(payload)
 roles = {"triage": "1001", "scribe": "1002", "coder": "1003", "review": "1004", "fix": "1005",
          "fullsend": "1006", "retro": "1007", "prioritize": "1008"}
 out = {}
 for role, app_id in roles.items():
-    status, app = call(f"{base}/admin/api/apps/{app_id}")
-    if status != 200:
-        sys.exit(f"could not read App {app_id}: HTTP {status}")
-    for inst in app.get("installations") or []:
+    status, app = call(f"{api}/admin/apps/{app_id}")
+    if status != 200 or not isinstance(app, dict) or not isinstance(app.get("permissions"), dict) or not app["permissions"]:
+        sys.exit(f"could not read permissions for App {app_id}: HTTP {status}")
+    # The UI inventory has installation selections but omits App permissions.
+    status, inventory = call(f"{base}/admin/api/apps/{app_id}")
+    if status != 200 or not isinstance(inventory, dict):
+        sys.exit(f"could not read installations for App {app_id}: HTTP {status}")
+    for inst in inventory.get("installations") or []:
         if inst.get("owner") == org and inst.get("repositories"):
             status, _ = call(f"{base}/admin/api/apps/{app_id}/installations/{inst['id']}", method="DELETE")
             if status != 204:
                 sys.exit(f"could not replace installation {inst['id']} of App {app_id}: HTTP {status}")
     status, inst = call(f"{api}/admin/apps/{app_id}/installations",
                         {"account_login": org, "account_type": "Organization", "repositories": [],
-                         "permissions": app.get("permissions") or {}})
+                         "permissions": app["permissions"]})
     if status not in (200, 201):
         sys.exit(f"could not install App {app_id} on {org}: HTTP {status} {inst}")
+    if not isinstance(inst, dict) or inst.get("permissions") != app["permissions"]:
+        # Roll back only an installation this invocation just created. Do not
+        # delete an existing operator installation on a failed verification.
+        installation_id = inst.get("id") if isinstance(inst, dict) else None
+        cleanup = "existing installation left unchanged"
+        if status == 201 and type(installation_id) is int and installation_id > 0:
+            try:
+                rollback_status, _ = call(f"{base}/admin/api/apps/{app_id}/installations/{installation_id}", method="DELETE")
+                cleanup = "new installation removed" if rollback_status == 204 else f"rollback failed: HTTP {rollback_status}; installation {installation_id} may remain"
+            except (urllib.error.URLError, OSError):
+                cleanup = f"rollback failed: network error; installation {installation_id} may remain"
+        elif status == 201:
+            cleanup = "new installation ID invalid; cleanup could not be attempted"
+        sys.exit(f"installation permissions do not match the configured App {app_id}; {cleanup}")
     status, key = call(f"{base}/admin/api/apps/{app_id}/private-key")
-    if status != 200 or not key.get("private_key"):
+    if status != 200 or not isinstance(key, dict) or not key.get("private_key"):
         sys.exit(f"could not read the private key of App {app_id}: HTTP {status}")
     out[role] = {"app_id": app_id, "private_key": key["private_key"]}
 print(json.dumps(out))

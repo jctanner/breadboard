@@ -182,3 +182,57 @@ The replacement PR credits @durandom, retains his 16 commits, includes the valid
 and accepted deferrals, and requests manual merge with a merge commit. No PR comment,
 review, label, closure, or merge was performed. The reviewed implementation remains
 `cea968c`; subsequent changes are ledger-only publication records.
+
+## Remote Linux qualification follow-up (2026-11-12)
+
+The human subsequently authorized a separate Fedora test host and a custom domain.
+The live launch checkout remains untouched. Work continues in the isolated copy
+`/tmp/cc61-w530-bootstrap`; PR #10 remains the approved fallback, and #8 is unchanged.
+
+Fresh deployment exposed and fixed: unattended Podman short-name resolution,
+upstream OpenCode layout drift, unsupported declared Node engine range, non-root
+public-CA readability under umask 0077, incomplete grouped-image resumes, empty CA
+placeholders, public-only certificate serialization/cleanup and remote HTTPS/SNI
+instructions. The x64 OpenCode artifact is explicitly baseline; source/fetch pins
+verify HTTPS. All code changes retain original authorship with maintainer fix commits.
+
+| Build review round | Codex disposition | Claude disposition | Closure |
+| --- | --- | --- | --- |
+| 1 | Fresh build repairs under test | Approve with should-fixes | Runtime smoke, qualified bases, documented build-input deferrals |
+| 2 | Node trust/copy fixes identified | Changes requested for old-CPU target | Explicit baseline artifact and deeper target execution later closed CPU concern |
+| 3 | Final runtime gate required | Conditional approve; wording fix | Final Node image and package-engine wording verified/fixed |
+| 4 | Non-root CA and partial resume fixed | No blockers; portable builder/empty-CA should-fixes | RUN chmod and fail-closed CA input |
+| 5 | Portable CA checks under test | Changes requested for CPU; PEM/cleanup should-fixes | Baseline, X509 serialization, cleanup and upgrade notes |
+| 6 | No blockers after target smokes | Approve; bundle-count recommendation | Bundle rejection and relative-root cleanup added |
+| 7 | No blockers | Approve; precise validation wording | Parseability wording and mixed legacy/trusted bundle rejection |
+| 8 | No blockers | Approve; missing OpenSSL parse-failure test | Corrupt DER and standalone legacy/trusted cases added |
+| 9 | No blockers | Approve; optional test assertions | Exact error assertions and valid-base64 invalid DER added; all pass |
+
+Current focused suite: **106 passed, 5 live tests skipped**, including 48 isolated
+CA-input cases. Shell syntax and whitespace checks pass for the current PR diff
+against main (`95a1399`) and for the new fix commits. Whitespace inherited from
+older main's patch files is outside this PR diff and has not been reformatted.
+
+Observed on the test host: K3s/cert-manager Ready; nine certificate chains validate;
+an outside-name leaf is rejected and domain drift is refused. The final agent runs
+as its non-root user on a CPU without AVX2, loads OpenCode configuration with the
+MLflow plugin configured, and verifies custom-domain HTTPS from Node. Both Fullsend
+sandbox variants trust the public CA as UID 10001; supervisor bundle is mode 0644
+and trusts that CA. Native Fullsend/OpenShell CLI help passes inside the runner;
+runner Fullsend bytes match the staged release asset. Seven core HTTPS routes
+return 200. Dashboard links use the custom domain. Demo seeding twice leaves the
+same 25 Jira/GitLab tickets and correct link domains.
+
+Full-stack build/deployment and Fullsend execution qualification are still ongoing;
+these checks do not yet establish complete end-to-end readiness.
+
+Accepted nonblocking follow-ups: reconcile the fork's Bun lockfile and multi-target
+build filter; keep the pinned fork commit reachable (no tag/protection changes are
+authorized here); pin other pre-existing moving build inputs; improve opt-in tag-only
+cache fingerprints/unfinished-alias recovery (default forced rebuild is safe and the
+runbook requires it after changes/interrupted imports); consolidate existing Fullsend
+CA extraction; qualify Python certifi clients where internal HTTPS is introduced;
+and handle legacy manual CDPATH/space-containing project paths separately. Current
+host/Make paths are absolute and do not exercise those legacy path limitations.
+Client DNS/trust-store setup, real model inference, interactive OpenCode TUI, macOS
+Lima/ARM and legacy Docker runtime qualification remain outside the passed checks.

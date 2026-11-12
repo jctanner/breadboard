@@ -25,17 +25,23 @@ fi
 
 # Extract internal CA cert from ConfigMap so it can be baked into the image
 echo "  Extracting CA certificate from ConfigMap..."
-CA_CERT=$(kubectl get configmap internal-ca-cert \
-  -n ai-pipeline \
-  -o jsonpath='{.data.ca\.crt}' 2>/dev/null || true)
-
-if [ -z "$CA_CERT" ]; then
-  echo "WARNING: Could not extract CA cert from ConfigMap, using empty placeholder"
-  echo "" > internal-ca.crt
-else
-  echo "$CA_CERT" > internal-ca.crt
-  echo "  CA certificate extracted successfully"
+if ! CA_CERT=$(kubectl get configmap internal-ca-cert \
+  -n ai-pipeline -o jsonpath='{.data.ca\.crt}'); then
+  echo "ERROR: Could not read internal-ca-cert; refusing to build a CA-less agent" >&2
+  exit 1
 fi
+if [ -z "$CA_CERT" ]; then
+  echo "ERROR: internal-ca-cert is empty; refusing to build a CA-less agent" >&2
+  exit 1
+fi
+command -v openssl >/dev/null || { echo "ERROR: openssl is required to validate the CA" >&2; exit 1; }
+trap 'rm -f "${PROJECT_ROOT}/internal-ca.crt"' EXIT
+# Serialize only the public X509 certificate; discard any appended PEM data.
+if ! printf '%s\n' "$CA_CERT" | openssl x509 -out internal-ca.crt; then
+  echo "ERROR: internal-ca-cert is not a valid X509 certificate" >&2
+  exit 1
+fi
+echo "  CA certificate extracted and validated successfully"
 
 ${CONTAINER_CMD} build ${DOCKER_BUILD_ARGS:-} -f deploy/pipeline-agent/Dockerfile -t pipeline-agent:latest .
 

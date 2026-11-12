@@ -586,12 +586,18 @@ The OpenCode builder defaults to the maintainer integration fork at immutable co
 and the `packages/opencode` build layout. Upstream's moving `dev` branch no longer
 has that layout, so fresh builds cannot use it with the current build recipe.
 `OPENCODE_REPO` and `OPENCODE_REF` remain build overrides; the ref may be a full commit,
-branch or tag. Fetching verifies HTTPS. Docker Hub base-image names are qualified so
+branch or tag. The default fetch verifies HTTPS. Docker Hub base-image names are qualified so
 unattended Podman builds do not depend on distribution short-name aliases. The CLI
 is smoke-checked in both builder and final runtime images. The final image copies
 the official Node 24 runtime rather than the distribution Node 20 package, because
 the current Claude CLI declares Node 22 or newer in its package engines. Its version
-is also checked during the build. Node explicitly trusts the injected CA through `NODE_EXTRA_CA_CERTS`.
+is also checked during the build. Node explicitly trusts the injected CA through
+`NODE_EXTRA_CA_CERTS`; agent builds refuse unavailable, empty or invalid CA input.
+Public certificate permissions are set explicitly for non-root readers.
+
+Use `FORCE_REBUILD=1` after source or CA changes: optional image reuse checks tags,
+not source/CA fingerprints. This includes upgrading images made by older builders
+that permitted an empty CA placeholder.
 
 This pins the source, not every build input: the existing Bun/uv lockfile fallback,
 other moving source refs and package downloads still limit full image reproducibility.

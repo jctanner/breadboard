@@ -42,9 +42,10 @@ RUN if command -v apt-get >/dev/null 2>&1; then \
 
 # Written into the build context by deploy/scripts/05i-build-fullsend.sh from
 # the cluster's internal-ca-cert ConfigMap. Public certificate only.
-COPY --chmod=0644 internal-ca.crt /usr/local/share/ca-certificates/breadboard-internal-ca.crt
+COPY internal-ca.crt /usr/local/share/ca-certificates/breadboard-internal-ca.crt
 # /usr/sbin is not on this image's PATH, so call it by path rather than name.
-RUN /usr/sbin/update-ca-certificates \
+RUN chmod 0644 /usr/local/share/ca-certificates/breadboard-internal-ca.crt \
+    && /usr/sbin/update-ca-certificates \
     && openssl x509 -in /usr/local/share/ca-certificates/breadboard-internal-ca.crt \
          -noout -subject \
     && grep -c "BEGIN CERTIFICATE" /etc/ssl/certs/ca-certificates.crt

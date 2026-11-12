@@ -245,3 +245,20 @@ def test_real_gitlab_web_url_is_preserved():
         collector = TicketAggregator()
     with mock.patch.object(collector, '_gitlab_projects', return_value=[{'id': 1, 'path_with_namespace': 'org/repo'}]), mock.patch.object(collector, '_get', side_effect=[[{'iid': 1, 'title': 'external', 'web_url': 'https://gitlab.example.org/org/repo/-/issues/1'}], []]):
         assert collector._gitlab()[0]['url'] == 'https://gitlab.example.org/org/repo/-/issues/1'
+
+
+def test_gitlab_unsafe_url_scheme_falls_back_to_ui():
+    from src.dashboard.ticket_data import TicketAggregator
+    with mock.patch.dict('os.environ', {}, clear=True):
+        collector = TicketAggregator()
+    with mock.patch.object(collector, '_gitlab_projects', return_value=[{'id': 1, 'path_with_namespace': 'org/repo'}]), mock.patch.object(collector, '_get', side_effect=[[{'iid': 1, 'title': 'untrusted link', 'web_url': 'javascript:alert(1)'}], []]):
+        assert collector._gitlab()[0]['url'] == 'https://gitlab.local/org/repo/-/issues/1'
+
+
+def test_render_only_wrapper_never_calls_cluster(tmp_path):
+    import subprocess
+    manifest = tmp_path / 'manifest.yaml'
+    manifest.write_text('kind: ConfigMap\ndata:\n  key: value\n')
+    result = subprocess.run(['bash', str(ROOT / 'deploy/scripts/apply-domain-manifests.sh'), '--render', str(manifest)], env={'PATH': str(Path(sys.executable).parent) + ':/usr/bin:/bin', 'BREADBOARD_DOMAIN': 'bb.internal'}, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == manifest.read_text()

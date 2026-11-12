@@ -311,6 +311,12 @@ class TicketAggregator:
                             f"{'merge_requests' if type_name == 'merge_request' else 'issues'}/{iid}"
                         )
                         web_url = item.get("web_url", "")
+                        try:
+                            parsed_web_url = urlsplit(web_url)
+                            if parsed_web_url.scheme not in ("http", "https") or not parsed_web_url.hostname:
+                                web_url = ""
+                        except ValueError:
+                            web_url = ""
                         item_path = urlsplit(web_url).path if web_url else default_path
                         item_path = item_path or default_path
                         tickets.append({

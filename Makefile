@@ -503,7 +503,7 @@ host-rebuild-org-pulse: ## Rebuild and redeploy Org Pulse on host
 	@echo "==> Building Org Pulse images..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05l-build-org-pulse.sh
 	@echo "==> Applying manifest and restarting Org Pulse..."
-	kubectl apply -f deploy/k8s/28-org-pulse.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/28-org-pulse.yaml
 	kubectl rollout restart deployment/org-pulse-backend deployment/org-pulse-frontend -n ai-pipeline
 	kubectl rollout status deployment/org-pulse-backend -n ai-pipeline --timeout=180s
 	kubectl rollout status deployment/org-pulse-frontend -n ai-pipeline --timeout=120s

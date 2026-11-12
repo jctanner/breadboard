@@ -57,7 +57,7 @@ Explicit deferrals:
 
 ## Validation
 
-Offline dashboard/domain/CLI/seed regression suite: 83 passed, 5 explicitly skipped
+Offline dashboard/domain/CLI/seed regression suite: 85 passed, 5 explicitly skipped
 live-stack tests. Go proxy tests pass (ephemeral loopback mock servers). Plugin Node
 checks pass. Changed shell scripts pass `bash -n`; Python compile checks pass.
 `git diff --check` passes. Re-run after subsequent changes.
@@ -102,3 +102,19 @@ All host deploy/reset/conformance Make targets forward the domain and explicit
 DNS/hosts/cache options; Lima passes the same settings by argv. Seeding reads only
 the public ConfigMap. Additional tests cover old-CA refusal, fresh clusters,
 existing-home-mount rejection, absent runner metadata, and real GitLab URLs.
+
+## Round 4 (frozen `20dea95`)
+
+Claude: **NO BLOCKERS**, with three nonblocking should-fixes. All three are fixed
+in the next delta: preflight follows K3s availability; non-rendering manifest applies
+centrally guard domain/CA compatibility (fresh CA setup publishes the public root
+before leaf applies); and the runbook explicitly requires deleting the old root
+Certificate **and Secret** during a deliberately authorized maintenance migration.
+Org Pulse's Make rebuild now uses the renderer too. Minor fixes restrict external
+GitLab link schemes, isolate seed git TLS from global/system overrides, and handle
+null Lima configuration. Future IPv6 constraint parsing remains explicitly deferred
+because the current manifest contains only IPv4; unsupported inputs fail closed.
+
+Final local validation: 85 Python tests passed, 5 live-stack tests skipped; Node,
+Python compilation, all changed-shell syntax, full-diff whitespace and render-only
+Make forwarding checks pass. Go proxy tests passed after its final code change.

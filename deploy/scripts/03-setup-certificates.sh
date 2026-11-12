@@ -31,6 +31,10 @@ kubectl wait --for=condition=Ready --timeout=60s \
   echo "WARNING: Issuer not ready yet, continuing anyway..."
 }
 
+# Publish the newly issued public root before guarded leaf-manifest applies.
+# Existing incompatible roots were already refused by preflight.
+bash "${SCRIPT_DIR}/04-extract-ca-cert.sh"
+
 # Apply service certificates
 "${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/02-certificates.yaml"
 

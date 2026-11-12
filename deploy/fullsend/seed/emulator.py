@@ -101,6 +101,8 @@ def ensure_repo() -> None:
 def git_env() -> dict[str, str]:
     env = os.environ.copy()
     env.pop("GIT_SSL_NO_VERIFY", None)
+    env["GIT_CONFIG_GLOBAL"] = os.devnull
+    env["GIT_CONFIG_NOSYSTEM"] = "1"
     if os.getenv("BREADBOARD_CA_FILE"):
         env["GIT_SSL_CAINFO"] = os.environ["BREADBOARD_CA_FILE"]
     env["GIT_TERMINAL_PROMPT"] = "0"

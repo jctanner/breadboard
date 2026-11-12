@@ -237,3 +237,14 @@ The site runner's `FULLSEND_ALLOW_PRIVATE_FORGE=1` permits the intentionally pri
 emulator endpoint, and `FULLSEND_MINT_URL` identifies the internal HTTPS mint already
 used by the role runner. They are local deployment settings, not permission to contact
 arbitrary external forges or bypass token scopes.
+
+During the explicit migration, back up state, remove the old root from client trust,
+and delete **both** the old `internal-ca` Certificate and **`internal-ca-secret`**
+before issuing a replacement. Deleting just the Certificate reuses the old key.
+Perform these destructive steps only in the planned maintenance window. Generate a
+new root/key, reissue every leaf, refresh the public ConfigMap, rebuild every image
+that embeds the CA, and install only the new root on clients before restoring traffic.
+Keep backups for an explicit rollback; do not leave both roots trusted indefinitely.
+
+The current manifest permits only IPv4 CIDRs. Adding IPv6 requires extending and
+testing the preflight's OpenSSL netmask parser first; unsupported input fails closed.

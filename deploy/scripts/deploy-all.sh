@@ -23,7 +23,6 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-python3 "${SCRIPT_DIR}/check_ca_compatibility.py"
 
 # .env is optional: model credentials are managed by Model Relay, and every
 # value 06-create-secrets.sh reads from it has a default.
@@ -42,6 +41,9 @@ else
   bash "${SCRIPT_DIR}/01-install-k3s.sh"
 fi
 echo ""
+
+# K3s is available now; refuse incompatible existing CA before changing services.
+python3 "${SCRIPT_DIR}/check_ca_compatibility.py"
 
 # Step 2: Install cert-manager
 echo "Step 2/19: Installing cert-manager..."

@@ -25,6 +25,10 @@ if [ "$#" -eq 0 ]; then
   exit 1
 fi
 
+if [ "$RENDER_ONLY" = false ]; then
+  python3 "${SCRIPT_DIR}/check_ca_compatibility.py"
+fi
+
 for file in "$@"; do
   if [ "$RENDER_ONLY" = true ]; then
     python3 "${SCRIPT_DIR}/render_domain_manifest.py" "$file" "$DOMAIN"

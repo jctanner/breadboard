@@ -38,7 +38,7 @@ def main():
         else:
             status = json.loads(run('list', '--json', '--all-fields', instance, capture_output=True, text=True).stdout)
             # Existing VMs must not retain a writable or readable home mount.
-            mounts = status.get('config', {}).get('mounts')
+            mounts = (status.get('config') or {}).get('mounts')
             if mounts is None:
                 raise SystemExit('Cannot inspect existing VM mounts; inspect Lima configuration and recreate with repository-only mounts.')
             if len(mounts) != 1 or Path(mounts[0].get('location', '')).expanduser().resolve() != ROOT or not mounts[0].get('writable'):

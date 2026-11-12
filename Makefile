@@ -367,7 +367,7 @@ host-build-dashboard: ## Build dashboard image on host
 host-rebuild-dashboard: ## Rebuild and redeploy dashboard on host
 	@echo "==> Rebuilding dashboard image..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05a-build-dashboard.sh
-	kubectl apply -f deploy/k8s/20-pipeline-dashboard.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/20-pipeline-dashboard.yaml
 	kubectl delete pod -n ai-pipeline -l app=pipeline-dashboard --wait=false
 	@echo "==> Waiting for dashboard pod to be ready..."
 	kubectl wait --for=condition=ready pod -n ai-pipeline -l app=pipeline-dashboard --timeout=60s || true
@@ -376,7 +376,7 @@ host-rebuild-dashboard: ## Rebuild and redeploy dashboard on host
 host-rebuild-fullsend-dashboard: ## Rebuild and redeploy Fullsend dashboard on host
 	@echo "==> Rebuilding Fullsend dashboard image..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05j-build-fullsend-dashboard.sh
-	kubectl apply -f deploy/k8s/26-fullsend-dashboard.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/26-fullsend-dashboard.yaml
 	kubectl rollout restart deployment/fullsend-dashboard -n ai-pipeline
 	kubectl rollout status deployment/fullsend-dashboard -n ai-pipeline --timeout=60s
 	@echo "✓ Fullsend dashboard rebuilt and redeployed"
@@ -392,7 +392,7 @@ host-rebuild-fullsend-dashboard: ## Rebuild and redeploy Fullsend dashboard on h
 bt-seed: ## Seed the Fullsend behaviour-test pool org and mint allowlists
 	python3 deploy/fullsend/seed/seed-behaviour-pool.py
 	python3 deploy/fullsend/behaviour/mint-pool.py write
-	kubectl apply -f deploy/k8s/24-fullsend-mint-dev.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/24-fullsend-mint-dev.yaml
 	kubectl rollout status deployment/fullsend-mint-dev -n ai-pipeline --timeout=120s
 
 bt-run: ## Run Fullsend behaviour tests against the stack (FEATURES=, TAGS=, FULLSEND_REF=)
@@ -417,7 +417,7 @@ host-rebuild-jira: ## Rebuild and redeploy Jira emulator on host
 	@echo "==> Rebuilding Jira emulator..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05b-build-jira-emulator.sh
 	kubectl apply -f deploy/k8s/11-jira-emulator-config.yaml
-	kubectl apply -f deploy/k8s/12-jira-emulator.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/12-jira-emulator.yaml
 	kubectl rollout restart deployment/jira-emulator -n ai-pipeline
 	kubectl rollout status deployment/jira-emulator -n ai-pipeline --timeout=60s
 	@echo "✓ Jira emulator rebuilt and redeployed"
@@ -426,7 +426,7 @@ host-rebuild-github: ## Rebuild and redeploy GitHub emulator on host
 	@echo "==> Rebuilding GitHub emulator..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05a-build-github-emulator.sh
 	kubectl apply -f deploy/k8s/09-github-emulator-config.yaml
-	kubectl apply -f deploy/k8s/10-github-emulator.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/10-github-emulator.yaml
 	kubectl rollout restart deployment/github-emulator -n ai-pipeline
 	kubectl rollout status deployment/github-emulator -n ai-pipeline --timeout=60s
 	@echo "✓ GitHub emulator rebuilt and redeployed"
@@ -434,7 +434,7 @@ host-rebuild-github: ## Rebuild and redeploy GitHub emulator on host
 host-rebuild-gitlab: ## Rebuild and redeploy GitLab emulator on host
 	@echo "==> Rebuilding GitLab emulator..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05f-build-gitlab-emulator.sh
-	kubectl apply -f deploy/k8s/19-gitlab-emulator.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/19-gitlab-emulator.yaml
 	kubectl rollout restart deployment/gitlab-emulator -n ai-pipeline
 	kubectl rollout status deployment/gitlab-emulator -n ai-pipeline --timeout=60s
 	@echo "✓ GitLab emulator rebuilt and redeployed"
@@ -651,7 +651,7 @@ host-rebuild-markovd: ## Rebuild and redeploy markovd on host
 	@echo "==> Building markovd image..."
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/05c-build-markovd.sh
 	@echo "==> Restarting markovd..."
-	kubectl apply -f deploy/k8s/15-markovd.yaml
+	bash deploy/scripts/apply-domain-manifests.sh deploy/k8s/15-markovd.yaml
 	kubectl rollout restart deployment/markovd -n ai-pipeline
 	kubectl rollout status deployment/markovd -n ai-pipeline --timeout=60s
 	@echo "✓ markovd rebuilt and redeployed"

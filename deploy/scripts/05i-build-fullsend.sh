@@ -7,6 +7,8 @@ export PATH="/opt/rust/cargo/bin:/usr/local/go/bin:${PATH}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 python3 "${SCRIPT_DIR}/render_domain_manifest.py" /dev/null "${BREADBOARD_DOMAIN:-local}" >/dev/null
+# The forge domain is baked into profiles; reject drift before building/importing.
+python3 "${SCRIPT_DIR}/check_ca_compatibility.py"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 FULLSEND_ROOT="${PROJECT_ROOT}/checkouts/fullsend-ai/fullsend"
 OPENSHELL_ROOT="${PROJECT_ROOT}/checkouts/openshell"

@@ -248,3 +248,12 @@ Keep backups for an explicit rollback; do not leave both roots trusted indefinit
 
 The current manifest permits only IPv4 CIDRs. Adding IPv6 requires extending and
 testing the preflight's OpenSSL netmask parser first; unsupported input fails closed.
+
+If first-time certificate setup was interrupted after the root became Ready but
+before its public ConfigMap was published, preflight deliberately refuses to trust
+an absent public root. Verify the root's critical constraints and fingerprint through
+your authenticated Kubernetes connection, run `04-extract-ca-cert.sh` to publish that
+verified public root, then retry setup. This is an explicit recovery step; do not
+regenerate keys just to bypass the guard. Standalone emulator/Markovd deployment
+scripts use the shared `03-setup-certificates.sh` bootstrap so a fresh setup publishes
+the root before domain-bearing component manifests are applied.

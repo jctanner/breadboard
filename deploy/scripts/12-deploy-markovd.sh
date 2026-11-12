@@ -14,7 +14,7 @@ cd "${PROJECT_ROOT}/deploy/k8s"
 
 echo "--- Ensuring namespace and cert infrastructure ---"
 kubectl apply -f 00-namespace.yaml
-"${SCRIPT_DIR}/apply-domain-manifests.sh" 01-ca-issuer.yaml
+PROJECT_ROOT="${PROJECT_ROOT}" bash "${SCRIPT_DIR}/03-setup-certificates.sh"
 
 echo "--- Applying markovd resources ---"
 "${SCRIPT_DIR}/apply-domain-manifests.sh" 15-markovd.yaml

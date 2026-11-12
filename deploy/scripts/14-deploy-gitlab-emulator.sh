@@ -17,10 +17,10 @@ echo "--- Creating namespace ---"
 kubectl apply -f 00-namespace.yaml
 
 echo "--- Setting up certificate infrastructure ---"
-"${SCRIPT_DIR}/apply-domain-manifests.sh" 01-ca-issuer.yaml
+PROJECT_ROOT="${PROJECT_ROOT}" bash "${SCRIPT_DIR}/03-setup-certificates.sh"
 
 echo "--- Creating certificates ---"
-"${SCRIPT_DIR}/apply-domain-manifests.sh" 02-certificates.yaml
+# Shared setup above issued the service certificates and published the public root.
 
 echo "--- Waiting for certificates to be ready ---"
 kubectl wait --for=condition=ready certificate/gitlab-emulator-tls -n ai-pipeline --timeout=120s || {

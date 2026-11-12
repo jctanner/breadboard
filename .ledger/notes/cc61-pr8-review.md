@@ -118,3 +118,14 @@ because the current manifest contains only IPv4; unsupported inputs fail closed.
 Final local validation: 85 Python tests passed, 5 live-stack tests skipped; Node,
 Python compilation, all changed-shell syntax, full-diff whitespace and render-only
 Make forwarding checks pass. Go proxy tests passed after its final code change.
+
+## Round 5 (frozen `b6379de`)
+
+Claude: **NO BLOCKERS**, confirmed all prior should-fixes closed, and reported two
+new nonblocking should-fixes. Standalone emulator/Markovd scripts now use the complete
+shared certificate bootstrap, and all identified domain-bearing host rebuild/seed
+Make applies use the guarded renderer. An interrupted initial root publication has
+an explicit authenticated recovery procedure rather than a silent trust fallback.
+The Fullsend image build also checks compatibility before baking a domain into
+profiles or importing images, preventing a wrong-default rebuild before deploy
+preflight can reject it. No implementation changes remain outside these closures.

@@ -126,16 +126,10 @@ def ensure_repo() -> None:
 
 def git_env() -> dict[str, str]:
     env = os.environ.copy()
-    blocked = {
-        "GIT_CONFIG", "GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE",
-        "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE",
-        "GIT_SSH", "GIT_SSH_COMMAND", "GIT_ASKPASS", "SSH_ASKPASS", "GIT_EXEC_PATH",
-        "GIT_CURL_VERBOSE",
-        "GIT_TEMPLATE_DIR", "GIT_PROTOCOL_FROM_USER", "GIT_ALLOW_PROTOCOL",
-        "GIT_REPLACE_REF_BASE", "GIT_CEILING_DIRECTORIES", "GIT_EDITOR", "GIT_PAGER",
-    }
+    # Git has many environment controls; retain only its stricter ownership
+    # test hook, never inherited config, transport, tracing or execution overrides.
     for key in list(env):
-        if key in blocked or key.startswith(("GIT_CONFIG_", "GIT_SSL_", "GIT_TRACE")):
+        if (key.startswith("GIT_") and key != "GIT_TEST_ASSUME_DIFFERENT_OWNER") or key == "SSH_ASKPASS":
             env.pop(key, None)
     env["GIT_CONFIG_GLOBAL"] = os.devnull
     env["GIT_CONFIG_NOSYSTEM"] = "1"
@@ -145,7 +139,7 @@ def git_env() -> dict[str, str]:
     return env
 
 
-def run_git(directory: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+def run_git(directory: Path, *args: str, check: bool = True, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
     # Old Git versions require safe.directory in global rather than -c scope.
     # Build an isolated, short-lived config containing only this controlled repo.
     with tempfile.TemporaryDirectory(prefix="breadboard-seed-git-") as temporary:
@@ -161,8 +155,24 @@ def run_git(directory: Path, *args: str, check: bool = True) -> subprocess.Compl
             ["git", "-c", "core.hooksPath=" + os.devnull, "-c", "core.fsmonitor=false",
              "-c", "credential.helper=", "-c", "protocol.ext.allow=never",
              "-c", "http.sslVerify=true", *args], cwd=directory, env=env, text=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=check,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=check, input=input_text,
         )
+
+
+def seed_source_path(root: Path, relative: str) -> Path:
+    """Reject source symlinks and escapes before privileged mirror reads."""
+    relative_path = Path(relative)
+    if relative_path.is_absolute() or ".." in relative_path.parts:
+        raise RuntimeError("Mirror source path must stay inside its checkout")
+    base = root.resolve()
+    current = base
+    for part in relative_path.parts:
+        current = current / part
+        if current.is_symlink():
+            raise RuntimeError(f"Mirror source symlink is not allowed: {relative}")
+    if not current.resolve().is_relative_to(base):
+        raise RuntimeError("Mirror source escapes its checkout")
+    return current
 
 
 

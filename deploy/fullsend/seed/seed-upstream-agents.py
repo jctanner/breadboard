@@ -20,13 +20,12 @@ from __future__ import annotations
 import os
 import re
 import shutil
-import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
 
-from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git
+from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git, seed_source_path
 
 
 # deploy/fullsend/seed/seed-upstream-agents.py -> parents[3] is the project root.
@@ -110,19 +109,16 @@ def ensure_upstream_repo() -> None:
 
 
 def collect_sources() -> list[tuple[Path, str]]:
-    """Every tracked file, taken from git rather than the working tree."""
+    """Tracked filenames from Git, with content from the trusted working tree."""
     if not (SOURCE / ".git").exists():
         raise RuntimeError(
             f"Fullsend agents checkout is missing: {SOURCE}. "
             "Clone fullsend-ai/agents into checkouts/fullsend-ai/ first."
         )
-    listed = subprocess.run(
-        ["git", "ls-files", "-z"],
-        cwd=SOURCE, capture_output=True, check=True,
-    ).stdout.decode()
+    listed = run_git(SOURCE, "ls-files", "-z").stdout
     collected = []
     for relative in filter(None, listed.split("\0")):
-        path = SOURCE / relative
+        path = seed_source_path(SOURCE, relative)
         if path.is_file():
             collected.append((path, relative))
     if not collected:
@@ -159,11 +155,7 @@ def apply_mirror_patches(directory: Path) -> None:
                 line.replace("github.local", f"github.{domain}") if line.startswith("+") else line
                 for line in patch_text.splitlines(keepends=True)
             )
-        result = subprocess.run(
-            ["git", "apply", "-"],
-            input=patch_text,
-            cwd=directory, capture_output=True, text=True,
-        )
+        result = run_git(directory, "apply", "-", input_text=patch_text, check=False)
         if result.returncode != 0:
             raise RuntimeError(
                 f"mirror patch {name} does not apply to the current agents "
@@ -213,6 +205,7 @@ def main() -> None:
         for origin, relative in sources:
             destination = directory / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
+            origin = seed_source_path(SOURCE, relative)
             shutil.copyfile(origin, destination)
             destination.chmod(origin.stat().st_mode & 0o777)
 

@@ -23,13 +23,12 @@ from __future__ import annotations
 
 import shutil
 import os
-import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
 
-from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git
+from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git, seed_source_path
 
 
 # deploy/fullsend/seed/seed-upstream-fullsend.py -> parents[3] is the project root.
@@ -108,12 +107,12 @@ def collect_sources() -> list[tuple[Path, str]]:
         )
     collected: list[tuple[Path, str]] = []
     for relative in MIRRORED_PATHS:
-        origin = SOURCE / relative
+        origin = seed_source_path(SOURCE, relative)
         if origin.is_file():
             collected.append((origin, relative))
         elif origin.is_dir():
             for path in sorted(origin.rglob("*")):
-                if path.is_file() and _wanted(str(path.relative_to(SOURCE))):
+                if seed_source_path(SOURCE, str(path.relative_to(SOURCE))).is_file() and _wanted(str(path.relative_to(SOURCE))):
                     collected.append((path, str(path.relative_to(SOURCE))))
         else:
             raise RuntimeError(f"required Fullsend path is missing: {origin}")
@@ -155,12 +154,7 @@ def apply_mirror_patches(directory: Path) -> None:
         patch = PATCH_DIR / name
         if not patch.is_file():
             raise RuntimeError(f"mirror patch is missing: {patch}")
-        result = subprocess.run(
-            ["git", "apply", str(patch)],
-            cwd=directory,
-            capture_output=True,
-            text=True,
-        )
+        result = run_git(directory, "apply", str(patch), check=False)
         if result.returncode != 0:
             raise RuntimeError(
                 f"mirror patch {name} does not apply to the current Fullsend "
@@ -205,6 +199,7 @@ def main() -> None:
         for origin, relative in sources:
             destination = directory / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
+            origin = seed_source_path(SOURCE, relative)
             shutil.copyfile(origin, destination)
             destination.chmod(origin.stat().st_mode & 0o777)
 

@@ -638,3 +638,9 @@ Sudo seeders assume a trusted single operator who already has full sudo and
 controls the integration checkouts. Do not seed as root from repositories writable
 by untrusted users. The temporary exact-path Git trust is not a sanitizer for an
 untrusted repository's local configuration or attributes.
+
+Upstream mirrors preserve final source symlinks as link text, without reading
+those targets on the seed host. Linked parents and escaping source/destination
+paths are rejected. Mirrored links retain upstream semantics inside a later
+consumer's environment; they are not sanitized or rewritten for that consumer.
+Actions remain disabled on the agents mirror.

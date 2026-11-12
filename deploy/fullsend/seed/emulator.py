@@ -183,6 +183,8 @@ def mirror_destination(root: Path, relative: str) -> Path:
     destination = seed_source_path(root, relative, allow_final_symlink=True)
     if destination.is_symlink():
         destination.unlink()
+    if destination.exists() and not destination.is_file():
+        raise RuntimeError(f"Mirror destination is not a regular file: {relative}")
     return destination
 
 

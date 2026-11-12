@@ -19,7 +19,7 @@ def load_seed(name, monkeypatch):
 
 @pytest.mark.parametrize('name', ['seed-upstream-agents', 'seed-upstream-fullsend'])
 @pytest.mark.parametrize('kind', ['regular', 'file_symlink', 'directory_symlink'])
-def test_mirror_collection_rejects_symlink_sources(tmp_path, monkeypatch, name, kind):
+def test_mirror_collection_preserves_source_links_without_reading_targets(tmp_path, monkeypatch, name, kind):
     module = load_seed(name, monkeypatch)
     source = tmp_path / 'source'
     source.mkdir()
@@ -36,7 +36,7 @@ def test_mirror_collection_rejects_symlink_sources(tmp_path, monkeypatch, name, 
     monkeypatch.setattr(module, 'SOURCE', source)
     if name == 'seed-upstream-fullsend':
         monkeypatch.setattr(module, 'MIRRORED_PATHS', ('payload',))
-    assert module.collect_sources() == [(source / 'payload', 'payload')]
+    assert module.collect_sources() == [(source.resolve() / 'payload', 'payload')]
     from emulator import copy_mirror_source
     destination = tmp_path / 'mirrored'
     copy_mirror_source(source, 'payload', destination)
@@ -92,11 +92,18 @@ def test_fullsend_directory_collection_with_linked_checkout(tmp_path, monkeypatc
     (actual / '.git').mkdir(parents=True)
     (actual / '.github/workflows').mkdir(parents=True)
     (actual / '.github/workflows/reusable-test.yml').write_text('public')
+    (actual / '.github/actions').mkdir()
+    (actual / 'fixtures').mkdir()
+    (actual / '.github/workflows/reusable-link.yml').symlink_to('../../fixture.yml')
+    (actual / '.github/actions/linked').symlink_to('../../fixtures', target_is_directory=True)
     linked = tmp_path / 'checkout'
     linked.symlink_to(actual, target_is_directory=True)
     monkeypatch.setattr(module, 'SOURCE', linked)
-    monkeypatch.setattr(module, 'MIRRORED_PATHS', ('.github/workflows',))
-    assert module.collect_sources() == [(actual / '.github/workflows/reusable-test.yml', '.github/workflows/reusable-test.yml')]
+    monkeypatch.setattr(module, 'MIRRORED_PATHS', ('.github/workflows', '.github/actions'))
+    assert {relative for _, relative in module.collect_sources()} == {
+        '.github/workflows/reusable-test.yml', '.github/workflows/reusable-link.yml',
+        '.github/actions/linked',
+    }
 
 
 @pytest.mark.parametrize('kind', ['parent_link', 'final_link', 'source_link'])
@@ -137,7 +144,7 @@ def test_composite_mirror_does_not_follow_fetched_or_source_links(tmp_path, monk
     assert retained.read_text() == 'private fixture'
 
 
-@pytest.mark.parametrize('kind', ['parent_link', 'final_link', 'source_link', 'regular'])
+@pytest.mark.parametrize('kind', ['parent_link', 'final_link', 'source_link', 'regular', 'directory_destination'])
 def test_cve_staging_keeps_unrelated_files_and_rejects_linked_parents(tmp_path, monkeypatch, kind):
     module = load_seed('seed-cve-fixture', monkeypatch)
     target = tmp_path / 'target'
@@ -158,9 +165,11 @@ def test_cve_staging_keeps_unrelated_files_and_rejects_linked_parents(tmp_path, 
     elif kind == 'source_link':
         (plugin / 'README.md').unlink()
         (plugin / 'README.md').symlink_to(retained)
+    if kind == 'directory_destination':
+        (target / 'README.md').mkdir()
     monkeypatch.setattr(module, 'find_cve_plugin_source', lambda: plugin)
-    if kind in {'parent_link', 'source_link'}:
-        with pytest.raises(RuntimeError, match='symlink'):
+    if kind in {'parent_link', 'source_link', 'directory_destination'}:
+        with pytest.raises(RuntimeError, match='regular file' if kind == 'directory_destination' else 'symlink'):
             module.stage_files(target, 'https://github.local', 'a'*40, 'b'*64)
     else:
         module.stage_files(target, 'https://github.local', 'a'*40, 'b'*64)

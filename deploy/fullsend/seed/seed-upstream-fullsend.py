@@ -21,14 +21,13 @@ Gap A1 of the Fullsend integration conformance plan.
 
 from __future__ import annotations
 
-import shutil
 import os
 import sys
 import tempfile
 import time
 from pathlib import Path
 
-from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git, seed_source_path, clear_mirror_worktree, copy_mirror_source
+from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git, seed_source_path, clear_mirror_worktree, copy_mirror_source, mirror_destination
 
 
 # deploy/fullsend/seed/seed-upstream-fullsend.py -> parents[3] is the project root.
@@ -193,7 +192,7 @@ def main() -> None:
         clear_mirror_worktree(directory)
 
         for origin, relative in sources:
-            destination = directory / relative
+            destination = mirror_destination(directory, relative)
             destination.parent.mkdir(parents=True, exist_ok=True)
             copy_mirror_source(SOURCE, relative, destination)
 

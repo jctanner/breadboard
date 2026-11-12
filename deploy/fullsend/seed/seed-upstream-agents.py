@@ -143,7 +143,10 @@ def apply_mirror_patches(directory: Path) -> None:
         patch_text = patch.read_text()
         domain = os.environ.get("BREADBOARD_DOMAIN", "local")
         if domain != "local":
-            patch_text = patch_text.replace("github.local", f"github.{domain}")
+            patch_text = "".join(
+                line.replace("github.local", f"github.{domain}") if line.startswith("+") else line
+                for line in patch_text.splitlines(keepends=True)
+            )
         result = subprocess.run(
             ["git", "apply", "-"],
             input=patch_text,

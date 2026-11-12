@@ -6,6 +6,7 @@ set -euo pipefail
 export PATH="/opt/rust/cargo/bin:/usr/local/go/bin:${PATH}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "${SCRIPT_DIR}/render_domain_manifest.py" /dev/null "${BREADBOARD_DOMAIN:-local}" >/dev/null
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 FULLSEND_ROOT="${PROJECT_ROOT}/checkouts/fullsend-ai/fullsend"
 OPENSHELL_ROOT="${PROJECT_ROOT}/checkouts/openshell"
@@ -112,7 +113,7 @@ for patch in "${FULLSEND_PATCHES[@]}"; do
   patch_file="${patch}"
   if [[ "${BREADBOARD_DOMAIN:-local}" != "local" ]]; then
     patch_tmp="$(mktemp /tmp/fullsend-patch.XXXXXX)"
-    sed "s/github\.local/github.${BREADBOARD_DOMAIN}/g" "${patch}" > "${patch_tmp}"
+    sed "/^+/s/github\.local/github.${BREADBOARD_DOMAIN}/g" "${patch}" > "${patch_tmp}"
     patch_file="${patch_tmp}"
   fi
   if ! git -C "${FULLSEND_BUILD_ROOT}" apply --check --unidiff-zero "${patch_file}" 2>/dev/null; then

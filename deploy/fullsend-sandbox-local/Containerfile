@@ -52,8 +52,9 @@ RUN /usr/sbin/update-ca-certificates \
 # Marks the one thing this layer changes, for anything that wants to assert it.
 ENV BREADBOARD_SANDBOX_CA=/usr/local/share/ca-certificates/breadboard-internal-ca.crt
 
-ARG PI_VERSION=1.3.0
-RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent@$PI_VERSION && npm cache clean --force && [ "$(pi --version)" = "$PI_VERSION" ]
+# Keep the harness-pinned base image runtime unless explicitly testing an override.
+ARG PI_VERSION=
+RUN if [ -n "$PI_VERSION" ]; then npm install -g --ignore-scripts "@earendil-works/pi-coding-agent@$PI_VERSION" && npm cache clean --force && [ "$(pi --version)" = "$PI_VERSION" ]; fi
 
 # OpenShell 0.1.x's Kubernetes driver seeds the image's /sandbox into the
 # workspace volume as uid 10001 (workspace-init, `openshell-sandbox

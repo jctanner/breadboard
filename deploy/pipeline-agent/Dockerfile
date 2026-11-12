@@ -64,7 +64,7 @@ RUN chmod +x /usr/local/bin/opencode && opencode --version
 WORKDIR /app
 
 # Inject internal CA certificate (extracted at build time by 05b-build-agent.sh)
-COPY internal-ca.crt /usr/local/share/ca-certificates/internal-ca.crt
+COPY --chmod=0644 internal-ca.crt /usr/local/share/ca-certificates/internal-ca.crt
 RUN update-ca-certificates
 ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/internal-ca.crt
 

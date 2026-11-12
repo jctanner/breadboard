@@ -59,7 +59,6 @@ provision:
         lsb-release \
         net-tools \
         dnsutils \
-        dnsmasq \
         iputils-ping \
         python3-pip \
         python3-venv \

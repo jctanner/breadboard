@@ -28,7 +28,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git, seed_source_path
+from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git, seed_source_path, clear_mirror_worktree
 
 
 # deploy/fullsend/seed/seed-upstream-fullsend.py -> parents[3] is the project root.
@@ -188,14 +188,10 @@ def main() -> None:
                 break
             time.sleep(2)
 
-        # The tree reflects the collection exactly: a file mirrored before and
-        # not collected now is removed rather than left behind from the fetch.
-        for relative in MIRRORED_PATHS:
-            target = directory / relative
-            if target.is_dir():
-                shutil.rmtree(target)
-            elif target.is_file():
-                target.unlink()
+        # Drop the fetched working tree, including symlinks, before copying.
+        # Never traverse fetched parent links while removing selected subtrees.
+        clear_mirror_worktree(directory)
+
         for origin, relative in sources:
             destination = directory / relative
             destination.parent.mkdir(parents=True, exist_ok=True)

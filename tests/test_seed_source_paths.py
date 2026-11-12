@@ -48,3 +48,22 @@ def test_mirror_source_rejects_escape(tmp_path, monkeypatch, relative):
     module = load_seed('seed-upstream-agents', monkeypatch)
     with pytest.raises(RuntimeError, match='inside'):
         module.seed_source_path(tmp_path, relative)
+
+
+def test_fetched_mirror_links_are_removed_without_following(tmp_path, monkeypatch):
+    module = load_seed('seed-upstream-fullsend', monkeypatch)
+    outside = tmp_path / 'outside'
+    outside.mkdir()
+    retained = outside / 'keep'
+    retained.write_text('must survive')
+    mirror = tmp_path / 'mirror'
+    mirror.mkdir()
+    (mirror / '.git').mkdir()
+    (mirror / '.github').symlink_to(outside, target_is_directory=True)
+    (mirror / 'action.yml').symlink_to(outside / 'missing')
+    (mirror / 'obsolete').mkdir()
+    (mirror / 'obsolete/file').write_text('remove')
+    module.clear_mirror_worktree(mirror)
+    assert retained.read_text() == 'must survive'
+    assert not (outside / 'missing').exists()
+    assert list(mirror.iterdir()) == [mirror / '.git']

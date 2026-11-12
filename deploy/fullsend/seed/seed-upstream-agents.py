@@ -25,7 +25,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git, seed_source_path
+from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git, seed_source_path, clear_mirror_worktree
 
 
 # deploy/fullsend/seed/seed-upstream-agents.py -> parents[3] is the project root.
@@ -194,13 +194,7 @@ def main() -> None:
         # "already exists in working directory" on every later run, and a file
         # deleted upstream stayed in the mirror forever. The history is kept -
         # only the checked-out files go.
-        for entry in directory.iterdir():
-            if entry.name == ".git":
-                continue
-            if entry.is_dir() and not entry.is_symlink():
-                shutil.rmtree(entry)
-            else:
-                entry.unlink()
+        clear_mirror_worktree(directory)
 
         for origin, relative in sources:
             destination = directory / relative

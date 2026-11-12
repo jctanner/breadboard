@@ -11,3 +11,9 @@ Route source ls-files and mirror git apply through the isolated Git helper. Clea
 inherited Git controls instead of maintaining a partial denylist, retaining only
 the stricter ownership test hook. Preserve the explicitly selected public CA.
 Disable external diff for the fixture diff command.
+
+Also clear the whole fetched mirror working tree before copying, preserving only
+.git and unlinking links rather than traversing them. A malicious fetched parent
+link must not redirect selective cleanup outside the temporary mirror, and broken
+links must not remain as copy destinations. A filesystem regression proves outside
+files survive and broken/parent links and stale normal content are removed.

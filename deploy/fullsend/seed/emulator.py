@@ -12,6 +12,7 @@ through the emulator's Git transport.
 from __future__ import annotations
 
 import json
+import shutil
 import os
 import ssl
 import re
@@ -173,6 +174,17 @@ def seed_source_path(root: Path, relative: str) -> Path:
     if not current.resolve().is_relative_to(base):
         raise RuntimeError("Mirror source escapes its checkout")
     return current
+
+
+def clear_mirror_worktree(directory: Path) -> None:
+    """Remove fetched content without following mirror-controlled symlinks."""
+    for entry in directory.iterdir():
+        if entry.name == ".git":
+            continue
+        if entry.is_dir() and not entry.is_symlink():
+            shutil.rmtree(entry)
+        else:
+            entry.unlink()
 
 
 

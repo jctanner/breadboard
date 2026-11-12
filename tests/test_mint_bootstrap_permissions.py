@@ -4,6 +4,7 @@ import io
 import json
 from pathlib import Path
 import ssl
+import urllib.error
 from unittest import mock
 
 import pytest
@@ -13,11 +14,12 @@ SOURCE = (ROOT / "deploy/scripts/18-deploy-fullsend-mint-dev.sh").read_text()
 BLOCK = SOURCE.split("<<'PY'\n", 1)[1].split("\nPY\n", 1)[0]
 
 
-@pytest.mark.parametrize("missing_permissions", [None, "missing", "empty", "installation_mismatch", "malformed", "existing_installation_mismatch", "rollback_failure"])
+@pytest.mark.parametrize("missing_permissions", [None, "missing", "empty", "installation_mismatch", "malformed", "existing_installation_mismatch", "rollback_failure", "rollback_network", "missing_id", "bool_id", "nondict"])
 def test_installation_grants_from_api_metadata(monkeypatch, missing_permissions):
     monkeypatch.setenv("BREADBOARD_CA_FILE", "/fixture/public-ca.crt")
     grants = []
     writes = []
+    deletes = []
     expected = {str(1000+i): {"metadata": "read", "contents": "write" if i % 2 else "read",
                              "issues": "write" if i % 4 < 2 else "read",
                              "checks": "write" if i < 4 else "read"} for i in range(1, 9)}
@@ -25,19 +27,29 @@ def test_installation_grants_from_api_metadata(monkeypatch, missing_permissions)
 
     def request(req, **kwargs):
         assert kwargs["context"] is context
+        assert kwargs["timeout"] == 30
         url = req.full_url
         status = 200
         if url.endswith("/private-key"):
             body = {"private_key": "fixture-key"}
         elif req.get_method() == "DELETE":
             writes.append("DELETE")
+            deletes.append(url)
+            if missing_permissions == "rollback_network" and url.endswith("/77"):
+                raise urllib.error.URLError("fixture network failure")
             status, body = (503, None) if missing_permissions == "rollback_failure" else (204, None)
         elif req.get_method() == "POST":
             writes.append("POST")
             body = json.loads(req.data)
             grants.append(body["permissions"])
             status = 200 if missing_permissions == "existing_installation_mismatch" else 201
-            body = {"id": 1, "permissions": {} if missing_permissions in {"installation_mismatch", "existing_installation_mismatch", "rollback_failure"} else body["permissions"]}
+            body = {"id": 77, "permissions": {} if missing_permissions in {"installation_mismatch", "existing_installation_mismatch", "rollback_failure", "rollback_network", "missing_id", "bool_id"} else body["permissions"]}
+            if missing_permissions == "missing_id":
+                body.pop("id")
+            elif missing_permissions == "bool_id":
+                body["id"] = True
+            elif missing_permissions == "nondict":
+                body = []
         elif "/api/v3/admin/apps/" in url:
             app_id = url.rsplit("/", 1)[-1]
             body = None if missing_permissions == "malformed" else ({} if missing_permissions == "missing" else {"permissions": {} if missing_permissions == "empty" else expected[app_id]})
@@ -62,6 +74,8 @@ def test_installation_grants_from_api_metadata(monkeypatch, missing_permissions)
             with pytest.raises(SystemExit, match="installation permissions do not match"):
                 exec(compile(BLOCK, "mint-bootstrap", "exec"), {})
             assert writes == ["DELETE", "POST", "DELETE"]
+            assert deletes == ["https://fixture.invalid/admin/api/apps/1001/installations/1",
+                               "https://fixture.invalid/admin/api/apps/1001/installations/77"]
         elif missing_permissions == "existing_installation_mismatch":
             with pytest.raises(SystemExit, match="existing installation left unchanged"):
                 exec(compile(BLOCK, "mint-bootstrap", "exec"), {})
@@ -70,6 +84,14 @@ def test_installation_grants_from_api_metadata(monkeypatch, missing_permissions)
             with pytest.raises(SystemExit, match="rollback failed: HTTP 503"):
                 exec(compile(BLOCK, "mint-bootstrap", "exec"), {})
             assert writes == ["POST", "DELETE"]
+        elif missing_permissions in {"rollback_network", "missing_id", "bool_id", "nondict"}:
+            message = "rollback failed: network error" if missing_permissions == "rollback_network" else "new installation ID invalid"
+            with pytest.raises(SystemExit, match=message):
+                exec(compile(BLOCK, "mint-bootstrap", "exec"), {})
+            if missing_permissions == "rollback_network":
+                assert deletes[-1].endswith("/77")
+            else:
+                assert deletes == ["https://fixture.invalid/admin/api/apps/1001/installations/1"]
         else:
             exec(compile(BLOCK, "mint-bootstrap", "exec"), {})
             assert grants == list(expected.values())

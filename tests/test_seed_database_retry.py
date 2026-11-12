@@ -65,7 +65,7 @@ def test_conflict_requires_confirmed_resource(kind):
         function()
 
 
-@pytest.mark.parametrize("payload", [b"maintenance", b'{"errors":[{"code":"unavailable"}]}'])
+@pytest.mark.parametrize("payload", [b"maintenance", b"\xff", b'{"errors":7}', b'{"errors":[{"code":"unavailable"}]}'])
 def test_non_lock_503_is_not_retried(payload):
     error = urllib.error.HTTPError("https://fixture.invalid", 503, "busy", {}, io.BytesIO(payload))
     with mock.patch("urllib.request.urlopen", side_effect=error) as request, \

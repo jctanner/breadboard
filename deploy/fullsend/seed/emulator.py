@@ -70,19 +70,20 @@ def api_request(method: str, path: str, body: dict | None = None) -> tuple[int, 
     )
     for attempt in range(4):
         try:
-            with urllib.request.urlopen(request, context=context) as response:
+            with urllib.request.urlopen(request, context=context, timeout=30) as response:
                 payload = response.read()
                 return response.status, json.loads(payload) if payload else None
         except urllib.error.HTTPError as exc:
             payload = exc.read()
             try:
                 decoded = json.loads(payload) if payload else None
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, UnicodeDecodeError):
                 decoded = payload.decode(errors="replace")
             exc.close()
-            locked = isinstance(decoded, dict) and any(
+            errors = decoded.get("errors") if isinstance(decoded, dict) else None
+            locked = isinstance(errors, list) and any(
                 isinstance(error, dict) and error.get("code") == "sqlite_locked"
-                for error in (decoded.get("errors") or [])
+                for error in errors
             ) and "cannot be replayed safely" not in str(decoded.get("message", ""))
             if exc.code == 503 and locked and replay_safe and attempt < 3:
                 time.sleep(2 ** attempt)
@@ -130,6 +131,8 @@ def git_env() -> dict[str, str]:
         "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE",
         "GIT_SSH", "GIT_SSH_COMMAND", "GIT_ASKPASS", "SSH_ASKPASS", "GIT_EXEC_PATH",
         "GIT_CURL_VERBOSE",
+        "GIT_TEMPLATE_DIR", "GIT_PROTOCOL_FROM_USER", "GIT_ALLOW_PROTOCOL",
+        "GIT_REPLACE_REF_BASE", "GIT_CEILING_DIRECTORIES", "GIT_EDITOR", "GIT_PAGER",
     }
     for key in list(env):
         if key in blocked or key.startswith(("GIT_CONFIG_", "GIT_SSL_", "GIT_TRACE")):

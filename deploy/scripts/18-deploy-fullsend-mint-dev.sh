@@ -28,7 +28,7 @@ ensure_app() {
   local slug="$3"
   local permissions="$4"
   local app_status
-  app_status="$(curl --silent --show-error --cacert "${BREADBOARD_CA_FILE}" \
+  app_status="$(curl --connect-timeout 10 --max-time 60 --silent --show-error --cacert "${BREADBOARD_CA_FILE}" \
     -o /dev/null -w '%{http_code}' \
     -X POST "${API}/admin/apps" \
     -H "Authorization: token ${GITHUB_TOKEN}" \
@@ -43,7 +43,7 @@ ensure_app() {
   fi
 
   local reconcile_status
-  reconcile_status="$(curl --silent --show-error --cacert "${BREADBOARD_CA_FILE}" \
+  reconcile_status="$(curl --connect-timeout 10 --max-time 60 --silent --show-error --cacert "${BREADBOARD_CA_FILE}" \
     -o /dev/null -w '%{http_code}' \
     -X PATCH "${API}/admin/apps/${app_id}" \
     -H "Authorization: token ${GITHUB_TOKEN}" \
@@ -88,7 +88,7 @@ mint_pat() {
   local scopes="$2"
   local login="$3"
   local response
-  response="$(curl --silent --show-error --fail --cacert "${BREADBOARD_CA_FILE}" \
+  response="$(curl --connect-timeout 10 --max-time 60 --silent --show-error --fail --cacert "${BREADBOARD_CA_FILE}" \
     -X POST "${API}/admin/tokens" \
     -H "Authorization: token ${GITHUB_TOKEN}" \
     -H 'Content-Type: application/json' \
@@ -145,7 +145,7 @@ def call(url, body=None, method=None):
                                  headers={"Authorization": "token " + token, "Content-Type": "application/json",
                                           "Accept": "application/vnd.github+json"}, method=method)
     try:
-        with urllib.request.urlopen(req, context=ctx) as r:
+        with urllib.request.urlopen(req, context=ctx, timeout=30) as r:
             payload = r.read(); return r.status, decode(payload)
     except urllib.error.HTTPError as e:
         payload = e.read(); return e.code, decode(payload)
@@ -174,7 +174,7 @@ for role, app_id in roles.items():
         # Roll back only an installation this invocation just created. Do not
         # delete an existing operator installation on a failed verification.
         installation_id = inst.get("id") if isinstance(inst, dict) else None
-        cleanup = "existing installation left unchanged"
+        cleanup = "returned existing installation left unchanged; any replaced selected installations were already removed"
         if status == 201 and type(installation_id) is int and installation_id > 0:
             try:
                 rollback_status, _ = call(f"{base}/admin/api/apps/{app_id}/installations/{installation_id}", method="DELETE")

@@ -625,3 +625,14 @@ export KUBECONFIG="$HOME/.kube/config"
 ```
 
 An explicitly selected context is preserved; the target refuses `sudo make`.
+
+Fullsend Mint bootstrap reconciles eight role Apps in sequence. It may remove an
+old repository-selected installation before creating its organization-wide
+replacement. If bootstrap fails, earlier valid changes remain, and the failed role
+may have no installation. Fix the reported cause and rerun bootstrap; it writes the
+combined role-App secret only after all eight verifications succeed.
+
+Sudo seeders assume a trusted single operator who already has full sudo and
+controls the integration checkouts. Do not seed as root from repositories writable
+by untrusted users. The temporary exact-path Git trust is not a sanitizer for an
+untrusted repository's local configuration or attributes.

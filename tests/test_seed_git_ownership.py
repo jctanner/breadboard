@@ -51,10 +51,24 @@ def test_git_environment_drops_redirection_and_config_injection(monkeypatch):
            "GIT_CONFIG_PARAMETERS": "'safe.directory=*'", "GIT_CONFIG_COUNT": "1",
            "GIT_CONFIG_KEY_0": "http.sslVerify", "GIT_CONFIG_VALUE_0": "false",
            "GIT_SSH_COMMAND": "unwanted", "GIT_ASKPASS": "unwanted",
-           "GIT_EXEC_PATH": "/other/bin", "GIT_SSL_NO_VERIFY": "1"}
+           "GIT_EXEC_PATH": "/other/bin", "GIT_SSL_NO_VERIFY": "1",
+           "GIT_TEMPLATE_DIR": "/other/templates", "GIT_PROTOCOL_FROM_USER": "1",
+           "GIT_ALLOW_PROTOCOL": "ext", "GIT_REPLACE_REF_BASE": "refs/other",
+           "GIT_CEILING_DIRECTORIES": "/", "GIT_EDITOR": "unwanted", "GIT_PAGER": "unwanted",
+           "GIT_TRACE_CURL": "1", "GIT_CURL_VERBOSE": "1", "GIT_INDEX_FILE": "/other/index",
+           "GIT_OBJECT_DIRECTORY": "/other/objects"}
     for key, value in bad.items():
         monkeypatch.setenv(key, value)
     env = helper.git_env()
     assert not set(bad).intersection(env)
     assert env["GIT_CONFIG_GLOBAL"] == os.devnull
     assert env["GIT_CONFIG_NOSYSTEM"] == "1"
+
+
+def test_git_ca_override_replaces_inherited_value(monkeypatch):
+    spec = importlib.util.spec_from_file_location("ca_seed", ROOT / "deploy/fullsend/seed/emulator.py")
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    monkeypatch.setenv("GIT_SSL_CAINFO", "/unwanted/ca")
+    monkeypatch.setenv("BREADBOARD_CA_FILE", "/fixture/public-ca.crt")
+    assert helper.git_env()["GIT_SSL_CAINFO"] == "/fixture/public-ca.crt"

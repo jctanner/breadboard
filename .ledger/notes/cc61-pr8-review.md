@@ -236,3 +236,125 @@ and handle legacy manual CDPATH/space-containing project paths separately. Curre
 host/Make paths are absolute and do not exercise those legacy path limitations.
 Client DNS/trust-store setup, real model inference, interactive OpenCode TUI, macOS
 Lima/ARM and legacy Docker runtime qualification remain outside the passed checks.
+
+
+## Host operator and Fullsend seed follow-up qualification
+
+The ordinary operator's bundled K3s kubectl continued selecting the root-only
+server config after the old copy target succeeded. The replacement target installs
+a protected user config, backs up differing operator data, preserves explicit
+KUBECONFIG and adds an idempotent interactive Bash fallback. A fresh interactive
+Bash on the test host now runs kubectl without sudo; the root server file remains
+0600. Other shells use the documented explicit export.
+
+Fresh Fullsend seeding exposed two further failures: sudo ownership checks after
+isolating Git configuration, and transient emulator SQLite locks. Each seed Git
+command now trusts only its controlled resolved checkout through a temporary
+protected global configuration, disables hooks/helpers and filters inherited Git
+redirects. Lock retries are bounded and restricted to replay-safe operations.
+Duplicate creation conflicts are confirmed by reading the expected resource.
+The complete seed subsequently succeeded on the test host.
+
+The first conformance attempt failed at Mint because the UI App inventory omits
+permissions. Bootstrap now reads canonical REST App grants, verifies the installed
+grants, refuses malformed metadata, and reports rollback failures for newly created
+mismatches. Existing installations are never deleted by verification rollback.
+All bootstrap HTTPS requests verify the selected public CA. Authenticated checks
+inside Mint confirmed all eight actual installation maps match their App grants;
+no keys, JWTs or tokens were exported by those checks.
+
+| Follow-up review round | Codex disposition | Claude disposition | Closure |
+| --- | --- | --- | --- |
+| 10 | Kubeconfig fix under test | No blockers; backup/root/mode should-fixes | Protected backup, root refusal and mode tests added |
+| 11 | Seed ownership/retries under test | No blockers; protected scope/hooks/retry evidence | Temporary global config, hooks disabled, actual lock response confirmed |
+| 12 | Grant source corrected | No source blockers; conflict/grant tests requested | GET-confirmed 422s, varied role-map tests, eight real grant checks |
+| 13 | Source approvable; integration blocked | No source blockers; rollback/type guards requested | New-only mismatch cleanup and malformed metadata guards |
+| 14 | Source approvable; integration blocked | No source blockers; rollback reporting/env tests requested | Failure diagnostics, existing-installation regression and inherited-env filtering |
+| 15 | No blockers within documented single-operator trust boundary | No hard source blockers; hardening/test/documentation should-fixes | HTTP timeouts, malformed errors, more inherited-env filtering, distinct rollback IDs and failure branches; partial bootstrap documented |
+
+Current focused regression suite: **161 passed, 5 live tests skipped**. Shell
+syntax and PR whitespace checks pass. All application deployments are Available;
+cluster/certificate validation and a custom-domain in-cluster DNS probe pass.
+Strictly verified HTTPS routes and idempotent demo seeding remain qualified.
+
+**Integration is not qualified. Ready for manual merge: no.** A second conformance
+attempt passed Mint, checkout and setup but failed while activating the OpenShell
+sandbox's effective configuration (ConfigurationInvalid). An independent sandbox
+probe without attached providers reproduced that activation failure. The public
+OpenShell runtime capability probe passes both in an isolated Podman container
+and in a hardened K3s pod on this host; no host-wide security controls were
+weakened. Metadata does not explain the remaining runtime activation failure.
+Diagnostic log inspection awaits explicit permission after automatic approval
+review rejected earlier exports because they might contain credentials/session
+material. No raw diagnostic logs were exported after those rejections.
+
+Accepted source deferrals: operator-owned local Git configuration stays within
+the operator's existing sudo trust boundary; eight-App bootstrap is not atomic
+and retains earlier valid reconciliations on a later failure; pre-existing token
+arguments deserve a separate protected-file/stdin cleanup; Bash-only shell setup
+is documented. Real model inference, client DNS/trust configuration, macOS Lima
+and ARM remain unqualified. No Model Relay upstream accounts were explicitly
+provisioned for this qualification.
+
+Review 15 deferrals: untrusted/shared root seed checkouts are unsupported, as now
+explicitly documented; root seeders operate on the trusted operator's committed
+integration checkouts and controlled temporary repositories. Disabling every
+possible local Git configuration/attribute command would require redesigning the
+seed flow and is not claimed here. HTTPS-only Git protocol enforcement is deferred
+because helpers also perform local fixture operations; inherited protocol overrides
+are removed. A separate shell CA-selection fixture is deferred because the actual
+bootstrap successfully selected the cluster CA and verified the emulator chain,
+and TLS context assertions cover the Python grant reconciliation. OpenSSL was
+already a required host dependency for the CA/deployment flow.
+
+
+### Wider mirror security audit (rounds 16–18)
+
+Round 16: Codex and Claude identified source symlink reads, unwrapped Git callers,
+canonical requested-grant verification, repository selection and inventory shape
+checks. All are fixed, with executable regressions. Git environment handling now
+clears inherited Git controls rather than keeping an incomplete denylist.
+
+Round 17: Claude requested changes for fetched/source links in composite-action
+mirroring and CVE fixture staging. Codex also identified fetched parent/broken-link
+cleanup hazards in the Fullsend mirror. Shared guards now reject linked ancestors,
+replace final destination links without following them, and clear whole upstream
+mirror working trees without traversing fetched links. The selective CVE fixture
+writer preserves unrelated repository content. Directory collection supports a
+symlinked operator checkout root; App grant mismatches have a precise error.
+
+A real agents checkout contains legitimate tracked fixture links, so upstream
+mirrors preserve final symlinks as link text without reading their targets rather
+than aborting on them. Ancestor links and escaping source paths remain forbidden.
+Source action/plugin links are refused. The real privileged copy probe succeeds
+for 54 Fullsend files and 482 agents entries, preserving 12 links. Real plugin
+staging generates 16 dummy files and 15 Pi files; three composite actions copy
+through guarded paths. Those probes use controlled temporary directories and do
+not publish new fixture commits or execute models.
+
+The stricter canonical-grant/repository-selection bootstrap succeeds against the
+real cluster-selected public CA. A repeat run also succeeds with existing org-wide grants (both systemd runs exit 0).
+End-to-end sandbox activation remains blocked as documented in
+[the open qualification bug](../bugs/open/w530-openshell-configuration-activation.md).
+
+
+| Wider follow-up round | Codex verdict | Claude verdict | Closure |
+| --- | --- | --- | --- |
+| 16 | Should-fix mirror reads and exact grant checks | No delta blockers; conditional trust concern | Final-link preservation, ancestor rejection, isolated Git calls, exact requested grants/selection/inventory checks |
+| 17 | Request changes for fetched-link hazards | Request changes: composite and CVE writers | Both writers guarded; fetched mirror cleanup and source reads covered by real filesystem regressions |
+| 18 | No blockers after fixes | No source blockers; linked-walk/destination test suggestions | Directory links under linked SOURCE tested; upstream destinations guarded; directory leaves rejected |
+| 19 | No source blockers; integration blocked | No blockers; confirm CVE fixture test | Actual stage_files uses guarded output(); complete suite passes 161/5; integration gate remains open |
+
+Final source should-fixes are closed or explicitly deferred. Faithful upstream
+link targets are retained, rather than validated/rewritten for consumers: the seed
+host reads only link text; agents Actions is disabled; normal Fullsend reuse reads
+workflow contents through Git/API. A consumer that independently checks out and
+follows an absolute/escaping upstream link must enforce its own filesystem
+boundary. This documented consumer hardening is a nonblocking follow-up accepted
+by both reviews. A separate nested-copy end-to-end fixture is optional: filesystem
+component tests plus real privileged copies of all 536 source entries already
+exercise collection/copy/link semantics. The final existing-directory CVE case is
+confirmed by executing the actual stage_files, not a copied test implementation.
+
+No fork-main push, force-push, merge, PR comment/review, label or closure occurred.
+The replacement PR stays work in progress for integration despite source approval.

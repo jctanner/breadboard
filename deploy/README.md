@@ -663,3 +663,13 @@ maps it to automatic TLS termination, not skip. Policies with anchors/aliases/ex
 invalid structure, oversized data, non-regular archive entries or only a legacy policy
 path fail closed and need an explicit migration. The helper uses the host PyYAML
 dependency already declared by the project.
+
+The Fullsend runner allows five minutes for sandbox readiness through
+`FULLSEND_SANDBOX_READY_TIMEOUT`. Cold startup on the qualified physical host took
+135–180 seconds, exceeding the CLI's 120-second default plus its 10-second context
+buffer. An explicit harness
+[`sandbox_timeout_seconds`](https://github.com/fullsend-ai/fullsend/blob/1d00009b1e10bdea36a5760ef5c67a687a3bbfec/internal/harness/harness.go)
+takes precedence; the pinned
+[timeout/retry implementation](https://github.com/fullsend-ai/fullsend/blob/1d00009b1e10bdea36a5760ef5c67a687a3bbfec/internal/sandbox/sandbox.go)
+still caps readiness at ten minutes and retains its bounded retry count. This
+changes the startup budget, not agent execution timeouts or sandbox enforcement.

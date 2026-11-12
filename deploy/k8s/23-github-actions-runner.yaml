@@ -66,6 +66,11 @@ spec:
             # one host and nothing else; see patch 0006.
             - name: FULLSEND_ALLOW_PRIVATE_FORGE
               value: "1"
+            # Cold workspace/runtime startup can exceed Fullsend's 120s
+            # default on physical/remote hosts. Keep a bounded budget;
+            # an explicit harness sandbox_timeout_seconds still wins.
+            - name: FULLSEND_SANDBOX_READY_TIMEOUT
+              value: 5m
             # A fallback for CLI commands run outside a workflow (minttoken,
             # reconcilestatus); workflows take vars.FULLSEND_MINT_URL and the
             # config's mint_url. The mint serves TLS only, and Fullsend

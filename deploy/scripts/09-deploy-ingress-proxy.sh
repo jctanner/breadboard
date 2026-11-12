@@ -4,6 +4,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "${SCRIPT_DIR}/render_domain_manifest.py" /dev/null "${BREADBOARD_DOMAIN:-local}" >/dev/null
 PROJECT_ROOT="${SCRIPT_DIR}/../.."
 
 echo "==> Deploying Go Reverse Proxy (Ingress Controller)..."

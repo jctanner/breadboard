@@ -3,12 +3,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "${SCRIPT_DIR}/render_domain_manifest.py" /dev/null "${BREADBOARD_DOMAIN:-local}" >/dev/null
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
 DOMAIN="${BREADBOARD_DOMAIN:-local}"
 
 echo "==> Deploying Org Pulse..."
 "${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/02-certificates.yaml"
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/28-org-pulse.yaml"
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/28-org-pulse.yaml"
 "${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/08-ingress-https.yaml"
 
 echo "  Waiting for MongoDB, the backend and the frontend..."

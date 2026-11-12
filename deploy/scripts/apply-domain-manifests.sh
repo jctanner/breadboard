@@ -2,7 +2,7 @@
 # Apply Kubernetes manifests parameterized with BREADBOARD_DOMAIN.
 # When BREADBOARD_DOMAIN is unset or "local", manifests are applied unchanged.
 # When BREADBOARD_DOMAIN is set (e.g. "bb.internal"), manifests are rendered
-# with both .local and .${BREADBOARD_DOMAIN} SANs and routes before applying.
+# with the configured domain in certificate SANs and TLS hosts before applying.
 #
 # Usage:
 #   apply-domain-manifests.sh <file1.yaml> [file2.yaml ...]

@@ -23,7 +23,7 @@ image_in_k3s() {
   local img="$1"
   sudo k3s ctr images ls -q 2>/dev/null | grep -qE "(docker\.io/library/|localhost/)${img}"
 }
-FORCE_REBUILD="${FORCE_REBUILD:-0}"
+FORCE_REBUILD="${FORCE_REBUILD:-1}"
 
 # Build the pipeline dashboard image (Flask web UI)
 echo "--- Building pipeline-dashboard image (web UI) ---"

@@ -16,7 +16,7 @@ echo "--- Creating namespace ---"
 kubectl apply -f 00-namespace.yaml
 
 echo "--- Setting up certificate infrastructure ---"
-kubectl apply -f 01-ca-issuer.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" 01-ca-issuer.yaml
 
 echo "--- Creating certificates ---"
 "${SCRIPT_DIR}/apply-domain-manifests.sh" 02-certificates.yaml

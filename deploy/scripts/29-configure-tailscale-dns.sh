@@ -6,6 +6,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "${SCRIPT_DIR}/render_domain_manifest.py" /dev/null "${BREADBOARD_DOMAIN:-local}" >/dev/null
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 
 echo "==> Configuring Tailscale Split DNS responder (dnsmasq)..."
@@ -37,24 +38,24 @@ if [ -f /etc/dnsmasq.d/ubuntu-fan ]; then
 fi
 
 # Determine configured domains
-DOMAIN="${BREADBOARD_DOMAIN:-bb.internal}"
+DOMAIN="${BREADBOARD_DOMAIN:-local}"
+if [ "$DOMAIN" = local ]; then
+  echo "Split DNS requires an explicit non-local BREADBOARD_DOMAIN; skipping."
+  exit 0
+fi
 
 # Write dnsmasq configuration for breadboard
 cat <<EOF > /etc/dnsmasq.d/breadboard.conf
 # Breadboard Tailscale Split DNS responder
+interface=tailscale0
 listen-address=${TS_IP}
 bind-dynamic
 except-interface=lo
 no-resolv
 no-hosts
-address=/.bb.internal/${TS_IP}
-EOF
-
-if [ "${DOMAIN}" != "bb.internal" ] && [ -n "${DOMAIN}" ] && [ "${DOMAIN}" != "local" ]; then
-  cat <<EOF >> /etc/dnsmasq.d/breadboard.conf
+local=/${DOMAIN}/
 address=/.${DOMAIN}/${TS_IP}
 EOF
-fi
 
 echo "  Enabling and restarting dnsmasq..."
 systemctl enable --now dnsmasq
@@ -71,9 +72,9 @@ fi
 # Self-test DNS resolution inside VM
 echo "  Testing DNS resolution on ${TS_IP}:53..."
 if command -v dig >/dev/null 2>&1; then
-  RESOLVED_IP=$(dig @${TS_IP} dashboard.bb.internal +short || true)
+  RESOLVED_IP=$(dig @${TS_IP} dashboard.${DOMAIN} +short || true)
   if [ "${RESOLVED_IP}" = "${TS_IP}" ]; then
-    echo "  ✓ Local DNS query verified: dashboard.bb.internal -> ${RESOLVED_IP}"
+    echo "  ✓ Local DNS query verified: dashboard.${DOMAIN} -> ${RESOLVED_IP}"
   else
     echo "  WARNING: Local DNS query returned '${RESOLVED_IP}', expected '${TS_IP}'"
   fi
@@ -81,7 +82,4 @@ fi
 
 echo "==> Tailscale Split DNS configured successfully."
 echo "    Nameserver: ${TS_IP}"
-echo "    Domain:     *.bb.internal -> ${TS_IP}"
-if [ "${DOMAIN}" != "bb.internal" ] && [ -n "${DOMAIN}" ] && [ "${DOMAIN}" != "local" ]; then
-  echo "    Domain:     *.${DOMAIN} -> ${TS_IP}"
-fi
+echo "    Domain:     *.${DOMAIN} -> ${TS_IP}"

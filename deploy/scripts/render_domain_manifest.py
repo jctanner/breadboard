@@ -3,10 +3,10 @@
 
 When BREADBOARD_DOMAIN is unset or "local", manifests are emitted unchanged.
 When BREADBOARD_DOMAIN is set to another domain (e.g. "bb.internal"), external
-edge routes and hostnames (.local) are supplemented with .<domain> so both
-.local and .<domain> work simultaneously:
-- Certificate dnsNames: adds <service>.<domain> alongside <service>.local
-- Ingress tls.hosts: adds <service>.<domain> alongside <service>.local
+edge routes also accept .<domain>. Certificates use only the configured
+external domain; .local aliases are HTTP-only when a custom domain is used:
+- Certificate dnsNames: replaces <service>.local with <service>.<domain>
+- Ingress tls.hosts: replaces <service>.local with <service>.<domain>
 - Ingress rules: adds rule for <service>.<domain> identical to <service>.local
 - CoreDNS rewrite rules: adds rewrite for <service>.<domain>
 - BREADBOARD_DOMAIN env vars: updated to <domain>
@@ -24,6 +24,11 @@ CLUSTER_SUFFIX = ".svc.cluster.local"
 
 def transform_manifest(content: str, domain: str) -> str:
     domain = domain.strip().strip(".")
+    if domain and (len(domain) > 230 or not all(
+        re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?", label)
+        for label in domain.split(".")
+    )):
+        raise ValueError("BREADBOARD_DOMAIN must contain lowercase DNS labels (maximum 230 characters)")
     if not domain or domain == "local":
         return content
 
@@ -56,7 +61,7 @@ def transform_manifest(content: str, domain: str) -> str:
 
     # 5. URL value containing .local (e.g., https://github.local, https://jira.local):
     env_url_pattern = re.compile(
-        r"^(\s*value:\s*(?:https?|http)://[a-zA-Z0-9_-]+)\.local((?:/.*)?\s*)$"
+        r"^(\s*(?:value|GITHUB_SERVER_URL):\s*https?://[a-zA-Z0-9_-]+)\.local((?:/.*)?\s*)$"
     )
 
     last_env_name = None

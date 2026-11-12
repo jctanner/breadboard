@@ -4,6 +4,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "${SCRIPT_DIR}/render_domain_manifest.py" /dev/null "${BREADBOARD_DOMAIN:-local}" >/dev/null
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
 
 echo "==> Deploying markovd..."
@@ -12,7 +13,7 @@ cd "${PROJECT_ROOT}/deploy/k8s"
 
 echo "--- Ensuring namespace and cert infrastructure ---"
 kubectl apply -f 00-namespace.yaml
-kubectl apply -f 01-ca-issuer.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" 01-ca-issuer.yaml
 
 echo "--- Applying markovd resources ---"
 "${SCRIPT_DIR}/apply-domain-manifests.sh" 15-markovd.yaml

@@ -210,6 +210,8 @@ def clear_mirror_worktree(directory: Path) -> None:
 
 
 
+FULLSEND_SHIM_PATH = ".github/workflows/fullsend.yaml"
+
 FULLSEND_SHIM = """---
 # This file is managed by Fullsend. Do not edit it directly.
 name: fullsend

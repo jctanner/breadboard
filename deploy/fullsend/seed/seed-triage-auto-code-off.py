@@ -30,12 +30,12 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from emulator import BASE_URL, ORG, REPO, api_request, ensure_org, ensure_repo  # noqa: E402
+from emulator import BASE_URL, FULLSEND_SHIM_PATH, ORG, REPO, api_request, ensure_org, ensure_repo  # noqa: E402
 
 AGENTS_REPO = "fullsend-ai/agents"
 HARNESS_PATH = ".fullsend/triage.yaml"
 CONFIG_PATH = ".fullsend/config.yaml"
-SHIM_PATH = ".github/workflows/fullsend.yaml"
+SHIM_PATH = FULLSEND_SHIM_PATH
 from emulator import FULLSEND_SHIM as SHIM_WORKFLOW
 
 

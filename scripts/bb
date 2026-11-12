@@ -103,44 +103,25 @@ VALID_FLAGS = {
 
 FLAGS_WITH_VALUES = {"--domain", "--repo", "--limit", "--job", "--source"}
 
-RHEA_HOST = os.environ.get("RHEA_HOST", "mhild@100.89.90.31")
+RHEA_HOST = os.environ.get("RHEA_HOST", "")
 
 
 def setup_env() -> None:
-    rhea_kube = os.path.expanduser("~/.kube/rhea.yaml")
-    if "KUBECONFIG" not in os.environ and os.path.exists(rhea_kube):
-        os.environ["KUBECONFIG"] = rhea_kube
+    # Respect the operator's current kubectl context; never select a personal cluster.
+    pass
 
 
 def resolve_domain(cli_domain: Optional[str] = None) -> str:
-    if cli_domain:
-        return cli_domain.strip(".")
-    if "BREADBOARD_DOMAIN" in os.environ and os.environ["BREADBOARD_DOMAIN"].strip():
-        return os.environ["BREADBOARD_DOMAIN"].strip().strip(".")
-    rhea_kube = os.path.expanduser("~/.kube/rhea.yaml")
-    if os.path.exists(rhea_kube):
-        return "bb.internal"
-    try:
-        ctx = ssl._create_unverified_context()
-        req = urllib.request.Request("https://dashboard.bb.internal", method="HEAD")
-        with urllib.request.urlopen(req, context=ctx, timeout=1):
-            return "bb.internal"
-    except Exception:
-        pass
-    return "local"
+    domain = (cli_domain or os.environ.get("BREADBOARD_DOMAIN", "local")).strip().strip(".") or "local"
+    import re
+    if len(domain) > 240 or not all(re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?", label) for label in domain.split(".")):
+        error_exit("usage", "invalid domain", "use lowercase DNS labels", exit_code=2)
+    return domain
 
 
 def get_ssl_context() -> ssl.SSLContext:
-    ca_path = "/tmp/rhea-ca.crt"
-    if os.path.exists(ca_path):
-        try:
-            ctx = ssl.create_default_context(cafile=ca_path)
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-            return ctx
-        except Exception:
-            pass
-    return ssl._create_unverified_context()
+    ca_path = os.environ.get("BREADBOARD_CA_FILE")
+    return ssl.create_default_context(cafile=ca_path or None)
 
 
 def error_exit(code: str, message: str, hint: str, exit_code: int = 1) -> None:
@@ -160,6 +141,8 @@ def toon_val(val: Any) -> str:
 
 
 def get_thermal() -> Tuple[str, str]:
+    if not RHEA_HOST or RHEA_HOST.startswith("-"):
+        return "n/a", "unknown"
     try:
         proc = subprocess.run(
             [
@@ -285,18 +268,7 @@ def fetch_runners(domain: str) -> List[Dict[str, str]]:
                 })
             return runners
     except Exception:
-        return [
-            {
-                "name": "fullsend-agent-runner",
-                "scope": "fullsend-dev/triage-target",
-                "status": "online",
-            },
-            {
-                "name": "breadboard-enterprise-router",
-                "scope": "enterprise",
-                "status": "online",
-            },
-        ]
+        return []
 
 
 def fetch_runs(
@@ -833,7 +805,7 @@ commands:
   seed          Seed demo tickets, CVE fixture, or run conformance triage
 
 global flags:
-  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --domain <domain>   Target domain (defaults to BREADBOARD_DOMAIN or local)
   --skill             Print complete version-matched operational guide (SKILL.md)
   --help, -h          Show this help message
   --version, -v, -V   Print version (bb 0.1.0) and exit
@@ -852,7 +824,7 @@ Show detailed K3s cluster workloads, physical host thermal status,
 OpenShell profiles, providers, active sandboxes, and emulator tickets.
 
 flags:
-  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --domain <domain>   Target domain (defaults to BREADBOARD_DOMAIN or local)
   --help, -h          Show this help message
 
 examples:
@@ -866,7 +838,7 @@ List GitHub Actions workflow runs for a repository or across repositories.
 flags:
   --repo <owner/repo> Target repository (default: fullsend-dev/triage-target, or "all")
   --limit <n>         Maximum number of runs to display (default: 10)
-  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --domain <domain>   Target domain (defaults to BREADBOARD_DOMAIN or local)
   --help, -h          Show this help message
 
 examples:
@@ -887,7 +859,7 @@ flags:
   --repo <owner/repo> Target repository (default: fullsend-dev/triage-target)
   --job <name>        Filter specific job name instead of auto-selected job
   --full              Display complete log without tail truncation (1500 chars)
-  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --domain <domain>   Target domain (defaults to BREADBOARD_DOMAIN or local)
   --help, -h          Show this help message
 
 examples:
@@ -903,7 +875,7 @@ Query tickets from the Breadboard dashboard API across Jira, GitHub, and GitLab.
 flags:
   --source <source>   Filter by ticket source (github, gitlab, or jira)
   --limit <n>         Maximum number of tickets to display (default: 20)
-  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --domain <domain>   Target domain (defaults to BREADBOARD_DOMAIN or local)
   --help, -h          Show this help message
 
 examples:
@@ -921,7 +893,7 @@ arguments:
   reset               Scale sts/openshell to 0, delete PVC, and scale back to 1
 
 flags:
-  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --domain <domain>   Target domain (defaults to BREADBOARD_DOMAIN or local)
   --help, -h          Show this help message
 
 examples:
@@ -940,7 +912,7 @@ arguments:
   conformance         Run deploy/scripts/24-run-conformance-triage.sh --keep-issue
 
 flags:
-  --domain <domain>   Target domain (defaults to bb.internal or local)
+  --domain <domain>   Target domain (defaults to BREADBOARD_DOMAIN or local)
   --help, -h          Show this help message
 
 examples:

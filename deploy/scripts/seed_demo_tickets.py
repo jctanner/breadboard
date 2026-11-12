@@ -26,12 +26,13 @@ import requests
 import urllib3
 import yaml
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+DOMAIN = os.getenv("BREADBOARD_DOMAIN", "local").strip().strip(".") or "local"
+CA_FILE = os.getenv("BREADBOARD_CA_FILE") or True
 
 
-DEFAULT_JIRA_URL = os.getenv("JIRA_URL", "https://jira.bb.internal")
-DEFAULT_GITLAB_URL = os.getenv("GITLAB_URL", "https://gitlab.bb.internal")
-DEFAULT_DASHBOARD_URL = os.getenv("DASHBOARD_URL", "https://dashboard.bb.internal")
+DEFAULT_JIRA_URL = os.getenv("JIRA_URL", f"https://jira.{DOMAIN}")
+DEFAULT_GITLAB_URL = os.getenv("GITLAB_URL", f"https://gitlab.{DOMAIN}")
+DEFAULT_DASHBOARD_URL = os.getenv("DASHBOARD_URL", f"https://dashboard.{DOMAIN}")
 
 
 def load_yaml_template(path: Path) -> dict[str, Any]:
@@ -44,7 +45,7 @@ class JiraSeeder:
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
         self.session.auth = auth
-        self.session.verify = False
+        self.session.verify = CA_FILE
         self.session.headers.update({"Content-Type": "application/json"})
 
     def get_existing_issues_for_project(self, project_key: str) -> list[dict[str, Any]]:
@@ -109,7 +110,7 @@ class GitLabSeeder:
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
         self.session.auth = auth
-        self.session.verify = False
+        self.session.verify = CA_FILE
         self.session.headers.update({"Content-Type": "application/json"})
 
     def ensure_group(self, group_path: str, group_name: str) -> int:
@@ -748,7 +749,7 @@ def seed_gitlab(gitlab_url: str) -> list[dict[str, Any]]:
 
 def verify_dashboard_tickets(dashboard_url: str) -> dict[str, Any]:
     url = f"{dashboard_url.rstrip('/')}/api/tickets?page_size=100"
-    res = requests.get(url, verify=False, timeout=25)
+    res = requests.get(url, verify=CA_FILE, timeout=25)
     res.raise_for_status()
     data = res.json()
     tickets = data.get("tickets", [])

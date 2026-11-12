@@ -152,6 +152,7 @@ class TestHelpSubcommands:
             assert proc.stderr == ""
 
 
+@pytest.mark.skipif(os.getenv("BREADBOARD_LIVE_TESTS") != "1", reason="requires an explicitly selected live stack")
 class TestLiveExecution:
     """Live execution checks against active cluster/emulators."""
 

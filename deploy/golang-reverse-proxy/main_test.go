@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -50,7 +49,7 @@ func mockProxy(t *testing.T, host string, tls bool, upstream http.Handler, http2
 
 func TestInferenceStreamOutlivesFrontendWriteDeadline(t *testing.T) {
 	for _, protocol := range []string{"http", "https", "http2"} {
-		for _, host := range []string{"relay-api.local", "RELAY-API.LOCAL:443", "model-relay.ai-pipeline.svc.cluster.local"} {
+		for _, host := range []string{"relay-api.local", "RELAY-API.LOCAL:443", "relay-api.bb.internal", "model-relay.ai-pipeline.svc.cluster.local"} {
 			t.Run(protocol+"/"+host, func(t *testing.T) {
 				server, client := mockProxy(t, host, protocol != "http", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.Header().Set("Content-Type", "text/event-stream")
@@ -152,8 +151,10 @@ func TestInferenceClientCancellationReachesUpstream(t *testing.T) {
 }
 
 func TestGetBackend(t *testing.T) {
+	previousHosts, previousCache, previousTransport := hostToBackend, proxyCache, sharedTransport
+	t.Cleanup(func() { hostToBackend, proxyCache, sharedTransport = previousHosts, previousCache, previousTransport })
 	// 1. Verify default domain ("local")
-	os.Unsetenv("BREADBOARD_DOMAIN")
+	t.Setenv("BREADBOARD_DOMAIN", "")
 	initProxies()
 
 	if backend := getBackend("dashboard.local"); backend == "" {
@@ -164,7 +165,7 @@ func TestGetBackend(t *testing.T) {
 	}
 
 	// 2. Verify with BREADBOARD_DOMAIN=bb.internal
-	os.Setenv("BREADBOARD_DOMAIN", "bb.internal")
+	t.Setenv("BREADBOARD_DOMAIN", "bb.internal")
 	initProxies()
 
 	if backend := getBackend("dashboard.local"); backend == "" {

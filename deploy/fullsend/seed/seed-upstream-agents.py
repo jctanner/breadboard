@@ -25,7 +25,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git, seed_source_path, clear_mirror_worktree
+from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git, seed_source_path, clear_mirror_worktree, copy_mirror_source
 
 
 # deploy/fullsend/seed/seed-upstream-agents.py -> parents[3] is the project root.
@@ -118,8 +118,8 @@ def collect_sources() -> list[tuple[Path, str]]:
     listed = run_git(SOURCE, "ls-files", "-z").stdout
     collected = []
     for relative in filter(None, listed.split("\0")):
-        path = seed_source_path(SOURCE, relative)
-        if path.is_file():
+        path = seed_source_path(SOURCE, relative, allow_final_symlink=True)
+        if path.is_symlink() or path.is_file():
             collected.append((path, relative))
     if not collected:
         raise RuntimeError(f"no tracked files found in {SOURCE}")
@@ -199,9 +199,7 @@ def main() -> None:
         for origin, relative in sources:
             destination = directory / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
-            origin = seed_source_path(SOURCE, relative)
-            shutil.copyfile(origin, destination)
-            destination.chmod(origin.stat().st_mode & 0o777)
+            copy_mirror_source(SOURCE, relative, destination)
 
         apply_mirror_patches(directory)
 

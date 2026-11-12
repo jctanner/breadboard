@@ -1,8 +1,8 @@
 # Privileged mirrors followed source symlinks
 
 Review of the mirror callers found that is_file/copyfile/stat followed a tracked
-symlink into host files while the seed ran under sudo. Reject direct and ancestor
-symlinks and path escapes both during collection and immediately before copying.
+symlink into host files while the seed ran under sudo. Preserve final symlinks as link text, never target contents; reject ancestor
+symlinks and path escapes during collection and copying.
 Tests exercise regular files, file/directory symlinks and escaping paths in both
 mirrors. Source working trees remain within the documented trusted operator/sudo
 boundary; racing that operator is not a supported hostile-user security boundary.
@@ -17,3 +17,9 @@ Also clear the whole fetched mirror working tree before copying, preserving only
 link must not redirect selective cleanup outside the temporary mirror, and broken
 links must not remain as copy destinations. A filesystem regression proves outside
 files survive and broken/parent links and stale normal content are removed.
+
+The real agents checkout includes legitimate fixture-directory symlinks. A
+blanket rejection blocked qualification, so final symlinks are now faithfully
+mirrored with readlink/symlink_to and no target stat/read/copy. Ancestor symlinks
+remain forbidden. This preserves executable regular file modes and tracked link
+semantics while preventing privileged host-file disclosure.

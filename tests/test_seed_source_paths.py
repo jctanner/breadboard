@@ -1,4 +1,4 @@
-"""Privileged mirrors reject symlinks instead of exporting host files."""
+"""Privileged mirrors preserve link text instead of exporting host files."""
 import importlib.util
 from pathlib import Path
 import subprocess
@@ -36,11 +36,16 @@ def test_mirror_collection_rejects_symlink_sources(tmp_path, monkeypatch, name, 
     monkeypatch.setattr(module, 'SOURCE', source)
     if name == 'seed-upstream-fullsend':
         monkeypatch.setattr(module, 'MIRRORED_PATHS', ('payload',))
+    assert module.collect_sources() == [(source / 'payload', 'payload')]
+    from emulator import copy_mirror_source
+    destination = tmp_path / 'mirrored'
+    copy_mirror_source(source, 'payload', destination)
     if kind == 'regular':
-        assert module.collect_sources() == [(source / 'payload', 'payload')]
+        assert destination.read_text() == 'public fixture'
     else:
-        with pytest.raises(RuntimeError, match='symlink'):
-            module.collect_sources()
+        assert destination.is_symlink()
+        assert destination.readlink() == (source / 'payload').readlink()
+        assert external.read_text() == 'must never be mirrored'
 
 
 @pytest.mark.parametrize('relative', ['../host-file', '/etc/passwd'])
@@ -67,3 +72,15 @@ def test_fetched_mirror_links_are_removed_without_following(tmp_path, monkeypatc
     assert retained.read_text() == 'must survive'
     assert not (outside / 'missing').exists()
     assert list(mirror.iterdir()) == [mirror / '.git']
+
+
+def test_mirror_source_refuses_symlink_ancestor(tmp_path, monkeypatch):
+    module = load_seed('seed-upstream-agents', monkeypatch)
+    source = tmp_path / 'source'
+    source.mkdir()
+    outside = tmp_path / 'outside'
+    outside.mkdir()
+    (outside / 'file').write_text('private fixture')
+    (source / 'parent').symlink_to(outside, target_is_directory=True)
+    with pytest.raises(RuntimeError, match='symlink'):
+        module.seed_source_path(source, 'parent/file', allow_final_symlink=True)

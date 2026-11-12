@@ -160,20 +160,32 @@ def run_git(directory: Path, *args: str, check: bool = True, input_text: str | N
         )
 
 
-def seed_source_path(root: Path, relative: str) -> Path:
-    """Reject source symlinks and escapes before privileged mirror reads."""
+def seed_source_path(root: Path, relative: str, *, allow_final_symlink: bool = False) -> Path:
+    """Reject ancestor symlinks/escapes; optionally preserve a final link."""
     relative_path = Path(relative)
     if relative_path.is_absolute() or ".." in relative_path.parts:
         raise RuntimeError("Mirror source path must stay inside its checkout")
     base = root.resolve()
     current = base
-    for part in relative_path.parts:
+    for index, part in enumerate(relative_path.parts):
         current = current / part
         if current.is_symlink():
+            if allow_final_symlink and index == len(relative_path.parts) - 1:
+                return current  # The caller may readlink, never read its target.
             raise RuntimeError(f"Mirror source symlink is not allowed: {relative}")
     if not current.resolve().is_relative_to(base):
         raise RuntimeError("Mirror source escapes its checkout")
     return current
+
+
+def copy_mirror_source(root: Path, relative: str, destination: Path) -> None:
+    """Copy regular bytes or symlink text, never a symlink target's bytes."""
+    origin = seed_source_path(root, relative, allow_final_symlink=True)
+    if origin.is_symlink():
+        destination.symlink_to(os.readlink(origin))
+    else:
+        shutil.copyfile(origin, destination)
+        destination.chmod(origin.stat().st_mode & 0o777)
 
 
 def clear_mirror_worktree(directory: Path) -> None:

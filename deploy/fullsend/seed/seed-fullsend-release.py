@@ -34,7 +34,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from emulator import API_URL, TOKEN, api_request
+from emulator import API_URL, TOKEN, api_request, ssl_context
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -95,7 +95,7 @@ def upload_asset(release_id: int, name: str, content: bytes) -> dict:
         },
         method="POST",
     )
-    context = ssl._create_unverified_context()
+    context = ssl_context()
     try:
         with urllib.request.urlopen(request, context=context) as response:
             return json.loads(response.read())

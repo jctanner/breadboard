@@ -35,7 +35,7 @@ node --test plugins/cve/index.test.js
 On macOS, the following isolated help-only loader check uses the locally installed Pi path; adjust `P` and `PLUGIN` for your installation. It starts no model, denies network with `sandbox-exec`, and uses a disposable home and empty inherited environment. `--cve-extension-loaded` is a help-only diagnostic marker; compare with the negative control without `-e`.
 
 ```sh
-P=/Users/mhild/.local/share/fnm/node-versions/v22.21.1/installation
+P="${HOME}/.local/share/fnm/node-versions/v22.21.1/installation"
 PLUGIN="$(pwd)/plugins/cve"
 D=$(mktemp -d); mkdir -p "$D/home" "$D/config" "$D/work" "$D/tmp"
 (cd "$D/work" && env -i PATH="$P/bin:/usr/bin:/bin" HOME="$D/home" TMPDIR="$D/tmp" PI_CODING_AGENT_DIR="$D/config" PI_OFFLINE=1 PI_SKIP_VERSION_CHECK=1 /usr/bin/sandbox-exec -p '(version 1) (allow default) (deny network*)' "$P/bin/node" "$P/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js" --offline --no-approve --no-extensions --no-session -e "$PLUGIN" --help </dev/null) | grep -- --cve-extension-loaded

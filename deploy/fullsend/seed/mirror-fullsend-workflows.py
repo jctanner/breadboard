@@ -26,7 +26,7 @@ from pathlib import Path
 import tempfile
 import time
 
-from emulator import BASE_URL, ORG, REPO, TOKEN, run_git
+from emulator import git_remote, BASE_URL, ORG, REPO, TOKEN, run_git
 
 
 # deploy/fullsend/seed/mirror-fullsend-workflows.py -> parents[3] is the project root.
@@ -41,7 +41,7 @@ RETIRED_WORKFLOW = ".github/workflows/m8-role-events.yml"
 
 
 def main() -> None:
-    remote = f"{BASE_URL.replace('https://', f'https://x-access-token:{TOKEN}@')}/{ORG}/{REPO}.git"
+    remote = git_remote(ORG, REPO)
     with tempfile.TemporaryDirectory(prefix="fullsend-seed-mirror-") as temp:
         directory = Path(temp)
         run_git(directory, "init", "--initial-branch=main")

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import os
 import ssl
 import sys
 import urllib.request
@@ -35,40 +36,8 @@ AGENTS_REPO = "fullsend-ai/agents"
 HARNESS_PATH = ".fullsend/triage.yaml"
 CONFIG_PATH = ".fullsend/config.yaml"
 SHIM_PATH = ".github/workflows/fullsend.yaml"
-SHIM_WORKFLOW = """---
-# This file is managed by Fullsend. Do not edit it directly.
-name: fullsend
+from emulator import FULLSEND_SHIM as SHIM_WORKFLOW
 
-on:
-  issues:
-    types: [opened, edited, labeled]
-  issue_comment:
-    types: [created]
-  pull_request_target:
-    types: [opened, synchronize, ready_for_review, closed, labeled, unlabeled]
-  pull_request_review:
-    types: [submitted]
-
-permissions: {}
-
-jobs:
-  dispatch:
-    concurrency:
-      group: >-
-        fullsend-dispatch-${{ github.event.issue.number || github.event.pull_request.number }}-${{
-          github.event.action == 'labeled' && format('label-{0}', github.event.label.name) || 'dispatch'
-        }}
-      cancel-in-progress: false
-    if: >-
-      (github.event_name != 'pull_request_target' && github.event_name != 'pull_request_review') ||
-      github.event.pull_request.state == 'open' || github.event.action == 'closed'
-    uses: fullsend-ai/fullsend/.github/workflows/reusable-dispatch.yml@main
-    with:
-      event_action: ${{ github.event.action }}
-      mint_url: https://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080
-      runner_image: fullsend
-    secrets: inherit
-"""
 
 
 def _get_file(path: str) -> tuple[str | None, str | None]:
@@ -96,9 +65,7 @@ def _mirror_pin() -> tuple[str, str]:
         raise RuntimeError(f"cannot read {AGENTS_REPO} main: HTTP {status}")
     sha = commit["sha"]
     url = f"{BASE_URL}/{AGENTS_REPO}/raw/{sha}/harness/triage.yaml"
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
+    ctx = ssl.create_default_context(cafile=os.getenv("BREADBOARD_CA_FILE") or None)
     with urllib.request.urlopen(url, context=ctx) as resp:
         raw = resp.read()
     return sha, hashlib.sha256(raw).hexdigest()
@@ -128,7 +95,7 @@ def main() -> None:
         print(f"{HARNESS_PATH} already current")
 
     shim, s_sha = _get_file(SHIM_PATH)
-    if shim != SHIM_WORKFLOW.strip():
+    if (shim or "").strip() != SHIM_WORKFLOW.strip():
         _put_file(SHIM_PATH, SHIM_WORKFLOW.strip(), "Install managed Fullsend event shim", s_sha)
         print(f"wrote {SHIM_PATH}")
 

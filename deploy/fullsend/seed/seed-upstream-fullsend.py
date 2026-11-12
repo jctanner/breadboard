@@ -28,7 +28,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from emulator import BASE_URL, TOKEN, api_request, run_git
+from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git
 
 
 # deploy/fullsend/seed/seed-upstream-fullsend.py -> parents[3] is the project root.
@@ -168,10 +168,7 @@ def main() -> None:
 
     sources = collect_sources()
     revision = run_git(SOURCE, "rev-parse", "HEAD").stdout.strip()
-    remote = (
-        f"{BASE_URL.replace('https://', f'https://x-access-token:{TOKEN}@')}/"
-        f"{UPSTREAM_ORG}/{UPSTREAM_REPO}.git"
-    )
+    remote = git_remote(UPSTREAM_ORG, UPSTREAM_REPO)
 
     with tempfile.TemporaryDirectory(prefix="fullsend-upstream-mirror-") as temp:
         directory = Path(temp)

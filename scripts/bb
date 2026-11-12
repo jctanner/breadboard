@@ -97,7 +97,7 @@ VALID_FLAGS = {
     "runs": ("--repo", "--limit", "--domain"),
     "logs": ("--repo", "--job", "--full", "--domain"),
     "tickets": ("--source", "--limit", "--domain"),
-    "openshell": ("--domain",),
+    "openshell": ("--domain", "--yes"),
     "seed": ("--domain",),
 }
 
@@ -151,6 +151,7 @@ def get_thermal() -> Tuple[str, str]:
                 "BatchMode=yes",
                 "-o",
                 "ConnectTimeout=2",
+                "--",
                 RHEA_HOST,
                 "cat /sys/class/hwmon/hwmon*/temp*_input 2>/dev/null || sensors 2>/dev/null",
             ],
@@ -379,7 +380,7 @@ def cmd_home(domain: str) -> None:
     runners = fetch_runners(domain)
     print(f"runners[{len(runners)}]{{name,scope,status}}:")
     for r in runners:
-        print(f"  {r['name']},{r['scope']},{r['status']}")
+        print(f"  {toon_val(r['name'])},{toon_val(r['scope'])},{toon_val(r['status'])}")
 
     # Recent runs (top 5 across triage and cve targets)
     all_runs = []
@@ -393,7 +394,7 @@ def cmd_home(domain: str) -> None:
     recent = all_runs[:5]
     print(f"recent_runs[{len(recent)}]{{id,repo,event,status,conclusion}}:")
     for r in recent:
-        print(f"  {r['id']},{r['repo']},{r['event']},{r['status']},{r['conclusion']}")
+        print(f"  {toon_val(r['id'])},{toon_val(r['repo'])},{toon_val(r['event'])},{toon_val(r['status'])},{toon_val(r['conclusion'])}")
 
     # Contextual help (AXI 9 & 10)
     print("help[4]:")
@@ -417,7 +418,7 @@ def cmd_status(domain: str) -> None:
     _, _, pods = get_workloads()
     print(f"workloads[{len(pods)}]{{namespace,name,ready,status}}:")
     for p in pods:
-        print(f"  {p['namespace']},{p['name']},{p['ready']},{p['status']}")
+        print(f"  {toon_val(p['namespace'])},{toon_val(p['name'])},{toon_val(p['ready'])},{toon_val(p['status'])}")
 
     # OpenShell profiles
     rc, p_out = runner_openshell_cmd(["provider", "profile", "list", "-o", "json"])
@@ -510,7 +511,7 @@ def cmd_runs(domain: str, repo_arg: str, limit_arg: str) -> None:
     print(f"runs[{len(displayed)}]{{id,repo,event,status,conclusion,created_at}}:")
     for r in displayed:
         print(
-            f"  {r['id']},{r['repo']},{r['event']},{r['status']},{r['conclusion']},{r['created_at']}"
+            f"  {toon_val(r['id'])},{toon_val(r['repo'])},{toon_val(r['event'])},{toon_val(r['status'])},{toon_val(r['conclusion'])},{toon_val(r['created_at'])}"
         )
 
 
@@ -561,7 +562,7 @@ def cmd_logs(
 
     print(f"jobs[{len(jobs)}]{{id,name,status,conclusion,runner}}:")
     for j in jobs:
-        print(f"  {j['id']},{j['name']},{j['status']},{j['conclusion']},{j['runner']}")
+        print(f"  {toon_val(j['id'])},{toon_val(j['name'])},{toon_val(j['status'])},{toon_val(j['conclusion'])},{toon_val(j['runner'])}")
 
     # Automatically select job:
     selected_job = None
@@ -605,7 +606,7 @@ def cmd_logs(
         )
 
     print("log{job,id}:")
-    print(f"  {selected_job['name']},{job_id}")
+    print(f"  {toon_val(selected_job['name'])},{job_id}")
 
     total_chars = len(raw_log)
     if total_chars > 1500 and not full:
@@ -645,7 +646,7 @@ def cmd_tickets(domain: str, source: Optional[str], limit_arg: str) -> None:
         )
 
 
-def cmd_openshell(domain: str, action: str) -> None:
+def cmd_openshell(domain: str, action: str, confirmed: bool = False) -> None:
     if action == "status":
         # Gateway pod status
         proc = subprocess.run(
@@ -725,31 +726,19 @@ def cmd_openshell(domain: str, action: str) -> None:
                     f"    {toon_val(sb.get('id'))},{toon_val(sb.get('status'))},{toon_val(sb.get('created_at'))}"
                 )
     elif action == "reset":
-        # Scale to 0
-        subprocess.run(
-            ["kubectl", "-n", "openshell-system", "scale", "sts/openshell", "--replicas=0"],
-            check=True,
-            capture_output=True,
-        )
-        # Delete PVC
-        subprocess.run(
-            [
-                "kubectl",
-                "-n",
-                "openshell-system",
-                "delete",
-                "pvc",
-                "openshell-data-openshell-0",
-                "--wait=false",
-            ],
-            capture_output=True,
-        )
-        # Scale back to 1
-        subprocess.run(
-            ["kubectl", "-n", "openshell-system", "scale", "sts/openshell", "--replicas=1"],
-            check=True,
-            capture_output=True,
-        )
+        if not confirmed:
+            error_exit("usage", "reset deletes OpenShell persistent data", "repeat with --yes to confirm", exit_code=2)
+        for command in [
+            ["scale", "sts/openshell", "--replicas=0"],
+            ["delete", "pod", "openshell-0", "--ignore-not-found=true", "--wait=true", "--timeout=120s"],
+            ["delete", "pvc", "openshell-data-openshell-0", "--ignore-not-found=true", "--wait=true", "--timeout=120s"],
+            ["scale", "sts/openshell", "--replicas=1"],
+            ["rollout", "status", "sts/openshell", "--timeout=120s"],
+        ]:
+            try:
+                subprocess.run(["kubectl", "-n", "openshell-system", *command], check=True, capture_output=True, timeout=130)
+            except (subprocess.SubprocessError, OSError) as exc:
+                error_exit("runtime", f"reset failed: {exc}", "inspect openshell-system before retrying")
         print("openshell_reset{status,target}:")
         print("  success,sts/openshell")
         print("help[1]:")
@@ -894,12 +883,13 @@ arguments:
 
 flags:
   --domain <domain>   Target domain (defaults to BREADBOARD_DOMAIN or local)
+  --yes               Confirm destructive reset of persistent data
   --help, -h          Show this help message
 
 examples:
   ./scripts/bb openshell
   ./scripts/bb openshell status
-  ./scripts/bb openshell reset
+  ./scripts/bb openshell reset --yes
 """)
     elif command == "seed":
         print("""usage: bb seed <demo|cve|conformance> [--domain <domain>]
@@ -1010,6 +1000,12 @@ def main() -> None:
             positional.append(arg)
         i += 1
 
+    import re
+    repo = parsed_flags.get("--repo")
+    if repo and repo != "all" and not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo):
+        error_exit("usage", "invalid repository", "use owner/repo", exit_code=2)
+    if repo and any(part in (".", "..") for part in repo.split("/")):
+        error_exit("usage", "invalid repository", "use owner/repo", exit_code=2)
     domain = resolve_domain(parsed_flags.get("--domain"))
 
     if cmd == "status":
@@ -1037,7 +1033,7 @@ def main() -> None:
         cmd_tickets(domain, source_arg, limit_arg)
     elif cmd == "openshell":
         action = positional[0] if positional else "status"
-        cmd_openshell(domain, action)
+        cmd_openshell(domain, action, "--yes" in parsed_flags)
     elif cmd == "seed":
         if not positional:
             error_exit(

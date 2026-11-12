@@ -18,6 +18,7 @@ Gap G28 of the Fullsend integration conformance plan.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -25,7 +26,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from emulator import BASE_URL, TOKEN, api_request, run_git
+from emulator import git_remote, BASE_URL, TOKEN, api_request, run_git
 
 
 # deploy/fullsend/seed/seed-upstream-agents.py -> parents[3] is the project root.
@@ -142,6 +143,8 @@ def apply_mirror_patches(directory: Path) -> None:
             raise RuntimeError(f"mirror patch is missing: {patch}")
         patch_text = patch.read_text()
         domain = os.environ.get("BREADBOARD_DOMAIN", "local")
+        if len(domain) > 230 or not all(re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?", label) for label in domain.split(".")):
+            raise RuntimeError("Invalid BREADBOARD_DOMAIN")
         if domain != "local":
             patch_text = "".join(
                 line.replace("github.local", f"github.{domain}") if line.startswith("+") else line
@@ -167,10 +170,7 @@ def main() -> None:
 
     sources = collect_sources()
     revision = run_git(SOURCE, "rev-parse", "HEAD").stdout.strip()
-    remote = (
-        f"{BASE_URL.replace('https://', f'https://x-access-token:{TOKEN}@')}/"
-        f"{UPSTREAM_ORG}/{UPSTREAM_REPO}.git"
-    )
+    remote = git_remote(UPSTREAM_ORG, UPSTREAM_REPO)
 
     with tempfile.TemporaryDirectory(prefix="fullsend-agents-mirror-") as temp:
         directory = Path(temp)

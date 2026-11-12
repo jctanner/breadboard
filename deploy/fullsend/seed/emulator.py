@@ -15,6 +15,7 @@ import json
 import os
 import ssl
 import subprocess
+from urllib.parse import urlsplit, urlunsplit, quote
 from pathlib import Path
 
 
@@ -27,6 +28,19 @@ TOKEN = os.environ.get("GITHUB_EMULATOR_TOKEN", "ghp_admin_default_token")
 # through the dashboard - takes the target from the environment.
 ORG = os.environ.get("FULLSEND_SEED_ORG", "fullsend-dev")
 REPO = os.environ.get("FULLSEND_SEED_REPO", "triage-target")
+
+
+def ssl_context() -> ssl.SSLContext:
+    """Use verified HTTPS, preferring an explicitly selected public CA."""
+    return ssl.create_default_context(cafile=os.getenv("BREADBOARD_CA_FILE") or None)
+
+
+def git_remote(owner: str, repo: str) -> str:
+    parsed = urlsplit(BASE_URL)
+    if parsed.scheme not in ("https", "http") or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
+        raise RuntimeError("GITHUB_EMULATOR_URL must be an HTTP(S) base URL without credentials, query, or fragment")
+    auth = f"x-access-token:{quote(TOKEN, safe='')}@{parsed.netloc}"
+    return urlunsplit((parsed.scheme, auth, f"{parsed.path.rstrip('/')}/{owner}/{repo}.git", "", ""))
 
 
 def api_request(method: str, path: str, body: dict | None = None) -> tuple[int, dict | list | None]:
@@ -45,7 +59,7 @@ def api_request(method: str, path: str, body: dict | None = None) -> tuple[int, 
     request = urllib.request.Request(
         f"{API_URL}{path}", data=data, headers=headers, method=method,
     )
-    context = ssl._create_unverified_context()
+    context = ssl_context()
     try:
         with urllib.request.urlopen(request, context=context) as response:
             payload = response.read()
@@ -86,7 +100,10 @@ def ensure_repo() -> None:
 
 def git_env() -> dict[str, str]:
     env = os.environ.copy()
-    env["GIT_SSL_NO_VERIFY"] = "true"
+    env.pop("GIT_SSL_NO_VERIFY", None)
+    env["GIT_SSL_VERIFY"] = "true"
+    if os.getenv("BREADBOARD_CA_FILE"):
+        env["GIT_SSL_CAINFO"] = os.environ["BREADBOARD_CA_FILE"]
     env["GIT_TERMINAL_PROMPT"] = "0"
     return env
 
@@ -96,3 +113,39 @@ def run_git(directory: Path, *args: str, check: bool = True) -> subprocess.Compl
         ["git", *args], cwd=directory, env=git_env(), text=True,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=check,
     )
+
+
+FULLSEND_SHIM = """---
+# This file is managed by Fullsend. Do not edit it directly.
+name: fullsend
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+  issue_comment:
+    types: [created]
+  pull_request_target:
+    types: [opened, synchronize, ready_for_review, closed, labeled, unlabeled]
+  pull_request_review:
+    types: [submitted]
+
+permissions: {}
+
+jobs:
+  dispatch:
+    concurrency:
+      group: >-
+        fullsend-dispatch-${{ github.event.issue.number || github.event.pull_request.number }}-${{
+          github.event.action == 'labeled' && format('label-{0}', github.event.label.name) || 'dispatch'
+        }}
+      cancel-in-progress: false
+    if: >-
+      (github.event_name != 'pull_request_target' && github.event_name != 'pull_request_review') ||
+      github.event.pull_request.state == 'open' || github.event.action == 'closed'
+    uses: fullsend-ai/fullsend/.github/workflows/reusable-dispatch.yml@main
+    with:
+      event_action: ${{ github.event.action }}
+      mint_url: https://fullsend-mint-dev.ai-pipeline.svc.cluster.local:8080
+      runner_image: fullsend
+    secrets: inherit
+"""

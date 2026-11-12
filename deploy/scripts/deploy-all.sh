@@ -73,11 +73,10 @@ image_in_k3s() {
 }
 FORCE_REBUILD="${FORCE_REBUILD:-1}"
 
-if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "pipeline-dashboard:latest" || ! image_in_k3s "pipeline-agent:latest"; then
-  bash "${SCRIPT_DIR}/05-build-images.sh"
-else
-  echo "  Core images already present in k3s; skipping 05-build-images.sh (set FORCE_REBUILD=1 to rebuild)"
-fi
+# The grouped builder also handles emulator, Markov and Observatory images.
+# Let its per-image checks resume partial builds; two core images do not prove
+# every image in that group was built/imported successfully.
+bash "${SCRIPT_DIR}/05-build-images.sh"
 
 if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "github-emulator-actions-runner:k3s"; then
   bash "${SCRIPT_DIR}/05g-build-github-actions-runner.sh"

@@ -644,3 +644,22 @@ those targets on the seed host. Linked parents and escaping source/destination
 paths are rejected. Mirrored links retain upstream semantics inside a later
 consumer's environment; they are not sanitized or rewritten for that consumer.
 Actions remain disabled on the agents mirror.
+
+## Fullsend image policy compatibility
+
+`05i-build-fullsend.sh` prepares each local sandbox/code wrapper from the exact
+harness-pinned base image. It copies the public `/etc/openshell/policy.yaml`
+without starting the image and generates a temporary build context containing the
+Containerfile, public CA and `image-policy.yaml`. Manual wrapper builds need those
+same generated inputs; using the source directory alone is insufficient.
+
+The pinned OpenShell 0.1.4 rejects legacy `tls: terminate`. The helper changes only
+that scalar to `tls: ""`, preserving every other content byte and policy rule; the public file is installed
+as root:root mode 0644. The pinned
+[policy validator](https://github.com/NVIDIA/OpenShell/blob/5a7728c304b5528e954e9ae900cf21f84e1a12b1/crates/openshell-policy/src/l7_validate.rs)
+maps empty to Unspecified; the
+[network runtime](https://github.com/NVIDIA/OpenShell/blob/5a7728c304b5528e954e9ae900cf21f84e1a12b1/crates/openshell-supervisor-network/src/l7/mod.rs)
+maps it to automatic TLS termination, not skip. Policies with anchors/aliases/explicit tags or block-style legacy TLS values,
+invalid structure, oversized data, non-regular archive entries or only a legacy policy
+path fail closed and need an explicit migration. The helper uses the host PyYAML
+dependency already declared by the project.

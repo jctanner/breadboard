@@ -306,11 +306,19 @@ for entry in "${LOCAL_SANDBOX_IMAGES[@]}"; do
     echo "       Agents patch 0004 substitutes ${local_image} for all of them; split the image or update the patch." >&2
     exit 1
   fi
+  # Pinned Fullsend images still spell automatic TLS termination as
+  # tls: terminate, which the pinned OpenShell rejects. Read the image without
+  # executing it, migrate only that value to the equivalent empty/default spelling, and keep generated inputs temporary.
+  policy_context="$(mktemp -d "${BUILD_CONTEXT}/sandbox-policy.XXXXXX")"
+  cp "${CA_OUT}" "${policy_context}/internal-ca.crt"
+  cp "${SANDBOX_LOCAL_CONTEXT}/Containerfile" "${policy_context}/Containerfile"
+  python3 "${SCRIPT_DIR}/prepare_sandbox_policy.py" "${base_repo}@${base_digest}" \
+    "${policy_context}/image-policy.yaml" "${CONTAINER_CMD_ARR[@]}"
   echo "==> Building ${local_image} FROM ${base_repo}@${base_digest} (pinned by ${harness_file})"
-  "${CONTAINER_CMD_ARR[@]}" build -f "${SANDBOX_LOCAL_CONTEXT}/Containerfile" \
+  "${CONTAINER_CMD_ARR[@]}" build -f "${policy_context}/Containerfile" \
     --build-arg "BASE_REPO=${base_repo}" \
     --build-arg "BASE_DIGEST=${base_digest}" \
-    -t "${local_image}" "${SANDBOX_LOCAL_CONTEXT}"
+    -t "${local_image}" "${policy_context}"
 done
 
 # From OpenShell 0.1.x the supervisor, which verifies upstream TLS, runs in

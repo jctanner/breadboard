@@ -624,7 +624,7 @@ select it explicitly:
 export KUBECONFIG="$HOME/.kube/config"
 ```
 
-An explicitly selected context is preserved; the target refuses `sudo make`.
+An explicitly set `KUBECONFIG` is preserved; the target refuses `sudo make`.
 
 Fullsend Mint bootstrap reconciles eight role Apps in sequence. It may remove an
 old repository-selected installation before creating its organization-wide

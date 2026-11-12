@@ -34,5 +34,5 @@ fi
 EOF
 fi
 printf '%s\n' 'User kubeconfig installed with mode 0600.' \
-  'New Bash shells select it when KUBECONFIG is unset.' \
+  'New interactive Bash shells select it when KUBECONFIG is unset.' \
   'For the current shell, run: export KUBECONFIG="$HOME/.kube/config"'

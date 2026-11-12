@@ -24,8 +24,9 @@ def public_ca(tmp_path_factory):
 
 
 @pytest.mark.parametrize("script", ["05-build-images.sh", "05b-build-agent.sh"])
-@pytest.mark.parametrize("ca_state", ["unavailable", "empty", "invalid", "valid", "appended_key"])
-def test_agent_build_requires_valid_ca(tmp_path, public_ca, script, ca_state):
+@pytest.mark.parametrize("ca_state", ["unavailable", "empty", "invalid", "valid", "appended_key", "prepended_key", "bundle"])
+@pytest.mark.parametrize("relative_root", [False, True])
+def test_agent_build_requires_valid_ca(tmp_path, public_ca, script, ca_state, relative_root):
     project = tmp_path / "project"
     dockerfile = project / "deploy/pipeline-agent/Dockerfile"
     dockerfile.parent.mkdir(parents=True)
@@ -45,6 +46,8 @@ case "$CA_STATE" in
  invalid) echo not-a-certificate ;;
  valid) cat "$PUBLIC_CA" ;;
  appended_key) cat "$PUBLIC_CA" "${PUBLIC_CA%/*}/key.pem" ;;
+ prepended_key) cat "${PUBLIC_CA%/*}/key.pem" "$PUBLIC_CA" ;;
+ bundle) cat "$PUBLIC_CA" "$PUBLIC_CA" ;;
 esac
 ''',
     }
@@ -55,12 +58,12 @@ esac
     result = subprocess.run(
         ["bash", str(ROOT / "deploy/scripts" / script)],
         env={**os.environ, "PATH": f"{commands}:{os.environ['PATH']}",
-             "PROJECT_ROOT": str(project), "FORCE_REBUILD": "0",
+             "PROJECT_ROOT": "project" if relative_root else str(project), "FORCE_REBUILD": "0",
              "CA_STATE": ca_state, "PUBLIC_CA": str(public_ca),
              "ENGINE_MARKER": str(marker), "CA_CAPTURE": str(captured)},
-        cwd=project, capture_output=True, text=True, timeout=10,
+        cwd=tmp_path, capture_output=True, text=True, timeout=10,
     )
-    if ca_state in {"valid", "appended_key"}:
+    if ca_state in {"valid", "appended_key", "prepended_key"}:
         assert marker.exists(), result.stdout + result.stderr
         assert result.returncode == 77
         assert captured.read_text() == public_ca.read_text()

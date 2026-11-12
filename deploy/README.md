@@ -592,7 +592,8 @@ is smoke-checked in both builder and final runtime images. The final image copie
 the official Node 24 runtime rather than the distribution Node 20 package, because
 the current Claude CLI declares Node 22 or newer in its package engines. Its version
 is also checked during the build. Node explicitly trusts the injected CA through
-`NODE_EXTRA_CA_CERTS`; agent builds refuse unavailable, empty or invalid CA input.
+`NODE_EXTRA_CA_CERTS`; agent builds require exactly one valid public CA certificate and refuse bundles,
+unavailable input or empty input.
 Public certificate permissions are set explicitly for non-root readers. The x64
 builder selects the baseline artifact, and unsupported architectures fail closed.
 

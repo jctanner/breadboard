@@ -4,6 +4,7 @@
 set -euo pipefail
 
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
+PROJECT_ROOT="$(cd -- "${PROJECT_ROOT}" >/dev/null && pwd -P)"
 
 # Use docker or podman
 if command -v docker &> /dev/null; then
@@ -35,7 +36,13 @@ if [ -z "$CA_CERT" ]; then
   exit 1
 fi
 command -v openssl >/dev/null || { echo "ERROR: openssl is required to validate the CA" >&2; exit 1; }
-trap 'rm -f "${PROJECT_ROOT}/internal-ca.crt"' EXIT
+CA_CONTEXT_FILE="${PWD}/internal-ca.crt"
+trap 'rm -f "${CA_CONTEXT_FILE}"' EXIT
+CERT_COUNT=$(printf '%s\n' "$CA_CERT" | grep -c -- '-----BEGIN CERTIFICATE-----' || true)
+if [ "$CERT_COUNT" -ne 1 ]; then
+  echo "ERROR: internal-ca-cert must contain exactly one certificate" >&2
+  exit 1
+fi
 # Serialize only the public X509 certificate; discard any appended PEM data.
 if ! printf '%s\n' "$CA_CERT" | openssl x509 -out internal-ca.crt; then
   echo "ERROR: internal-ca-cert is not a valid X509 certificate" >&2

@@ -10,8 +10,11 @@ clean the generated context certificate on every exit. The image validates its
 certificate too. Portable RUN chmod steps keep public certificates readable without
 requiring Docker BuildKit. Document forced rebuilds when upgrading old images.
 
-Ten offline tests cover both entry points with unavailable, empty, invalid, valid
-and appended-private-key input. They assert engine invocation, exact public-only
+Twenty-eight offline cases cover both entry points and absolute/relative roots with unavailable, empty, invalid, valid
+appended/prepended-private-key and multi-certificate bundle input. They assert engine invocation, exact public-only
 certificate content and cleanup even when the engine fails. The focused suite has
-68 passes and five live skips. The target's final image verifies custom-domain
+86 passes and five live skips. The target's final image verifies custom-domain
 HTTPS from Node as its non-root runtime user.
+
+Require exactly one certificate rather than silently discarding a bundle. Canonicalize
+the project root and retain an absolute cleanup path across later directory changes.

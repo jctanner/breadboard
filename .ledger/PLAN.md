@@ -17,6 +17,9 @@
 
 ## Current milestone
 
+- [CC-61: PR #8 manual merge preparation](tasks/current/cc61-pr8.md): isolated
+  fallback branch, independent review iteration and offline validation.
+
 - [Fullsend v0.52.0 patch rebase](tasks/current/fullsend-v052-patch-rebase.md):
   both checkouts fast-forwarded (fullsend 2,616 and agents 620 commits);
   fullsend 0010 dropped as fixed upstream, 0015 added (dispatch/lint fallback

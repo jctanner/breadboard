@@ -36,7 +36,14 @@ def main():
         if instance not in instances:
             run('start', '--name=' + instance, '--tty=false', '--mount-only', str(ROOT) + ':w', os.getenv('LIMA_CONFIG', str(ROOT / 'deploy/lima/breadboard-vm.yaml')))
         else:
-            status = json.loads(run('list', '--json', instance, capture_output=True, text=True).stdout)
+            status = json.loads(run('list', '--json', '--all-fields', instance, capture_output=True, text=True).stdout)
+            # Existing VMs must not retain a writable or readable home mount.
+            mounts = status.get('config', {}).get('mounts')
+            if mounts is None:
+                raise SystemExit('Cannot inspect existing VM mounts; inspect Lima configuration and recreate with repository-only mounts.')
+            if len(mounts) != 1 or Path(mounts[0].get('location', '')).expanduser().resolve() != ROOT or not mounts[0].get('writable'):
+                raise SystemExit('Existing VM must mount only this repository writable. Stop it and use limactl edit --mount-only <repository>:w before retrying.')
+
             if status['status'] != 'Running':
                 run('start', '--tty=false', instance)
         # Existing VMs must have the same explicit mount; no automatic home mount.
@@ -65,7 +72,7 @@ def main():
             Path(name).unlink(missing_ok=True)
     else:
         scripts = {'install-k3s': '01-install-k3s-host.sh', 'deploy-all': 'deploy-all.sh', 'configure-dns': '29-configure-tailscale-dns.sh', 'validate': 'validate-lima.sh'}
-        shell('sudo', 'env', f'PROJECT_ROOT={ROOT}', f'BREADBOARD_DOMAIN={domain}', 'bash', str(ROOT / 'deploy/scripts' / scripts[args.action]))
+        shell('sudo', 'env', f'PROJECT_ROOT={ROOT}', f'BREADBOARD_DOMAIN={domain}', f'BREADBOARD_SPLIT_DNS={os.getenv("BREADBOARD_SPLIT_DNS", "0")}', f'BREADBOARD_UPDATE_HOSTS={os.getenv("BREADBOARD_UPDATE_HOSTS", "0")}', f'FORCE_REBUILD={os.getenv("FORCE_REBUILD", "1")}', 'bash', str(ROOT / 'deploy/scripts' / scripts[args.action]))
 
 
 if __name__ == '__main__':

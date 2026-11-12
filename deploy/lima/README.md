@@ -34,7 +34,7 @@ The root `Makefile` provides convenience targets:
 # Start VM and ensure project symlinks (/breadboard and /vagrant)
 make lima-up
 
-# Enter shell inside VM (working directory matches repo on host)
+# Enter shell inside VM (working directory is / in the guest)
 make lima-shell
 
 # Check VM and cluster status
@@ -175,7 +175,7 @@ that new constraints or SANs have already been issued. Back up state and plan ro
 before changing a working install. No client trust-store changes run automatically.
 
 Deployments rebuild images by default. `FORCE_REBUILD=0` is an explicit optimization
-for unchanged source and unchanged CA only; cached tags do not detect either change.
+for unchanged source, unchanged domain, and unchanged CA only; cached tags do not detect either change.
 For `scripts/bb` and the demo/CVE seeders, set `BREADBOARD_CA_FILE` to the verified
 public CA file if it is not in the system trust store. `scripts/bb` uses the current
 kubectl context and defaults to `local`; remote thermal inspection requires explicit
@@ -190,13 +190,13 @@ Split DNS is opt-in: run `make lima-configure-dns BREADBOARD_DOMAIN=bb.internal`
 after installing dnsmasq with the guest package manager. For a direct host deployment,
 `BREADBOARD_SPLIT_DNS=1` explicitly enables the final DNS setup step. It never installs
 packages. `/etc/hosts` updates also require `BREADBOARD_UPDATE_HOSTS=1`; otherwise
-configure host resolution separately before running seeders. These opt-ins must be
-passed through sudo explicitly on host deployments.
+configure host resolution separately before running seeders. The Make targets forward these opt-ins through sudo; when invoking scripts
+directly, pass them explicitly through sudo.
 
 The NameConstraints feature gate must be enabled in both cert-manager's controller
 and webhook. `02-install-cert-manager.sh` does this; reinstalling cert-manager by
-another method must preserve those flags. The CA uses `rotationPolicy: Always` for
-renewal. Remove old unconstrained trust entries explicitly; a retained old root can
+another method must preserve those flags. The CA retains its key (`rotationPolicy: Never`) during routine renewal; root key
+changes require an explicit maintenance migration. Remove old unconstrained trust entries explicitly; a retained old root can
 still validate old signatures. The default external constraints list actual Breadboard
 service names, rather than trusting every mDNS host on the LAN.
 
@@ -214,3 +214,26 @@ Add the target repository through the emulator admin interface. The explicit
 only: recreation changes the installation identity and can invalidate other tokens.
 The conformance target intentionally bootstraps `runtime: dummy` when no scaffold
 exists; it exercises scripted plumbing without consuming model credentials.
+
+Deployment refuses an existing CA whose issued critical constraints do not exactly
+match the requested manifest/domain. This guard runs before CA mutation; there is no
+"skip verification" override. Existing unconstrained installs must first perform a
+planned maintenance migration (rotate the root deliberately, reissue all leaves,
+refresh the ConfigMap and CA-bearing images, replace client trust), or use a fresh
+disposable cluster. Ordinary deployment is not a CA migration tool. After migration,
+`deploy/validation/test-certificates.sh` verifies every issued leaf against the public
+ConfigMap CA. Verify hostname coverage separately as described above.
+
+The legacy direct-token smoke manifests/policies remain `.local` HTTP compatibility
+fixtures; they do not claim custom-domain HTTPS coverage. Use the parameterized
+Fullsend conformance/behaviour paths for that coverage.
+
+The arm64 upstream runner Dockerfile rewrite has not been image-built on corsair.
+Review any upstream architecture-specific checksums before building on Apple Silicon;
+this needs the component checkout and disposable VM qualification. The copied build
+context includes dotfiles such as `.dockerignore`.
+
+The site runner's `FULLSEND_ALLOW_PRIVATE_FORGE=1` permits the intentionally private
+emulator endpoint, and `FULLSEND_MINT_URL` identifies the internal HTTPS mint already
+used by the role runner. They are local deployment settings, not permission to contact
+arbitrary external forges or bypass token scopes.

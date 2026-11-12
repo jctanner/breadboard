@@ -23,6 +23,8 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
+python3 "${SCRIPT_DIR}/check_ca_compatibility.py"
+
 # .env is optional: model credentials are managed by Model Relay, and every
 # value 06-create-secrets.sh reads from it has a default.
 if [ ! -f "${PROJECT_ROOT}/.env" ]; then
@@ -247,7 +249,7 @@ echo ""
 
 # Configure Tailscale Split DNS if tailscale0 is present
 if [ "${BREADBOARD_SPLIT_DNS:-0}" = 1 ]; then
-  echo "Tailscale interface detected, configuring Split DNS..."
+  echo "Split DNS explicitly requested, configuring responder..."
   bash "${SCRIPT_DIR}/29-configure-tailscale-dns.sh"
   echo ""
 fi

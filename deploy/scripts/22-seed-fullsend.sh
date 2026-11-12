@@ -24,8 +24,8 @@ export GITHUB_EMULATOR_URL="${GITHUB_EMULATOR_URL:-https://github.${BREADBOARD_D
 if [ -z "${BREADBOARD_CA_FILE:-}" ]; then
   SEED_CA="$(mktemp /tmp/breadboard-seed-ca.XXXXXX)"
   trap 'rm -f "${SEED_CA}"' EXIT
-  kubectl get secret internal-ca-secret -n ai-pipeline \
-    -o jsonpath='{.data.tls\.crt}' | base64 -d > "${SEED_CA}"
+  kubectl get configmap internal-ca-cert -n ai-pipeline \
+    -o jsonpath='{.data.ca\.crt}' > "${SEED_CA}"
   openssl x509 -in "${SEED_CA}" -noout >/dev/null
   export BREADBOARD_CA_FILE="${SEED_CA}"
 fi

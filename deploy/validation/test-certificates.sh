@@ -65,4 +65,17 @@ kubectl get configmap internal-ca-cert -n ${NAMESPACE} -o jsonpath='{.data.ca\.c
 echo "✓ CA ConfigMap exists and contains certificate"
 
 echo ""
+# Public certificates only; use temporary per-run files, never a host trust store.
+CHAIN_DIR="$(mktemp -d /tmp/breadboard-chain-check.XXXXXX)"
+trap 'rm -rf "${CHAIN_DIR}"' EXIT
+kubectl get configmap internal-ca-cert -n "${NAMESPACE}" \
+  -o jsonpath='{.data.ca\.crt}' > "${CHAIN_DIR}/ca.crt"
+CERTIFICATE_SECRETS="$(kubectl get certificates -n "${NAMESPACE}" -o jsonpath='{range .items[*]}{.spec.secretName}{"\n"}{end}')"
+while IFS= read -r secret; do
+  [ -n "${secret}" ] || continue
+  kubectl get secret "${secret}" -n "${NAMESPACE}" \
+    -o jsonpath='{.data.tls\.crt}' | base64 -d > "${CHAIN_DIR}/leaf.crt"
+  openssl verify -CAfile "${CHAIN_DIR}/ca.crt" "${CHAIN_DIR}/leaf.crt"
+done <<< "${CERTIFICATE_SECRETS}"
+
 echo "==> Certificate validation PASSED"

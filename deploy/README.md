@@ -566,3 +566,15 @@ This deployment is designed for **local development and testing only**. For prod
 ## License
 
 This deployment configuration is part of the ai-first-pipeline project.
+
+## Existing CA and custom-domain upgrades
+
+The deployment preflight refuses to change an existing CA's name constraints or
+external domain. This applies to host, Vagrant, Lima, and component rebuild targets,
+including the default `local` domain. An existing unconstrained CA requires a planned
+manual migration before upgrading; deployment does not rotate root keys or migrate
+leaf certificates automatically. Follow the CA/leaf/image/client-trust maintenance
+runbook in [the Lima deployment guide](lima/README.md#domain-trust-and-upgrade-notes),
+which also applies to Linux and Vagrant installations. Use a disposable cluster to
+qualify the migration first. The certificate validation script checks issued chains
+against the public ConfigMap CA; inspect hostnames and trust constraints separately.

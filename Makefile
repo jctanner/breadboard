@@ -302,7 +302,10 @@ vagrant-reset: ## Delete namespace and reinstall (WARNING: destructive)
 
 HOST_PROJECT_ROOT := $(shell pwd)
 BREADBOARD_DOMAIN ?= local
-export BREADBOARD_DOMAIN
+BREADBOARD_SPLIT_DNS ?= 0
+BREADBOARD_UPDATE_HOSTS ?= 0
+FORCE_REBUILD ?= 1
+export BREADBOARD_DOMAIN BREADBOARD_SPLIT_DNS BREADBOARD_UPDATE_HOSTS FORCE_REBUILD
 
 host-install-k3s: ## Install K3s on host with /data auto-detection
 	sudo bash deploy/scripts/01-install-k3s-host.sh
@@ -314,7 +317,7 @@ host-kubeconfig: ## Copy k3s kubeconfig to ~/.kube/config for non-sudo kubectl
 	@echo "✓ kubeconfig updated — kubectl should work without sudo"
 
 host-deploy-all: ## Run full deployment from scratch on host
-	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) BREADBOARD_DOMAIN="$${BREADBOARD_DOMAIN}" bash deploy/scripts/deploy-all.sh
+	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) BREADBOARD_DOMAIN="$${BREADBOARD_DOMAIN}" BREADBOARD_SPLIT_DNS="$${BREADBOARD_SPLIT_DNS}" BREADBOARD_UPDATE_HOSTS="$${BREADBOARD_UPDATE_HOSTS}" FORCE_REBUILD="$${FORCE_REBUILD}" bash deploy/scripts/deploy-all.sh
 
 host-rebuild-prereqs: ## Install cert-manager, namespace, CA, secrets, storage, and RBAC on host
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/02-install-cert-manager.sh
@@ -333,7 +336,7 @@ host-conformance: ## Run the Fullsend conformance triage and leave an evidence f
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/24-run-conformance-triage.sh
 
 host-conformance-all: ## Deploy, reset conformance state, then run the triage (prompts)
-	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/deploy-all.sh
+	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) BREADBOARD_DOMAIN="$${BREADBOARD_DOMAIN}" BREADBOARD_SPLIT_DNS="$${BREADBOARD_SPLIT_DNS}" BREADBOARD_UPDATE_HOSTS="$${BREADBOARD_UPDATE_HOSTS}" FORCE_REBUILD="$${FORCE_REBUILD}" bash deploy/scripts/deploy-all.sh
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/25-reset-conformance.sh
 	PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/24-run-conformance-triage.sh
 
@@ -691,7 +694,7 @@ host-reset: ## Delete namespace and reinstall on host (WARNING: destructive)
 	@echo "WARNING: This will delete the ai-pipeline namespace and all resources!"
 	@read -p "Are you sure? (yes/no): " confirm && [ "$$confirm" = "yes" ]
 	kubectl delete namespace ai-pipeline || true
-	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) bash deploy/scripts/deploy-all.sh
+	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) BREADBOARD_DOMAIN="$${BREADBOARD_DOMAIN}" BREADBOARD_SPLIT_DNS="$${BREADBOARD_SPLIT_DNS}" BREADBOARD_UPDATE_HOSTS="$${BREADBOARD_UPDATE_HOSTS}" FORCE_REBUILD="$${FORCE_REBUILD}" bash deploy/scripts/deploy-all.sh
 
 ##@ Lima: Apple Silicon VM (vz + Rosetta)
 

@@ -5,6 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-/vagrant}"
+python3 "${SCRIPT_DIR}/check_ca_compatibility.py"
 
 echo "==> Deploying GitLab Emulator to k3s..."
 

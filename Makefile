@@ -310,11 +310,8 @@ export BREADBOARD_DOMAIN BREADBOARD_SPLIT_DNS BREADBOARD_UPDATE_HOSTS FORCE_REBU
 host-install-k3s: ## Install K3s on host with /data auto-detection
 	sudo bash deploy/scripts/01-install-k3s-host.sh
 
-host-kubeconfig: ## Copy k3s kubeconfig to ~/.kube/config for non-sudo kubectl
-	sudo cp /etc/rancher/k3s/k3s.yaml $(HOME)/.kube/config
-	sudo chown $(shell id -u):$(shell id -g) $(HOME)/.kube/config
-	chmod 600 $(HOME)/.kube/config
-	@echo "✓ kubeconfig updated — kubectl should work without sudo"
+host-kubeconfig: ## Install protected user kubeconfig and configure Bash selection
+	bash deploy/scripts/host-kubeconfig.sh
 
 host-deploy-all: ## Run full deployment from scratch on host
 	sudo PROJECT_ROOT=$(HOST_PROJECT_ROOT) BREADBOARD_DOMAIN="$${BREADBOARD_DOMAIN}" BREADBOARD_SPLIT_DNS="$${BREADBOARD_SPLIT_DNS}" BREADBOARD_UPDATE_HOSTS="$${BREADBOARD_UPDATE_HOSTS}" FORCE_REBUILD="$${FORCE_REBUILD}" bash deploy/scripts/deploy-all.sh

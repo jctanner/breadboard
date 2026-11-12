@@ -611,3 +611,17 @@ The selected OpenCode source currently needs its Bun lockfile reconciled before 
 fallback can be removed; its frozen install reports a lockfile mismatch. Keeping the
 fork commit reachable/protected is a maintainer follow-up; it is currently reachable
 from the existing integration branch, and an unavailable ref fails the build closed.
+
+## Host operator kubeconfig
+
+Run `make host-kubeconfig` as the ordinary operator user. It installs the user copy
+at `~/.kube/config` with mode 0600, backs up a differing existing config with mode
+0600, and keeps the server copy protected. New interactive Bash shells select the
+user copy only when `KUBECONFIG` is unset. For the current terminal or other shells,
+select it explicitly:
+
+```bash
+export KUBECONFIG="$HOME/.kube/config"
+```
+
+An explicitly selected context is preserved; the target refuses `sudo make`.

@@ -162,3 +162,27 @@ def test_openssl_enforces_rendered_ca_dns_constraints(tmp_path, domain, allowed,
         leaf_path.write_bytes(leaf.public_bytes(serialization.Encoding.PEM))
         result = subprocess.run(['openssl', 'verify', '-CAfile', str(ca_path), '-verify_hostname', name, str(leaf_path)], capture_output=True, text=True)
         assert result.returncode == expected, result.stderr
+
+
+def test_demo_seeder_finds_existing_issue_after_first_page():
+    seed = load('demo_pr8', 'deploy/scripts/seed_demo_tickets.py')
+    seeder = seed.GitLabSeeder('https://gitlab.local')
+    response1 = mock.Mock()
+    response1.json.return_value = [{'iid': i, 'title': str(i)} for i in range(100)]
+    response2 = mock.Mock()
+    response2.json.return_value = [{'iid': 101, 'title': 'existing target'}]
+    seeder.session = mock.Mock()
+    seeder.session.get.side_effect = [response1, response2]
+    assert seeder.ensure_issue(1, 'existing target', '', []) == (101, False)
+    seeder.session.post.assert_not_called()
+    assert seeder.session.get.call_args.kwargs['params']['page'] == 2
+
+
+def test_cve_issue_lookup_failure_does_not_create_duplicate():
+    with mock.patch.object(sys, 'path', [str(ROOT / 'deploy/fullsend/seed'), *sys.path]):
+        seed = load('cve_lookup_pr8', 'deploy/fullsend/seed/seed-cve-fixture.py')
+    with mock.patch.object(seed, 'api_request', return_value=(503, None)) as api:
+        with pytest.raises(RuntimeError, match='Cannot check'):
+            seed.ensure_assessment_issue()
+        assert api.call_count == 1
+        assert api.call_args.args[0] == 'GET'

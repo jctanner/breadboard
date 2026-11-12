@@ -55,9 +55,16 @@ class JiraSeeder:
             "maxResults": 100,
             "fields": ["summary", "status", "priority", "issuetype", "labels", "project"],
         }
-        res = self.session.post(url, json=payload, timeout=20)
-        res.raise_for_status()
-        return res.json().get("issues", [])
+        issues = []
+        while True:
+            payload['startAt'] = len(issues)
+            res = self.session.post(url, json=payload, timeout=20)
+            res.raise_for_status()
+            data = res.json()
+            batch = data.get('issues', [])
+            issues.extend(batch)
+            if not batch or len(issues) >= data.get('total', len(issues)):
+                return issues
 
     def ensure_issue(
         self,
@@ -155,6 +162,20 @@ class GitLabSeeder:
         create_res.raise_for_status()
         return create_res.json()["id"]
 
+    def get_all(self, path: str, params: dict) -> list[dict[str, Any]]:
+        items = []
+        page = 1
+        while True:
+            response = self.session.get(f"{self.base_url}{path}", params={**params, "per_page": 100, "page": page}, timeout=20)
+            response.raise_for_status()
+            batch = response.json()
+            if not isinstance(batch, list):
+                raise RuntimeError(f"Expected a list from {path}")
+            items.extend(batch)
+            if len(batch) < 100:
+                return items
+            page += 1
+
     def ensure_issue(
         self,
         project_id: int,
@@ -162,13 +183,8 @@ class GitLabSeeder:
         description: str,
         labels: list[str],
     ) -> tuple[int, bool]:
-        res = self.session.get(
-            f"{self.base_url}/api/v4/projects/{project_id}/issues",
-            params={"state": "all", "per_page": 100},
-            timeout=20,
-        )
-        res.raise_for_status()
-        for issue in res.json():
+        existing = self.get_all(f"/api/v4/projects/{project_id}/issues", {"state": "all"})
+        for issue in existing:
             if issue.get("title", "").strip() == title.strip():
                 return issue.get("iid", issue.get("id")), False
 
@@ -234,13 +250,8 @@ class GitLabSeeder:
         file_path: str,
         file_content: str,
     ) -> tuple[int, bool]:
-        res = self.session.get(
-            f"{self.base_url}/api/v4/projects/{project_id}/merge_requests",
-            params={"state": "all", "per_page": 100},
-            timeout=20,
-        )
-        res.raise_for_status()
-        for mr in res.json():
+        existing = self.get_all(f"/api/v4/projects/{project_id}/merge_requests", {"state": "all"})
+        for mr in existing:
             if mr.get("title", "").strip() == title.strip():
                 return mr.get("iid", mr.get("id")), False
 

@@ -71,7 +71,7 @@ def test_installation_grants_from_api_metadata(monkeypatch, missing_permissions)
             mock.patch("ssl.create_default_context", return_value=context) as tls, \
             contextlib.redirect_stdout(io.StringIO()):
         if missing_permissions in {"missing", "empty", "malformed", "bad_inventory", "broader_app"}:
-            with pytest.raises(SystemExit, match="invalid installation inventory" if missing_permissions == "bad_inventory" else "could not read permissions"):
+            with pytest.raises(SystemExit, match="invalid installation inventory" if missing_permissions == "bad_inventory" else ("permissions differ from requested" if missing_permissions == "broader_app" else "could not read permissions")):
                 exec(compile(BLOCK, "mint-bootstrap", "exec"), {})
             assert not grants
             assert not writes

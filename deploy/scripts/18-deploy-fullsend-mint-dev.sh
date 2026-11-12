@@ -159,8 +159,10 @@ roles = {"triage": "1001", "scribe": "1002", "coder": "1003", "review": "1004", 
 out = {}
 for role, app_id in roles.items():
     status, app = call(f"{api}/admin/apps/{app_id}")
-    if status != 200 or not isinstance(app, dict) or not isinstance(app.get("permissions"), dict) or not app["permissions"] or app["permissions"] != expected_grants.get(app_id):
+    if status != 200 or not isinstance(app, dict) or not isinstance(app.get("permissions"), dict) or not app["permissions"]:
         sys.exit(f"could not read permissions for App {app_id}: HTTP {status}")
+    if app["permissions"] != expected_grants.get(app_id):
+        sys.exit(f"App {app_id} permissions differ from requested bootstrap grants")
     # The UI inventory has installation selections but omits App permissions.
     status, inventory = call(f"{base}/admin/api/apps/{app_id}")
     if status != 200 or not isinstance(inventory, dict):

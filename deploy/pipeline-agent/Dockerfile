@@ -11,7 +11,7 @@ RUN git clone --depth 1 https://github.com/opendatahub-io/architecture-context.g
 
 
 # ── Stage 2: Build OpenCode from its source repository ──────────
-FROM oven/bun:1.3.14-debian AS opencode-builder
+FROM docker.io/oven/bun:1.3.14-debian AS opencode-builder
 
 ARG OPENCODE_REPO=https://github.com/anomalyco/opencode.git
 ARG OPENCODE_REF=dev

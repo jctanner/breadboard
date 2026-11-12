@@ -14,6 +14,9 @@ from __future__ import annotations
 import json
 import os
 import ssl
+import re
+import time
+import tempfile
 import subprocess
 from urllib.parse import urlsplit, urlunsplit, quote
 from pathlib import Path
@@ -60,17 +63,31 @@ def api_request(method: str, path: str, body: dict | None = None) -> tuple[int, 
         f"{API_URL}{path}", data=data, headers=headers, method=method,
     )
     context = ssl_context()
-    try:
-        with urllib.request.urlopen(request, context=context) as response:
-            payload = response.read()
-            return response.status, json.loads(payload) if payload else None
-    except urllib.error.HTTPError as exc:
-        payload = exc.read()
+    # Only retry the emulator's explicit lock response on replay-safe operations.
+    # Organization/repository names are unique; their callers accept duplicate 422s.
+    replay_safe = method.upper() in {"GET", "HEAD", "PUT", "DELETE"} or (
+        method.upper() == "POST" and (path == "/orgs" or re.fullmatch(r"/orgs/[^/]+/repos", path))
+    )
+    for attempt in range(4):
         try:
-            decoded = json.loads(payload) if payload else None
-        except json.JSONDecodeError:
-            decoded = payload.decode(errors="replace")
-        return exc.code, decoded
+            with urllib.request.urlopen(request, context=context) as response:
+                payload = response.read()
+                return response.status, json.loads(payload) if payload else None
+        except urllib.error.HTTPError as exc:
+            payload = exc.read()
+            try:
+                decoded = json.loads(payload) if payload else None
+            except json.JSONDecodeError:
+                decoded = payload.decode(errors="replace")
+            exc.close()
+            locked = isinstance(decoded, dict) and any(
+                isinstance(error, dict) and error.get("code") == "sqlite_locked"
+                for error in (decoded.get("errors") or [])
+            ) and "cannot be replayed safely" not in str(decoded.get("message", ""))
+            if exc.code == 503 and locked and replay_safe and attempt < 3:
+                time.sleep(2 ** attempt)
+                continue
+            return exc.code, decoded
 
 
 def ensure_org() -> None:
@@ -80,7 +97,11 @@ def ensure_org() -> None:
     if status != 404:
         raise RuntimeError(f"GET organization failed: HTTP {status}")
     status, payload = api_request("POST", "/orgs", {"login": ORG, "name": ORG})
-    if status not in (201, 422):
+    if status == 422:
+        found, _ = api_request("GET", f"/orgs/{ORG}")
+        if found != 200:
+            raise RuntimeError(f"Organization conflict was not confirmed: HTTP {found}")
+    elif status != 201:
         raise RuntimeError(f"POST organization failed: HTTP {status}: {payload}")
 
 
@@ -94,13 +115,25 @@ def ensure_repo() -> None:
         "POST", f"/orgs/{ORG}/repos",
         {"name": REPO, "description": "Minimal Fullsend development target", "private": False},
     )
-    if status not in (201, 422):
+    if status == 422:
+        found, existing = api_request("GET", f"/repos/{ORG}/{REPO}")
+        if found != 200 or not isinstance(existing, dict) or not existing.get("default_branch"):
+            raise RuntimeError(f"Repository conflict was not confirmed with a default branch: HTTP {found}")
+    elif status != 201:
         raise RuntimeError(f"POST repository failed: HTTP {status}: {payload}")
 
 
 def git_env() -> dict[str, str]:
     env = os.environ.copy()
-    env.pop("GIT_SSL_NO_VERIFY", None)
+    blocked = {
+        "GIT_CONFIG", "GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE",
+        "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE",
+        "GIT_SSH", "GIT_SSH_COMMAND", "GIT_ASKPASS", "SSH_ASKPASS", "GIT_EXEC_PATH",
+        "GIT_CURL_VERBOSE",
+    }
+    for key in list(env):
+        if key in blocked or key.startswith(("GIT_CONFIG_", "GIT_SSL_", "GIT_TRACE")):
+            env.pop(key, None)
     env["GIT_CONFIG_GLOBAL"] = os.devnull
     env["GIT_CONFIG_NOSYSTEM"] = "1"
     if os.getenv("BREADBOARD_CA_FILE"):
@@ -110,10 +143,24 @@ def git_env() -> dict[str, str]:
 
 
 def run_git(directory: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["git", "-c", "http.sslVerify=true", *args], cwd=directory, env=git_env(), text=True,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=check,
-    )
+    # Old Git versions require safe.directory in global rather than -c scope.
+    # Build an isolated, short-lived config containing only this controlled repo.
+    with tempfile.TemporaryDirectory(prefix="breadboard-seed-git-") as temporary:
+        config = Path(temporary) / "config"
+        env = git_env()
+        subprocess.run(
+            ["git", "config", "--file", str(config), "--add", "safe.directory", str(directory.resolve())],
+            cwd=temporary, env=env, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        config.chmod(0o600)
+        env["GIT_CONFIG_GLOBAL"] = str(config)
+        return subprocess.run(
+            ["git", "-c", "core.hooksPath=" + os.devnull, "-c", "core.fsmonitor=false",
+             "-c", "credential.helper=", "-c", "protocol.ext.allow=never",
+             "-c", "http.sslVerify=true", *args], cwd=directory, env=env, text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=check,
+        )
+
 
 
 FULLSEND_SHIM = """---

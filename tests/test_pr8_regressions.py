@@ -125,3 +125,40 @@ def test_lima_uses_repository_only_mount_and_argv(tmp_path):
     assert str(root) + ':w' in create
     assert '~' not in create
     assert not any('bash' in call for call in calls)
+
+
+@pytest.mark.parametrize(('domain', 'allowed', 'forbidden'), [
+    ('local', 'dashboard.local', 'unrelated.local'),
+    ('bb.internal', 'dashboard.bb.internal', 'dashboard.local'),
+])
+def test_openssl_enforces_rendered_ca_dns_constraints(tmp_path, domain, allowed, forbidden):
+    """Exercise X.509 chain validation, not just YAML/string expectations."""
+    import datetime
+    import ipaddress
+    import shutil
+    import subprocess
+    from cryptography import x509
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from cryptography.x509.oid import NameOID
+
+    if not shutil.which('openssl'):
+        pytest.skip('openssl is required for chain validation')
+    docs = yaml.safe_load_all(render.transform_manifest((ROOT / 'deploy/k8s/01-ca-issuer.yaml').read_text(), domain))
+    permitted = next(d for d in docs if d['kind'] == 'Certificate')['spec']['nameConstraints']['permitted']
+    now = datetime.datetime.now(datetime.timezone.utc)
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'Offline test CA')])
+    base = x509.CertificateBuilder().subject_name(subject).issuer_name(subject).public_key(key.public_key()).serial_number(x509.random_serial_number()).not_valid_before(now - datetime.timedelta(minutes=1)).not_valid_after(now + datetime.timedelta(days=1))
+    constraints = [x509.DNSName(name) for name in permitted['dnsDomains']]
+    constraints += [x509.IPAddress(ipaddress.ip_network(value)) for value in permitted['ipRanges']]
+    ca = base.add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True).add_extension(x509.NameConstraints(permitted_subtrees=constraints, excluded_subtrees=None), critical=True).sign(key, hashes.SHA256())
+    ca_path = tmp_path / 'ca.crt'
+    ca_path.write_bytes(ca.public_bytes(serialization.Encoding.PEM))
+    for name, expected in [(allowed, 0), (forbidden, 2)]:
+        leaf = x509.CertificateBuilder()
+        leaf = leaf.subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, name)])).issuer_name(subject).public_key(key.public_key()).serial_number(x509.random_serial_number()).not_valid_before(now - datetime.timedelta(minutes=1)).not_valid_after(now + datetime.timedelta(days=1)).add_extension(x509.SubjectAlternativeName([x509.DNSName(name)]), critical=False).sign(key, hashes.SHA256())
+        leaf_path = tmp_path / 'leaf.crt'
+        leaf_path.write_bytes(leaf.public_bytes(serialization.Encoding.PEM))
+        result = subprocess.run(['openssl', 'verify', '-CAfile', str(ca_path), '-verify_hostname', name, str(leaf_path)], capture_output=True, text=True)
+        assert result.returncode == expected, result.stderr

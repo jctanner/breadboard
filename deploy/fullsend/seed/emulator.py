@@ -178,6 +178,14 @@ def seed_source_path(root: Path, relative: str, *, allow_final_symlink: bool = F
     return current
 
 
+def mirror_destination(root: Path, relative: str) -> Path:
+    """Reject linked ancestors and replace a final link without following it."""
+    destination = seed_source_path(root, relative, allow_final_symlink=True)
+    if destination.is_symlink():
+        destination.unlink()
+    return destination
+
+
 def copy_mirror_source(root: Path, relative: str, destination: Path) -> None:
     """Copy regular bytes or symlink text, never a symlink target's bytes."""
     origin = seed_source_path(root, relative, allow_final_symlink=True)

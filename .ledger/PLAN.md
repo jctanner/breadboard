@@ -18,7 +18,7 @@
 ## Current milestone
 
 - [CC-61: PR #8 manual merge preparation](tasks/done/cc61-pr8.md): isolated
-  fallback branch reviewed with no blockers and pushed; [PR #10](https://github.com/jctanner/breadboard/pull/10) awaits manual merge.
+  fallback branch pushed as [PR #10](https://github.com/jctanner/breadboard/pull/10); remote integration remains [blocked by sandbox activation](bugs/open/w530-openshell-configuration-activation.md).
 
 - [Fullsend v0.52.0 patch rebase](tasks/current/fullsend-v052-patch-rebase.md):
   both checkouts fast-forwarded (fullsend 2,616 and agents 620 commits);

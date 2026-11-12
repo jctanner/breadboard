@@ -84,3 +84,86 @@ def test_mirror_source_refuses_symlink_ancestor(tmp_path, monkeypatch):
     (source / 'parent').symlink_to(outside, target_is_directory=True)
     with pytest.raises(RuntimeError, match='symlink'):
         module.seed_source_path(source, 'parent/file', allow_final_symlink=True)
+
+
+def test_fullsend_directory_collection_with_linked_checkout(tmp_path, monkeypatch):
+    module = load_seed('seed-upstream-fullsend', monkeypatch)
+    actual = tmp_path / 'actual'
+    (actual / '.git').mkdir(parents=True)
+    (actual / '.github/workflows').mkdir(parents=True)
+    (actual / '.github/workflows/reusable-test.yml').write_text('public')
+    linked = tmp_path / 'checkout'
+    linked.symlink_to(actual, target_is_directory=True)
+    monkeypatch.setattr(module, 'SOURCE', linked)
+    monkeypatch.setattr(module, 'MIRRORED_PATHS', ('.github/workflows',))
+    assert module.collect_sources() == [(actual / '.github/workflows/reusable-test.yml', '.github/workflows/reusable-test.yml')]
+
+
+@pytest.mark.parametrize('kind', ['parent_link', 'final_link', 'source_link'])
+def test_composite_mirror_does_not_follow_fetched_or_source_links(tmp_path, monkeypatch, kind):
+    from subprocess import CompletedProcess
+    module = load_seed('mirror-fullsend-workflows', monkeypatch)
+    source = tmp_path / 'source'
+    action = source / 'action.yml'
+    source.mkdir()
+    outside = tmp_path / 'outside'
+    outside.mkdir()
+    retained = outside / 'action.yml'
+    retained.write_text('private fixture')
+    if kind == 'source_link':
+        action.symlink_to(retained)
+    else:
+        action.write_text('public fixture')
+    monkeypatch.setattr(module, 'SOURCE', source)
+    monkeypatch.setattr(module, 'FILES', ('nested/action.yml',) if kind != 'source_link' else ('action.yml',))
+    if kind != 'source_link':
+        (source / 'nested').mkdir()
+        (source / 'nested/action.yml').write_text('public fixture')
+
+    def git(directory, *args, **kwargs):
+        if args[0] == 'reset':
+            if kind == 'parent_link':
+                (directory / 'nested').symlink_to(outside, target_is_directory=True)
+            elif kind == 'final_link':
+                (directory / 'nested').mkdir()
+                (directory / 'nested/action.yml').symlink_to(retained)
+        return CompletedProcess(args, 0, 'fixture', '')
+    monkeypatch.setattr(module, 'run_git', git)
+    if kind == 'final_link':
+        module.main()
+    else:
+        with pytest.raises(RuntimeError, match='symlink'):
+            module.main()
+    assert retained.read_text() == 'private fixture'
+
+
+@pytest.mark.parametrize('kind', ['parent_link', 'final_link', 'source_link', 'regular'])
+def test_cve_staging_keeps_unrelated_files_and_rejects_linked_parents(tmp_path, monkeypatch, kind):
+    module = load_seed('seed-cve-fixture', monkeypatch)
+    target = tmp_path / 'target'
+    target.mkdir()
+    (target / 'unrelated').write_text('keep')
+    outside = tmp_path / 'outside'
+    outside.mkdir()
+    retained = outside / 'README.md'
+    retained.write_text('private fixture')
+    plugin = tmp_path / 'plugin'
+    plugin.mkdir()
+    for name in ('package.json', 'index.js', 'index.test.js', 'README.md'):
+        (plugin / name).write_text('public fixture')
+    if kind == 'parent_link':
+        (target / '.fullsend').symlink_to(outside, target_is_directory=True)
+    elif kind == 'final_link':
+        (target / 'README.md').symlink_to(retained)
+    elif kind == 'source_link':
+        (plugin / 'README.md').unlink()
+        (plugin / 'README.md').symlink_to(retained)
+    monkeypatch.setattr(module, 'find_cve_plugin_source', lambda: plugin)
+    if kind in {'parent_link', 'source_link'}:
+        with pytest.raises(RuntimeError, match='symlink'):
+            module.stage_files(target, 'https://github.local', 'a'*40, 'b'*64)
+    else:
+        module.stage_files(target, 'https://github.local', 'a'*40, 'b'*64)
+        assert not (target / 'README.md').is_symlink()
+    assert retained.read_text() == 'private fixture'
+    assert (target / 'unrelated').read_text() == 'keep'

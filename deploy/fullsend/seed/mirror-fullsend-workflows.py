@@ -26,7 +26,7 @@ from pathlib import Path
 import tempfile
 import time
 
-from emulator import git_remote, BASE_URL, ORG, REPO, TOKEN, run_git
+from emulator import git_remote, BASE_URL, ORG, REPO, TOKEN, run_git, seed_source_path, mirror_destination
 
 
 # deploy/fullsend/seed/mirror-fullsend-workflows.py -> parents[3] is the project root.
@@ -59,18 +59,18 @@ def main() -> None:
             raise RuntimeError(fetched.stderr if fetched else "fetch did not run")
         mirrored = []
         for relative in FILES:
-            source = SOURCE / relative
+            source = seed_source_path(SOURCE, relative)
             if not source.is_file():
                 raise RuntimeError(f"required local Fullsend fixture is missing: {source}")
-            destination = directory / relative
+            destination = mirror_destination(directory, relative)
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(source.read_bytes())
             mirrored.append(relative)
         run_git(directory, "add", *mirrored)
         # Converge rather than merely stop writing it: a repository seeded
         # before this change still carries the fixture, and it keeps firing.
-        retired = directory / RETIRED_WORKFLOW
-        if retired.is_file():
+        retired = seed_source_path(directory, RETIRED_WORKFLOW, allow_final_symlink=True)
+        if retired.is_symlink() or retired.is_file():
             retired.unlink()
             run_git(directory, "rm", "--cached", "--quiet", RETIRED_WORKFLOW)
             mirrored.append(f"-{RETIRED_WORKFLOW}")

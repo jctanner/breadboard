@@ -23,3 +23,10 @@ blanket rejection blocked qualification, so final symlinks are now faithfully
 mirrored with readlink/symlink_to and no target stat/read/copy. Ancestor symlinks
 remain forbidden. This preserves executable regular file modes and tracked link
 semantics while preventing privileged host-file disclosure.
+
+The wider caller audit then found two additional writers: composite-action
+mirroring and CVE fixture staging. Both now validate destination parents, unlink
+only a final destination symlink, and refuse linked ancestors. Source action and
+plugin reads reject symlinks. CVE staging preserves unrelated repository content.
+Tests exercise malicious fetched parents, final links and source links through
+both actual entry points, plus a directory collection under a linked checkout.

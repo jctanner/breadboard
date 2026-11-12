@@ -112,8 +112,8 @@ def collect_sources() -> list[tuple[Path, str]]:
             collected.append((origin, relative))
         elif origin.is_dir():
             for path in sorted(origin.rglob("*")):
-                if (path.is_symlink() or seed_source_path(SOURCE, str(path.relative_to(SOURCE))).is_file()) and _wanted(str(path.relative_to(SOURCE))):
-                    collected.append((path, str(path.relative_to(SOURCE))))
+                if (path.is_symlink() or seed_source_path(SOURCE, str(path.relative_to(SOURCE.resolve()))).is_file()) and _wanted(str(path.relative_to(SOURCE.resolve()))):
+                    collected.append((path, str(path.relative_to(SOURCE.resolve()))))
         else:
             raise RuntimeError(f"required Fullsend path is missing: {origin}")
     return collected

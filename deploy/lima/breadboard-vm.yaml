@@ -17,9 +17,9 @@ disk: "100GiB"
 
 mountType: virtiofs
 
-mounts:
-  - location: "~"
-    writable: true
+# make lima-up supplies --mount-only <repository>:w (Lima 2+).
+# Direct creation defaults to no host mounts.
+mounts: []
 
 portForwards:
   - guestPort: 80
@@ -105,21 +105,6 @@ CARGO_HOME="/opt/rust/cargo"
 EOF
       fi
 
-      echo "==> Setting up convenience symlinks..."
-      for candidate in \
-        /Users/*/src/jctanner/breadboard* \
-        /Users/*/src/*/breadboard* \
-        /Users/*/breadboard* \
-        "{{.Home}}/src/jctanner/breadboard*" \
-        "{{.Home}}/src/jctanner/breadboard.wp1-lima-vm" \
-        "{{.Home}}/src/jctanner/breadboard" \
-        "{{.Home}}/breadboard"; do
-        if [ -d "$candidate" ]; then
-          ln -sfn "$candidate" /breadboard
-          ln -sfn "$candidate" /vagrant
-          break
-        fi
-      done
 
   - mode: user
     script: |

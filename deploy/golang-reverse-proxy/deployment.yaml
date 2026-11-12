@@ -112,7 +112,6 @@ spec:
   secretName: ingress-proxy-tls
   dnsNames:
     - "*.ai-pipeline.svc.cluster.local"
-    - "*.local"
     - github-emulator.ai-pipeline.svc.cluster.local
     - jira-emulator.ai-pipeline.svc.cluster.local
     - dashboard.ai-pipeline.svc.cluster.local

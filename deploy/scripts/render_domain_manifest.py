@@ -191,6 +191,9 @@ def main() -> None:
     file_arg = sys.argv[1]
     domain = sys.argv[2] if len(sys.argv) > 2 else os.getenv("BREADBOARD_DOMAIN", "local")
 
+    if domain != domain.strip().strip("."):
+        raise ValueError("Use a canonical BREADBOARD_DOMAIN without surrounding whitespace or dots")
+
     if file_arg == "-":
         content = sys.stdin.read()
     else:

@@ -21,7 +21,7 @@ echo "==> Building container images with ${CONTAINER_CMD}..."
 
 image_in_k3s() {
   local img="$1"
-  sudo k3s ctr images ls -q 2>/dev/null | grep -qE "(docker\.io/library/|localhost/)${img}"
+  sudo k3s ctr images ls -q 2>/dev/null | grep -Fx -e "docker.io/library/${img}" -e "localhost/${img}" >/dev/null
 }
 FORCE_REBUILD="${FORCE_REBUILD:-1}"
 

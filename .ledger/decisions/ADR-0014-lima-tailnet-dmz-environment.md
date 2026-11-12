@@ -32,7 +32,7 @@ Running Breadboard on Apple Silicon (arm64 macOS) creates two challenges:
    only to the public internet for package and image updates).
 3. **Domain Parameterization**: Introduce `BREADBOARD_DOMAIN` across the reverse
    proxy, certificate provisioning, and dashboard links. It defaults to `local`
-   to preserve 100% backward compatibility with upstream (`jctanner/breadboard`),
+   to preserve default service hostnames with upstream (`jctanner/breadboard`),
    but permits overriding to e.g. `bb.internal` for Tailscale Split DNS routing.
 
 ## Consequences
@@ -40,4 +40,4 @@ Running Breadboard on Apple Silicon (arm64 macOS) creates two challenges:
 - Apple Silicon hosts run the full platform without modifying x86_64 binaries.
 - Remote access from browsers over Tailscale works without port forwarding or
   fragile `/etc/hosts` synchronization on client devices.
-- Upstream compatibility with `jctanner/breadboard` is strictly preserved.
+- Default service hostnames are preserved; CA rotation and trust migration require operator validation.

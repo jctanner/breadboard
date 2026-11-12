@@ -9,7 +9,7 @@ running the Breadboard integrated stack on macOS Apple Silicon (ARM64).
 - **Rosetta Emulation**: `rosetta: { enabled: true, binfmt: true }` transparently runs x86_64 container layers and binaries (e.g., GitHub Actions runners, Fullsend releases) without QEMU overhead
 - **OS**: Ubuntu 24.04 LTS (Noble Numbat) ARM64 cloud image
 - **Resources**: 8 vCPUs, 20 GiB RAM, 100 GiB virtual disk
-- **Mounts**: User home directory (`~`) mounted writable via `virtiofs`
+- **Mounts**: Only the repository is mounted writable via `virtiofs`; the host home is not mounted
 - **Port Forwards**: Ports 80, 443, 5000, 6443 forwarded to `127.0.0.1`
 
 ## Prerequisites
@@ -17,7 +17,7 @@ running the Breadboard integrated stack on macOS Apple Silicon (ARM64).
 Install Lima on macOS:
 
 ```bash
-brew install lima
+brew install lima  # Lima 2 or newer
 ```
 
 Ensure Rosetta 2 is installed on your Mac:
@@ -52,7 +52,7 @@ make lima-halt
 ### 1. Start the VM
 
 ```bash
-limactl start --name=breadboard deploy/lima/breadboard-vm.yaml
+limactl start --name=breadboard --mount-only "$(pwd):w" deploy/lima/breadboard-vm.yaml
 ```
 
 ### 2. Open an Interactive Shell
@@ -61,8 +61,10 @@ limactl start --name=breadboard deploy/lima/breadboard-vm.yaml
 limactl shell breadboard
 ```
 
-Inside the VM, your host home directory is mounted at the identical path. The repo
-is also symlinked at `/breadboard` and `/vagrant`.
+Only the selected repository appears at the identical guest path. `make lima-up`
+also creates `/breadboard` and `/vagrant` symlinks. Existing VMs need a matching
+repository-only mount configured with `limactl edit --mount-only "$(pwd):w" breadboard`
+while stopped; inspect their configuration before restarting.
 
 ### 3. Verify Rosetta Emulation (Breakpoint B1)
 
@@ -78,9 +80,10 @@ limactl shell breadboard -- sudo docker run --rm --platform linux/amd64 alpine u
 
 ### 4. Tailscale DMZ Node & Split DNS (Work Package 4)
 
-The Lima VM joins the operator's Tailnet as a dedicated DMZ node:
-- **Tailnet Node**: `breadboard-vm.tailc66a3b.ts.net`
-- **Tailscale IPv4**: `100.115.60.69`
+The operator may join the Lima VM to a Tailnet. These are illustrative addresses,
+not a preconfigured network or evidence of enforced isolation:
+- **Tailnet Node**: `breadboard-vm.<your-tailnet>.ts.net`
+- **Tailscale IPv4**: `100.64.0.10`
 - **ACL Tag**: `tag:breadboard`
 
 Joining the VM to Tailscale (one-time setup):
@@ -97,8 +100,8 @@ limactl shell breadboard -- sudo tailscale up \
 
 #### Split DNS Responder (`dnsmasq`)
 
-A dedicated `dnsmasq` instance runs inside the VM listening on `100.115.60.69:53` (UDP + TCP):
-- Resolves all `*.bb.internal` (and `*.${BREADBOARD_DOMAIN}`) queries to `100.115.60.69`.
+A dedicated `dnsmasq` instance runs inside the VM listening on `100.64.0.10:53` (UDP + TCP):
+- Resolves all `*.bb.internal` (and `*.${BREADBOARD_DOMAIN}`) queries to `100.64.0.10`.
 - Uses `bind-dynamic` and binds strictly to `tailscale0` without conflicting with `systemd-resolved` on `127.0.0.53`.
 - Exports the cluster CA certificate to `deploy/certs/ca.crt`.
 
@@ -109,44 +112,39 @@ make lima-configure-dns BREADBOARD_DOMAIN=bb.internal
 ```
 
 In the Tailscale Admin Console (DNS -> Nameservers):
-- Add a custom nameserver pointing `bb.internal` to `100.115.60.69` (Split DNS).
+- Add a custom nameserver pointing `bb.internal` to `100.64.0.10` (Split DNS).
 - Any client on the tailnet with access to `tag:breadboard` can then directly browse `https://dashboard.bb.internal`.
 
 #### Trusting the Internal Cluster CA
 
-The cluster's cert-manager uses an internal CA to issue TLS certificates for the configured external domain and internal Kubernetes service names. With `BREADBOARD_DOMAIN=bb.internal`, external certificate names use `*.bb.internal`; `.local` aliases are HTTP-only. With the default `local`, existing `.local` HTTPS names are retained. The certificate is automatically exported to `deploy/certs/ca.crt`.
+The cluster's cert-manager uses an internal CA to issue TLS certificates for the configured external domain and internal Kubernetes service names. With `BREADBOARD_DOMAIN=bb.internal`, external certificate names use `*.bb.internal`; `.local` aliases are HTTP-only. With the default `local`, existing `.local` HTTPS names are retained. When explicitly requested, Split DNS configuration exports the certificate to `deploy/certs/ca.crt`.
 
-To trust the certificate:
-- **macOS**:
-  ```bash
-  sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain deploy/certs/ca.crt
-  ```
-- **Ubuntu/Debian**:
-  ```bash
-  sudo cp deploy/certs/ca.crt /usr/local/share/ca-certificates/breadboard-ca.crt
-  sudo update-ca-certificates
-  ```
+Prefer a tool-scoped trust setting, rather than adding this developer CA to the
+system-wide trust store. First inspect the certificate fingerprint and critical
+constraints using a trusted channel. If system trust is needed, use your OS's
+administration procedure and explicitly remove obsolete unconstrained roots.
+
 - **Curl verification**:
   ```bash
-  curl --cacert deploy/certs/ca.crt --resolve dashboard.bb.internal:443:100.115.60.69 https://dashboard.bb.internal/ -I
+  curl --cacert deploy/certs/ca.crt --resolve dashboard.bb.internal:443:100.64.0.10 https://dashboard.bb.internal/ -I
   ```
 
 #### Verification & DMZ Isolation
 
 1. **DNS Resolution**:
    ```bash
-   dig @100.115.60.69 dashboard.bb.internal +short
-   dig +tcp @100.115.60.69 github.bb.internal +short
+   dig @100.64.0.10 dashboard.bb.internal +short
+   dig +tcp @100.64.0.10 github.bb.internal +short
    ```
 2. **HTTPS Ingress**:
    ```bash
-   curl --cacert deploy/certs/ca.crt --resolve dashboard.bb.internal:443:100.115.60.69 https://dashboard.bb.internal/ -I
+   curl --cacert deploy/certs/ca.crt --resolve dashboard.bb.internal:443:100.64.0.10 https://dashboard.bb.internal/ -I
    ```
 3. **DMZ Lateral Movement Block**:
    Inside the VM, traffic to other internal Tailscale nodes is blocked by ACL, while outbound internet access is permitted:
    ```bash
    # Blocked by Tailscale ACL (times out):
-   limactl shell breadboard -- timeout 3 bash -c 'cat < /dev/null > /dev/tcp/100.100.21.61/22'
+   limactl shell breadboard -- timeout 3 bash -c 'cat < /dev/null > /dev/tcp/100.64.0.20/22'
    # Permitted (public internet egress):
    limactl shell breadboard -- curl -sI https://1.1.1.1
    ```
@@ -187,3 +185,32 @@ The CVE fixture uses synthetic advisory data and a deterministic dummy-runtime r
 That result tests plumbing; it is not a verified vulnerability or reachability assessment.
 Only the native architecture of the built Fullsend binary is published as a release
 asset. Running mixed architectures requires separately built and validated releases.
+
+Split DNS is opt-in: run `make lima-configure-dns BREADBOARD_DOMAIN=bb.internal`
+after installing dnsmasq with the guest package manager. For a direct host deployment,
+`BREADBOARD_SPLIT_DNS=1` explicitly enables the final DNS setup step. It never installs
+packages. `/etc/hosts` updates also require `BREADBOARD_UPDATE_HOSTS=1`; otherwise
+configure host resolution separately before running seeders. These opt-ins must be
+passed through sudo explicitly on host deployments.
+
+The NameConstraints feature gate must be enabled in both cert-manager's controller
+and webhook. `02-install-cert-manager.sh` does this; reinstalling cert-manager by
+another method must preserve those flags. The CA uses `rotationPolicy: Always` for
+renewal. Remove old unconstrained trust entries explicitly; a retained old root can
+still validate old signatures. The default external constraints list actual Breadboard
+service names, rather than trusting every mDNS host on the LAN.
+
+Provisioning still runs the upstream HTTPS bootstrap installers for Tailscale, Rust,
+and uv, and downloads Go from go.dev. Pinned installer hashes and an offline bootstrap
+are deferred: this optional developer VM follows the repository's existing online
+bootstrap model. Review these upstream scripts before running provisioning; do not
+use it as a reproducible or hostile-code isolation boundary. Only mount a disposable
+copy of the repo if the workloads are untrusted. No credentials outside that mount
+should be made available to the guest.
+
+CVE seeding refuses to delete an existing GitHub App installation by default.
+Add the target repository through the emulator admin interface. The explicit
+`FULLSEND_CVE_ALLOW_INSTALLATION_RECREATE=1` override is for a maintenance window
+only: recreation changes the installation identity and can invalidate other tokens.
+The conformance target intentionally bootstraps `runtime: dummy` when no scaffold
+exists; it exercises scripted plumbing without consuming model credentials.

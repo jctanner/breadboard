@@ -9,6 +9,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 python3 "${SCRIPT_DIR}/render_domain_manifest.py" /dev/null "${BREADBOARD_DOMAIN:-local}" >/dev/null
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 
+# Determine configured domains
+DOMAIN="${BREADBOARD_DOMAIN:-local}"
+if [ "$DOMAIN" = local ]; then
+  echo "Split DNS requires an explicit non-local BREADBOARD_DOMAIN; skipping."
+  exit 0
+fi
+
 echo "==> Configuring Tailscale Split DNS responder (dnsmasq)..."
 
 # Detect tailscale0 interface IPv4 address
@@ -25,23 +32,9 @@ fi
 
 echo "  Detected Tailscale IP: ${TS_IP}"
 
-# Ensure dnsmasq is installed
-if ! command -v dnsmasq >/dev/null 2>&1 || ! dpkg -s dnsmasq >/dev/null 2>&1; then
-  echo "  Installing dnsmasq..."
-  apt-get update -qq
-  DEBIAN_FRONTEND=noninteractive apt-get install -y dnsmasq
-fi
-
-# Ensure ubuntu-fan configuration does not conflict with bind-dynamic
-if [ -f /etc/dnsmasq.d/ubuntu-fan ]; then
-  sed -i 's/^bind-interfaces/#bind-interfaces/' /etc/dnsmasq.d/ubuntu-fan
-fi
-
-# Determine configured domains
-DOMAIN="${BREADBOARD_DOMAIN:-local}"
-if [ "$DOMAIN" = local ]; then
-  echo "Split DNS requires an explicit non-local BREADBOARD_DOMAIN; skipping."
-  exit 0
+if ! command -v dnsmasq >/dev/null 2>&1; then
+  echo "ERROR: Install dnsmasq with your host package manager before opting into Split DNS." >&2
+  exit 1
 fi
 
 # Write dnsmasq configuration for breadboard

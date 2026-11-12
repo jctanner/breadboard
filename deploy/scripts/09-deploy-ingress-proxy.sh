@@ -65,10 +65,13 @@ if [ "${DOMAIN}" != "local" ]; then
 fi
 
 MARKER="# Breadboard services"
+if [ "${BREADBOARD_UPDATE_HOSTS:-0}" = 1 ]; then
 if grep -q "${MARKER}" /etc/hosts 2>/dev/null; then
   sed -i "s/^.*${MARKER}.*$/${HOSTS_LINE} ${MARKER}/" /etc/hosts 2>/dev/null || true
 elif [ -w /etc/hosts ]; then
   echo "${HOSTS_LINE} ${MARKER}" >> /etc/hosts
+fi
+
 fi
 
 echo "==> Ingress proxy deployed successfully"

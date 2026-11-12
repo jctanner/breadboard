@@ -240,7 +240,11 @@ echo "==> Building ${RUNNER_IMAGE} (arch: ${TARGETARCH})"
 "${CONTAINER_CMD_ARR[@]}" build --build-arg TARGETARCH="${TARGETARCH}" -f "${RUNNER_CONTEXT}/Containerfile" -t "${RUNNER_IMAGE}" "${BUILD_CONTEXT}"
 
 IMPORT_IMAGES=("${RUNNER_IMAGE}" "${SANDBOX_LOCAL_IMAGE}" "${CODE_LOCAL_IMAGE}" "${SUPERVISOR_LOCAL_IMAGE}")
-if [[ "${SKIP_SANDBOX_DEV:-}" != "1" ]] && "${CONTAINER_CMD_ARR[@]}" image inspect pipeline-agent:latest >/dev/null 2>&1; then
+if [[ "${SKIP_SANDBOX_DEV:-}" != "1" ]]; then
+  if ! "${CONTAINER_CMD_ARR[@]}" image inspect pipeline-agent:latest >/dev/null 2>&1; then
+    echo "ERROR: pipeline-agent:latest is required in the container engine; build it first or explicitly set SKIP_SANDBOX_DEV=1." >&2
+    exit 1
+  fi
   echo "==> Building ${SANDBOX_IMAGE} (arch: ${TARGETARCH})"
   "${CONTAINER_CMD_ARR[@]}" build --build-arg TARGETARCH="${TARGETARCH}" -f "${SANDBOX_CONTEXT}/Containerfile" -t "${SANDBOX_IMAGE}" "${SANDBOX_CONTEXT}"
   IMPORT_IMAGES+=("${SANDBOX_IMAGE}")

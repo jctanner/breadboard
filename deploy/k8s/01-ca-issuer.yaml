@@ -20,6 +20,7 @@ spec:
   duration: 87600h # 10 years
   renewBefore: 8760h # 1 year
   privateKey:
+    rotationPolicy: Always
     algorithm: RSA
     size: 4096
   issuerRef:
@@ -29,8 +30,21 @@ spec:
     critical: true
     permitted:
       dnsDomains:
-        - "local"
-        - ".local"
+        - "github.local"
+        - "gitlab.local"
+        - "jira.local"
+        - "dashboard.local"
+        - "fullsend.local"
+        - "mint.local"
+        - "markovd.local"
+        - "observatory.local"
+        - "mlflow.local"
+        - "orgpulse.local"
+        - "relay.local"
+        - "relay-api.local"
+        - "hooksink.local"
+        - "hooksink-admin.local"
+        - "dojo.local"
         - "svc.cluster.local"
         - ".svc.cluster.local"
         - "svc"

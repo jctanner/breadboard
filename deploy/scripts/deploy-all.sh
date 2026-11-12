@@ -65,7 +65,7 @@ echo ""
 echo "Step 6/19: Building container images..."
 image_in_k3s() {
   local img="$1"
-  sudo k3s ctr images ls -q 2>/dev/null | grep -qE "(docker\.io/library/|localhost/)${img}"
+  sudo k3s ctr images ls -q 2>/dev/null | grep -Fx -e "docker.io/library/${img}" -e "localhost/${img}" >/dev/null
 }
 FORCE_REBUILD="${FORCE_REBUILD:-1}"
 
@@ -246,7 +246,7 @@ bash test-application.sh
 echo ""
 
 # Configure Tailscale Split DNS if tailscale0 is present
-if ip link show dev tailscale0 >/dev/null 2>&1; then
+if [ "${BREADBOARD_SPLIT_DNS:-0}" = 1 ]; then
   echo "Tailscale interface detected, configuring Split DNS..."
   bash "${SCRIPT_DIR}/29-configure-tailscale-dns.sh"
   echo ""

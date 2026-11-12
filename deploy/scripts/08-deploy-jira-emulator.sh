@@ -36,7 +36,7 @@ echo "--- Creating Jira Emulator configuration ---"
 kubectl apply -f 11-jira-emulator-config.yaml
 
 echo "--- Deploying Jira Emulator ---"
-kubectl apply -f 12-jira-emulator.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" 12-jira-emulator.yaml
 
 echo ""
 echo "==> Deployment complete!"

@@ -588,7 +588,10 @@ has that layout, so fresh builds cannot use it with the current build recipe.
 `OPENCODE_REPO` and `OPENCODE_REF` remain build overrides; the ref may be a full commit,
 branch or tag. Fetching verifies HTTPS. Docker Hub base-image names are qualified so
 unattended Podman builds do not depend on distribution short-name aliases. The CLI
-is smoke-checked in both builder and final runtime images.
+is smoke-checked in both builder and final runtime images. The final image copies
+the official Node 24 runtime rather than the distribution Node 20 package, because
+the current Claude CLI declares Node 22 or newer in its package engines. Its version
+is also checked during the build. Node explicitly trusts the injected CA through `NODE_EXTRA_CA_CERTS`.
 
 This pins the source, not every build input: the existing Bun/uv lockfile fallback,
 other moving source refs and package downloads still limit full image reproducibility.

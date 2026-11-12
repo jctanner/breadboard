@@ -35,19 +35,26 @@ RUN ARCH=$(uname -m | sed 's/x86_64/x64/' | sed 's/aarch64/arm64/') \
 RUN /build/opencode --version
 
 
+FROM docker.io/library/node:24-bookworm-slim AS node-runtime
+
 # ── Stage 3: Pipeline agent ─────────────────────────────────────
 FROM docker.io/library/python:3.13-slim
+
+# Use a supported Node runtime for the Claude CLI (declares Node >=22).
+COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     iproute2 \
     curl \
-    nodejs \
-    npm \
     ca-certificates \
     strace \
     && npm install -g @anthropic-ai/claude-code \
+    && python --version && node --version && claude --version \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy OpenCode binary built from local source
@@ -59,6 +66,7 @@ WORKDIR /app
 # Inject internal CA certificate (extracted at build time by 05b-build-agent.sh)
 COPY internal-ca.crt /usr/local/share/ca-certificates/internal-ca.crt
 RUN update-ca-certificates
+ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/internal-ca.crt
 
 # Copy arch-query binary from builder stage
 COPY --from=arch-query-builder /build/arch-query /usr/local/bin/arch-query

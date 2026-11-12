@@ -2,6 +2,7 @@
 name = "bug-bash-analyzer"
 version = "0.1.0"
 description = "AI-driven RHOAIENG bug bash analysis pipeline"
+license = {text = "Apache-2.0"}
 requires-python = ">=3.13"
 dependencies = [
     "claude-agent-sdk==0.1.61",

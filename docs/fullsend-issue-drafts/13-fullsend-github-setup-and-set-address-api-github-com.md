@@ -12,8 +12,9 @@
 <key> <value>` build their API client with a bare `gh.New(token)`
 (`internal/cli/github.go:150` and `:1165`). That client targets
 api.github.com regardless of `GITHUB_API_URL`. Pointed at another GitHub
-host, with a token for that host, both commands reach the public API and are
-refused with `401 Bad credentials` before doing any work.
+host, with a token for that host, both commands reach the public API; by
+inspection the token is not valid there, so they are refused before doing
+any work.
 
 The sibling `fullsend github foreign allow|list|revoke` commands
 (`internal/cli/foreign.go:64`, `:142`, `:295`) build theirs with
@@ -32,7 +33,9 @@ Behaviour on github.com is unchanged.
    `GH_TOKEN` valid for that host.
 2. Run `fullsend github set <owner/repo> FULLSEND_GCP_REGION us-east5`
    for a repository on that host.
-3. The command fails with `401 Bad credentials` from api.github.com.
+3. The command fails with `401 Bad credentials` from api.github.com
+   (expected, by inspection; the observed 401s were logged by runs against
+   a non-github.com forge, not pinned to these subcommands).
    `fullsend github foreign list` with the same environment reaches the
    configured host.
 

@@ -54,8 +54,12 @@ spec:
             # one of these files, hosted by fullsend-ai/fullsend (always) or a
             # listed repository. The conformance target hosts the trust-check
             # workflow, which mints on purpose to prove the boundary.
+            # The halfsend entries here and in FULLSEND_ALLOWED_ORGS are the
+            # behaviour-test pool, written by
+            # deploy/fullsend/behaviour/mint-pool.py from pool.env; change
+            # the pool there, not here.
             - name: FULLSEND_WORKFLOW_HOST_REPOS
-              value: fullsend-dev/triage-target
+              value: fullsend-dev/triage-target,halfsend/test-repo-01,halfsend/test-repo-02,halfsend/test-repo-03,halfsend/test-repo-04
             # Who may use the mint at all (Fullsend's ALLOWED_ORGS and
             # PER_REPO_WIF_REPOS): the organisations enrolled with this
             # stack, per-org, so any repository onboarded into one of them
@@ -67,7 +71,7 @@ spec:
             # Every outcome is audited to the pod's log as a JSON line with no
             # secret in it.
             - name: FULLSEND_ALLOWED_ORGS
-              value: fullsend-dev,experiment
+              value: fullsend-dev,experiment,halfsend
             - name: FULLSEND_PER_REPO_WIF_REPOS
               value: ""
             - name: FULLSEND_ALLOWED_WORKFLOW_FILES

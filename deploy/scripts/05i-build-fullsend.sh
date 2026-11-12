@@ -22,8 +22,13 @@ OPENSHELL_ROOT="${PROJECT_ROOT}/checkouts/openshell"
 # 0010 (do not cache a profile import that replaced nothing) was dropped in
 # the v0.52.0 rebase: upstream now verifies the gateway's exported profile
 # against the file before treating "already exists" as success (#7973), which
-# closes the same hole. 0016 is a local substitution, not upstream-bound; see
-# its header.
+# closes the same hole. 0009 (load the harness environment for behaviour
+# ops) was dropped on 2026-11-07: upstream merged the same fix as
+# fullsend#9055 (#9046, commit 877c381b5, DummyRuntime.harnessEnvCommand).
+# 0016 is a local substitution, not upstream-bound; see its header. 0017-0020
+# are test-only (deploy/fullsend/behaviour/run.sh applies them); 0021 and
+# 0022, found by the behaviour tests, are build patches like the rest of this
+# list; 0022 is a local workaround whose problem goes upstream as an issue.
 # These patch Go source before the binary is compiled. Patches that change
 # files a workflow reads at run time belong to MIRROR_PATCHES in
 # deploy/fullsend/seed/seed-upstream-fullsend.py instead; a patch in the wrong
@@ -33,13 +38,14 @@ FULLSEND_PATCHES=(
   "${PROJECT_ROOT}/deploy/fullsend/patches/0006-allow-a-privately-reachable-forge.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0007-parse-enterprise-raw-content-urls.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0008-scope-the-minted-token-on-enterprise-forges.patch"
-  "${PROJECT_ROOT}/deploy/fullsend/patches/0009-load-the-harness-environment-for-behaviour-ops.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0011-address-the-configured-forge-in-the-github-commands.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0012-let-an-installation-name-its-runner.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0013-allow-the-configured-forge-in-the-default-remote-resources.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0014-address-the-configured-forge-in-the-remaining-clients.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0015-resolve-the-agents-repo-in-dispatch-lint-and-offline-cache.patch"
   "${PROJECT_ROOT}/deploy/fullsend/patches/0016-local-allow-the-emulator-in-the-embedded-github-ro-profile.patch"
+  "${PROJECT_ROOT}/deploy/fullsend/patches/0021-accept-the-configured-forge-as-the-actions-oidc-token-service.patch"
+  "${PROJECT_ROOT}/deploy/fullsend/patches/0022-chown-the-readonly-repo-git-dir-only-as-root.patch"
 )
 RUNNER_CONTEXT="${PROJECT_ROOT}/deploy/fullsend-runner-dev"
 SANDBOX_CONTEXT="${PROJECT_ROOT}/deploy/fullsend-sandbox-dev"
@@ -54,8 +60,9 @@ SUPERVISOR_LOCAL_IMAGE="openshell-supervisor-local:k3s"
 # The CA-bearing local images, each "<tag>|<harness file>|<base repository>".
 # The base digest is not written here: it is read from the harness file that
 # pins it, so the local image cannot quietly be built on a stale base when the
-# harness moves. fullsend-sandbox backs triage; fullsend-code backs review and
-# code, which pin the same digest.
+# harness moves. fullsend-sandbox backs triage, prioritize, retro and scribe;
+# fullsend-code backs review, code and fix. Each group pins one digest, which
+# the loop below checks.
 AGENTS_HARNESS_DIR="${PROJECT_ROOT}/checkouts/fullsend-ai/agents/harness"
 LOCAL_SANDBOX_IMAGES=(
   "${SANDBOX_LOCAL_IMAGE}|triage.yaml|ghcr.io/fullsend-ai/fullsend-sandbox"
@@ -284,6 +291,17 @@ for entry in "${LOCAL_SANDBOX_IMAGES[@]}"; do
     echo "       Its image: line is:" >&2
     grep -n '^image:' "${harness_path}" >&2 || true
     echo "       Update LOCAL_SANDBOX_IMAGES in this script to match." >&2
+    exit 1
+  fi
+  # Agents patch 0004 points every harness on ${base_repo} at this one local
+  # image, so they must all pin the digest it is built from. One that moved
+  # on its own would otherwise run on the wrong base.
+  mismatched="$(grep -l "^image: ${base_repo}@" "${AGENTS_HARNESS_DIR}"/*.yaml \
+    | xargs grep -L "^image: ${base_repo}@${base_digest}\s*$" || true)"
+  if [[ -n "${mismatched}" ]]; then
+    echo "ERROR: these harnesses pin ${base_repo} at a digest other than ${harness_file}'s ${base_digest}:" >&2
+    echo "${mismatched}" >&2
+    echo "       Agents patch 0004 substitutes ${local_image} for all of them; split the image or update the patch." >&2
     exit 1
   fi
   echo "==> Building ${local_image} FROM ${base_repo}@${base_digest} (pinned by ${harness_file})"

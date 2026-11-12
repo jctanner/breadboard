@@ -23,7 +23,6 @@ deploy/scripts/05i-build-fullsend.sh. Found while rebasing the patch set onto
 v0.52.0: these call sites were added upstream after 0005 was written. Written
 to be sent upstream as-is, alongside 0005. Add a DCO sign-off before
 submitting it as a human-authored change.
-
 diff --git a/internal/cli/agents_repo_host_test.go b/internal/cli/agents_repo_host_test.go
 new file mode 100644
 index 000000000..fa304f866
@@ -109,7 +108,7 @@ index 000000000..fa304f866
 +	}
 +}
 diff --git a/internal/cli/dispatch_route.go b/internal/cli/dispatch_route.go
-index 96d9cf6a0..33a677c88 100644
+index 215a00c10..2342eb3cd 100644
 --- a/internal/cli/dispatch_route.go
 +++ b/internal/cli/dispatch_route.go
 @@ -12,7 +12,6 @@ import (
@@ -120,7 +119,7 @@ index 96d9cf6a0..33a677c88 100644
  	"github.com/fullsend-ai/fullsend/internal/harness"
  	"github.com/fullsend-ai/fullsend/internal/harnessdispatch"
  	"github.com/fullsend-ai/fullsend/internal/normevent"
-@@ -219,7 +218,11 @@ func routeBuiltinAgent(ctx context.Context, o routeOpts) (routeDecision, error)
+@@ -234,7 +233,11 @@ func routeBuiltinAgent(ctx context.Context, o routeOpts) (routeDecision, error)
  	}
  	forgeClient := o.forgeClient
  	if forgeClient == nil {
@@ -133,7 +132,7 @@ index 96d9cf6a0..33a677c88 100644
  	}
  	printer := o.printer
  	if printer == nil {
-@@ -295,8 +298,9 @@ func routeHarnessLabel(cfg config.ConfigReader, agent string, deps []harness.Dep
+@@ -313,8 +316,9 @@ func routeHarnessLabel(cfg config.ConfigReader, agent string, deps []harness.Dep
  	if entry := findConfigAgentEntry(cfg.AgentEntries(), agent); entry != nil && entry.Source != "" {
  		return "config:" + entry.Source
  	}
@@ -146,10 +145,10 @@ index 96d9cf6a0..33a677c88 100644
  			sha = sha[:12]
  		}
 diff --git a/internal/cli/lint.go b/internal/cli/lint.go
-index cd6e48b72..93c741130 100644
+index 54caa13d2..57687cd9e 100644
 --- a/internal/cli/lint.go
 +++ b/internal/cli/lint.go
-@@ -10,7 +10,6 @@ import (
+@@ -13,7 +13,6 @@ import (
  
  	"github.com/fullsend-ai/fullsend/internal/config"
  	"github.com/fullsend-ai/fullsend/internal/fetch"
@@ -157,7 +156,7 @@ index cd6e48b72..93c741130 100644
  	"github.com/fullsend-ai/fullsend/internal/harness"
  	"github.com/fullsend-ai/fullsend/internal/resolve"
  	"github.com/fullsend-ai/fullsend/internal/ui"
-@@ -95,7 +94,9 @@ func runLint(cmd *cobra.Command, fullsendDir, forgeFlag string, strict, offline
+@@ -242,7 +241,9 @@ func runLint(cmd *cobra.Command, fullsendDir, forgeFlag, only string, strict, of
  	// Always create a GitHub client for the agents-repo fallback —
  	// fullsend-ai/agents is public, so unauthenticated requests work when
  	// no GitHub token is available (same as fullsend run).
@@ -167,12 +166,12 @@ index cd6e48b72..93c741130 100644
 +	fallbackForgeClient := newGitHubLiveClient(composeGitToken, "")
  
  	var errs []error
- 	errDiags := 0
+ 	// Semantic validation, the same checks config-writing commands
 diff --git a/internal/cli/run.go b/internal/cli/run.go
-index e84b7d4d4..f2f3e50b1 100644
+index 67b8eaaa0..1b769df33 100644
 --- a/internal/cli/run.go
 +++ b/internal/cli/run.go
-@@ -7582,9 +7582,12 @@ func cachedPinnedAgentsRepoFile(relPath string, composeOpts harness.ComposeOpts,
+@@ -7809,9 +7809,12 @@ func cachedPinnedAgentsRepoFile(relPath string, composeOpts harness.ComposeOpts,
  	var none harness.Dependency
  	allowlist := composeOpts.OrgAllowlist
  
@@ -186,7 +185,7 @@ index e84b7d4d4..f2f3e50b1 100644
  		if !ok {
  			return false
  		}
-@@ -7637,7 +7640,7 @@ func cachedPinnedAgentsRepoFile(relPath string, composeOpts harness.ComposeOpts,
+@@ -7864,7 +7867,7 @@ func cachedPinnedAgentsRepoFile(relPath string, composeOpts harness.ComposeOpts,
  		}
  	}
  

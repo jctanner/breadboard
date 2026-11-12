@@ -1,0 +1,219 @@
+Subject: local: run the behaviour suite against an external mint
+
+NOT FOR UPSTREAM as written. The behaviour suite selects its install driver
+from ENVIRONMENT, which accepts only dev and stage, both of which deploy a
+Cloudflare mint for the pool. RepoPoolExternalMint, which uses a mint that is
+already running at FULLSEND_MINT_URL, exists but cannot be selected.
+
+ENVIRONMENT=external now selects it, with these choices:
+
+- the pool is laid out like stage: the single unsuffixed halfsend org, with
+  BEHAVIOUR_POOL_SIZE slots;
+- each slot is installed vendored by default, as the dev (pull request)
+  path installs the build under test, or non-vendored at
+  BEHAVIOUR_FULLSEND_REF when that is set, as the stage path installs main;
+- setup names BEHAVIOUR_APP_SET when it is set, so it asks for the Apps the
+  mint was configured with. Unset, the CLI default is kept, as before.
+
+Together with 0017 and GITHUB_API_URL, this runs the suite against
+Breadboard's GitHub emulator and Fullsend Mint. Gap BT-H3 of
+.ledger/plans/fullsend-behaviour-tests-plan.md; BT-H4 (pool org names) needs
+no change, because Breadboard seeds an emulator org named halfsend.
+
+Breadboard note: test-only, like 0017; applied by the behaviour-test run, not
+by deploy/scripts/05i-build-fullsend.sh.
+
+diff --git a/pkg/behaviourtest/drivers/env/env.go b/pkg/behaviourtest/drivers/env/env.go
+index c6357cca5..88da0721c 100644
+--- a/pkg/behaviourtest/drivers/env/env.go
++++ b/pkg/behaviourtest/drivers/env/env.go
+@@ -65,8 +65,8 @@ func (c RunnerConfig) Validate() error {
+ 	if c.CI != "githubactions" {
+ 		return fmt.Errorf("unsupported BEHAVIOUR_CI %q", c.CI)
+ 	}
+-	if c.Environment != "dev" && c.Environment != "stage" {
+-		return fmt.Errorf("unsupported ENVIRONMENT %q (want dev or stage)", c.Environment)
++	if c.Environment != "dev" && c.Environment != "stage" && c.Environment != "external" {
++		return fmt.Errorf("unsupported ENVIRONMENT %q (want dev, stage or external)", c.Environment)
+ 	}
+ 	return nil
+ }
+diff --git a/pkg/behaviourtest/drivers/env/env_test.go b/pkg/behaviourtest/drivers/env/env_test.go
+index 2e57da1ac..3c62c5c99 100644
+--- a/pkg/behaviourtest/drivers/env/env_test.go
++++ b/pkg/behaviourtest/drivers/env/env_test.go
+@@ -74,3 +74,13 @@ func TestValidate_RejectsEmptyEnvironment(t *testing.T) {
+ 	require.Error(t, err)
+ 	assert.Contains(t, err.Error(), `unsupported ENVIRONMENT ""`)
+ }
++
++func TestValidate_AcceptsExternal(t *testing.T) {
++	cfg := RunnerConfig{
++		SCM:         "github",
++		CI:          "githubactions",
++		InstallMode: "per-repo",
++		Environment: "external",
++	}
++	require.NoError(t, cfg.Validate())
++}
+diff --git a/pkg/behaviourtest/drivers/install/repopool_external_mint.go b/pkg/behaviourtest/drivers/install/repopool_external_mint.go
+index 272a2b252..9004288f6 100644
+--- a/pkg/behaviourtest/drivers/install/repopool_external_mint.go
++++ b/pkg/behaviourtest/drivers/install/repopool_external_mint.go
+@@ -8,6 +8,7 @@ import (
+ 	"context"
+ 	"fmt"
+ 	"os"
++	"strings"
+ 
+ 	"github.com/fullsend-ai/fullsend/pkg/behaviourtest/drivers/install/common"
+ )
+@@ -17,7 +18,8 @@ import (
+ // the pool uses that mint, which must already enroll the pool's slot
+ // repos; nothing is deployed and teardown is a no-op.
+ //
+-// The mint URL is read from FULLSEND_MINT_URL.
++// The mint URL is read from FULLSEND_MINT_URL; see externalMintSetupOpts
++// for how each slot is installed.
+ func NewRepoPoolExternalMint(pool PoolConfig) (Driver, error) {
+ 	if err := pool.validate(); err != nil {
+ 		return nil, fmt.Errorf("external mint factory: %w", err)
+@@ -29,9 +31,26 @@ func NewRepoPoolExternalMint(pool PoolConfig) (Driver, error) {
+ 	newMint := func(mintGroup, orgCredential) (mintDriver, func(), error) {
+ 		return &externalMintDriver{mintURL: mintURL}, func() {}, nil
+ 	}
++	return buildPoolDriver(pool, nil, newMint, externalMintSetupOpts(), traceStart{})
++}
++
++// externalMintSetupOpts is how each slot is installed against an external
++// mint, chosen the way the CI environments choose it: vendored by default,
++// as dev installs the build under test, or non-vendored at
++// BEHAVIOUR_FULLSEND_REF when that is set, as stage installs main. When
++// BEHAVIOUR_APP_SET is set, setup names that App set, the one the mint was
++// configured with; unset, setup keeps the CLI's default as before.
++func externalMintSetupOpts() common.GitHubSetupOpts {
+ 	opts := common.DefaultGitHubSetupOpts()
++	if ref := strings.TrimSpace(os.Getenv("BEHAVIOUR_FULLSEND_REF")); ref != "" {
++		opts.Vendor = false
++		opts.FullsendRef = ref
++	}
++	if appSet := strings.TrimSpace(os.Getenv("BEHAVIOUR_APP_SET")); appSet != "" {
++		opts.AppSet = appSet
++	}
+ 	opts.ConfigPreset = envConfigPreset()
+-	return buildPoolDriver(pool, nil, newMint, opts, traceStart{})
++	return opts
+ }
+ 
+ // Compile-time check: NewRepoPoolExternalMint satisfies Factory.
+diff --git a/pkg/behaviourtest/drivers/install/repopool_external_mint_test.go b/pkg/behaviourtest/drivers/install/repopool_external_mint_test.go
+index 752dd4bfc..be19a8f52 100644
+--- a/pkg/behaviourtest/drivers/install/repopool_external_mint_test.go
++++ b/pkg/behaviourtest/drivers/install/repopool_external_mint_test.go
+@@ -53,3 +53,39 @@ func TestNewRepoPoolExternalMint_HappyPath(t *testing.T) {
+ 	require.NoError(t, err)
+ 	assert.Equal(t, "https://mint.test", env.mintURL)
+ }
++
++func TestExternalMintSetupOpts_VendoredByDefault(t *testing.T) {
++	t.Setenv("BEHAVIOUR_FULLSEND_REF", "")
++	t.Setenv("BEHAVIOUR_APP_SET", "")
++	t.Setenv("BEHAVIOUR_CONFIG_PRESET", "")
++
++	opts := externalMintSetupOpts()
++	assert.True(t, opts.Vendor)
++	assert.Empty(t, opts.FullsendRef)
++	assert.Empty(t, opts.AppSet, "an unset app set keeps the CLI default")
++}
++
++func TestExternalMintSetupOpts_FullsendRefInstallsNonVendored(t *testing.T) {
++	t.Setenv("BEHAVIOUR_FULLSEND_REF", " main ")
++	t.Setenv("BEHAVIOUR_APP_SET", "fullsend")
++	t.Setenv("BEHAVIOUR_CONFIG_PRESET", "preset.yaml")
++
++	opts := externalMintSetupOpts()
++	assert.False(t, opts.Vendor)
++	assert.Equal(t, "main", opts.FullsendRef)
++	assert.Equal(t, "fullsend", opts.AppSet)
++	assert.Equal(t, "preset.yaml", opts.ConfigPreset)
++}
++
++func TestPoolLayoutForEnvironment_ExternalIsOneOrg(t *testing.T) {
++	t.Setenv("BEHAVIOUR_POOL_SIZE", "3")
++	layout := PoolLayoutForEnvironment("external", nil)
++	assert.Equal(t, []string{StageOrg}, layout.Orgs())
++	assert.Len(t, layout.Slots(), 3)
++
++	// The external factory accepts that layout.
++	t.Setenv("FULLSEND_MINT_URL", "https://mint.test")
++	d, err := NewRepoPoolExternalMint(testPoolConfig(t, layout))
++	require.NoError(t, err)
++	assert.Equal(t, 3, d.Capacity())
++}
+diff --git a/pkg/behaviourtest/drivers/install/slotpool.go b/pkg/behaviourtest/drivers/install/slotpool.go
+index 3975c3b55..5b5720dd7 100644
+--- a/pkg/behaviourtest/drivers/install/slotpool.go
++++ b/pkg/behaviourtest/drivers/install/slotpool.go
+@@ -126,8 +126,8 @@ func StagePoolLayout(slotsPerOrg int) PoolLayout {
+ }
+ 
+ // PoolLayoutForEnvironment returns StagePoolLayout for "stage" and
+-// DevPoolLayout otherwise, matching the install factory selection. The
+-// slot count honours BEHAVIOUR_POOL_SIZE through envPoolSize, the same
++// "external" and DevPoolLayout otherwise, matching the install factory
++// selection. The slot count honours BEHAVIOUR_POOL_SIZE through envPoolSize, the same
+ // source as the mint and WIF repo lists, so the allocator never claims a
+ // test-repo-NN name that has no mint/WIF configuration. logf receives
+ // the warning for an unparsable override and may be nil.
+@@ -136,7 +136,9 @@ func PoolLayoutForEnvironment(environment string, logf func(string, ...any)) Poo
+ 		logf = func(string, ...any) {}
+ 	}
+ 	slotsPerOrg := envPoolSize(logf)
+-	if environment == "stage" {
++	// An external mint serves one pool org, laid out like STAGE: the
++	// unsuffixed halfsend org on whatever forge GITHUB_API_URL names.
++	if environment == "stage" || environment == "external" {
+ 		return StagePoolLayout(slotsPerOrg)
+ 	}
+ 	return DevPoolLayout(slotsPerOrg)
+diff --git a/pkg/behaviourtest/select.go b/pkg/behaviourtest/select.go
+index e648afb97..c0ad6e6be 100644
+--- a/pkg/behaviourtest/select.go
++++ b/pkg/behaviourtest/select.go
+@@ -18,11 +18,16 @@ import (
+ 
+ // installFactoryFor selects the install driver based on ENVIRONMENT:
+ //
+-//	dev   → CF preview mint (ephemeral per run)
+-//	stage → durable CF mint at stage-mint.fullsend.sh
++//	dev      → CF preview mint (ephemeral per run)
++//	stage    → durable CF mint at stage-mint.fullsend.sh
++//	external → a mint already running at FULLSEND_MINT_URL, on the forge
++//	           at GITHUB_API_URL (nothing is deployed)
+ func installFactoryFor(environment string) install.Factory {
+-	if environment == "stage" {
++	switch environment {
++	case "stage":
+ 		return install.NewRepoPoolCFMintStage
++	case "external":
++		return install.NewRepoPoolExternalMint
+ 	}
+ 	return install.NewRepoPoolCFMintPreviews
+ }
+diff --git a/pkg/behaviourtest/select_test.go b/pkg/behaviourtest/select_test.go
+index aab6fcf8e..2d912e46e 100644
+--- a/pkg/behaviourtest/select_test.go
++++ b/pkg/behaviourtest/select_test.go
+@@ -143,3 +143,12 @@ func TestResolveConcurrency(t *testing.T) {
+ 		})
+ 	}
+ }
++
++func TestInstallFactoryFor_External(t *testing.T) {
++	t.Parallel()
++
++	assert.Equal(t,
++		reflect.ValueOf(install.NewRepoPoolExternalMint).Pointer(),
++		reflect.ValueOf(installFactoryFor("external")).Pointer(),
++	)
++}

@@ -1,0 +1,47 @@
+Subject: local: select behaviour features from the environment
+
+NOT FOR UPSTREAM as written. The behaviour suite always runs every feature
+under e2e/behaviour/features and narrows only by GODOG_TAGS, and the
+scenarios Breadboard brings up one tier at a time (triage first) carry no tag
+of their own. Editing a feature file to add one would fork the scenarios.
+
+BEHAVIOUR_FEATURES, when set, replaces the feature path list with its
+space-separated godog paths (relative to e2e/behaviour), such as
+"features/triage/triage.feature". Unset, every feature runs as before.
+
+Breadboard note: test-only, like 0017 and 0018; applied by the behaviour-test
+run, not by deploy/scripts/05i-build-fullsend.sh.
+
+diff --git a/e2e/behaviour/suite_test.go b/e2e/behaviour/suite_test.go
+index c6c8b4844..0f32c8534 100644
+--- a/e2e/behaviour/suite_test.go
++++ b/e2e/behaviour/suite_test.go
+@@ -3,6 +3,8 @@
+ package behaviour_test
+ 
+ import (
++	"os"
++	"strings"
+ 	"testing"
+ 
+ 	"github.com/fullsend-ai/fullsend/pkg/behaviourtest"
+@@ -10,7 +12,18 @@ import (
+ 
+ func TestBehaviourSuite(t *testing.T) {
+ 	behaviourtest.RunSuite(t, behaviourtest.SuiteOptions{
+-		FeaturePaths: []string{"features"},
++		FeaturePaths: featurePaths(),
+ 		FixturesRoot: "e2e/behaviour",
+ 	})
+ }
++
++// featurePaths is every feature, or the space-separated godog paths in
++// BEHAVIOUR_FEATURES (relative to this directory, e.g.
++// "features/triage/triage.feature" or "features/dispatch"), so one feature
++// can run without a tag on it.
++func featurePaths() []string {
++	if paths := strings.Fields(os.Getenv("BEHAVIOUR_FEATURES")); len(paths) > 0 {
++		return paths
++	}
++	return []string{"features"}
++}

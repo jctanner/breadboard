@@ -1,5 +1,5 @@
 <!-- Draft for review. Not filed. -->
-# triage: agent definition does not say ISSUE_URL is an environment variable, so the model sometimes asks for it
+# triage, review: agent definitions do not say their inputs are environment variables, so the model sometimes asks for them
 
 **Repository:** fullsend-ai/agents
 **Parent:** none
@@ -20,7 +20,7 @@ With claude-haiku-4-5, the triage agent occasionally reads the Inputs list, deci
 
 This is a low-rate flake: of 32 consecutive issue-triggered triage runs on one repository, 27 passed and none of the 4 failures was this. It was seen three times in total: twice on triage and once on review. For the review occurrence, a scripted check inside the same harness, with no model involved, confirmed that every input variable was set.
 
-By inspection, `agents/review.md` describes its inputs the same way (lines 25-37: `PR_URL`, `REPO_FULL_NAME`, `FULLSEND_OUTPUT_DIR` are "set by the harness" but not called environment variables). In the review occurrence the agent made no tool call and asked to be told the PR URL, the repository and the output directory. `agents/fix.md` does name its inputs as environment variables (for example `TRIGGER_SOURCE`, line 61).
+By inspection, `agents/review.md` describes its inputs the same way (lines 28-36: `PR_URL`, `REPO_FULL_NAME`, `FULLSEND_OUTPUT_DIR` are "set by the harness" but not called environment variables). In the review occurrence the agent made no tool call and asked to be told the PR URL, the repository and the output directory. `agents/fix.md` does name its inputs as environment variables (for example `TRIGGER_SOURCE`, line 61).
 
 ### What should happen
 

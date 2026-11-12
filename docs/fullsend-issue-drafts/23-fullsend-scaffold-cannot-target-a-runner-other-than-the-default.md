@@ -24,9 +24,12 @@ The pieces needed for another label exist but nothing connects them:
   `RunnerImage`, and no other caller sets it.
 
 The rendered placeholder is the shim's `runs-on` for `stop-fix`
-(`templates/shim-per-repo.yaml:73`). It is also the `runner_image` input
-that the shim and the `prioritize` thin caller pass to the reusable
-workflows (`shim-per-repo.yaml:52`, `.github/workflows/prioritize.yml:45`).
+(`templates/shim-per-repo.yaml:72`). It is also the `runner_image` input
+that the shim passes to the reusable workflows
+(`shim-per-repo.yaml:51`); the `prioritize` thin caller passes
+`runner_image: ubuntu-24.04` as a literal
+(`.github/workflows/prioritize.yml:47`), so the scaffold has no effect on
+that path at all.
 The reusable workflows then use `runs-on: ${{ inputs.runner_image }}` for
 every agent job, for example `reusable-dispatch.yml:119`.
 

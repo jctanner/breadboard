@@ -1,0 +1,181 @@
+{
+ "01": {
+  "draft": "01-agents-triage-issue-url-is-an-environment-variable.md",
+  "filed_at": "2026-11-03T01:55:31Z",
+  "id": 6174678073,
+  "number": 1864,
+  "repo": "fullsend-ai/agents",
+  "title": "triage, review: agent definitions do not say their inputs are environment variables, so the model sometimes asks for them",
+  "url": "https://github.com/fullsend-ai/agents/issues/1864"
+ },
+ "02": {
+  "draft": "02-fullsend-parse-raw-content-url-rejects-enterprise-hosts.md",
+  "filed_at": "2026-11-03T01:55:28Z",
+  "id": 6174677676,
+  "number": 9037,
+  "repo": "fullsend-ai/fullsend",
+  "title": "forge: ParseRawContentURL rejects raw-content URLs on GitHub Enterprise hosts",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9037"
+ },
+ "10": {
+  "draft": "10-fullsend-tracking-github-com-host-assumption.md",
+  "filed_at": "2026-11-03T01:55:26Z",
+  "id": 6174677261,
+  "number": 9036,
+  "repo": "fullsend-ai/fullsend",
+  "title": "Several code paths address github.com instead of the configured GitHub host",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9036"
+ },
+ "11": {
+  "draft": "11-fullsend-agents-repo-fallback-and-status-comment-use-api-github-com.md",
+  "filed_at": "2026-11-03T01:55:33Z",
+  "id": 6174678485,
+  "number": 9038,
+  "repo": "fullsend-ai/fullsend",
+  "title": "run: agents-repo fallback and the run's status comment address github.com on other GitHub hosts",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9038"
+ },
+ "12": {
+  "draft": "12-fullsend-minted-token-is-not-used-by-gh-off-github-com.md",
+  "filed_at": "2026-10-30T15:39:15Z",
+  "note": "trial run, filed before CC-1",
+  "number": 8952,
+  "repo": "fullsend-ai/fullsend",
+  "title": "run: minted agent token is not used by gh on hosts other than github.com",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/8952"
+ },
+ "13": {
+  "draft": "13-fullsend-github-setup-and-set-address-api-github-com.md",
+  "filed_at": "2026-11-03T01:55:36Z",
+  "id": 6174678932,
+  "number": 9039,
+  "repo": "fullsend-ai/fullsend",
+  "title": "cli: `fullsend github setup` and `github set` address api.github.com on other GitHub hosts",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9039"
+ },
+ "14": {
+  "draft": "14-fullsend-default-allowed-remote-resources-refuses-the-configured-host.md",
+  "filed_at": "2026-11-03T01:55:39Z",
+  "id": 6174679352,
+  "number": 9040,
+  "repo": "fullsend-ai/fullsend",
+  "title": "config: default allowed_remote_resources refuses fullsend-ai repositories on the configured GitHub host",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9040"
+ },
+ "15": {
+  "draft": "15-fullsend-token-scope-status-reconcile-and-eval-measure-use-api-github-com.md",
+  "filed_at": "2026-11-03T01:55:41Z",
+  "id": 6174679779,
+  "number": 9041,
+  "repo": "fullsend-ai/fullsend",
+  "title": "cli: token-scope check, `reconcile-status` and `eval-measure` address api.github.com on other GitHub hosts",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9041"
+ },
+ "16": {
+  "draft": "16-fullsend-dispatch-route-lint-and-offline-cache-resolve-agents-repo-on-github-com.md",
+  "filed_at": "2026-11-03T01:55:44Z",
+  "id": 6174680152,
+  "number": 9042,
+  "repo": "fullsend-ai/fullsend",
+  "title": "cli: `dispatch --route`, `lint` and the offline cache resolve the agents repo on github.com",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9042"
+ },
+ "17": {
+  "draft": "17-agents-triage-rejects-issue-urls-on-the-configured-host.md",
+  "filed_at": "2026-11-03T01:55:46Z",
+  "id": 6174680536,
+  "number": 1865,
+  "repo": "fullsend-ai/agents",
+  "title": "triage: tracker_validate_issue_url rejects issue URLs on GitHub hosts other than github.com",
+  "url": "https://github.com/fullsend-ai/agents/issues/1865"
+ },
+ "18": {
+  "draft": "18-agents-ops-libraries-assume-github-com-urls.md",
+  "filed_at": "2026-11-03T01:55:48Z",
+  "id": 6174680945,
+  "number": 1866,
+  "repo": "fullsend-ai/agents",
+  "title": "ops libraries: review, code, fix and other GitHub stages assume github.com URLs",
+  "url": "https://github.com/fullsend-ai/agents/issues/1866"
+ },
+ "19": {
+  "draft": "19-fullsend-agent-and-install-actions-call-github-com.md",
+  "filed_at": "2026-11-03T01:55:51Z",
+  "id": 6174681344,
+  "number": 9043,
+  "repo": "fullsend-ai/fullsend",
+  "title": "action: agent and CLI install actions call github.com for releases and clones",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9043"
+ },
+ "20": {
+  "draft": "20-fullsend-agent-action-sets-up-a-local-sandbox-host-when-a-gateway-is-configured.md",
+  "filed_at": "2026-11-03T01:55:53Z",
+  "id": 6174681727,
+  "number": 9044,
+  "repo": "fullsend-ai/fullsend",
+  "title": "action: agent action sets up a local sandbox host even when an OpenShell gateway endpoint is configured",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9044"
+ },
+ "21": {
+  "draft": "21-fullsend-fetcher-refuses-a-forge-on-a-private-network.md",
+  "filed_at": "2026-11-03T01:55:56Z",
+  "id": 6174682123,
+  "number": 9045,
+  "repo": "fullsend-ai/fullsend",
+  "title": "fetch: a GitHub host on a private network cannot be fetched from, even when it is the configured forge",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9045"
+ },
+ "22": {
+  "draft": "22-fullsend-dummy-runtime-behaviour-ops-cannot-see-the-harness-environment.md",
+  "filed_at": "2026-11-03T01:55:58Z",
+  "id": 6174682550,
+  "number": 9046,
+  "repo": "fullsend-ai/fullsend",
+  "title": "runtime: dummy-runtime behaviour operations do not see the harness environment from .env",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9046"
+ },
+ "23": {
+  "draft": "23-fullsend-scaffold-cannot-target-a-runner-other-than-the-default.md",
+  "filed_at": "2026-11-03T01:56:01Z",
+  "id": 6174682931,
+  "number": 9047,
+  "repo": "fullsend-ai/fullsend",
+  "title": "scaffold: installed workflows always target the default runner label, so they stay queued on installations without it",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9047"
+ },
+ "24": {
+  "draft": "24-fullsend-dispatch-retriages-on-every-issue-edit.md",
+  "note": "held 2026-11-02: both GLM and DeepSeek pre-filing reviews concluded the premise may be vacuous on github.com (issues.edited carries only title/body changes, which the ADR intends); needs an observed changes-neutral edited delivery or an owner decision before filing.",
+  "number": null,
+  "repo": null,
+  "title": "dispatch: every issues.edited event re-runs triage, not only title or body edits",
+  "verdict": "held"
+ },
+ "25": {
+  "draft": "25-agents-triage-duplicate-rule-ignores-closed-issues.md",
+  "filed_at": "2026-11-03T01:56:03Z",
+  "id": 6174683347,
+  "number": 1867,
+  "repo": "fullsend-ai/agents",
+  "title": "triage: duplicate rule counts only open issues, but the triage tooling also shows closed issues",
+  "url": "https://github.com/fullsend-ai/agents/issues/1867"
+ },
+ "26": {
+  "draft": "26-fullsend-code-image-cannot-be-seeded-by-the-openshell-kubernetes-driver.md",
+  "filed_at": "2026-11-03T01:56:06Z",
+  "id": 6174683768,
+  "number": 9048,
+  "repo": "fullsend-ai/fullsend",
+  "title": "images: fullsend-code sandboxes never become Ready on OpenShell's Kubernetes driver because /sandbox/.cache/gopls is unreadable",
+  "url": "https://github.com/fullsend-ai/fullsend/issues/9048"
+ },
+ "27": {
+  "draft": "27-agents-ops-push-remote-targets-github-com.md",
+  "filed_at": "2026-11-03T01:56:08Z",
+  "id": 6174684193,
+  "number": 1868,
+  "repo": "fullsend-ai/agents",
+  "title": "ops libraries: forge_set_push_remote pushes to github.com regardless of the configured host",
+  "url": "https://github.com/fullsend-ai/agents/issues/1868"
+ }
+}

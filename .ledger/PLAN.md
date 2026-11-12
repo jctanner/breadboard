@@ -7,6 +7,14 @@
   semantics, observed source edits and relaunches, recovery/freshness, live
   qualification, and dated effort accounting. [Writing task](tasks/done/strat-workflow-migration-retrospective.md).
 
+## Fullsend behaviour tests
+
+- [Behaviour tests on Breadboard](plans/fullsend-behaviour-tests-plan.md):
+  run Fullsend's Gherkin BT suite against the emulator, runners and mint;
+  gaps BT-H1–H6 / BT-S1–S5, tiers T1–T3, breakpoints BT-B0–B6. B0 done
+  2026-11-07: checkouts on upstream main, 0009 retired (fullsend#9055),
+  conformance run 1936 passes. Next: B1 install spike.
+
 ## Current milestone
 
 - [Fullsend v0.52.0 patch rebase](tasks/current/fullsend-v052-patch-rebase.md):

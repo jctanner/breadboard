@@ -465,6 +465,59 @@ explicit go or pivot before the next begins.
   code.
 - **U5. Host-assumption cluster resolved**: each sub-issue fixed, declined
   with a reason recorded here, or obsoleted by upstream.
+  **Batch filed 2026-11-02 (CC-1):** after a two-model pre-filing review
+  (GLM + DeepSeek, see docs/fullsend-issue-drafts/cc-1-filing/reviews/), a
+  fresh duplicate search and a line-citation re-check against current
+  upstream main, every draft was filed except 24 (held: its premise may be
+  vacuous on github.com). Parent
+  [fullsend#9036](https://github.com/fullsend-ai/fullsend/issues/9036)
+  carries the cluster as sub-issues:
+  fullsend#9037 (02), fullsend#9038 (11), fullsend#9039 (13),
+  fullsend#9040 (14), fullsend#9041 (15), fullsend#9042 (16),
+  fullsend#9043 (19), agents#1865 (17), agents#1866 (18), agents#1868
+  (push remote, split out of 18 during review), plus the already-filed
+  fullsend#8952 (12). Standalone: agents#1864 (01), fullsend#9044 (20),
+  fullsend#9045 (21), fullsend#9046 (22), fullsend#9047 (23),
+  agents#1867 (25), fullsend#9048 (26). Review edits were folded back into
+  the drafts; the numbers are in
+  docs/fullsend-issue-drafts/cc-1-filing/filed-issues.json. Follow-up is
+  automated on rhlaptop (the "ralph loop": systemd user timer
+  fullsend-ralph-loop.timer checks the issues every 6 hours and classifies
+  changes).
+  **First PR verification (2026-11-02, PR #9052 for #9037/draft 02):**
+  built from main with 0007 skipped and 84a9e92 cherry-picked (branch
+  verify/9052 in the checkout). Conformance run 1848 failed at exactly
+  the issue's symptom - harness base-chain skill fetch refused with
+  "not a raw.githubusercontent.com URL: github.local" - because the PR adds
+  ParseRawContentURLOnHost but threads no caller: fetchBaseSkillDir and
+  parseAgentSourceURL still call ParseRawContentURL with no host. Unit
+  tests for the new function pass. Control run 1855 on the canonical
+  build passed. Result posted on the PR (two comments). Run 1850 in
+  between failed only because the harness-dispatch job restored a CLI
+  cached by run 1848 - **purge the runner's /runner-root/_cache before
+  each verification build** (actions/cache wraps the CLI install).
+  **Revision verified same day:** a /fs-fix command (write permission)
+  with a self-contained instruction got the fix agent to push cbefdf78
+  "thread configured GitHub host into raw-content URL callers" within
+  ~10 minutes. Re-verified with both PR commits, 0007 and 0015 skipped
+  (0015's lint.go hunk conflicts with the fix's ComposeOpts change; its
+  intent was carried as a commit on the verify branch - the canonical
+  patch is untouched): conformance run 1860 passed. Result posted on the
+  PR. #9037 is fixed by the PR as of cbefdf78, pending merge; drop 0007
+  at the next rebase once it lands.
+  **Coordinated campaign (2026-11-03, CC-1):** all 14 upstream fix PRs
+  verified by a serial queue on rhlaptop (conformance-queue.json +
+  cc1_conformance.sh; one stack, canonical restored after every item,
+  runner CLI cache purged per run). Results: PASS 9053/9050/9055/9054/
+  1870/1871/1873/1872/1869/9051 (runs 1865-1915); FAIL 9049 (run 1873:
+  gateway conditioning works but the unconditional pip install fails on
+  the containerized gateway runner - externally-managed-environment) and
+  9056 (run 1915: URL construction works but fetch.DefaultPolicy still
+  refuses the configured host - 'domain not in allowlist'). Findings
+  posted on both. Two hand-carries: 9055 (DU conflict, files from after
+  the pin) and 9056 (0006 chained on 0005's fetch.go comment; 0005's
+  defaultAllowedDomains deliberately not carried so the PR was judged
+  alone). Patch-chain couplings found: 0006->0005 and 0015->0005.
 - **U6. Every upstream-bound defect has a terminal state**: fixed upstream and
   the local patch dropped, declined with reason, or obsoleted. The
   compatibility profile shrinks to the local-only substitutions (four patches

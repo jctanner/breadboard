@@ -20,7 +20,7 @@ directly:
 
 - `tracker_validate_issue_url` (line 22) matches `ISSUE_URL` against
   `^https://github\.com/...`, so any other host fails.
-- `tracker_parse_issue_url` (line 29) strips the literal
+- `tracker_parse_issue_url` (line 28) strips the literal
   `https://github.com/` with `sed`. For a URL on another host nothing is
   stripped, and `REPO` is set to `https://<host>/<owner>/<repo>` instead of
   `<owner>/<repo>`.

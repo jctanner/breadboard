@@ -1,0 +1,127 @@
+Subject: fix(run): chown the read-only repo's .git only when the exec user is root
+
+A harness with readonly_repo: true makes the target repo read-only before
+the agent starts. Part of that command is chown -R sandbox:sandbox on .git:
+
+  find <repo> -path '*/.git' -prune -o -not -type l -exec chmod a-w {} + &&
+    chown -R sandbox:sandbox <repo>/.git && chmod -R u+w <repo>/.git
+
+The chown assumes the exec user is root. OpenShell's Kubernetes driver runs
+the sandbox container as a non-root UID (10001) with every capability
+dropped, and the sandbox image's sandbox user is a different UID (998). The
+chown fails with "Operation not permitted" on every file in .git, and the
+run fails:
+
+  Error: read-only repo enforcement failed: exit code 1
+
+So every readonly_repo harness fails on that driver, including review.
+Nothing from the agent has run yet at that point. The Docker driver, which
+upstream CI uses, execs as root, so this does not show there.
+
+The chown now runs only when the exec user is root. A non-root exec user
+already owns the tree it extracted and can chmod it, so the chown would
+only fail. The command moves into readonlyRepoCommand, with tests for the
+non-root path and the root guard.
+
+The workaround does not cover one limitation. A non-root exec user that
+owns the tree can chmod it back to writable, so on that driver read-only is
+advisory against the agent. That is for upstream to decide; see the issue
+draft.
+
+Breadboard note: this patches Go source compiled into the fullsend binary,
+so it belongs to the build list in deploy/scripts/05i-build-fullsend.sh.
+Found in the behaviour-test T2 run (BT-B4): the fix-authorization and
+fork-bash-routing review scenarios. It is a local workaround; the problem
+goes upstream as an issue, not as this patch.
+
+diff --git a/internal/cli/run.go b/internal/cli/run.go
+index 1b769df33..d5b965d3b 100644
+--- a/internal/cli/run.go
++++ b/internal/cli/run.go
+@@ -2556,12 +2556,7 @@ func runAgent(ctx context.Context, agentName, fullsendDir, outputBase, targetRep
+ 	// Runs after all repo-directory writes (8a, 8a-2) are complete.
+ 	// Excludes .git/ so git operations (index.lock, etc.) still work.
+ 	if h.ReadonlyRepo {
+-		// -prune skips .git traversal entirely; -not -type l prevents symlink traversal.
+-		// chown ensures the sandbox user (run_as_user) owns .git/ after root-owned extraction.
+-		chmodCmd := fmt.Sprintf(
+-			"find %s -path '*/.git' -prune -o -not -type l -exec chmod a-w {} + && chown -R sandbox:sandbox %s/.git && chmod -R u+w %s/.git",
+-			remoteRepositoryDir, remoteRepositoryDir, remoteRepositoryDir,
+-		)
++		chmodCmd := readonlyRepoCommand(remoteRepositoryDir)
+ 		if _, stderr, exitCode, err := sandbox.Exec(sandboxName, chmodCmd, 30*time.Second); err != nil {
+ 			printer.StepFail("Could not make repo read-only: " + err.Error())
+ 			return fmt.Errorf("Read-only repo enforcement failed: %w", err)
+@@ -6211,6 +6206,26 @@ func outputDirExcludeRel(hostRepositoryDir, outputBase string) (string, bool) {
+ // excludeAgentWorkingDirs adds agent working directory patterns to
+ // .git/info/exclude so they are invisible to git status and git add.
+ // extra holds layout-specific patterns (e.g. host output/ when nested).
++// readonlyRepoCommand returns the shell command that makes the target repo
++// read-only while leaving .git/ writable, so git operations (index.lock,
++// etc.) still work. -prune skips .git traversal entirely; -not -type l
++// prevents symlink traversal.
++//
++// The chown hands .git/ to the sandbox user (run_as_user) after a root-owned
++// extraction, so it runs only when the exec user is root. A non-root exec
++// user already owns what it extracted, and cannot chown without
++// CAP_CHOWN: OpenShell's Kubernetes driver runs the sandbox as a
++// non-root UID with every capability dropped, so an unconditional chown
++// failed there and with it every readonly_repo harness.
++func readonlyRepoCommand(dir string) string {
++	return fmt.Sprintf(
++		"find %[1]s -path '*/.git' -prune -o -not -type l -exec chmod a-w {} + && "+
++			"{ [ \"$(id -u)\" != 0 ] || chown -R sandbox:sandbox %[1]s/.git; } && "+
++			"chmod -R u+w %[1]s/.git",
++		dir,
++	)
++}
++
+ func excludeAgentWorkingDirs(sandboxName, repoDir string, extra []string, printer *ui.Printer) error {
+ 	var lines []string
+ 	for _, pattern := range agentWorkingDirExcludes {
+diff --git a/internal/cli/run_test.go b/internal/cli/run_test.go
+index 71624a836..c6b30c1fd 100644
+--- a/internal/cli/run_test.go
++++ b/internal/cli/run_test.go
+@@ -10080,6 +10080,41 @@ func TestForceRemoveAll_ReadOnlyTree(t *testing.T) {
+ 	assert.True(t, os.IsNotExist(err), "directory should be fully removed")
+ }
+ 
++func TestReadonlyRepoCommand_NonRootExecUser(t *testing.T) {
++	// OpenShell's Kubernetes driver runs the sandbox as a non-root UID with
++	// every capability dropped. The command must still succeed there: the
++	// chown is for root-owned extractions, and a non-root exec user already
++	// owns the tree.
++	if os.Geteuid() == 0 {
++		t.Skip("exercises the non-root path; running as root")
++	}
++	if _, err := exec.LookPath("sh"); err != nil {
++		t.Skip("sh not available")
++	}
++	repo := filepath.Join(t.TempDir(), "target-repo")
++	require.NoError(t, os.MkdirAll(filepath.Join(repo, ".git", "hooks"), 0o755))
++	require.NoError(t, os.MkdirAll(filepath.Join(repo, "src"), 0o755))
++	require.NoError(t, os.WriteFile(filepath.Join(repo, "src", "main.go"), []byte("package main"), 0o644))
++	require.NoError(t, os.WriteFile(filepath.Join(repo, ".git", "HEAD"), []byte("ref: refs/heads/main"), 0o644))
++	t.Cleanup(func() { _ = forceRemoveAll(repo) })
++
++	out, err := exec.Command("sh", "-c", readonlyRepoCommand(repo)).CombinedOutput()
++	require.NoError(t, err, "readonly command failed: %s", out)
++
++	info, err := os.Stat(filepath.Join(repo, "src", "main.go"))
++	require.NoError(t, err)
++	assert.Zero(t, info.Mode().Perm()&0o222, "working-tree file should be read-only")
++	info, err = os.Stat(filepath.Join(repo, ".git", "HEAD"))
++	require.NoError(t, err)
++	assert.NotZero(t, info.Mode().Perm()&0o200, ".git should stay writable")
++}
++
++func TestReadonlyRepoCommand_ChownsOnlyAsRoot(t *testing.T) {
++	cmd := readonlyRepoCommand("/sandbox/workspace/target-repo")
++	assert.Contains(t, cmd, `{ [ "$(id -u)" != 0 ] || chown -R sandbox:sandbox /sandbox/workspace/target-repo/.git; }`)
++	assert.True(t, strings.HasSuffix(cmd, "chmod -R u+w /sandbox/workspace/target-repo/.git"))
++}
++
+ func TestForceRemoveAll_AlreadyWritable(t *testing.T) {
+ 	// Normal (writable) directories should be removed without issues.
+ 	root := t.TempDir()

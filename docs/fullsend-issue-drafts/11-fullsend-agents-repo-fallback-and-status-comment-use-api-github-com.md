@@ -14,9 +14,9 @@ run still go to github.com:
 
 1. **Agents-repo fallback.** An agent with no local definition is resolved
    from `fullsend-ai/agents`. The client for that lookup is a bare
-   `gh.New(composeGitToken)` (`internal/cli/run.go:666`), which targets
+   `gh.New(composeGitToken)` (`internal/cli/run.go:665`), which targets
    api.github.com regardless of `GITHUB_API_URL`. The ref lookup in
-   `fetchPinnedAgentsRepoFile` (`run.go:7414`) reaches the public API with
+   `fetchPinnedAgentsRepoFile` (`run.go:7468`) reaches the public API with
    the configured host's token and is refused, and the run stops:
 
    ```
@@ -33,7 +33,7 @@ run still go to github.com:
    cannot fetch the harness from the configured host even with a working
    ref lookup.
 
-2. **Status comment.** `statusNewForgeClientFn` (`run.go:169-171`) also
+2. **Status comment.** `statusNewForgeClientFn` (`run.go:166-168`) also
    returns a bare `gh.New(token)`, so the comment the run posts about itself
    goes to api.github.com:
 

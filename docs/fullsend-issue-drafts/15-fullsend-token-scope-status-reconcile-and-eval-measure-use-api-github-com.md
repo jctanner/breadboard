@@ -13,15 +13,17 @@ api.github.com. On another GitHub host each fails on every run:
 
 | Site | Code (origin/main) | Observed |
 | --- | --- | --- |
-| Token-scope check in `fullsend run` | `internal/cli/run.go:1357` passes the literal `"https://api.github.com"` to `fetchTokenScope` | `! Token scope check: fetching token scope: listing installation repositories: Get "https://api.github.com/installation/repositories?per_page=100": dial tcp 140.82.112.5:443: connect: connection refused` |
-| `fullsend eval-measure` manifest lookup in `fullsend-ai/agents` | `internal/cli/evalmeasure.go:257` returns a bare `gh.New(token)` | `! Could not resolve fullsend-ai/agents@main: get ref fullsend-ai/agents@heads/main: ... Get "https://api.github.com/...": dial tcp ...: connect: connection refused` |
+| Token-scope check in `fullsend run` | `internal/cli/run.go:1400` passes the literal `"https://api.github.com"` to `fetchTokenScope` | `! Token scope check: fetching token scope: listing installation repositories: Get "https://api.github.com/installation/repositories?per_page=100": dial tcp 140.82.112.5:443: connect: connection refused` |
+| `fullsend eval-measure`'s `fullsend-ai/agents` manifest lookup | `internal/cli/evalmeasure.go:257` returns a bare `gh.New(token)` | `! Could not resolve fullsend-ai/agents@main: get ref fullsend-ai/agents@heads/main: ... Get "https://api.github.com/...": dial tcp ...: connect: connection refused` |
 | `fullsend reconcile-status` | `internal/cli/reconcilestatus.go:21-23`, `reconcileNewForgeClient` returns a bare `gh.New(token)` | `Error: listing comments: list issue comments page 1: ... Get "https://api.github.com/...": dial tcp ...: connect: connection refused`, then `::warning::Could not reconcile orphaned status comment` (`action.yml:660`) |
 
 The first two are warnings. The third matters: `reconcile-status` is the
 post-job step that finalizes a status comment left in the "Started" state
 when the `fullsend` process died before posting its completion. On another
 host it never reaches the forge, so by inspection a cancelled or hard-killed
-run keeps its "Started" comment.
+run keeps its "Started" comment. The eval-measure warning line above is
+quoted from run logs; which client emitted it was determined by reading
+the code.
 
 `internal/cli` already has `newGitHubLiveClient`
 (`internal/cli/github_client.go:137`), which honours `forge.github.url` and
@@ -40,8 +42,9 @@ host. Behaviour on github.com is unchanged.
    `GITHUB_API_URL` names that host.
 2. The `fullsend run` log shows the token-scope warning above, and the
    eval-measure step logs the agents-ref warning.
-3. Cancel a run after its "Started" status comment is posted. The post-job
-   step logs `Could not reconcile orphaned status comment` and the comment
+3. Cancel a run after its "Started" status comment is posted (by
+   inspection): the post-job step logs
+   `Could not reconcile orphaned status comment` and the comment
    stays "Started".
 
 Code-level: with `GITHUB_API_URL=https://ghes.example.com/api/v3`,

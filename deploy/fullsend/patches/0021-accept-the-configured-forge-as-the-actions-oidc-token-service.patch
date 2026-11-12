@@ -1,0 +1,112 @@
+Subject: fix(actionsoidc): accept the configured forge as the Actions token service
+
+RequireGitHubOIDCHost accepts an OIDC request URL only on
+*.actions.githubusercontent.com (or loopback). On an enterprise server the
+Actions token service is the appliance itself, so every assertion the CLI
+asks for there is refused before it is requested:
+
+  bot-role lookup failed: fetching OIDC token: actionsoidc: OIDC request URL
+  host "github.example" is not GitHub's Actions token service
+  (*.actions.githubusercontent.com)
+
+`fullsend dispatch` uses that assertion to look up a bot actor's role, so
+on such a forge it denies every bot: a role App's handoff label, or a pull
+request a bot opened, cannot dispatch a harness.
+
+The host GITHUB_SERVER_URL names is now accepted too, when it is not
+github.com. The runner sets that variable beside ACTIONS_ID_TOKEN_REQUEST_URL,
+and the rest of the CLI already reads it to decide where the forge is
+(patches 0003, 0007). On github.com nothing changes: github.com itself is not
+accepted as a token service.
+
+Breadboard note: patches Go source compiled into the fullsend binary, so it
+belongs to the build list in deploy/scripts/05i-build-fullsend.sh. Found in
+the behaviour-test T2 run (BT-B4). Written to be sent upstream as-is, should
+the conformance campaign choose to file it; add a DCO sign-off first.
+
+diff --git a/internal/inference/actionsoidc/actionsoidc.go b/internal/inference/actionsoidc/actionsoidc.go
+index 1b59a029d..1f9893901 100644
+--- a/internal/inference/actionsoidc/actionsoidc.go
++++ b/internal/inference/actionsoidc/actionsoidc.go
+@@ -20,6 +20,7 @@ import (
+ 	"net"
+ 	"net/http"
+ 	"net/url"
++	"os"
+ 	"strings"
+ 	"time"
+ )
+@@ -173,6 +174,11 @@ func RequireSecureURL(what, raw string) error {
+ // GitHub's Actions token service (loopback is allowed for tests). The URL
+ // is runner-injected and deny-listed, so this is defence in depth against a
+ // rewritten runner environment, not SSRF hardening.
++//
++// On an enterprise server the token service is the appliance itself, so the
++// host GITHUB_SERVER_URL names is accepted too, when that is not github.com.
++// The runner sets GITHUB_SERVER_URL beside the request URL, and the rest of
++// the CLI already reads it to decide where the forge is.
+ func RequireGitHubOIDCHost(raw string) error {
+ 	u, err := url.Parse(raw)
+ 	if err != nil {
+@@ -182,9 +188,30 @@ func RequireGitHubOIDCHost(raw string) error {
+ 	if isLoopback(host) || strings.HasSuffix(host, oidcHostSuffix) {
+ 		return nil
+ 	}
++	if forge := configuredEnterpriseHost(); forge != "" && host == forge {
++		return nil
++	}
+ 	return fmt.Errorf("OIDC request URL host %q is not GitHub's Actions token service (*%s)", u.Hostname(), oidcHostSuffix)
+ }
+ 
++// configuredEnterpriseHost returns the hostname GITHUB_SERVER_URL names, or
++// "" when it is unset, unparsable, or github.com.
++func configuredEnterpriseHost() string {
++	server := strings.TrimSpace(os.Getenv("GITHUB_SERVER_URL"))
++	if server == "" {
++		return ""
++	}
++	parsed, err := url.Parse(server)
++	if err != nil {
++		return ""
++	}
++	host := strings.ToLower(parsed.Hostname())
++	if host == "" || host == "github.com" {
++		return ""
++	}
++	return host
++}
++
+ func isLoopback(host string) bool {
+ 	if host == "localhost" {
+ 		return true
+diff --git a/internal/inference/actionsoidc/enterprise_host_test.go b/internal/inference/actionsoidc/enterprise_host_test.go
+new file mode 100644
+index 000000000..db7e1b29d
+--- /dev/null
++++ b/internal/inference/actionsoidc/enterprise_host_test.go
+@@ -0,0 +1,25 @@
++package actionsoidc
++
++import "testing"
++
++func TestRequireGitHubOIDCHost_ConfiguredEnterpriseForge(t *testing.T) {
++	t.Setenv("GITHUB_SERVER_URL", "https://github.example")
++	if err := RequireGitHubOIDCHost("https://github.example/_services/token?audience=x"); err != nil {
++		t.Fatalf("the configured forge's token service was refused: %v", err)
++	}
++	if err := RequireGitHubOIDCHost("https://elsewhere.example/token"); err == nil {
++		t.Fatal("a host other than the configured forge was accepted")
++	}
++}
++
++func TestRequireGitHubOIDCHost_GitHubComServerAddsNothing(t *testing.T) {
++	for _, server := range []string{"", "https://github.com"} {
++		t.Setenv("GITHUB_SERVER_URL", server)
++		if err := RequireGitHubOIDCHost("https://github.com/token"); err == nil {
++			t.Fatalf("GITHUB_SERVER_URL=%q accepted github.com itself as a token service", server)
++		}
++		if err := RequireGitHubOIDCHost("https://pipelines.actions.githubusercontent.com/abc"); err != nil {
++			t.Fatalf("GitHub's token service was refused: %v", err)
++		}
++	}
++}

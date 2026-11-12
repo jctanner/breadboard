@@ -170,3 +170,15 @@ PR exists. Use a merge commit to preserve the original commits and authorship.
 - `20dea95` fix(compat): preserve real forge links and validate existing VM mounts
 - `b6379de` fix(deploy): guard all domain applies and retain fresh-install flow
 - `cea968c` fix(deploy): share certificate bootstrap across component entry points
+
+## Publication completed
+
+Replacement PR: https://github.com/jctanner/breadboard/pull/10 (open, not draft),
+created after the human explicitly authorized using the token in `.env.github`.
+The token was read in memory and passed only in HTTPS authorization headers; no
+credential values were printed or written to artifacts. The source PR #8 was
+rechecked: still open at `3b18b726d143efc210b101d9d84267dcc5f6f42c`, unchanged.
+The replacement PR credits @durandom, retains his 16 commits, includes the validation
+and accepted deferrals, and requests manual merge with a merge commit. No PR comment,
+review, label, closure, or merge was performed. The reviewed implementation remains
+`cea968c`; subsequent changes are ledger-only publication records.

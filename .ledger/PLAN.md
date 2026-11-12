@@ -17,8 +17,8 @@
 
 ## Current milestone
 
-- [CC-61: PR #8 manual merge preparation](tasks/blocked/cc61-pr8.md): isolated
-  fallback branch reviewed with no blockers and pushed; replacement PR needs GitHub API auth.
+- [CC-61: PR #8 manual merge preparation](tasks/done/cc61-pr8.md): isolated
+  fallback branch reviewed with no blockers and pushed; [PR #10](https://github.com/jctanner/breadboard/pull/10) awaits manual merge.
 
 - [Fullsend v0.52.0 patch rebase](tasks/current/fullsend-v052-patch-rebase.md):
   both checkouts fast-forwarded (fullsend 2,616 and agents 620 commits);

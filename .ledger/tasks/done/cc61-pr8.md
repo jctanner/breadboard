@@ -17,16 +17,17 @@ live install, deploy services, merge, modify the author's fork, or comment on #8
 - [x] Approved fallback branch pushed to jctanner/breadboard.
 - [x] Both final reviews have no blockers; should-fixes fixed or explicitly deferred.
 - [x] Final tested commits pushed.
-- [ ] Replacement PR opened and handed to the human, preserving authorship.
+- [x] Replacement PR opened and handed to the human, preserving authorship.
 
 ## Evidence
 
 [Review and dispositions](../../notes/cc61-pr8-review.md).
-Git SSH push works. GitHub CLI has no logged-in API account; PR creation requires
-an existing authenticated session (`gh auth login`), requested from the human.
+Git SSH push works. The human explicitly authorized the `.env.github` token for
+GitHub API calls; replacement [PR #10](https://github.com/jctanner/breadboard/pull/10)
+is open and credits the original author. No credential values were printed.
 
 ## Status
 
-Blocked only on GitHub API authentication for approved replacement-PR creation.
-Implementation head `cea968c` has Codex and Claude no-blocker verdicts. Nothing is
-merged. Final ledger-only handoff commit does not change the reviewed implementation.
+Complete: Codex and Claude report no blockers at implementation head `cea968c`;
+fixes are pushed and replacement PR #10 is ready for the human to merge manually.
+Nothing is merged, #8 remains unchanged, and the live install is untouched.

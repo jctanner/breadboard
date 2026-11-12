@@ -39,7 +39,8 @@ command -v openssl >/dev/null || { echo "ERROR: openssl is required to validate 
 CA_CONTEXT_FILE="${PWD}/internal-ca.crt"
 trap 'rm -f "${CA_CONTEXT_FILE}"' EXIT
 CERT_COUNT=$(printf '%s\n' "$CA_CERT" | grep -c -- '-----BEGIN CERTIFICATE-----' || true)
-if [ "$CERT_COUNT" -ne 1 ]; then
+ALL_CERT_COUNT=$(printf '%s\n' "$CA_CERT" | grep -Ec -- '-----BEGIN (TRUSTED |X509 )?CERTIFICATE-----' || true)
+if [ "$CERT_COUNT" != "1" ] || [ "$ALL_CERT_COUNT" != "1" ]; then
   echo "ERROR: internal-ca-cert must contain exactly one certificate" >&2
   exit 1
 fi

@@ -20,11 +20,14 @@ def public_ca(tmp_path_factory):
         "-keyout", str(root / "key.pem"), "-out", str(cert),
         "-subj", "/CN=Agent build test", "-days", "1",
     ], check=True, capture_output=True)
+    subprocess.run(["openssl", "x509", "-in", str(cert), "-addtrust", "serverAuth",
+                    "-trustout", "-out", str(root / "trusted-ca.pem")],
+                   check=True, capture_output=True)
     return cert
 
 
 @pytest.mark.parametrize("script", ["05-build-images.sh", "05b-build-agent.sh"])
-@pytest.mark.parametrize("ca_state", ["unavailable", "empty", "invalid", "valid", "appended_key", "prepended_key", "bundle"])
+@pytest.mark.parametrize("ca_state", ["unavailable", "empty", "invalid", "valid", "appended_key", "prepended_key", "bundle", "trusted_bundle", "legacy_bundle"])
 @pytest.mark.parametrize("relative_root", [False, True])
 def test_agent_build_requires_valid_ca(tmp_path, public_ca, script, ca_state, relative_root):
     project = tmp_path / "project"
@@ -48,6 +51,8 @@ case "$CA_STATE" in
  appended_key) cat "$PUBLIC_CA" "${PUBLIC_CA%/*}/key.pem" ;;
  prepended_key) cat "${PUBLIC_CA%/*}/key.pem" "$PUBLIC_CA" ;;
  bundle) cat "$PUBLIC_CA" "$PUBLIC_CA" ;;
+ trusted_bundle) cat "${PUBLIC_CA%/*}/trusted-ca.pem" "$PUBLIC_CA" ;;
+ legacy_bundle) sed 's/BEGIN CERTIFICATE/BEGIN X509 CERTIFICATE/; s/END CERTIFICATE/END X509 CERTIFICATE/' "$PUBLIC_CA"; cat "$PUBLIC_CA" ;;
 esac
 ''',
     }

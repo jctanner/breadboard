@@ -592,14 +592,18 @@ is smoke-checked in both builder and final runtime images. The final image copie
 the official Node 24 runtime rather than the distribution Node 20 package, because
 the current Claude CLI declares Node 22 or newer in its package engines. Its version
 is also checked during the build. Node explicitly trusts the injected CA through
-`NODE_EXTRA_CA_CERTS`; agent builds require exactly one valid public CA certificate and refuse bundles,
-unavailable input or empty input.
+`NODE_EXTRA_CA_CERTS`; agent builds require exactly one parseable X.509 certificate in a PEM
+`CERTIFICATE` block and reject bundles, unavailable input or empty input. These
+input guards do not check expiry or CA policy; use the deployment certificate
+validation for those checks.
 Public certificate permissions are set explicitly for non-root readers. The x64
 builder selects the baseline artifact, and unsupported architectures fail closed.
 
 Use `FORCE_REBUILD=1` after source or CA changes: optional image reuse checks tags,
 not source/CA fingerprints. This includes upgrading images made by older builders
-that permitted an empty CA placeholder.
+that permitted an empty CA placeholder. After an interrupted image import, a
+tag-only resume can also miss an unfinished image alias; use `FORCE_REBUILD=1`
+to rebuild and reconcile its tags.
 
 This pins the source, not every build input: the existing Bun/uv lockfile fallback,
 other moving source refs and package downloads still limit full image reproducibility.

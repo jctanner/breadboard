@@ -578,3 +578,21 @@ runbook in [the Lima deployment guide](lima/README.md#domain-trust-and-upgrade-n
 which also applies to Linux and Vagrant installations. Use a disposable cluster to
 qualify the migration first. The certificate validation script checks issued chains
 against the public ConfigMap CA; inspect hostnames and trust constraints separately.
+
+## Pipeline-agent OpenCode builder
+
+The OpenCode builder defaults to the maintainer integration fork at immutable commit
+`9f55fe01b9304cc34534dbf1e69b0f8c4bfc8c77`, retaining its SDK/MLflow integration fixes
+and the `packages/opencode` build layout. Upstream's moving `dev` branch no longer
+has that layout, so fresh builds cannot use it with the current build recipe.
+`OPENCODE_REPO` and `OPENCODE_REF` remain build overrides; the ref may be a full commit,
+branch or tag. Fetching verifies HTTPS. Docker Hub base-image names are qualified so
+unattended Podman builds do not depend on distribution short-name aliases. The CLI
+is smoke-checked in both builder and final runtime images.
+
+This pins the source, not every build input: the existing Bun/uv lockfile fallback,
+other moving source refs and package downloads still limit full image reproducibility.
+The selected OpenCode source currently needs its Bun lockfile reconciled before that
+fallback can be removed; its frozen install reports a lockfile mismatch. Keeping the
+fork commit reachable/protected is a maintainer follow-up; it is currently reachable
+from the existing integration branch, and an unavailable ref fails the build closed.

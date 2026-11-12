@@ -1,5 +1,5 @@
 # ── Stage 1: Build arch-query with embedded architecture data ────
-FROM golang:1.25-bookworm AS arch-query-builder
+FROM docker.io/library/golang:1.25-bookworm AS arch-query-builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*
 
@@ -13,13 +13,17 @@ RUN git clone --depth 1 https://github.com/opendatahub-io/architecture-context.g
 # ── Stage 2: Build OpenCode from its source repository ──────────
 FROM docker.io/oven/bun:1.3.14-debian AS opencode-builder
 
-ARG OPENCODE_REPO=https://github.com/anomalyco/opencode.git
-ARG OPENCODE_REF=dev
+# Pin the integration source: upstream dev no longer has packages/opencode.
+ARG OPENCODE_REPO=https://github.com/jctanner/opencode.git
+ARG OPENCODE_REF=9f55fe01b9304cc34534dbf1e69b0f8c4bfc8c77
 
-RUN apt-get update && apt-get install -y --no-install-recommends git python3 make g++ && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --branch "${OPENCODE_REF}" "${OPENCODE_REPO}" .
+RUN git init . \
+    && git remote add origin "${OPENCODE_REPO}" \
+    && git fetch --depth 1 -- origin "${OPENCODE_REF}" \
+    && git checkout --detach FETCH_HEAD
 
 RUN bun install --frozen-lockfile || bun install
 ENV OPENCODE_CHANNEL=latest
@@ -28,10 +32,11 @@ RUN cd packages/opencode && bun run script/build.ts --single --skip-embed-web-ui
 
 RUN ARCH=$(uname -m | sed 's/x86_64/x64/' | sed 's/aarch64/arm64/') \
     && cp packages/opencode/dist/opencode-linux-${ARCH}/bin/opencode /build/opencode
+RUN /build/opencode --version
 
 
 # ── Stage 3: Pipeline agent ─────────────────────────────────────
-FROM python:3.13-slim
+FROM docker.io/library/python:3.13-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -47,7 +52,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy OpenCode binary built from local source
 COPY --from=opencode-builder /build/opencode /usr/local/bin/opencode
-RUN chmod +x /usr/local/bin/opencode
+RUN chmod +x /usr/local/bin/opencode && opencode --version
 
 WORKDIR /app
 

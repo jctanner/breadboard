@@ -15,8 +15,8 @@ live install, deploy services, merge, modify the author's fork, or comment on #8
 - [x] Whole diff reviewed and first-round fixes committed.
 - [x] Offline tests, compiler checks and shell syntax checks pass.
 - [x] Approved fallback branch pushed to jctanner/breadboard.
-- [ ] Both final reviews have no blockers; should-fixes fixed or explicitly deferred.
-- [ ] Final tested commits pushed.
+- [x] Both final reviews have no blockers; should-fixes fixed or explicitly deferred.
+- [x] Final tested commits pushed.
 - [ ] Replacement PR opened and handed to the human, preserving authorship.
 
 ## Evidence
@@ -24,3 +24,9 @@ live install, deploy services, merge, modify the author's fork, or comment on #8
 [Review and dispositions](../../notes/cc61-pr8-review.md).
 Git SSH push works. GitHub CLI has no logged-in API account; PR creation requires
 an existing authenticated session (`gh auth login`), requested from the human.
+
+## Status
+
+Blocked only on GitHub API authentication for approved replacement-PR creation.
+Implementation head `cea968c` has Codex and Claude no-blocker verdicts. Nothing is
+merged. Final ledger-only handoff commit does not change the reviewed implementation.

@@ -129,3 +129,44 @@ an explicit authenticated recovery procedure rather than a silent trust fallback
 The Fullsend image build also checks compatibility before baking a domain into
 profiles or importing images, preventing a wrong-default rebuild before deploy
 preflight can reject it. No implementation changes remain outside these closures.
+
+## Final verdict (round 6, implementation head `cea968c`)
+
+Codex: **NO BLOCKERS**. Claude CLI: **NO BLOCKERS**; both round-5 should-fixes
+closed, no regressions. Every mandatory should-fix is closed or acceptably deferred.
+The final read-only review is retained locally at `/tmp/cc61-claude-round6.txt`.
+
+Optional round-6 nits explicitly deferred: friendlier traceback when initial public
+root publication is interrupted (the failure is safe and recovery is documented);
+the redundant final `03` hint to run `04` again (idempotent/cosmetic); and static tests
+asserting particular shell/Make command spellings (would mirror implementation).
+Fresh standalone deployment qualification needs a disposable cluster and remains
+unverified, per the user's prohibition on deployment against the live install.
+
+Publication: the approved fallback branch is pushed to jctanner/breadboard. No commits
+were pushed to durandom's fork. #8 remains open without comments or reviews. Original
+16 commits remain unchanged. Current main `95a1399` was merged without rewriting them.
+The replacement PR is prepared in `/tmp/cc61-pr-body.md`, but GitHub CLI reports no
+logged-in API account. SSH push authentication works; API auth is the sole remaining
+publication dependency. The human was asked to run `gh auth login`; no credentials
+were read from environment files. Do not claim manual-merge readiness until the new
+PR exists. Use a merge commit to preserve the original commits and authorship.
+
+## Pushed commit inventory (first-parent additions after original head)
+
+- `e044b74` fix(deploy): preserve domain constraints and safe host defaults
+- `001c9c3` fix(fullsend): publish native assets and isolate synthetic CVE results
+- `a8cefef` fix(cli): verify TLS and respect operator cluster selection
+- `cac6441` fix(deploy): confine Lima mounts and make host changes opt-in
+- `59d2a8b` fix(seed): verify transport and guard destructive operations
+- `2a03dd0` test(proxy): isolate route configuration and cover custom-domain streams
+- `b0c5183` Merge remote-tracking branch 'origin/main' into pr8-breadboard-domain-lima
+- `35b8bb5` fix(deploy): bootstrap seed TLS without changing host trust
+- `73c1320` test(tls): verify allowed and forbidden names with OpenSSL
+- `d303c83` fix(seed): paginate existing fixtures before creating tickets
+- `7e25d73` docs(ledger): track PR 8 review and publication status
+- `9012150` fix(deploy): print configured domains in service access instructions
+- `96ac0d4` fix(tls): refuse implicit CA migration before deployment changes
+- `20dea95` fix(compat): preserve real forge links and validate existing VM mounts
+- `b6379de` fix(deploy): guard all domain applies and retain fresh-install flow
+- `cea968c` fix(deploy): share certificate bootstrap across component entry points

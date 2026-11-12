@@ -22,6 +22,7 @@ fi
 openssl x509 -in "${BREADBOARD_CA_FILE}" -noout >/dev/null
 
 
+EXPECTED_APP_PERMISSIONS='{}'
 ensure_app() {
   local app_id="$1"
   local name="$2"
@@ -56,6 +57,8 @@ ensure_app() {
     echo "ERROR: could not reconcile ${slug} App (HTTP ${reconcile_status})" >&2
     exit 1
   fi
+  EXPECTED_APP_PERMISSIONS="$(jq -nc --argjson all "${EXPECTED_APP_PERMISSIONS}" \
+    --arg id "${app_id}" --argjson permissions "${permissions}" '$all + {($id): $permissions}')"
 }
 
 echo "==> Ensuring separate Fullsend App/bot identities"
@@ -130,9 +133,11 @@ echo "==> Installing the role Apps on ${FULLSEND_ORG} and collecting their keys 
 # reseed; an older installation that named specific repositories is replaced.
 # The Apps' private keys go to a Secret the mint mounts as one file, and the
 # mint signs a ten-minute JWT per exchange for a one-hour installation token.
+export EXPECTED_APP_PERMISSIONS
 ROLE_APPS="$(python3 - "${API}" "${GITHUB_URL%/}" "${GITHUB_TOKEN}" "${FULLSEND_ORG}" <<'PY'
 import json, os, ssl, sys, urllib.error, urllib.request
 api, base, token, org = sys.argv[1:5]
+expected_grants = json.loads(os.environ["EXPECTED_APP_PERMISSIONS"])
 ctx = ssl.create_default_context(cafile=os.environ["BREADBOARD_CA_FILE"])
 def decode(payload):
     try:
@@ -154,13 +159,20 @@ roles = {"triage": "1001", "scribe": "1002", "coder": "1003", "review": "1004", 
 out = {}
 for role, app_id in roles.items():
     status, app = call(f"{api}/admin/apps/{app_id}")
-    if status != 200 or not isinstance(app, dict) or not isinstance(app.get("permissions"), dict) or not app["permissions"]:
+    if status != 200 or not isinstance(app, dict) or not isinstance(app.get("permissions"), dict) or not app["permissions"] or app["permissions"] != expected_grants.get(app_id):
         sys.exit(f"could not read permissions for App {app_id}: HTTP {status}")
     # The UI inventory has installation selections but omits App permissions.
     status, inventory = call(f"{base}/admin/api/apps/{app_id}")
     if status != 200 or not isinstance(inventory, dict):
         sys.exit(f"could not read installations for App {app_id}: HTTP {status}")
-    for inst in inventory.get("installations") or []:
+    installations = inventory.get("installations")
+    if not isinstance(installations, list) or any(
+        not isinstance(inst, dict) or type(inst.get("id")) is not int or inst["id"] <= 0
+        or not isinstance(inst.get("owner"), str) or not isinstance(inst.get("repositories"), list)
+        for inst in installations
+    ):
+        sys.exit(f"invalid installation inventory for App {app_id}")
+    for inst in installations:
         if inst.get("owner") == org and inst.get("repositories"):
             status, _ = call(f"{base}/admin/api/apps/{app_id}/installations/{inst['id']}", method="DELETE")
             if status != 204:
@@ -170,7 +182,7 @@ for role, app_id in roles.items():
                          "permissions": app["permissions"]})
     if status not in (200, 201):
         sys.exit(f"could not install App {app_id} on {org}: HTTP {status} {inst}")
-    if not isinstance(inst, dict) or inst.get("permissions") != app["permissions"]:
+    if not isinstance(inst, dict) or inst.get("permissions") != app["permissions"] or inst.get("repository_selection") != "all":
         # Roll back only an installation this invocation just created. Do not
         # delete an existing operator installation on a failed verification.
         installation_id = inst.get("id") if isinstance(inst, dict) else None
@@ -183,7 +195,7 @@ for role, app_id in roles.items():
                 cleanup = f"rollback failed: network error; installation {installation_id} may remain"
         elif status == 201:
             cleanup = "new installation ID invalid; cleanup could not be attempted"
-        sys.exit(f"installation permissions do not match the configured App {app_id}; {cleanup}")
+        sys.exit(f"installation permissions do not match the configured App {app_id} or repository selection is not all; {cleanup}")
     status, key = call(f"{base}/admin/api/apps/{app_id}/private-key")
     if status != 200 or not isinstance(key, dict) or not key.get("private_key"):
         sys.exit(f"could not read the private key of App {app_id}: HTTP {status}")

@@ -19,3 +19,11 @@ JWTs or tokens. The subsequent conformance run passes mint, checkout and setup,
 but is blocked later at OpenShell configuration activation. Bootstrap remains a
 non-atomic sequence across eight Apps; a later failure does not roll back earlier
 valid reconciliations. Mint still downscopes every issued token by role.
+
+A further review added equality against the exact requested bootstrap permissions,
+not only the REST App response. The shell accumulates the eight ensure_app inputs
+and the Python verifier rejects a broader server App map before installation
+writes. Also validate inventory entry types/positive IDs and require returned
+repository_selection=all. Tests cover broader App grants, malformed inventory and
+selected installations as well as distinct old/new rollback IDs and cleanup
+network errors.

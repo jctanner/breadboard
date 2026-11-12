@@ -626,6 +626,8 @@ export KUBECONFIG="$HOME/.kube/config"
 
 An explicitly set `KUBECONFIG` is preserved; the target refuses `sudo make`.
 
+## Fullsend bootstrap failure recovery
+
 Fullsend Mint bootstrap reconciles eight role Apps in sequence. It may remove an
 old repository-selected installation before creating its organization-wide
 replacement. If bootstrap fails, earlier valid changes remain, and the failed role

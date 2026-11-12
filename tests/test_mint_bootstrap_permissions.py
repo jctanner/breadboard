@@ -14,7 +14,7 @@ SOURCE = (ROOT / "deploy/scripts/18-deploy-fullsend-mint-dev.sh").read_text()
 BLOCK = SOURCE.split("<<'PY'\n", 1)[1].split("\nPY\n", 1)[0]
 
 
-@pytest.mark.parametrize("missing_permissions", [None, "missing", "empty", "installation_mismatch", "malformed", "existing_installation_mismatch", "rollback_failure", "rollback_network", "missing_id", "bool_id", "nondict"])
+@pytest.mark.parametrize("missing_permissions", [None, "missing", "empty", "installation_mismatch", "malformed", "existing_installation_mismatch", "rollback_failure", "rollback_network", "missing_id", "bool_id", "nondict", "selected", "bad_inventory", "broader_app"])
 def test_installation_grants_from_api_metadata(monkeypatch, missing_permissions):
     monkeypatch.setenv("BREADBOARD_CA_FILE", "/fixture/public-ca.crt")
     grants = []
@@ -23,6 +23,7 @@ def test_installation_grants_from_api_metadata(monkeypatch, missing_permissions)
     expected = {str(1000+i): {"metadata": "read", "contents": "write" if i % 2 else "read",
                              "issues": "write" if i % 4 < 2 else "read",
                              "checks": "write" if i < 4 else "read"} for i in range(1, 9)}
+    monkeypatch.setenv("EXPECTED_APP_PERMISSIONS", json.dumps(expected))
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 
     def request(req, **kwargs):
@@ -43,7 +44,7 @@ def test_installation_grants_from_api_metadata(monkeypatch, missing_permissions)
             body = json.loads(req.data)
             grants.append(body["permissions"])
             status = 200 if missing_permissions == "existing_installation_mismatch" else 201
-            body = {"id": 77, "permissions": {} if missing_permissions in {"installation_mismatch", "existing_installation_mismatch", "rollback_failure", "rollback_network", "missing_id", "bool_id"} else body["permissions"]}
+            body = {"id": 77, "repository_selection": "selected" if missing_permissions == "selected" else "all", "permissions": {} if missing_permissions in {"installation_mismatch", "existing_installation_mismatch", "rollback_failure", "rollback_network", "missing_id", "bool_id"} else body["permissions"]}
             if missing_permissions == "missing_id":
                 body.pop("id")
             elif missing_permissions == "bool_id":
@@ -55,6 +56,10 @@ def test_installation_grants_from_api_metadata(monkeypatch, missing_permissions)
             body = None if missing_permissions == "malformed" else ({} if missing_permissions == "missing" else {"permissions": {} if missing_permissions == "empty" else expected[app_id]})
         else:
             body = {"installations": [] if missing_permissions in {"existing_installation_mismatch", "rollback_failure"} else [{"id": 1, "owner": "org", "repositories": ["org/old"]}]}  # Admin UI intentionally omits permissions.
+        if missing_permissions == "bad_inventory" and "/admin/api/apps/" in url:
+            body = {"installations": [None]}
+        if missing_permissions == "broader_app" and "/api/v3/admin/apps/" in url:
+            body = {"permissions": {**expected["1001"], "administration": "write"}}
         response = mock.MagicMock()
         response.__enter__.return_value = response
         response.status = status
@@ -65,12 +70,12 @@ def test_installation_grants_from_api_metadata(monkeypatch, missing_permissions)
             mock.patch("urllib.request.urlopen", side_effect=request), \
             mock.patch("ssl.create_default_context", return_value=context) as tls, \
             contextlib.redirect_stdout(io.StringIO()):
-        if missing_permissions in {"missing", "empty", "malformed"}:
-            with pytest.raises(SystemExit, match="could not read permissions"):
+        if missing_permissions in {"missing", "empty", "malformed", "bad_inventory", "broader_app"}:
+            with pytest.raises(SystemExit, match="invalid installation inventory" if missing_permissions == "bad_inventory" else "could not read permissions"):
                 exec(compile(BLOCK, "mint-bootstrap", "exec"), {})
             assert not grants
             assert not writes
-        elif missing_permissions == "installation_mismatch":
+        elif missing_permissions in {"installation_mismatch", "selected"}:
             with pytest.raises(SystemExit, match="installation permissions do not match"):
                 exec(compile(BLOCK, "mint-bootstrap", "exec"), {})
             assert writes == ["DELETE", "POST", "DELETE"]

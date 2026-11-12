@@ -28,11 +28,16 @@ RUN git init . \
 RUN bun install --frozen-lockfile || bun install
 ENV OPENCODE_CHANNEL=latest
 ENV OPENCODE_VERSION=0.0.0-local
-RUN cd packages/opencode && bun run script/build.ts --single --skip-embed-web-ui
-
-RUN ARCH=$(uname -m | sed 's/x86_64/x64/' | sed 's/aarch64/arm64/') \
-    && cp packages/opencode/dist/opencode-linux-${ARCH}/bin/opencode /build/opencode
-RUN /build/opencode --version
+# Use the conservative x64 artifact even when building on a newer CPU.
+RUN case "$(uname -m)" in \
+      x86_64) ARCH=x64-baseline; set -- --baseline ;; \
+      aarch64) ARCH=arm64; set -- ;; \
+      *) echo "Unsupported OpenCode build architecture" >&2; exit 1 ;; \
+    esac \
+    && cd packages/opencode \
+    && bun run script/build.ts --single --skip-embed-web-ui "$@" \
+    && cp "dist/opencode-linux-${ARCH}/bin/opencode" /build/opencode \
+    && /build/opencode --version
 
 
 FROM docker.io/library/node:24-bookworm-slim AS node-runtime

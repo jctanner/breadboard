@@ -593,7 +593,8 @@ the official Node 24 runtime rather than the distribution Node 20 package, becau
 the current Claude CLI declares Node 22 or newer in its package engines. Its version
 is also checked during the build. Node explicitly trusts the injected CA through
 `NODE_EXTRA_CA_CERTS`; agent builds refuse unavailable, empty or invalid CA input.
-Public certificate permissions are set explicitly for non-root readers.
+Public certificate permissions are set explicitly for non-root readers. The x64
+builder selects the baseline artifact, and unsupported architectures fail closed.
 
 Use `FORCE_REBUILD=1` after source or CA changes: optional image reuse checks tags,
 not source/CA fingerprints. This includes upgrading images made by older builders

@@ -20,8 +20,8 @@ External Request → Go Proxy (TLS termination) → Backend Services (HTTP)
 ```
 
 **TLS Strategy:**
-- Proxy terminates TLS using cert-manager wildcard certificate
-- Backends receive plain HTTP (no Caddy needed in ingress path)
+- Proxy terminates TLS using cert-manager certificates for internal service and configured external names
+- GitHub, Jira and GitLab backends use HTTPS; other service backends use their configured HTTP URLs
 - Internal pod-to-pod traffic still uses Caddy HTTPS (unchanged)
 
 ## Quick Start
@@ -87,10 +87,10 @@ kubectl run -n ai-pipeline test --rm -it --image=curlimages/curl --restart=Never
 
 Routes are defined in `main.go`:
 ```go
-var routes = []Route{
+var externalServices = []ExternalService{
     {
-        Host:    "jira.local",
-        Backend: "http://jira-emulator-backend.ai-pipeline.svc.cluster.local:8080",
+        Prefix:  "jira",
+        Backend: "https://jira-emulator.ai-pipeline.svc.cluster.local:443",
     },
     // ...
 }
@@ -104,7 +104,7 @@ To add new routes:
 
 The proxy uses a cert-manager Certificate resource that covers:
 - `*.ai-pipeline.svc.cluster.local` (wildcard)
-- `*.local` (wildcard)
+- Named external services under `BREADBOARD_DOMAIN` (default `local`); no external wildcard
 - Specific FQDNs for each service
 
 The certificate is issued by the internal CA (`internal-ca-issuer`).

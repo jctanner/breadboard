@@ -66,7 +66,7 @@ class TestSkillFrontmatterAndGuide:
         assert "seed-upstream-fullsend.py" in out
         assert "seed-upstream-agents.py" in out
 
-        assert "## 3. Physical Host `rhea` Hardware & Thermal Rules" in out
+        assert "## 3. Physical Host Hardware & Thermal Rules" in out
         assert "90°C" in out
         assert "CARGO_BUILD_JOBS=2" in out
         assert "PODMAN_SUDO=1" in out
@@ -76,7 +76,7 @@ class TestSkillFrontmatterAndGuide:
         assert "distroless" in out.lower() or "supervisor" in out.lower()
         assert "openshell-supervisor-local:k3s" in out
         assert "gcp-credentials" in out
-        assert "placeholder" in out
+        assert "Do not fabricate credentials" in out
 
     def test_skill_file_stub(self):
         assert SKILL_PATH.is_file(), f"Missing skill file at {SKILL_PATH}"

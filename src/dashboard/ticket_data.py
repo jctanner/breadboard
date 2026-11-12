@@ -329,7 +329,9 @@ class TicketAggregator:
                             "assignee": ((item.get("assignees") or [{}])[0]).get("username", "") if item.get("assignees") else "",
                             "created": item.get("created_at", ""),
                             "updated": item.get("updated_at", ""),
-                            "url": f"{self.gitlab_ui}{item_path}",
+                            "url": (f"{self.gitlab_ui}{item_path}"
+                                    if not web_url or urlsplit(web_url).hostname == "gitlab-emulator.ai-pipeline.svc.cluster.local"
+                                    else web_url),
                         })
                     if len(payload) < 100:
                         break

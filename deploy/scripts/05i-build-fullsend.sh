@@ -256,7 +256,7 @@ if [[ "${SKIP_SANDBOX_DEV:-}" != "1" ]]; then
   "${CONTAINER_CMD_ARR[@]}" build --build-arg TARGETARCH="${TARGETARCH}" -f "${SANDBOX_CONTEXT}/Containerfile" -t "${SANDBOX_IMAGE}" "${SANDBOX_CONTEXT}"
   IMPORT_IMAGES+=("${SANDBOX_IMAGE}")
 else
-  echo "==> Skipping ${SANDBOX_IMAGE} (pipeline-agent:latest not present or SKIP_SANDBOX_DEV=1)"
+  echo "==> Skipping ${SANDBOX_IMAGE} (SKIP_SANDBOX_DEV=1)"
 fi
 
 # The conformance sandboxes are Fullsend's own pinned images plus this

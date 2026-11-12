@@ -186,3 +186,62 @@ def test_cve_issue_lookup_failure_does_not_create_duplicate():
             seed.ensure_assessment_issue()
         assert api.call_count == 1
         assert api.call_args.args[0] == 'GET'
+
+
+def test_ca_preflight_refuses_old_spec_without_reading_secrets():
+    import json
+    with mock.patch.object(sys, 'path', [str(ROOT / 'deploy/scripts'), *sys.path]):
+        guard = load('ca_guard_pr8', 'deploy/scripts/check_ca_compatibility.py')
+    with mock.patch('subprocess.run', side_effect=[mock.Mock(stdout='crd'), mock.Mock(stdout=json.dumps({'spec': {}}))]) as run, mock.patch.dict('os.environ', {'BREADBOARD_DOMAIN': 'local'}):
+        with pytest.raises(SystemExit, match='Refusing automatic CA migration'):
+            guard.main()
+        assert run.call_count == 2
+        assert all('secret' not in c.args[0] for c in run.call_args_list)
+
+
+def test_ca_preflight_allows_fresh_cluster():
+    with mock.patch.object(sys, 'path', [str(ROOT / 'deploy/scripts'), *sys.path]):
+        guard = load('ca_fresh_pr8', 'deploy/scripts/check_ca_compatibility.py')
+    with mock.patch('subprocess.run', return_value=mock.Mock(stdout='')) as run:
+        guard.main()
+        assert run.call_count == 1
+
+
+def test_ca_extension_requires_exact_critical_constraints():
+    import ipaddress
+    with mock.patch.object(sys, 'path', [str(ROOT / 'deploy/scripts'), *sys.path]):
+        guard = load('ca_extension_pr8', 'deploy/scripts/check_ca_compatibility.py')
+    extension = 'X509v3 Name Constraints: critical\n Permitted:\n DNS:dashboard.local\n IP:192.168.56.10/255.255.255.255'
+    expected = ({'dashboard.local'}, {ipaddress.ip_network('192.168.56.10/32')})
+    assert guard.compatible(extension, *expected)
+    assert not guard.compatible(extension.replace(': critical', ':'), *expected)
+    assert not guard.compatible(extension.replace('dashboard.local', 'local'), *expected)
+
+
+def test_existing_lima_home_mount_is_rejected_before_start():
+    import json
+    lima = load('lima_existing_pr8', 'scripts/lima.py')
+    calls = []
+    def run(*args, **kwargs):
+        calls.append(args)
+        return mock.Mock(stdout='breadboard\n' if args == ('list', '-q') else json.dumps({'status': 'Stopped', 'config': {'mounts': [{'location': '~', 'writable': True}]}}))
+    with mock.patch.object(lima, 'run', side_effect=run), mock.patch('subprocess.run'), mock.patch.object(sys, 'argv', ['lima.py', 'up']), mock.patch.dict('os.environ', {}, clear=True):
+        with pytest.raises(SystemExit, match='mount only this repository'):
+            lima.main()
+    assert all(call[0] not in ('start', 'shell') for call in calls)
+
+
+def test_runner_without_status_is_unknown():
+    import io
+    with mock.patch.object(sys, 'argv', ['bb']):
+        bb = runpy.run_path(str(ROOT / 'scripts/bb'), run_name='bb_test')
+    with mock.patch('urllib.request.urlopen', return_value=io.BytesIO(b'[{"name":"fullsend-agent-runner"}]')):
+        assert bb['fetch_runners']('local') == [{'name': 'fullsend-agent-runner', 'scope': 'unknown', 'status': 'unknown'}]
+
+
+def test_real_gitlab_web_url_is_preserved():
+    from src.dashboard.ticket_data import TicketAggregator
+    with mock.patch.dict('os.environ', {}, clear=True):
+        collector = TicketAggregator()
+    with mock.patch.object(collector, '_gitlab_projects', return_value=[{'id': 1, 'path_with_namespace': 'org/repo'}]), mock.patch.object(collector, '_get', side_effect=[[{'iid': 1, 'title': 'external', 'web_url': 'https://gitlab.example.org/org/repo/-/issues/1'}], []]):
+        assert collector._gitlab()[0]['url'] == 'https://gitlab.example.org/org/repo/-/issues/1'

@@ -2,11 +2,11 @@
 """Seed demo issues, projects, and merge requests into Jira and GitLab emulators.
 
 Idempotently populates:
-1. Jira (https://jira.bb.internal):
+1. Jira (https://jira.<BREADBOARD_DOMAIN>):
    - RHAIRFE: 4 realistic RFEs from benchmark templates
    - RHAISTRAT: 3 realistic strategy initiatives/epics linked to RFEs
    - RHOAIENG: 4 realistic engineering bugs/tasks
-2. GitLab (https://gitlab.bb.internal):
+2. GitLab (https://gitlab.<BREADBOARD_DOMAIN>):
    - rhoai/odh-dashboard: 3 issues, 2 merge requests
    - rhoai/kserve: 3 issues, 2 merge requests
 Does NOT touch GitHub repositories.
@@ -23,7 +23,6 @@ from typing import Any
 from urllib.parse import quote
 
 import requests
-import urllib3
 import yaml
 
 DOMAIN = os.getenv("BREADBOARD_DOMAIN", "local").strip().strip(".") or "local"

@@ -91,7 +91,7 @@ Run the deployment inside the Lima VM mounting repository root:
    - Egress restricted to internet only (no lateral movement).
 3. Set up Split DNS in Tailscale Admin Console:
    - Route `*.bb.internal` to the VM's Tailscale IP (`100.x.y.z`).
-4. Validate access from client browser (e.g. from `proteus` over Tailscale).
+4. Validate access from client browser (e.g. from a client over Tailscale).
 
 **Breakpoint B4 (Remote Browser Access)**:
 - Open `https://dashboard.bb.internal` from remote browser.
@@ -131,11 +131,11 @@ Next step: Draft `deploy/lima/breadboard-vm.yaml` and parameterize reverse proxy
   - Installed native Go 1.24.1, Rust stable (`aarch64-unknown-linux-gnu`), and `docker-buildx` via provisioner.
   - Configured VM memory to 20GiB in `breadboard-vm.yaml` and `deploy/lima/README.md` for 32GiB host headroom.
   - Added `image_in_k3s` guards to `deploy/scripts/05-build-images.sh` and `deploy-all.sh` to avoid redundant builds.
-  - Added Linux page cache clearing (`sync && echo 3 > /proc/sys/vm/drop_caches`) and builder cache pruning after image builds.
+  - Historical experiment (removed during CC-61 review): added Linux page cache clearing (`sync && echo 3 > /proc/sys/vm/drop_caches`) and builder cache pruning after image builds.
   - Fixed `deploy/scripts/05k-build-github-actions-real-runner.sh` to install native ARM64 runner binaries on `aarch64`.
   - Fixed OpenShell helm chart alignment (`dependencies.json` pinned to `b2ea81822bb5263679ed00ff0fbe8c08577abab5` matching image tag `0.0.110`).
   - Fixed `deploy/k8s/18-observatory.yaml` `gcp-credentials` secret volume mount with `optional: true`.
-  - Added `dnsConfig` (`ndots: 2`) to `ingress-proxy` deployment and automated in-VM `/etc/hosts` sync for all `.local` and `.${DOMAIN}` endpoints.
+  - Added `dnsConfig` (`ndots: 2`) to `ingress-proxy` deployment and historical in-VM `/etc/hosts` sync (now explicit opt-in) for all `.local` and `.${DOMAIN}` endpoints.
   - Wrapped `24-fullsend-mint-dev.yaml`, `23-github-actions-runner.yaml`, and `27-fullsend-runner-egress.yaml` through `apply-domain-manifests.sh`.
   - Seeded Fullsend fixtures and verified `seed-fullsend-release.py` on both amd64 and arm64.
 - **Breakpoint B3 Verified**:
@@ -149,7 +149,7 @@ Next step: Draft `deploy/lima/breadboard-vm.yaml` and parameterize reverse proxy
 - Configured `breadboard-vm.<your-tailnet>.ts.net` (`100.64.0.10`, tagged `tag:breadboard`) as persistent Split DNS responder:
   - Added `dnsmasq` to package list in `deploy/lima/breadboard-vm.yaml`.
   - Created `deploy/scripts/29-configure-tailscale-dns.sh` and `make lima-configure-dns` target in `Makefile`.
-  - Added automatic invocation in `deploy/scripts/deploy-all.sh` when `tailscale0` interface is detected.
+  - Historical automatic invocation (removed during CC-61 review) in `deploy/scripts/deploy-all.sh` when `tailscale0` interface is detected.
   - Configured `/etc/dnsmasq.d/breadboard.conf` listening on `100.64.0.10:53` (UDP + TCP) with `bind-dynamic` and `except-interface=lo`, non-conflicting with `systemd-resolved` on `127.0.0.53`.
   - Handled `ubuntu-fan` configuration conflict with `bind-dynamic`.
   - Automated extraction of internal cluster CA certificate to `deploy/certs/ca.crt`.

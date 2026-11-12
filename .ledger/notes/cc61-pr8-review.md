@@ -18,7 +18,7 @@ Fixed findings (Claude identifiers refer to its first review):
   illustrative addresses. Seeded model configuration comes from deployment settings.
 - B3: Lima mounts only the repository, never the home directory. Lima 2+ required.
 - B4: render CA manifests on every component deploy path.
-- S1–4: rotate CA keys on renewal, narrow default external constraints to actual
+- S1–4: require explicit CA migration before changing an existing root, narrow default external constraints to actual
   service names, remove external wildcard, document feature gates and trust migration.
   Export current root directly; never export its private key.
 - S5–7: parameterize Jira/Org Pulse and related conformance defaults, correct TLS
@@ -57,7 +57,7 @@ Explicit deferrals:
 
 ## Validation
 
-Offline dashboard/domain/CLI/seed regression suite: 73 passed, 5 explicitly skipped
+Offline dashboard/domain/CLI/seed regression suite: 83 passed, 5 explicitly skipped
 live-stack tests. Go proxy tests pass (ephemeral loopback mock servers). Plugin Node
 checks pass. Changed shell scripts pass `bash -n`; Python compile checks pass.
 `git diff --check` passes. Re-run after subsequent changes.
@@ -70,3 +70,35 @@ not newly reproduced on corsair.
 
 No DCO/sign-off requirement was found in tracked contribution instructions.
 Human co-author credit is included when changing the author's code; no AI trailers.
+
+## Round 2
+
+Claude: request changes on frozen `b0c5183`. Its missing seed-CA blocker was
+already fixed by `35b8bb5`. The CA migration blocker is addressed by refusing an
+existing incompatible issued CA before mutation, retaining the root key on routine
+renewal, and validating all public leaf chains against the ConfigMap root.
+
+Additional fixes: check existing Lima mounts, avoid implicit online status and
+hardcoded runner scope, preserve genuine GitLab web URLs, pass the domain to
+host-reset, correct behaviour defaults/operator guide metadata, preserve runner
+build-context dotfiles, validate ticket sources, and remove duplicate/unused imports.
+
+Additional explicit deferrals: the named legacy direct-token HTTP smoke remains a
+`.local` compatibility fixture (not custom-domain TLS coverage); arm64 upstream-runner
+image/checksum qualification needs its ignored component checkout and disposable
+Apple Silicon build. These limitations are documented in the maintained Lima README.
+New site-runner mint/private-forge env settings are justified there.
+Historical author ledger logs describe superseded experiments, not current deployment
+behavior; current review/runbook notes override them. Retaining this review note in
+`.ledger/` follows repository policy for durable project evidence, not product docs.
+
+## Round 3 (frozen `9012150`)
+
+Claude: request changes for the same implicit CA/domain migration issue; accepted
+S8/S13/S15 deferrals. The next snapshot guards both stored CA specification and
+issued public constraints before any automatic CA apply, preserves the root key
+on routine renewal, and exposes migration guidance to Linux/Vagrant operators.
+All host deploy/reset/conformance Make targets forward the domain and explicit
+DNS/hosts/cache options; Lima passes the same settings by argv. Seeding reads only
+the public ConfigMap. Additional tests cover old-CA refusal, fresh clusters,
+existing-home-mount rejection, absent runner metadata, and real GitLab URLs.

@@ -26,7 +26,7 @@ echo "==> Building ${IMAGE} with ${CONTAINER_CMD}"
 BUILD_DIR="$(mktemp -d /tmp/runner-build.XXXXXX)"
 cleanup() { rm -rf "${BUILD_DIR}"; }
 trap cleanup EXIT
-cp -r "${RUNNER_CONTEXT}"/* "${BUILD_DIR}/"
+cp -a "${RUNNER_CONTEXT}/." "${BUILD_DIR}/"
 if [[ "$(uname -m)" == "aarch64" || "$(uname -m)" == "arm64" ]]; then
   sed -i "s/actions-runner-linux-x64/actions-runner-linux-arm64/g" "${BUILD_DIR}/Dockerfile"
 fi

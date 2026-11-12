@@ -25,14 +25,14 @@ from typing import Any, Dict, List, Optional, Tuple
 SKILL_DOC = """---
 name: breadboard-ops
 description: >
-  Operate the Breadboard K3s cluster, emulators, and Fullsend agent execution stack on rhea.
+  Operate the Breadboard K3s cluster, emulators, and Fullsend agent execution stack on the selected host.
   Use when inspecting cluster status, querying emulator tickets, monitoring Actions workflow
   runs and logs, resetting OpenShell state, or running conformance seeders.
 ---
 
 # Breadboard Operations Guide
 
-Authoritative, version-matched operational guide for Breadboard on physical host `rhea`.
+Authoritative, version-matched operational guide for Breadboard on the operator-selected cluster.
 
 ## 1. CLI Subcommands (`scripts/bb`)
 
@@ -64,9 +64,10 @@ Breadboard maintains three distinct, non-overlapping patch layers to bridge upst
    - Mirrors the full `fullsend-ai/agents` repository into the emulator.
    - Applies harness `MIRROR_PATCHES` (`0001` through `0005` under `deploy/fullsend/patches/agents/`), which configure GitHub host addresses, pass forge tokens into sandboxes, and select CA-bearing sandbox images. Patches here affect only what agent harnesses read at runtime.
 
-## 3. Physical Host `rhea` Hardware & Thermal Rules
+## 3. Physical Host Hardware & Thermal Rules
 
-`rhea` is an amd64 Fedora 44 physical host operating with fanless, passive cooling.
+For an example amd64 Fedora host with passive cooling, use the following limits.
+Confirm the actual host requirements before building; no host is selected implicitly.
 
 - **Thermal Boundary**: CPU core temperatures must remain strictly below 90°C. Normal idle temperature is 35°C–45°C.
 - **Strictly Sequential Builds**: Heavy compilation tasks (OpenShell Rust compiler, Go binary builds, container image generation) must run strictly sequentially. Never run parallel builds.
@@ -83,10 +84,10 @@ OpenShell 0.1.4 operates in `openshell-system` and orchestrates sandboxes in `ai
   - The gateway runs in `openshell-0` StatefulSet.
   - The supervisor runs in its own container alongside each sandbox and verifies upstream TLS against its own image's certificate bundle.
 - **`openshell-supervisor-local:k3s` CA Trust**:
-  - Because OpenShell 0.1.4 supervisor containers cannot dynamically mount external CA certificates without proxy configuration, `deploy/scripts/05i-build-fullsend.sh` builds `openshell-supervisor-local:k3s` from `ghcr.io/nvidia/openshell/supervisor` with the internal CA certificate (`/tmp/rhea-ca.crt`) appended directly into the image's trust store.
-- **`gcp-credentials` Dummy Placeholder Rule**:
+  - Because OpenShell 0.1.4 supervisor containers cannot dynamically mount external CA certificates without proxy configuration, `deploy/scripts/05i-build-fullsend.sh` builds `openshell-supervisor-local:k3s` from `ghcr.io/nvidia/openshell/supervisor` with the internal CA certificate (`internal-ca-cert` ConfigMap, staged as `CA_OUT`) appended directly into the image's trust store.
+- **`gcp-credentials` Requirements**:
   - Workloads and provider profiles requiring Google Cloud / Vertex AI inference declare volume mounts for Kubernetes secret `gcp-credentials`.
-  - When real Google ADC credentials are not configured, a dummy placeholder secret containing standard service-account JSON structure must be maintained so pods mount the volume and schedule successfully without container crashes.
+  - Observatory treats this secret as optional; workloads that actually use Vertex still need their configured credentials. Do not fabricate credentials to satisfy mounts.
 """
 
 VALID_SUBCOMMANDS = ("status", "runs", "logs", "tickets", "openshell", "seed")
@@ -251,17 +252,8 @@ def fetch_runners(domain: str) -> List[Dict[str, str]]:
                 name = r.get("name", "")
                 scope_kind = r.get("scope_kind", "")
                 scope_name = r.get("scope_name", "")
-                if name == "fullsend-agent-runner":
-                    scope = "fullsend-dev/triage-target"
-                elif scope_kind == "enterprise":
-                    scope = "enterprise"
-                elif scope_kind == "repository":
-                    scope = scope_name or "repository"
-                elif scope_kind == "site":
-                    scope = "site"
-                else:
-                    scope = scope_name or scope_kind or "site"
-                status = r.get("status", "online")
+                scope = scope_name or scope_kind or "unknown"
+                status = r.get("status") or "unknown"
                 runners.append({
                     "name": name,
                     "scope": scope,
@@ -365,7 +357,7 @@ def cmd_home(domain: str) -> None:
     max_temp, _ = get_thermal()
     pods_running, pods_total, _ = get_workloads()
     print("cluster{host,domain,max_temp_c,pods_running,pods_total}:")
-    print(f"  rhea,{domain},{max_temp},{pods_running},{pods_total}")
+    print(f"  {toon_val(RHEA_HOST or 'current-context')},{domain},{max_temp},{pods_running},{pods_total}")
 
     # Tickets summary
     tickets = fetch_tickets(domain)
@@ -413,7 +405,7 @@ def cmd_home(domain: str) -> None:
 def cmd_status(domain: str) -> None:
     max_temp, t_status = get_thermal()
     print("thermal{host,max_temp_c,status}:")
-    print(f"  rhea,{max_temp},{t_status}")
+    print(f"  {toon_val(RHEA_HOST or 'current-context')},{max_temp},{t_status}")
 
     _, _, pods = get_workloads()
     print(f"workloads[{len(pods)}]{{namespace,name,ready,status}}:")
@@ -1001,6 +993,8 @@ def main() -> None:
         i += 1
 
     import re
+    if parsed_flags.get("--source") not in (None, "github", "gitlab", "jira"):
+        error_exit("usage", "invalid ticket source", "use github, gitlab or jira", exit_code=2)
     repo = parsed_flags.get("--repo")
     if repo and repo != "all" and not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo):
         error_exit("usage", "invalid repository", "use owner/repo", exit_code=2)

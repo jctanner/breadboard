@@ -101,7 +101,6 @@ def ensure_repo() -> None:
 def git_env() -> dict[str, str]:
     env = os.environ.copy()
     env.pop("GIT_SSL_NO_VERIFY", None)
-    env["GIT_SSL_VERIFY"] = "true"
     if os.getenv("BREADBOARD_CA_FILE"):
         env["GIT_SSL_CAINFO"] = os.environ["BREADBOARD_CA_FILE"]
     env["GIT_TERMINAL_PROMPT"] = "0"
@@ -110,7 +109,7 @@ def git_env() -> dict[str, str]:
 
 def run_git(directory: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["git", *args], cwd=directory, env=git_env(), text=True,
+        ["git", "-c", "http.sslVerify=true", *args], cwd=directory, env=git_env(), text=True,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=check,
     )
 

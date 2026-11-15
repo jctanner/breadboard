@@ -1,5 +1,5 @@
 {
-  "jira-emulator:k3s": "ghcr.io/jctanner/jira-emulator-k3s:2026.11.15",
+  "jira-emulator:k3s": "ghcr.io/jctanner/jira-emulator-k3s:2026.11.15.1",
   "github-emulator:k3s": "ghcr.io/jctanner/github-emulator-k3s:2026.11.15",
   "gitlab-emulator:latest": "ghcr.io/jctanner/gitlab-emulator:2026.11.15",
   "hooksink:latest": "ghcr.io/jctanner/hooksink:2026.11.15",

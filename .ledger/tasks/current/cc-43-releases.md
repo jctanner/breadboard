@@ -120,3 +120,19 @@ runtime smoke configuration, not a value baked into the image.
 
 Anonymous GHCR reads already work for Jira standalone, Jira K3s and Entra ID.
 No package visibility changes were necessary or performed.
+
+## Verified release progress
+
+- Jira corrective PR #33 merged at a9b93fcb333b51243a1fe8d549611623ee7dca73.
+  The corrected tag-driven workflow automatically created 2026.11.15.1;
+  Breadboard now pins this release. Original 2026.11.15 tag/images are unchanged.
+- Entra ID #1 merged at e8d58605c9d61d37d83d4b5209aea0453bab1e52;
+  automatic 2026.11.15 release published.
+- Google Docs #1 merged at 9b6f6ac4613a67d9519d766150e4be9900f5a92d;
+  automatic 2026.11.15 release published.
+- Hooksink #1 merged at 4861f01d20db998c4bb1f43405e20ed17688de88;
+  awaiting default-branch publication before tagging.
+- GitHub/GitLab image smoke checks pass after standalone /data URL fixes;
+  full Python CI remains pending. GitLab smoke now runs through Caddy.
+- Jira and Entra latest OCI revisions match their current main commits and
+  remain labeled latest after release publication. Anonymous reads succeeded.

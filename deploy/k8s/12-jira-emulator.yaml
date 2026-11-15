@@ -68,7 +68,7 @@ spec:
 
       containers:
       - name: jira-emulator
-        image: ghcr.io/jctanner/jira-emulator-k3s:2026.11.15
+        image: ghcr.io/jctanner/jira-emulator-k3s:2026.11.15.1
         imagePullPolicy: IfNotPresent
 
         ports:

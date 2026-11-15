@@ -37,4 +37,4 @@ class ReleaseImagesTest(unittest.TestCase):
         for published in json.loads((ROOT / "deploy/release-images.json").read_text()).values():
             self.assertIn("image: " + published, combined)
         rendered = MODULE.transform_manifest(MODULE.transform_images(combined), "bb.example")
-        self.assertIn("ghcr.io/jctanner/jira-emulator-k3s:2026.11.15", rendered)
+        self.assertIn("ghcr.io/jctanner/jira-emulator-k3s:2026.11.15.1", rendered)

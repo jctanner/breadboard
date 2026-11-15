@@ -41,8 +41,8 @@ spec:
 
       containers:
       - name: dashboard
-        image: pipeline-dashboard:latest
-        imagePullPolicy: Never  # Use local image
+        image: ghcr.io/jctanner/breadboard-dashboard:2026.11.15
+        imagePullPolicy: IfNotPresent
 
         command:
         - /bin/bash

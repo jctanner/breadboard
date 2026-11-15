@@ -34,7 +34,7 @@ echo "--- Creating storage ---"
 kubectl apply -f 03-storage.yaml
 
 echo "--- Deploying GitLab Emulator ---"
-kubectl apply -f 19-gitlab-emulator.yaml
+"${SCRIPT_DIR}/apply-domain-manifests.sh" 19-gitlab-emulator.yaml
 
 echo ""
 echo "==> Deployment complete!"

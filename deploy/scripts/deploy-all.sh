@@ -94,7 +94,7 @@ if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "fullsend-runner-dev:k3s" || !
   bash "${SCRIPT_DIR}/05i-build-fullsend.sh"
 fi
 
-if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "fullsend-dashboard:latest"; then
+if [ "${BREADBOARD_IMAGE_SOURCE:-published}" = local ] && { [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "fullsend-dashboard:latest"; }; then
   bash "${SCRIPT_DIR}/05j-build-fullsend-dashboard.sh"
 fi
 
@@ -102,11 +102,11 @@ if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "org-pulse-backend:k3s" || ! i
   bash "${SCRIPT_DIR}/05l-build-org-pulse.sh"
 fi
 
-if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "model-relay:latest"; then
+if [ "${BREADBOARD_IMAGE_SOURCE:-published}" = local ] && { [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "model-relay:latest"; }; then
   bash "${SCRIPT_DIR}/05m-build-model-relay.sh"
 fi
 
-if [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "hooksink:latest"; then
+if [ "${BREADBOARD_IMAGE_SOURCE:-published}" = local ] && { [ "${FORCE_REBUILD}" = "1" ] || ! image_in_k3s "hooksink:latest"; }; then
   bash "${SCRIPT_DIR}/05n-build-hooksink.sh"
 fi
 

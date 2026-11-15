@@ -20,7 +20,7 @@ if ! kubectl get secret model-relay-admin -n "${NAMESPACE}" >/dev/null 2>&1; the
 fi
 
 "${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/02-certificates.yaml"
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/29-model-relay.yaml"
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/29-model-relay.yaml"
 "${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/08-ingress-https.yaml"
 
 echo "  Waiting for Model Relay..."

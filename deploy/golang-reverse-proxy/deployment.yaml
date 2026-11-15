@@ -46,7 +46,7 @@ spec:
             value: "2"
       containers:
       - name: proxy
-        image: ingress-proxy:latest
+        image: ghcr.io/jctanner/breadboard-golang-reverse-proxy:2026.11.15
         imagePullPolicy: IfNotPresent
 
         ports:

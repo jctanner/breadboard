@@ -68,8 +68,8 @@ spec:
       serviceAccountName: fullsend-dashboard
       containers:
         - name: dashboard
-          image: fullsend-dashboard:latest
-          imagePullPolicy: Never
+          image: ghcr.io/jctanner/breadboard-fullsend-dashboard:2026.11.15
+          imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 5000

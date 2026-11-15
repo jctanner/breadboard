@@ -21,7 +21,7 @@ if ! kubectl get secret hooksink-tokens -n "${NAMESPACE}" >/dev/null 2>&1; then
     --from-literal=default-sender-token="${HOOKSINK_DEFAULT_SENDER_TOKEN:-whs_$(random_value)}" \
     --from-literal=default-consumer-token="${HOOKSINK_DEFAULT_CONSUMER_TOKEN:-whc_$(random_value)}"
 fi
-kubectl apply -f "${PROJECT_ROOT}/deploy/k8s/31-hooksink.yaml"
+"${SCRIPT_DIR}/apply-domain-manifests.sh" "${PROJECT_ROOT}/deploy/k8s/31-hooksink.yaml"
 
 echo "  Waiting for webhook sink..."
 kubectl wait --for=condition=Available --timeout=120s deployment/hooksink -n "${NAMESPACE}" || true

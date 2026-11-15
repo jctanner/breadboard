@@ -9,6 +9,7 @@ PROJECT_ROOT="${SCRIPT_DIR}/../.."
 
 echo "==> Deploying Go Reverse Proxy (Ingress Controller)..."
 
+if [ "${BREADBOARD_IMAGE_SOURCE:-published}" = local ]; then
 # Use docker or podman
 if command -v docker &> /dev/null; then
   CONTAINER_CMD="docker"
@@ -30,6 +31,10 @@ sudo k3s ctr images rm docker.io/library/ingress-proxy:latest localhost/ingress-
 ${CONTAINER_CMD} save ingress-proxy:latest | sudo k3s ctr images import - > /dev/null
 sudo k3s ctr images tag localhost/ingress-proxy:latest docker.io/library/ingress-proxy:latest 2>/dev/null || true
 
+fi
+
+# Both image sources apply the same maintained manifest.
+cd "${PROJECT_ROOT}/deploy/golang-reverse-proxy"
 # Deploy to cluster
 echo "  Deploying to Kubernetes..."
 "${SCRIPT_DIR}/apply-domain-manifests.sh" deployment.yaml

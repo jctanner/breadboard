@@ -789,3 +789,6 @@ backup-full: host-backup-full ## Shortcut
 restore: host-restore ## Shortcut
 list-backups: host-list-backups ## Shortcut
 clean-all: host-clean-all ## Shortcut
+
+# Explicit rebuild commands retain local builds and deploy their local tags.
+host-rebuild-dashboard host-rebuild-fullsend-dashboard host-rebuild-jira host-rebuild-github host-rebuild-gitlab host-rebuild-ingress-proxy host-rebuild-relay host-rebuild-hooksink host-rebuild-all-with-emulators: export BREADBOARD_IMAGE_SOURCE = local

@@ -1,0 +1,166 @@
+{
+  "verified_at_utc": "2026-11-15T21:39:01.685987+00:00",
+  "status": "All eight component releases verified; Breadboard matrix publication pending",
+  "deployment_performed": false,
+  "package_visibility_changed": false,
+  "repositories": {
+    "jctanner/jira-emulator": {
+      "tag": "2026.11.15.1",
+      "url": "https://github.com/jctanner/jira-emulator/releases/tag/2026.11.15.1",
+      "images": {
+        "ghcr.io/jctanner/jira-emulator": {
+          "release_digest": "sha256:446aceda6048c490e0e99ff396fdc95f93051f204239c13adf7472ee18bb034d",
+          "latest_digest": "sha256:98a4f3b38cc6e61275c7f9fcd7dd933fc714b8f290d35f940d6766ea22b01737",
+          "source": "a9b93fcb333b51243a1fe8d549611623ee7dca73",
+          "anonymous_pull": true
+        },
+        "ghcr.io/jctanner/jira-emulator-k3s": {
+          "release_digest": "sha256:7751ab7312d662a3b66490c4969a100aa951d25da6777a7fd9f4e95015c4d71d",
+          "latest_digest": "sha256:a98b3dd0a4afbb5e7ed5c7fd6ceebcf6a1b66005dfb062a73523a273f56ff550",
+          "source": "a9b93fcb333b51243a1fe8d549611623ee7dca73",
+          "anonymous_pull": true
+        }
+      }
+    },
+    "jctanner/entra-id-emulator": {
+      "tag": "2026.11.15",
+      "url": "https://github.com/jctanner/entra-id-emulator/releases/tag/2026.11.15",
+      "images": {
+        "ghcr.io/jctanner/entra-id-emulator": {
+          "release_digest": "sha256:1424858c4b3a7561665667f2e241fe32d51cc71cfcd79c3bc477f14637089f66",
+          "latest_digest": "sha256:df415940c734bf260aa09f6a2cbc7c11e6b58bdb00b4980b6ecf44506db3bb83",
+          "source": "e8d58605c9d61d37d83d4b5209aea0453bab1e52",
+          "anonymous_pull": true
+        }
+      }
+    },
+    "jctanner/google-docs-emulator": {
+      "tag": "2026.11.15",
+      "url": "https://github.com/jctanner/google-docs-emulator/releases/tag/2026.11.15",
+      "images": {
+        "ghcr.io/jctanner/google-docs-emulator": {
+          "release_digest": "sha256:9d5185c4e4b1d7297921e85dfeb79e527a6964d8e0e68d62d9391604329cb1a2",
+          "latest_digest": "sha256:42a8eabf9b12f104e08765bfbe322ee05e4f7e73e2dc1c65b8c76b8b7ed990e3",
+          "source": "9b6f6ac4613a67d9519d766150e4be9900f5a92d",
+          "anonymous_pull": true
+        }
+      }
+    },
+    "jctanner/hooksink": {
+      "tag": "2026.11.15",
+      "url": "https://github.com/jctanner/hooksink/releases/tag/2026.11.15",
+      "images": {
+        "ghcr.io/jctanner/hooksink": {
+          "release_digest": "sha256:34dc639557a2d38ee97b7744c41cff81754250bb959fd1ffbb129d552d60d9d1",
+          "latest_digest": "sha256:609f34797473b9a5c8adbb7d1aa82f39ccfddc21cdbd3ffb81a4b08b5edc79ef",
+          "source": "4861f01d20db998c4bb1f43405e20ed17688de88",
+          "anonymous_pull": true
+        }
+      }
+    },
+    "jctanner/slack-emulator": {
+      "tag": "2026.11.15",
+      "url": "https://github.com/jctanner/slack-emulator/releases/tag/2026.11.15",
+      "images": {
+        "ghcr.io/jctanner/slack-emulator": {
+          "release_digest": "sha256:a0fa4571062a75828e3ac435ce22a23e285547a30b759f7561d3b745141f0795",
+          "latest_digest": "sha256:045e7bfce69c437c8f2f2a0453adeef5a2265ea845c2867b7101cec19994046c",
+          "source": "17b289a59ec966c978296eb5676a602329773c61",
+          "anonymous_pull": true
+        }
+      }
+    },
+    "jctanner/model-relay": {
+      "tag": "2026.11.15",
+      "url": "https://github.com/jctanner/model-relay/releases/tag/2026.11.15",
+      "images": {
+        "ghcr.io/jctanner/model-relay": {
+          "release_digest": "sha256:d20ab116f1e8065f7b170ffb40002a4c7deb1b47dc5fa91fb6b539186374249d",
+          "latest_digest": "sha256:d1d8fa1b517902256bd888e0f9fa0dc21f3a2b5de420face6d5d6ac85c37be04",
+          "source": "a2834fa2b1118d28728384cfdf9d069f57906bdf",
+          "anonymous_pull": true
+        }
+      }
+    },
+    "jctanner/github-emulator": {
+      "tag": "2026.11.15",
+      "url": "https://github.com/jctanner/github-emulator/releases/tag/2026.11.15",
+      "images": {
+        "ghcr.io/jctanner/github-emulator": {
+          "release_digest": "sha256:b0fa193de528755ffede90011dc852516a9aed10b08b0873239f9b3d9ddfba2a",
+          "latest_digest": "sha256:06787c46608a983773652401a3ed3a0cae578b97b829af0fcfb785c4e3bd1331",
+          "source": "0273956cd730cff0249f37eee8b1cc6db7c0ef06",
+          "anonymous_pull": true
+        },
+        "ghcr.io/jctanner/github-emulator-k3s": {
+          "release_digest": "sha256:1bda90babb3f8120ce9de6f37381bd157098a77ede839e9234d2610520351d9a",
+          "latest_digest": "sha256:e41805bf8534079651069106d46e00c1d1ec73c66d9b273f712d653ed9592fc3",
+          "source": "0273956cd730cff0249f37eee8b1cc6db7c0ef06",
+          "anonymous_pull": true
+        }
+      }
+    },
+    "jctanner/gitlab-emulator": {
+      "tag": "2026.11.15",
+      "url": "https://github.com/jctanner/gitlab-emulator/releases/tag/2026.11.15",
+      "images": {
+        "ghcr.io/jctanner/gitlab-emulator": {
+          "release_digest": "sha256:7b558202cbf4c090c20662c09c4da0ce06a5739d8288e62bddda0b0a36c4f66d",
+          "latest_digest": "sha256:5da90743f0506b046ccf500d005b10751d865d846509d2dd5fdbe98331b29dfc",
+          "source": "bfb7f2b28894fa5b0a44016f012e27fe708c722e",
+          "anonymous_pull": true
+        }
+      }
+    }
+  },
+  "merged_prs": {
+    "jctanner/jira-emulator": {
+      "pr": 33,
+      "head_sha": "4a8248802ec4fa62284663d43d7fcd5f76858d2e",
+      "merge_sha": "a9b93fcb333b51243a1fe8d549611623ee7dca73",
+      "url": "https://github.com/jctanner/jira-emulator/pull/33"
+    },
+    "jctanner/entra-id-emulator": {
+      "pr": 1,
+      "head_sha": "096bdcbb50b30a74a16245d35c9dcc5564019488",
+      "merge_sha": "e8d58605c9d61d37d83d4b5209aea0453bab1e52",
+      "url": "https://github.com/jctanner/entra-id-emulator/pull/1"
+    },
+    "jctanner/google-docs-emulator": {
+      "pr": 1,
+      "head_sha": "a42e2ba57f81af96844a7d5e8f422249c45d6080",
+      "merge_sha": "9b6f6ac4613a67d9519d766150e4be9900f5a92d",
+      "url": "https://github.com/jctanner/google-docs-emulator/pull/1"
+    },
+    "jctanner/hooksink": {
+      "pr": 1,
+      "head_sha": "00ac33609ee5eccf3ace7820f406eb96646d879f",
+      "merge_sha": "4861f01d20db998c4bb1f43405e20ed17688de88",
+      "url": "https://github.com/jctanner/hooksink/pull/1"
+    },
+    "jctanner/slack-emulator": {
+      "pr": 1,
+      "head_sha": "d2445406308a1846cb0b61a0e3c7ec7f9f84baa4",
+      "merge_sha": "17b289a59ec966c978296eb5676a602329773c61",
+      "url": "https://github.com/jctanner/slack-emulator/pull/1"
+    },
+    "jctanner/model-relay": {
+      "pr": 1,
+      "head_sha": "4609c9cf5af85842685574a8eef681fece6d4ce7",
+      "merge_sha": "a2834fa2b1118d28728384cfdf9d069f57906bdf",
+      "url": "https://github.com/jctanner/model-relay/pull/1"
+    },
+    "jctanner/github-emulator": {
+      "pr": 23,
+      "head_sha": "c9209ae6ca984c569059117ddb434c841e6272cb",
+      "merge_sha": "0273956cd730cff0249f37eee8b1cc6db7c0ef06",
+      "url": "https://github.com/jctanner/github-emulator/pull/23"
+    },
+    "jctanner/gitlab-emulator": {
+      "pr": 1,
+      "head_sha": "c62b629c8da085643b32987c2971ec02894e8066",
+      "merge_sha": "bfb7f2b28894fa5b0a44016f012e27fe708c722e",
+      "url": "https://github.com/jctanner/gitlab-emulator/pull/1"
+    }
+  }
+}

@@ -142,3 +142,44 @@ context because the existing pipeline-agent Dockerfile explicitly copies that
 installation's public CA. The selected release Dockerfiles do not copy it;
 .env files, key files and unrelated checkouts remain excluded. This preserves
 the deferred agent's existing local build path.
+
+## Remaining full-suite CI completed
+
+- GitHub emulator: 1066 passed in 613.58s; both image variants passed.
+- GitLab emulator: 749 passed in 477.02s; image smoke passed. The scoped
+  clean-runner/parser/precedence fixes are included in its single rollout PR.
+- Breadboard final PR checks are green. Its merge remains gated on the
+  GitHub/GitLab release pins actually existing and passing registry verification.
+- Six component repositories have verified GitHub releases, matching image
+  digests/source labels, unchanged latest semantics and anonymous pull access.
+
+## Final publication stage
+
+GitHub emulator #23 merged at 0273956cd730cff0249f37eee8b1cc6db7c0ef06;
+GitLab emulator #1 merged at bfb7f2b28894fa5b0a44016f012e27fe708c722e.
+Both main image publication runs succeeded. First CalVer tags are now being
+allocated from current remote state; GitLab's 2026.06.30 tag remains unchanged.
+The machine-readable verification note records the six already verified
+component releases; it will be completed after the final publications.
+
+## Component release verification complete
+
+All eight component repositories now have verified releases and anonymous GHCR
+pulls. GitHub/GitLab release tags and image digests match their merged source
+commits. Their latest images retain latest labels and the correct main source
+revision after release publication. No package visibility changes were needed.
+
+- jctanner/entra-id-emulator: [2026.11.15](https://github.com/jctanner/entra-id-emulator/releases/tag/2026.11.15); PR #1; 1 verified image(s).
+- jctanner/github-emulator: [2026.11.15](https://github.com/jctanner/github-emulator/releases/tag/2026.11.15); PR #23; 2 verified image(s).
+- jctanner/gitlab-emulator: [2026.11.15](https://github.com/jctanner/gitlab-emulator/releases/tag/2026.11.15); PR #1; 1 verified image(s).
+- jctanner/google-docs-emulator: [2026.11.15](https://github.com/jctanner/google-docs-emulator/releases/tag/2026.11.15); PR #1; 1 verified image(s).
+- jctanner/hooksink: [2026.11.15](https://github.com/jctanner/hooksink/releases/tag/2026.11.15); PR #1; 1 verified image(s).
+- jctanner/jira-emulator: [2026.11.15.1](https://github.com/jctanner/jira-emulator/releases/tag/2026.11.15.1); PR #33; 2 verified image(s).
+- jctanner/model-relay: [2026.11.15](https://github.com/jctanner/model-relay/releases/tag/2026.11.15); PR #1; 1 verified image(s).
+- jctanner/slack-emulator: [2026.11.15](https://github.com/jctanner/slack-emulator/releases/tag/2026.11.15); PR #1; 1 verified image(s).
+
+The verification JSON contains exact release/latest digests and source SHAs.
+Breadboard PR #11 is the final publication step; its selected image pins now
+all resolve to verified component releases. Its own matrix images will be
+verified after merging and tagging. Final verification will also be attached
+to the Breadboard GitHub release as a release manifest.

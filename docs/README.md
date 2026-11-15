@@ -59,3 +59,7 @@ Stable reference material.
 ## Reference (top-level)
 
 - [vertex-claude-runtime.md](vertex-claude-runtime.md) — Vertex AI Claude runtime wiring
+
+## Releases
+
+- [Service releases, published images and local builds](releases.md)

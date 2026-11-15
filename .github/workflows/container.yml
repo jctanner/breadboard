@@ -81,7 +81,11 @@ jobs:
           VARIANT: ${{ matrix.variant }}
           CONTAINER_PORT: ${{ matrix.port }}
         run: |
-          docker run -d --name release-smoke -p "127.0.0.1:8080:$CONTAINER_PORT" release-smoke:local
+          extra=()
+          if [[ "$VARIANT" == dashboard ]]; then
+            extra=(-e ANTHROPIC_VERTEX_PROJECT_ID=synthetic-ci-project)
+          fi
+          docker run -d --name release-smoke -p "127.0.0.1:8080:$CONTAINER_PORT" "${extra[@]}" release-smoke:local
           for _ in $(seq 1 30); do
             if curl --max-time 2 -fsS http://127.0.0.1:8080/healthz > /dev/null; then
               exit 0

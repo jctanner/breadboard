@@ -98,3 +98,25 @@ retried and no release was overwritten.
 - Deployment manifests use immutable CalVer pins; explicit rebuild targets
   export BREADBOARD_IMAGE_SOURCE=local and retain existing local build tags.
 - No cluster deployment or package visibility change has been performed.
+
+## Rollout PRs
+
+- Jira reference #32 merged; publication correction #33 open.
+- GitHub emulator #23: https://github.com/jctanner/github-emulator/pull/23
+- GitLab emulator #1: https://github.com/jctanner/gitlab-emulator/pull/1
+- Slack emulator #1: https://github.com/jctanner/slack-emulator/pull/1
+- Hooksink #1: https://github.com/jctanner/hooksink/pull/1
+- Model Relay #1: https://github.com/jctanner/model-relay/pull/1
+- Entra ID #1: https://github.com/jctanner/entra-id-emulator/pull/1
+- Google Docs #1: https://github.com/jctanner/google-docs-emulator/pull/1
+
+All PR creation calls succeeded; no missing per-repository write access has
+been observed. Fine-grained token values were read only at request time.
+
+Dashboard image build succeeded, but startup requires a configured model
+project or relay URL. Inspected the failed smoke logs; the smoke fixture now
+sets only a synthetic project name (no credentials, no inference). This is
+runtime smoke configuration, not a value baked into the image.
+
+Anonymous GHCR reads already work for Jira standalone, Jira K3s and Entra ID.
+No package visibility changes were necessary or performed.

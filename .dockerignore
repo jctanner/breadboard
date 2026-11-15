@@ -59,7 +59,6 @@ remote_skills/
 .env.*
 *.pem
 *.key
-internal-ca.crt
 checkouts/*
 !checkouts/openshell/
 checkouts/openshell/*

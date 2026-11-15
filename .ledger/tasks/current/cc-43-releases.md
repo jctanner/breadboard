@@ -40,7 +40,7 @@ parent branch and human's uncommitted work untouched.
 ## Acceptance criteria
 
 - [x] Inventory and approval
-- [ ] Jira reference PR merged with green CI and first release published
+- [x] Jira reference PR merged with green CI and first release published
 - [ ] Remaining owned repositories: one PR, green CI, release and image each
 - [ ] Breadboard matrix publication and pinned deployment option
 - [ ] Non-owned repository proposals and deferred image decisions documented
@@ -136,3 +136,9 @@ No package visibility changes were necessary or performed.
   full Python CI remains pending. GitLab smoke now runs through Caddy.
 - Jira and Entra latest OCI revisions match their current main commits and
   remain labeled latest after release publication. Anonymous reads succeeded.
+
+A final local-build review retained internal-ca.crt in the root Docker build
+context because the existing pipeline-agent Dockerfile explicitly copies that
+installation's public CA. The selected release Dockerfiles do not copy it;
+.env files, key files and unrelated checkouts remain excluded. This preserves
+the deferred agent's existing local build path.

@@ -51,3 +51,22 @@ remote_skills/
 # Exclude build/temp files
 *.log
 .DS_Store
+
+# Release builds include only the pinned OpenShell SDK inputs, never host state.
+.git
+**/.git
+.env
+.env.*
+*.pem
+*.key
+internal-ca.crt
+checkouts/*
+!checkouts/openshell/
+checkouts/openshell/*
+!checkouts/openshell/python/
+!checkouts/openshell/proto/
+!checkouts/openshell/tasks/
+checkouts/openshell/tasks/*
+!checkouts/openshell/tasks/scripts/
+checkouts/openshell/tasks/scripts/*
+!checkouts/openshell/tasks/scripts/generate_python_proto.py

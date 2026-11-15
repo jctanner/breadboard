@@ -30,7 +30,9 @@ FORCE_REBUILD="${FORCE_REBUILD:-1}"
 echo "--- Building pipeline-dashboard image (web UI) ---"
 cd ${PROJECT_ROOT}
 
-if [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "pipeline-dashboard:latest"; then
+if [ "${BREADBOARD_IMAGE_SOURCE:-published}" = published ]; then
+  echo "Using pinned published pipeline-dashboard image"
+elif [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "pipeline-dashboard:latest"; then
   echo "  pipeline-dashboard:latest already in k3s, skipping (set FORCE_REBUILD=1 to rebuild)"
 elif [ -f deploy/dashboard/Dockerfile ]; then
   ${CONTAINER_CMD} build -f deploy/dashboard/Dockerfile -t pipeline-dashboard:latest .
@@ -137,7 +139,9 @@ fi
 echo ""
 
 # Build github-emulator if the repo exists
-if [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "github-emulator:k3s"; then
+if [ "${BREADBOARD_IMAGE_SOURCE:-published}" = published ]; then
+  echo "Using pinned published github-emulator image"
+elif [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "github-emulator:k3s"; then
   echo "--- github-emulator:k3s already in k3s, skipping ---"
 elif [ -d ${PROJECT_ROOT}/checkouts/github-emulator ]; then
   echo "--- Building github-emulator image for k3s ---"
@@ -158,7 +162,9 @@ else
 fi
 
 # Build jira-emulator if the repo exists
-if [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "jira-emulator:k3s"; then
+if [ "${BREADBOARD_IMAGE_SOURCE:-published}" = published ]; then
+  echo "Using pinned published jira-emulator image"
+elif [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "jira-emulator:k3s"; then
   echo "--- jira-emulator:k3s already in k3s, skipping ---"
 elif [ -d ${PROJECT_ROOT}/checkouts/jira-emulator ]; then
   echo "--- Building jira-emulator image for k3s ---"
@@ -195,7 +201,9 @@ else
 fi
 
 # Build gitlab-emulator if the repo exists
-if [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "gitlab-emulator:latest"; then
+if [ "${BREADBOARD_IMAGE_SOURCE:-published}" = published ]; then
+  echo "Using pinned published gitlab-emulator image"
+elif [ "${FORCE_REBUILD}" != "1" ] && image_in_k3s "gitlab-emulator:latest"; then
   echo "--- gitlab-emulator:latest already in k3s, skipping ---"
 elif [ -d ${PROJECT_ROOT}/checkouts/gitlab-emulator ]; then
   echo "--- Building gitlab-emulator image for k3s ---"

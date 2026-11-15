@@ -15,7 +15,9 @@ external domain; .local aliases are HTTP-only when a custom domain is used:
 CRITICAL: Internal cluster names (*.svc.cluster.local) are NEVER modified.
 """
 
+import json
 import os
+from pathlib import Path
 import re
 import sys
 
@@ -183,6 +185,21 @@ def transform_manifest(content: str, domain: str) -> str:
     return result
 
 
+
+def transform_images(content: str, source: str = "published") -> str:
+    """Select release pins or the existing local build tags, only in image fields."""
+    if source not in {"published", "local"}:
+        raise ValueError("BREADBOARD_IMAGE_SOURCE must be published or local")
+    mapping = json.loads((Path(__file__).resolve().parents[1] / "release-images.json").read_text())
+    if source == "local":
+        mapping = {published: local for local, published in mapping.items()}
+    return re.sub(
+        r"(?m)^(\s*image:\s*)([^\s#]+)([^\n]*)$",
+        lambda match: match[1] + mapping.get(match[2], match[2]) + match[3],
+        content,
+    )
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         print("Usage: render_domain_manifest.py <file|-> [domain]", file=sys.stderr)
@@ -200,7 +217,7 @@ def main() -> None:
         with open(file_arg, "r", encoding="utf-8") as f:
             content = f.read()
 
-    rendered = transform_manifest(content, domain)
+    rendered = transform_manifest(transform_images(content, os.getenv("BREADBOARD_IMAGE_SOURCE", "published")), domain)
     sys.stdout.write(rendered)
 
 

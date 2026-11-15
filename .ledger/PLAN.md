@@ -1031,3 +1031,7 @@ Other existing work remains under `plans/`, `tasks/`, `bugs/`, and `decisions/`.
 - [Other Claude subagent information channels](tasks/done/claude-subagent-shared-information-analysis.md): complete; six new controls, file-change injection, host/model distinction and dormant nested-memory flag documented.
 
 - [Claude skill variable expansion](tasks/done/claude-skill-variable-expansion-analysis.md): complete; full prompt-placeholder catalog, field/stage differences, nine controls and forty-one exact symbols documented.
+
+## CC-43
+
+- [Service releases and container images](tasks/current/cc-43-releases.md)

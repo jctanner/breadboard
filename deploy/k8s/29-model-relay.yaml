@@ -106,8 +106,8 @@ spec:
         runAsNonRoot: true
       containers:
         - name: relay
-          image: model-relay:latest
-          imagePullPolicy: Never
+          image: ghcr.io/jctanner/model-relay:2026.11.15
+          imagePullPolicy: IfNotPresent
           ports:
             - name: inference
               containerPort: 8080

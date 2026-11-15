@@ -1,0 +1,10 @@
+{
+  "jira-emulator:k3s": "ghcr.io/jctanner/jira-emulator-k3s:2026.11.15",
+  "github-emulator:k3s": "ghcr.io/jctanner/github-emulator-k3s:2026.11.15",
+  "gitlab-emulator:latest": "ghcr.io/jctanner/gitlab-emulator:2026.11.15",
+  "hooksink:latest": "ghcr.io/jctanner/hooksink:2026.11.15",
+  "model-relay:latest": "ghcr.io/jctanner/model-relay:2026.11.15",
+  "pipeline-dashboard:latest": "ghcr.io/jctanner/breadboard-dashboard:2026.11.15",
+  "fullsend-dashboard:latest": "ghcr.io/jctanner/breadboard-fullsend-dashboard:2026.11.15",
+  "ingress-proxy:latest": "ghcr.io/jctanner/breadboard-golang-reverse-proxy:2026.11.15"
+}

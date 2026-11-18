@@ -1,0 +1,61 @@
+{
+  "scenario": "S9",
+  "kill_switch": {
+    "off": {
+      "pipeline": 28,
+      "variables": {
+        "STRAT_EXECUTOR": "fullsend",
+        "STRAT_DRY_RUN": "1",
+        "FULLSEND_PUBLISH": "0"
+      },
+      "jobs": {
+        "fullsend-input-check": "failed",
+        "python-tests": "success",
+        "workflow-batch-jql": "manual"
+      }
+    },
+    "on": {
+      "pipeline": 29,
+      "variables": {
+        "STRAT_EXECUTOR": "fullsend",
+        "STRAT_DRY_RUN": "1",
+        "FULLSEND_PUBLISH": "0",
+        "INITIATIVE_STRATEGIES": "on"
+      },
+      "jobs": {
+        "fullsend-input-check": "failed",
+        "python-tests": "success",
+        "workflow-batch-initiative": "manual"
+      }
+    },
+    "checks": {
+      "off_python_tests_success": true,
+      "off_offers_rfe_batch": true,
+      "off_has_no_initiative_job": true,
+      "on_python_tests_success": true,
+      "on_offers_initiative_job": true,
+      "on_suppresses_rfe_batch": true
+    }
+  },
+  "rollback": {
+    "baseline": "snapshot_cc75-baseline_20261116_003128.db",
+    "after_s7b": "snapshot_cc75-after-S7b_20261116_125308.db",
+    "issues": 78,
+    "changed_by_s7": [
+      "RHAISTRAT-75006",
+      "RHAISTRAT-75009",
+      "RHAISTRAT-75010",
+      "RHAISTRAT-75019"
+    ],
+    "restore_differences": [],
+    "catalogue_problems": [],
+    "checks": {
+      "restore_is_exact": true,
+      "s7_changes_were_present": true,
+      "matches_catalogue": true,
+      "baseline_has_no_strategy_artifacts": true
+    }
+  },
+  "ok": true,
+  "checked_at": "2026-11-16T16:09:04.778408+00:00"
+}

@@ -1,0 +1,412 @@
+# CC-75 synthetic Initiative catalogue.
+#
+# Everything here is fictional: product areas, people, components and text.
+# No real Red Hat Jira keys, names or ticket text. The Initiatives deliberately
+# span a range of quality, length and decomposition. generate_initiatives.py renders this file into
+# Jira-API-shaped issues plus the expected.yaml oracle.
+
+version: 1
+anchor_date: "2026-11-01T12:00:00.000+0000"   # created dates count back from here
+key_base: 75001                                # synthetic key block per project
+fixture_label: cc75-synthetic
+
+roster:
+  pms: [synth-pm-01, synth-pm-02, synth-pm-03, synth-pm-04, synth-pm-05, synth-pm-06]
+  engineers: [synth-eng-01, synth-eng-02, synth-eng-03, synth-eng-04]
+
+outcomes:
+  - id: O1
+    summary: Trustworthy platform foundations
+    reporter: synth-pm-01
+    assignee: synth-pm-01
+    status: In Progress
+    created_days_ago: 300
+  - id: O2
+    summary: Multi-cluster operations at scale
+    reporter: synth-pm-02
+    assignee: synth-pm-02
+    status: In Progress
+    created_days_ago: 260
+  - id: O3
+    summary: Developer productivity for model builders
+    reporter: synth-pm-03
+    assignee: synth-pm-03
+    status: New
+    created_days_ago: 120
+
+# Synthetic RFEs, only to be the source of Cloners links.
+rfes:
+  - id: R1
+    summary: Show GPU quota consumption per team
+    reporter: synth-pm-04
+  - id: R2
+    summary: Report CI spend per repository
+    reporter: synth-pm-06
+
+# Pipeline label variants (see plan section 4.3):
+#   opted-in     initiative-autofix-opt-in
+#   rubric-pass  opted-in + initiative-autofix-rubric-pass
+#   needs-attn   opted-in + initiative-needs-attention
+initiatives:
+  - id: I01
+    archetype: G-rich
+    area: Lanternfish telemetry
+    summary: Fleet-wide inference telemetry with Lanternfish
+    template: freehand
+    ac: true
+    status: In Progress
+    created_days_ago: 150
+    reporter: synth-pm-01
+    assignee: synth-eng-01
+    components: [synth-observability]
+    outcome: O1
+    variant: opted-in
+    epics: [{project: RHAI, count: 4, blocks: [[1, 2], [2, 3]]}]
+    links: [{type: Relates, to: I13}]
+
+  - id: I02
+    archetype: T-killed
+    area: Saltmarsh batch scheduler
+    summary: Priority queues for the Saltmarsh batch scheduler
+    template: freehand
+    status: Closed
+    resolution: Won't Do
+    created_days_ago: 280
+    resolved_days_ago: 190
+    reporter: synth-pm-02
+    assignee: synth-eng-02
+    components: [synth-runtime]
+    noise_labels: [synth-theme-aurora, synth-scrum-teal]
+    target_version: synth-1.4
+    epics: [{project: RHAI, count: 2, status: Closed}]
+    links: [{type: Blocks, to: I21}]
+
+  - id: I03
+    archetype: G-tight
+    area: Brackwater artefact cache
+    summary: Brackwater artefact cache for offline model installs
+    template: fpdor
+    ac: true
+    status: New
+    created_days_ago: 40
+    reporter: synth-pm-01
+    assignee: synth-pm-01
+    components: [synth-runtime, synth-installer]
+    outcome: O1
+    target_version: synth-2.0
+    variant: rubric-pass
+
+  - id: I04
+    archetype: T-eng-phased
+    area: Quillwork design reviews
+    summary: Formalise design review checkpoints with Quillwork
+    template: phased
+    status: Closed
+    resolution: Obsolete
+    created_days_ago: 330
+    resolved_days_ago: 200
+    reporter: synth-eng-03
+    assignee: synth-eng-03
+    epics: [{project: RHOAIENG, count: 1, status: Closed}]
+
+  - id: I05
+    archetype: G-template
+    area: Basalt base images
+    summary: Basalt base images with preinstalled accelerator libraries
+    template: fpdor
+    ac: true
+    status: Closed
+    resolution: Done
+    created_days_ago: 240
+    resolved_days_ago: 90
+    reporter: synth-pm-03
+    assignee: synth-eng-04
+    components: [synth-images]
+    outcome: O1
+    noise_labels: [synth-high-impact]
+    target_version: synth-1.6
+    rice: {score: 42, effort: 5}
+    epics:
+      - {project: RHAI, count: 5, status: Closed, blocks: [[1, 2]]}
+      - {project: RHOAIENG, count: 1, status: Closed}
+    links: [{type: Blocks, to: I03}, {type: Relates, to: I14}]
+
+  - id: I06
+    archetype: T-fieldgap
+    area: Driftwood notebook sync
+    summary: Two-way notebook sync with Driftwood
+    template: freehand
+    dod: true
+    status: Refinement
+    created_days_ago: 70
+    reporter: synth-eng-01
+    assignee: synth-eng-01
+    outcome: O3
+    variant: rubric-pass
+    epics: [{project: RHAI, count: 2}]
+    links: [{type: Relates, to: I12}]
+
+  - id: I07
+    archetype: T-median
+    area: Marigold evaluation harness
+    summary: Marigold evaluation harness for fine-tuned models
+    template: freehand
+    status: New
+    created_days_ago: 25
+    reporter: synth-pm-04
+    assignee: synth-eng-02
+    components: [synth-evaluation]
+    variant: rubric-pass
+
+  - id: I08
+    archetype: P-glyph
+    summary_raw: "=================="
+    template: empty
+    status: New
+    created_days_ago: 610
+    reporter: synth-pm-05
+    variant: opted-in
+    links: [{type: Relates, to: I17}]
+
+  - id: I09
+    archetype: P-titleonly
+    area: Tidewater codec
+    summary: Pending legal sign-off for Tidewater codec redistribution
+    template: empty
+    status: New
+    created_days_ago: 95
+    reporter: synth-pm-05
+
+  - id: I10
+    archetype: T-tracker
+    area: Sparrow runtime team
+    summary: Onboard new Sparrow runtime team members
+    template: tracker
+    status: Closed
+    resolution: Done
+    created_days_ago: 160
+    resolved_days_ago: 80
+    reporter: synth-eng-02
+    assignee: synth-eng-02
+    components: [synth-runtime]
+    stories: {project: RHAI, count: 3, status: Closed}
+
+  - id: I11
+    archetype: P-cryptic
+    summary_raw: QXR
+    template: empty
+    status: Backlog
+    created_days_ago: 400
+    reporter: synth-eng-04
+    links: [{type: Duplicate, to: I09}]
+
+  - id: I12
+    archetype: T-fpdor-eng
+    area: Pumice GPU quotas
+    summary: Pumice GPU quota dashboard for platform teams
+    template: fpdor
+    ac: true
+    status: In Progress
+    created_days_ago: 110
+    reporter: synth-pm-04
+    assignee: synth-eng-03
+    components: [synth-ui]
+    noise_labels: [synth-scrum-teal]
+    variant: opted-in
+    epics: [{project: RHOAIENG, count: 3}]
+    links: [{type: Cloners, to: R1}]
+
+  - id: I13
+    archetype: T-table
+    area: Cobalt serving autoscaler
+    summary: Cobalt autoscaler for model-serving replicas
+    template: freehand
+    table: true
+    ac: true
+    status: Review
+    created_days_ago: 130
+    reporter: synth-pm-02
+    assignee: synth-eng-04
+    components: [synth-serving]
+    outcome: O1
+    target_version: synth-2.0
+    epics:
+      - {project: RHAI, count: 2}
+      - {project: AIPCC, count: 1}
+
+  - id: I14
+    archetype: T-tail
+    area: Ironbark multi-cluster rollout
+    summary: Ironbark staged rollout across managed clusters
+    template: strategy
+    status: In Progress
+    created_days_ago: 200
+    reporter: synth-pm-02
+    assignee: synth-pm-02
+    components: [synth-fleet, synth-installer]
+    outcome: O2
+    noise_labels: [synth-theme-aurora]
+    target_version: synth-2.0
+    rice: {score: 77, effort: 13}
+    epics: [{project: RHAI, count: 12, blocks: [[1, 2], [2, 3], [3, 5], [8, 9]]}]
+    links: [{type: Blocks, to: I22}]
+
+  - id: I15
+    archetype: T-eng-phased
+    area: Fennel release engineering
+    summary: Fennel release engineering for the inference stack
+    template: phased
+    status: To Do
+    created_days_ago: 45
+    reporter: synth-eng-03
+    assignee: synth-eng-01
+    variant: opted-in
+    epics: [{project: RHAI, count: 2}]
+    links: [{type: Relates, to: I04}, {type: Depend, to: I14}]
+
+  - id: I16
+    archetype: T-long
+    area: Juniper data lineage
+    summary: End-to-end data lineage with Juniper
+    template: freehand
+    long: true
+    ac: true
+    status: Refinement
+    created_days_ago: 60
+    reporter: synth-pm-03
+    assignee: synth-pm-03
+    components: [synth-data]
+    variant: rubric-pass
+    links: [{type: Relates, to: I07}]
+
+  # I17-I19: a bulk-created batch (same day, one reporter, different owners).
+  - id: I17
+    archetype: T-bulk
+    area: Wren test-failure visibility
+    summary: Wren test-failure visibility for release owners
+    template: freehand
+    status: New
+    created_days_ago: 12
+    reporter: synth-pm-06
+    assignee: synth-eng-01
+    components: [synth-ci]
+    variant: needs-attn
+    epics: [{project: RHAI, count: 1}]
+
+  - id: I18
+    archetype: T-bulk
+    area: Wren flaky-test quarantine
+    summary: Wren flaky-test quarantine and triage
+    template: fpdor
+    ac: true
+    status: In Progress
+    created_days_ago: 12
+    reporter: synth-pm-06
+    assignee: synth-eng-02
+    components: [synth-ci]
+    variant: rubric-pass
+    pipeline_labels_extra: [initiative-ignore]
+    epics: [{project: RHAI, count: 2}]
+
+  - id: I19
+    archetype: T-bulk
+    area: Wren CI cost reporting
+    summary: Wren CI cost reporting per repository
+    template: freehand
+    status: To Do
+    created_days_ago: 12
+    reporter: synth-pm-06
+    assignee: synth-eng-04
+    components: [synth-ci]
+    variant: rubric-pass
+    pipeline_labels_extra: [strat-creator-ignore]
+    epics: [{project: RHAI, count: 1}]
+    links: [{type: Cloners, to: R2}]
+
+  - id: I20
+    archetype: P-short
+    area: Ember sandbox hardening
+    summary: Ember sandbox hardening
+    template: short
+    status: In Progress
+    created_days_ago: 30
+    reporter: synth-eng-04
+    assignee: synth-eng-04
+    variant: rubric-pass
+    pipeline_labels_extra: [strat-creator-processing]   # stale lock
+
+  - id: I21
+    archetype: G-closed-labelled
+    area: Slate audit logging
+    summary: Slate audit logging for administrative actions
+    template: fpdor
+    ac: true
+    status: Closed
+    resolution: Done
+    created_days_ago: 210
+    resolved_days_ago: 70
+    reporter: synth-pm-05
+    assignee: synth-eng-03
+    components: [synth-security]
+    variant: rubric-pass
+    epics: [{project: RHAI, count: 3, status: Closed}]
+
+  # I22-I24: already through strat-creator and human sign-off; decomposition inputs.
+  - id: I22
+    archetype: S-signed
+    area: Thornbill network policy baseline
+    summary: Thornbill default network policy baseline for workloads
+    template: strategy
+    status: Release Pending
+    created_days_ago: 100
+    reporter: synth-eng-02
+    assignee: synth-eng-02
+    components: [synth-security, synth-networking]
+    outcome: O2
+    variant: rubric-pass
+    pipeline_labels_extra: [strat-creator-auto-refined, strat-creator-rubric-pass, strat-creator-human-sign-off]
+
+  - id: I23
+    archetype: S-signed-children
+    area: Alder secrets rotation
+    summary: Alder automatic secrets rotation for platform services
+    template: freehand
+    ac: true
+    status: In Progress
+    created_days_ago: 140
+    reporter: synth-pm-01
+    assignee: synth-eng-03
+    components: [synth-security]
+    variant: rubric-pass
+    pipeline_labels_extra: [strat-creator-auto-refined, strat-creator-rubric-pass, strat-creator-human-sign-off]
+    epics: [{project: RHAI, count: 3, blocks: [[1, 2]]}]
+
+  - id: I24
+    archetype: S-signed-legacy
+    area: Osprey SBOM publication
+    summary: Osprey SBOM publication for shipped images
+    template: strategy
+    status: Refinement
+    created_days_ago: 180
+    reporter: synth-pm-03
+    assignee: synth-eng-04
+    components: [synth-images]
+    variant: rubric-pass
+    pipeline_labels_extra: [strat-creator-auto-refined, strat-creator-rubric-pass, strat-creator-human-sign-off]
+    legacy_incorporates_epic: {project: RHAI}
+
+  # I25: written to pass strategy review (demo), unlike the archetypes above. Bounded scope,
+  # measurable requirements, explicit non-goals and dependencies on existing public components.
+  - id: I25
+    archetype: G-exemplar
+    area: Bramblewick MLServer trace export
+    summary: Bramblewick trace export from the MLServer runtime for predictive serving
+    template: exemplar
+    status: New
+    created_days_ago: 12
+    reporter: synth-pm-02
+    assignee: synth-eng-03
+    components: [synth-serving, synth-observability]
+    outcome: O1
+    target_version: synth-2.0
+    variant: rubric-pass

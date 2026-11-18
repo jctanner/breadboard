@@ -1,0 +1,19 @@
+# CC-75: sandbox egress probe for emulator Jira and Model Relay (no model).
+egress-probe:
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags: [aipcc-small-x86_64]
+  timeout: 45m
+  variables:
+    STRAT_CREATOR_URL: https://github-emulator.ai-pipeline.svc.cluster.local/fullsend-ai/strat-creator.git
+    STRAT_CREATOR_REF: cc75-emulator
+  script:
+    - bash smoke.sh
+  after_script:
+    - |
+      for f in smoke-output/podman.log smoke-output/sandbox-build.log smoke-output/gateway.log smoke-output/gateway-cleanup.log smoke-output/sandbox-create-help.txt; do
+        [ -f "$f" ] && { echo "----- tail $f"; tail -n 40 "$f"; }
+      done
+      true
+  artifacts:
+    when: always
+    paths: [smoke-output/]

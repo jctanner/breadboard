@@ -1,0 +1,9 @@
+# CC-75: an agentic-ci OpenShell sandbox as rfe-autofixer creates it; report its TLS view (no model).
+sandbox-probe:
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags: [aipcc-small-x86_64]
+  timeout: 30m
+  script:
+    - bash smoke.sh
+  after_script:
+    - "true"

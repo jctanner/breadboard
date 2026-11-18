@@ -1,0 +1,61 @@
+{
+  "scenario": "S4",
+  "pipeline": 81,
+  "variables": {
+    "INITIATIVE_STRATEGIES": "on",
+    "STRAT_EXECUTOR": "fullsend",
+    "STRAT_DRY_RUN": "1",
+    "FULLSEND_PUBLISH": "0",
+    "STRAT_CREATOR_REPO": "https://github-emulator.ai-pipeline.svc.cluster.local/fullsend-ai/strat-creator.git",
+    "STRAT_CREATOR_BRANCH": "cc75-emulator",
+    "BATCH_SIZE": "1"
+  },
+  "ref": "main",
+  "fixture": {
+    "baseline": "snapshot_cc75-baseline_20261116_210711.db",
+    "variant": "no-opt-in",
+    "opt_in_removed": 17,
+    "restored_after": "snapshot_cc75-baseline_20261116_210711.db"
+  },
+  "jobs": {
+    "fullsend-input-check": {
+      "id": 321,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true
+    },
+    "python-tests": {
+      "id": 322,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true
+    },
+    "workflow-batch-initiative": {
+      "id": 323,
+      "status": "success",
+      "stage": "strategy",
+      "expected_status": "success",
+      "status_ok": true
+    }
+  },
+  "live": null,
+  "jira_writes": [],
+  "jira_read_posts": [
+    {
+      "method": "POST",
+      "path": "/rest/api/3/search/jql",
+      "status": 200,
+      "user": "cc75-strat-bot"
+    },
+    {
+      "method": "POST",
+      "path": "/rest/api/3/search/jql",
+      "status": 200,
+      "user": "cc75-strat-bot"
+    }
+  ],
+  "ok": true,
+  "checked_at": "2026-11-16T23:08:30.957446+00:00"
+}

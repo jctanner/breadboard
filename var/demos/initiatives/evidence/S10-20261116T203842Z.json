@@ -1,0 +1,100 @@
+{
+  "scenario": "S10",
+  "pipeline": 67,
+  "variables": {
+    "STRAT_EXECUTOR": "fullsend",
+    "RFE_KEY": "RHAIRFE-75003",
+    "STRAT_CREATOR_REPO": "https://github-emulator.ai-pipeline.svc.cluster.local/fullsend-ai/strat-creator.git",
+    "STRAT_CREATOR_BRANCH": "cc75-emulator"
+  },
+  "jobs": {
+    "fullsend-input-check": "success",
+    "python-tests": "success",
+    "workflow-single-rfe": "success",
+    "build-dashboard": "success"
+  },
+  "rfe": "RHAIRFE-75003",
+  "new_rhaistrat": [
+    "RHAISTRAT-75028"
+  ],
+  "feature_labels": [
+    "cc75-s10",
+    "cc75-synthetic",
+    "strat-creator-3.7",
+    "strat-creator-auto-created",
+    "strat-creator-auto-refined",
+    "strat-creator-clone-c5ac5167b95e6f0b90cffadcca46a29d",
+    "strat-creator-rubric-pass"
+  ],
+  "rfe_labels": [
+    "cc75-s10",
+    "cc75-synthetic",
+    "rfe-creator-autofix-rubric-pass",
+    "strat-creator-3.7"
+  ],
+  "clone_links": {
+    "RHAISTRAT-75028": [
+      [
+        "Cloners",
+        "RHAIRFE-75003"
+      ]
+    ]
+  },
+  "written_keys": [
+    "RHAIRFE-75003",
+    "RHAISTRAT-75028"
+  ],
+  "write_paths": [
+    "POST /rest/api/3/issue",
+    "POST /rest/api/3/issue/RHAISTRAT-75028/attachments",
+    "POST /rest/api/3/issue/RHAISTRAT-75028/comment",
+    "POST /rest/api/3/issueLink",
+    "PUT /rest/api/3/issue/RHAIRFE-75003",
+    "PUT /rest/api/3/issue/RHAISTRAT-75028"
+  ],
+  "data_repo_new_paths": {
+    "RHAISTRAT": [
+      "RHAISTRAT/current",
+      "RHAISTRAT/run-gitlab-job-277/.publication.json",
+      "RHAISTRAT/run-gitlab-job-277/pipeline-data.json",
+      "RHAISTRAT/run-gitlab-job-277/reports/report.html",
+      "RHAISTRAT/run-gitlab-job-277/strat-originals/RHAIRFE-75003-comments.md",
+      "RHAISTRAT/run-gitlab-job-277/strat-originals/RHAIRFE-75003.md",
+      "RHAISTRAT/run-gitlab-job-277/strat-reviews/RHAISTRAT-75028-review-architecture.md",
+      "RHAISTRAT/run-gitlab-job-277/strat-reviews/RHAISTRAT-75028-review-comment.md",
+      "RHAISTRAT/run-gitlab-job-277/strat-reviews/RHAISTRAT-75028-review-feasibility.md",
+      "RHAISTRAT/run-gitlab-job-277/strat-reviews/RHAISTRAT-75028-review-provenance.json",
+      "RHAISTRAT/run-gitlab-job-277/strat-reviews/RHAISTRAT-75028-review-scope.md",
+      "RHAISTRAT/run-gitlab-job-277/strat-reviews/RHAISTRAT-75028-review-scorer.md",
+      "RHAISTRAT/run-gitlab-job-277/strat-reviews/RHAISTRAT-75028-review-testability.md",
+      "RHAISTRAT/run-gitlab-job-277/strat-reviews/RHAISTRAT-75028-review.md",
+      "RHAISTRAT/run-gitlab-job-277/strat-tasks/RHAISTRAT-75028.md",
+      "RHAISTRAT/run-gitlab-job-277/strat-tickets.md",
+      "RHAISTRAT/summary-production.json",
+      "RHAISTRAT/summary.json"
+    ],
+    "initiative-strategy": []
+  },
+  "cost_lines": [
+    "6.6074",
+    "6.6074"
+  ],
+  "checks": {
+    "job success": true,
+    "python-tests success": true,
+    "exactly one new RHAISTRAT issue": true,
+    "it is a Feature": true,
+    "cloned from the RFE": true,
+    "Feature has a gate label": true,
+    "Feature has no initiative-* label": true,
+    "RFE has no initiative-* label": true,
+    "writes only to the RFE and the new Feature": true,
+    "no Initiative written": true,
+    "results under RHAISTRAT/": true,
+    "nothing new under initiative-strategy/": true
+  },
+  "ok": true,
+  "kept_as_snapshot": "snapshot_cc75-after-S10_20261116_203842.db",
+  "restored_after": "snapshot_cc75-baseline_20261116_182256.db",
+  "checked_at": "2026-11-16T20:38:42.056307+00:00"
+}

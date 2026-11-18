@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "projects": {
+    "strat-pipeline": {
+      "project": "redhat/rhel-ai/agentic-ci/strat-pipeline",
+      "project_id": 4,
+      "source_commit": "154d7db0031baf49aac380fba1473bff1471af87",
+      "excluded": [
+        "execution-logs"
+      ],
+      "patches": [
+        "private-patches/strat-pipeline/0001-emulator-runtime.py"
+      ],
+      "adapted_commit": "6d9a6f1abc0a01e556fd19cf38e77deff8fa5601",
+      "branches": {
+        "cc75-live": {
+          "commit": "331d908dfef9c1c70f750cfa732ae8e3e20ecddc",
+          "patches": [
+            "private-patches/strat-pipeline-live/0001-emulator-live-cutover.py"
+          ]
+        }
+      }
+    },
+    "strat-dashboard": {
+      "project": "redhat/rhel-ai/agentic-ci/strat-dashboard",
+      "project_id": 5,
+      "source_commit": "2fffc0e53e54e3d920e766d1cae007288bfd91a2",
+      "excluded": [],
+      "patches": [],
+      "adapted_commit": "41f15c5f34087a3bea115aa8bf993182cd4b4064"
+    },
+    "rfe-autofixer": {
+      "project": "redhat/rhel-ai/agentic-ci/rfe-autofixer",
+      "project_id": 6,
+      "source_commit": "fd8fb4edf8f535fd56098400de6d9e7afeeaa001",
+      "source_ref": "mr-43",
+      "excluded": [],
+      "patches": [
+        {
+          "path": "private-patches/rfe-autofixer/0001-push-results-url.py",
+          "kind": "upstream-proposal"
+        },
+        {
+          "path": "private-patches/rfe-autofixer/0002-permissions-probe-emulator.py",
+          "kind": "emulator-gap"
+        },
+        {
+          "path": "private-patches/rfe-autofixer/0003-w530-images.py",
+          "kind": "environment"
+        },
+        {
+          "path": "private-patches/rfe-autofixer/0004-runner-model-relay.py",
+          "kind": "model-relay"
+        },
+        {
+          "path": "private-patches/rfe-autofixer/0005-runner-environment.py",
+          "kind": "environment"
+        },
+        {
+          "path": "private-patches/rfe-autofixer/0006-flatten-references.py",
+          "kind": "emulator-gap"
+        },
+        {
+          "path": "private-patches/rfe-autofixer/0007-sandbox-endpoints.py",
+          "kind": "environment"
+        }
+      ],
+      "adapted_commit": "c7c7c2fee235f6572f3bad23ec442e6db1663566"
+    },
+    "epic-decomposer": {
+      "project": "redhat/rhel-ai/agentic-ci/epic-decomposer",
+      "project_id": 7,
+      "source_commit": "40acdf061e2e4d218c809bc0a842d66e2c8717ff",
+      "excluded": [],
+      "patches": [
+        "private-patches/epic-decomposer/0001-emulator-relay.py",
+        "private-patches/epic-decomposer/0002-flatten-references.py"
+      ],
+      "adapted_commit": "3a28e67cce7ccf2145e7a358166935ec46f374aa"
+    },
+    "strat-pipeline-data": {
+      "project": "redhat/rhel-ai/agentic-ci/strat-pipeline-data",
+      "project_id": 8,
+      "adapted_commit": "e764d7586f3a01065d65fd1c977d62ad2959b3db"
+    },
+    "rfe-autofixer-results": {
+      "project": "redhat/rhel-ai/agentic-ci/rfe-autofixer-results",
+      "project_id": 9,
+      "adapted_commit": "467936b0391279543bfcc9585a01a613f639b709"
+    },
+    "epic-decomposer-dashboard": {
+      "project": "redhat/rhel-ai/agentic-ci/epic-decomposer-dashboard",
+      "project_id": 15,
+      "adapted_commit": "8ae04a52152e96287c65cfa2b25477fbbfd3e78f"
+    }
+  },
+  "published_at": "2026-11-17T00:00:01.495682+00:00"
+}

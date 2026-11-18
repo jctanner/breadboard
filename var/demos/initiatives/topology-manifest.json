@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "github_url": "https://github.w530.local",
+  "mirrored_at": "2026-11-16T00:36:09.285543+00:00",
+  "github": [
+    {
+      "path": "fullsend-ai/strat-creator",
+      "upstream": "https://github.com/fullsend-ai/strat-creator.git",
+      "refs": {
+        "main": {
+          "upstream_ref": "refs/heads/main",
+          "commit": "95799c4e0812313d8834bc0c83bf89248610a75d"
+        },
+        "pr-124": {
+          "upstream_ref": "refs/pull/124/head",
+          "commit": "55e03525808febd3f1c5c0bd509a95aac71e2ce9"
+        }
+      }
+    },
+    {
+      "path": "fullsend-ai/rfe-creator",
+      "upstream": "https://github.com/fullsend-ai/rfe-creator.git",
+      "refs": {
+        "main": {
+          "upstream_ref": "refs/heads/main",
+          "commit": "f8ae373d754e5088cf5da80b402756253ba8d1e8"
+        },
+        "ci-prod": {
+          "upstream_ref": "refs/heads/ci-prod",
+          "commit": "1a961e37c7bb1cac71f5c662aa5cb3614127bd6a"
+        },
+        "ci-stage": {
+          "upstream_ref": "refs/heads/ci-stage",
+          "commit": "1a961e37c7bb1cac71f5c662aa5cb3614127bd6a"
+        }
+      }
+    },
+    {
+      "path": "fullsend-ai/epic-creator",
+      "upstream": "https://github.com/fullsend-ai/epic-creator.git",
+      "refs": {
+        "main": {
+          "upstream_ref": "refs/heads/main",
+          "commit": "dc36066355aff330114ed4c383a6219706646da4"
+        },
+        "pr-40": {
+          "upstream_ref": "refs/pull/40/head",
+          "commit": "8efd835f5b6f89f953f5e3b37e66f1d7c14ab1bb"
+        }
+      }
+    },
+    {
+      "path": "opendatahub-io/assess-strat",
+      "upstream": "https://github.com/opendatahub-io/assess-strat.git",
+      "refs": {
+        "main": {
+          "upstream_ref": "refs/heads/main",
+          "commit": "ae449845b2c8bde238ba7cd6ecd536b2c83f4a8b"
+        }
+      }
+    }
+  ],
+  "gitlab_private_pending": [
+    "redhat/rhel-ai/agentic-ci/strat-pipeline",
+    "redhat/rhel-ai/agentic-ci/strat-pipeline-data",
+    "redhat/rhel-ai/agentic-ci/strat-dashboard",
+    "redhat/rhel-ai/agentic-ci/rfe-autofixer",
+    "redhat/rhel-ai/agentic-ci/rfe-autofixer-results",
+    "redhat/rhel-ai/agentic-ci/epic-decomposer"
+  ],
+  "notes": [
+    "No credentials are stored in this manifest."
+  ],
+  "patched": [
+    {
+      "path": "fullsend-ai/strat-creator",
+      "branch": "cc75-emulator",
+      "base": "pr-124",
+      "base_commit": "55e03525808febd3f1c5c0bd509a95aac71e2ce9",
+      "commit": "512d0ad3992eedc8ac67f76e6aa9c0242120c266",
+      "patches": [
+        "patches/strat-creator/0001-raw-base.py",
+        "patches/strat-creator/0002-local-harness.py",
+        "patches/strat-creator/0003-relay-provider.py",
+        "patches/strat-creator/0004-sandbox-ca-image.py",
+        "patches/strat-creator/0005-jira-extra-ca.py",
+        "patches/strat-creator/0006-results-base.py"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3383 @@
+{
+ "issues": [
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-01"
+    },
+    "components": [],
+    "created": "2026-01-05T12:00:00.000+0000",
+    "description": "Synthetic Outcome grouping related Initiatives: trustworthy platform foundations.",
+    "issuetype": {
+     "name": "Outcome"
+    },
+    "labels": [
+     "cc75-fx-o1",
+     "cc75-synthetic"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-01"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Trustworthy platform foundations",
+    "updated": "2026-01-08T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75001"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-02-14T12:00:00.000+0000",
+    "description": "Synthetic Outcome grouping related Initiatives: multi-cluster operations at scale.",
+    "issuetype": {
+     "name": "Outcome"
+    },
+    "labels": [
+     "cc75-fx-o2",
+     "cc75-synthetic"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Multi-cluster operations at scale",
+    "updated": "2026-02-17T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75002"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-03"
+    },
+    "components": [],
+    "created": "2026-07-04T12:00:00.000+0000",
+    "description": "Synthetic Outcome grouping related Initiatives: developer productivity for model builders.",
+    "issuetype": {
+     "name": "Outcome"
+    },
+    "labels": [
+     "cc75-fx-o3",
+     "cc75-synthetic"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-03"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Developer productivity for model builders",
+    "updated": "2026-07-07T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75003"
+  },
+  {
+   "fields": {
+    "components": [],
+    "created": "2026-09-12T12:00:00.000+0000",
+    "description": "Synthetic request used only as a Cloners link source.",
+    "issuetype": {
+     "name": "Feature Request"
+    },
+    "labels": [
+     "cc75-fx-r1",
+     "cc75-synthetic"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAIRFE"
+    },
+    "reporter": {
+     "displayName": "synth-pm-04"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Show GPU quota consumption per team",
+    "updated": "2026-09-15T12:00:00.000+0000"
+   },
+   "key": "RHAIRFE-75001"
+  },
+  {
+   "fields": {
+    "components": [],
+    "created": "2026-09-12T12:00:00.000+0000",
+    "description": "Synthetic request used only as a Cloners link source.",
+    "issuetype": {
+     "name": "Feature Request"
+    },
+    "labels": [
+     "cc75-fx-r2",
+     "cc75-synthetic"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAIRFE"
+    },
+    "reporter": {
+     "displayName": "synth-pm-06"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Report CI spend per repository",
+    "updated": "2026-09-15T12:00:00.000+0000"
+   },
+   "key": "RHAIRFE-75002"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [
+     {
+      "name": "synth-observability"
+     }
+    ],
+    "created": "2026-06-04T12:00:00.000+0000",
+    "description": "## Who benefits\nData scientists get a predictable, supported workflow for Lanternfish telemetry, with fewer hand-offs and less time spent on one-off fixes. SRE teams gain visibility into how Lanternfish telemetry behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Lanternfish telemetry assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Goal\nMake Lanternfish telemetry usable by data scientists in day-to-day work, so that SRE teams no longer depend on manual workarounds.\n\n## Scope\n- A rollback path within one release\n- Per-team quotas and limits\n- An upgrade path with no manual steps\n- Dashboards for the key health signals\n\n## Success criteria\n- Median setup time below 15 minutes for a new team.\n- At least 3 internal teams onboarded within one release.\n\n## Acceptance Criteria\n- [ ] A rollback path within one release is verified.\n- [ ] Per-team quotas and limits is verified.\n- [ ] An upgrade path with no manual steps is verified.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAISTRAT-75016"
+      },
+      "type": {
+       "inward": "relates to",
+       "name": "Relates",
+       "outward": "relates to"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i01",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75001"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-01"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Fleet-wide inference telemetry with Lanternfish",
+    "updated": "2026-06-09T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75004"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-02"
+    },
+    "components": [
+     {
+      "name": "synth-runtime"
+     }
+    ],
+    "created": "2026-01-25T12:00:00.000+0000",
+    "customfield_10855": "synth-1.4",
+    "description": "## Who benefits\nPlatform administrators get a predictable, supported workflow for Saltmarsh batch scheduler, with fewer hand-offs and less time spent on one-off fixes. Release owners gain visibility into how Saltmarsh batch scheduler behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Saltmarsh batch scheduler assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Goal\nMake Saltmarsh batch scheduler usable by platform administrators in day-to-day work, so that release owners no longer depend on manual workarounds.\n\n## Scope\n- Audit events for every administrative action\n- Role-based access aligned with existing groups\n- A documented API with versioned schemas\n- Offline and disconnected operation\n\n## Success criteria\n- Median setup time below 15 minutes for a new team.\n- At least 3 internal teams onboarded within one release.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAISTRAT-75024"
+      },
+      "type": {
+       "inward": "is blocked by",
+       "name": "Blocks",
+       "outward": "blocks"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i02",
+     "cc75-synthetic",
+     "synth-scrum-teal",
+     "synth-theme-aurora"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "resolution": {
+     "name": "Won't Do"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Priority queues for the Saltmarsh batch scheduler",
+    "updated": "2026-04-25T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75005"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-01"
+    },
+    "components": [
+     {
+      "name": "synth-runtime"
+     },
+     {
+      "name": "synth-installer"
+     }
+    ],
+    "created": "2026-09-22T12:00:00.000+0000",
+    "customfield_10855": "synth-2.0",
+    "description": "## Who benefits\nModel builders get a predictable, supported workflow for Brackwater artefact cache, with fewer hand-offs and less time spent on one-off fixes. SRE teams gain visibility into how Brackwater artefact cache behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Brackwater artefact cache assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Feature Overview (mandatory - complete while in New status)\nBrackwater artefact cache gives model builders and SRE teams a supported way to work with this capability without bespoke scripts. This Initiative tracks the product bet end to end.\n\n## Goals (mandatory - New)\n- Provide per-team quotas and limits.\n- Provide audit events for every administrative action.\n- Provide dashboards for the key health signals.\n\n## Requirements (mandatory - Refinement)\n| Requirement | Notes | isMVP? |\n| --- | --- | --- |\n| Per-team quotas and limits | Synthetic requirement 1 | Yes |\n| Audit events for every administrative action | Synthetic requirement 2 | Yes |\n| Dashboards for the key health signals | Synthetic requirement 3 | Yes |\n| A rollback path within one release | Synthetic requirement 4 | No |\n| Self-service configuration | Synthetic requirement 5 | No |\n\n## Out of Scope\n- Replacing existing tooling outside Brackwater artefact cache.\n\n## Acceptance Criteria\n- [ ] Per-team quotas and limits is verified.\n- [ ] Audit events for every administrative action is verified.\n- [ ] Dashboards for the key health signals is verified.",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i03",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-autofix-rubric-pass"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75001"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-01"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Brackwater artefact cache for offline model installs",
+    "updated": "2026-09-27T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75006"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [],
+    "created": "2025-12-06T12:00:00.000+0000",
+    "description": "## Problem statement\nQuillwork design reviews decisions are made inconsistently across teams.\n1. Decisions are not recorded in one place.\n2. Reviews happen too late to change direction.\n3. Nobody owns follow-up actions.\n\n## Refinement Phase\n- Agree the template and the decision owners.\n\n## Design and Development Phase\n- Pilot with two teams for one release.\n\n## Finalization Phase\n- Publish the process and retire the old checklist.",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i04",
+     "cc75-synthetic"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-eng-03"
+    },
+    "resolution": {
+     "name": "Obsolete"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Formalise design review checkpoints with Quillwork",
+    "updated": "2026-04-15T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75007"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [
+     {
+      "name": "synth-images"
+     }
+    ],
+    "created": "2026-03-06T12:00:00.000+0000",
+    "customfield_10855": "synth-1.6",
+    "customfield_75001": 42,
+    "customfield_75002": 5,
+    "description": "## Who benefits\nPlatform administrators get a predictable, supported workflow for Basalt base images, with fewer hand-offs and less time spent on one-off fixes. Data scientists gain visibility into how Basalt base images behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Basalt base images assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Feature Overview (mandatory - complete while in New status)\nBasalt base images gives platform administrators and data scientists a supported way to work with this capability without bespoke scripts. This Initiative tracks the product bet end to end.\n\n## Goals (mandatory - New)\n- Provide self-service configuration.\n- Provide dashboards for the key health signals.\n- Provide a documented API with versioned schemas.\n\n## Requirements (mandatory - Refinement)\n| Requirement | Notes | isMVP? |\n| --- | --- | --- |\n| Self-service configuration | Synthetic requirement 1 | Yes |\n| Dashboards for the key health signals | Synthetic requirement 2 | Yes |\n| A documented API with versioned schemas | Synthetic requirement 3 | Yes |\n| Role-based access aligned with existing groups | Synthetic requirement 4 | No |\n| A rollback path within one release | Synthetic requirement 5 | No |\n\n## Out of Scope\n- Replacing existing tooling outside Basalt base images.\n\n## Acceptance Criteria\n- [ ] Self-service configuration is verified.\n- [ ] Dashboards for the key health signals is verified.\n- [ ] A documented API with versioned schemas is verified.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAISTRAT-75006"
+      },
+      "type": {
+       "inward": "is blocked by",
+       "name": "Blocks",
+       "outward": "blocks"
+      }
+     },
+     {
+      "outwardIssue": {
+       "key": "RHAISTRAT-75017"
+      },
+      "type": {
+       "inward": "relates to",
+       "name": "Relates",
+       "outward": "relates to"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i05",
+     "cc75-synthetic",
+     "synth-high-impact"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75001"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-03"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Basalt base images with preinstalled accelerator libraries",
+    "updated": "2026-08-03T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75008"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [],
+    "created": "2026-08-23T12:00:00.000+0000",
+    "description": "## Who benefits\nModel builders get a predictable, supported workflow for Driftwood notebook sync, with fewer hand-offs and less time spent on one-off fixes. Release owners gain visibility into how Driftwood notebook sync behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Driftwood notebook sync assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Goal\nMake Driftwood notebook sync usable by model builders in day-to-day work, so that release owners no longer depend on manual workarounds.\n\n## Scope\n- A rollback path within one release\n- Audit events for every administrative action\n- Self-service configuration\n- A documented API with versioned schemas\n\n## Success criteria\n- Median setup time below 15 minutes for a new team.\n- At least 3 internal teams onboarded within one release.\n\n## Definition of Ready\n- Owner and component agreed.\n\n## Definition of Done\n- Shipped behind a flag and documented.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAISTRAT-75015"
+      },
+      "type": {
+       "inward": "relates to",
+       "name": "Relates",
+       "outward": "relates to"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i06",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-autofix-rubric-pass"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75003"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-eng-01"
+    },
+    "status": {
+     "name": "Refinement",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Two-way notebook sync with Driftwood",
+    "updated": "2026-08-28T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75009"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-02"
+    },
+    "components": [
+     {
+      "name": "synth-evaluation"
+     }
+    ],
+    "created": "2026-10-07T12:00:00.000+0000",
+    "description": "## Who benefits\nPlatform administrators get a predictable, supported workflow for Marigold evaluation harness, with fewer hand-offs and less time spent on one-off fixes. Security reviewers gain visibility into how Marigold evaluation harness behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Marigold evaluation harness assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Goal\nMake Marigold evaluation harness usable by platform administrators in day-to-day work, so that security reviewers no longer depend on manual workarounds.\n\n## Scope\n- A documented API with versioned schemas\n- Alerting thresholds that teams can tune\n- An upgrade path with no manual steps\n- Role-based access aligned with existing groups\n\n## Success criteria\n- Median setup time below 15 minutes for a new team.\n- At least 3 internal teams onboarded within one release.",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i07",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-autofix-rubric-pass"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-04"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Marigold evaluation harness for fine-tuned models",
+    "updated": "2026-10-12T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75010"
+  },
+  {
+   "fields": {
+    "components": [],
+    "created": "2025-03-01T12:00:00.000+0000",
+    "description": "",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAISTRAT-75020"
+      },
+      "type": {
+       "inward": "relates to",
+       "name": "Relates",
+       "outward": "relates to"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i08",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-05"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] ==================",
+    "updated": "2025-03-06T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75011"
+  },
+  {
+   "fields": {
+    "components": [],
+    "created": "2026-07-29T12:00:00.000+0000",
+    "description": "",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i09",
+     "cc75-synthetic"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-05"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Pending legal sign-off for Tidewater codec redistribution",
+    "updated": "2026-08-03T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75012"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-02"
+    },
+    "components": [
+     {
+      "name": "synth-runtime"
+     }
+    ],
+    "created": "2026-05-25T12:00:00.000+0000",
+    "description": "## Scope\nTrack onboarding of new members to the Sparrow runtime team.\n\n## Success criteria\n- Each new member lands a change within 10 working days.\n- Onboarding guide updated after every cohort.",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i10",
+     "cc75-synthetic"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-eng-02"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Onboard new Sparrow runtime team members",
+    "updated": "2026-08-13T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75013"
+  },
+  {
+   "fields": {
+    "components": [],
+    "created": "2025-09-27T12:00:00.000+0000",
+    "description": "",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAISTRAT-75012"
+      },
+      "type": {
+       "inward": "is duplicated by",
+       "name": "Duplicate",
+       "outward": "duplicates"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i11",
+     "cc75-synthetic"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-eng-04"
+    },
+    "status": {
+     "name": "Backlog",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] QXR",
+    "updated": "2025-10-02T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75014"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [
+     {
+      "name": "synth-ui"
+     }
+    ],
+    "created": "2026-07-14T12:00:00.000+0000",
+    "description": "## Who benefits\nSRE teams get a predictable, supported workflow for Pumice GPU quotas, with fewer hand-offs and less time spent on one-off fixes. Release owners gain visibility into how Pumice GPU quotas behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Pumice GPU quotas assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Feature Overview (mandatory - complete while in New status)\nPumice GPU quotas gives SRE teams and release owners a supported way to work with this capability without bespoke scripts. This Initiative tracks the product bet end to end.\n\n## Goals (mandatory - New)\n- Provide offline and disconnected operation.\n- Provide dashboards for the key health signals.\n- Provide audit events for every administrative action.\n\n## Requirements (mandatory - Refinement)\n| Requirement | Notes | isMVP? |\n| --- | --- | --- |\n| Offline and disconnected operation | Synthetic requirement 1 | Yes |\n| Dashboards for the key health signals | Synthetic requirement 2 | Yes |\n| Audit events for every administrative action | Synthetic requirement 3 | Yes |\n| A documented API with versioned schemas | Synthetic requirement 4 | No |\n| An upgrade path with no manual steps | Synthetic requirement 5 | No |\n\n## Out of Scope\n- Replacing existing tooling outside Pumice GPU quotas.\n\n## Acceptance Criteria\n- [ ] Offline and disconnected operation is verified.\n- [ ] Dashboards for the key health signals is verified.\n- [ ] Audit events for every administrative action is verified.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAIRFE-75001"
+      },
+      "type": {
+       "inward": "is cloned by",
+       "name": "Cloners",
+       "outward": "clones"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i12",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "synth-scrum-teal"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-04"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Pumice GPU quota dashboard for platform teams",
+    "updated": "2026-07-19T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75015"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [
+     {
+      "name": "synth-serving"
+     }
+    ],
+    "created": "2026-06-24T12:00:00.000+0000",
+    "customfield_10855": "synth-2.0",
+    "description": "## Who benefits\nRelease owners get a predictable, supported workflow for Cobalt serving autoscaler, with fewer hand-offs and less time spent on one-off fixes. Data scientists gain visibility into how Cobalt serving autoscaler behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Cobalt serving autoscaler assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Goal\nMake Cobalt serving autoscaler usable by release owners in day-to-day work, so that data scientists no longer depend on manual workarounds.\n\n## Scope\n- A documented API with versioned schemas\n- Audit events for every administrative action\n- Dashboards for the key health signals\n- An upgrade path with no manual steps\n\n## Success criteria\n- Median setup time below 15 minutes for a new team.\n- At least 3 internal teams onboarded within one release.\n\n| Signal | Current | Target |\n| --- | --- | --- |\n| Scale-up latency | 4 min | 60 s |\n| Idle replicas | 30% | 10% |\n\n## Acceptance Criteria\n- [ ] A documented API with versioned schemas is verified.\n- [ ] Audit events for every administrative action is verified.\n- [ ] Dashboards for the key health signals is verified.",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i13",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75001"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "Review",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Cobalt autoscaler for model-serving replicas",
+    "updated": "2026-06-29T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75016"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [
+     {
+      "name": "synth-fleet"
+     },
+     {
+      "name": "synth-installer"
+     }
+    ],
+    "created": "2026-04-15T12:00:00.000+0000",
+    "customfield_10855": "synth-2.0",
+    "customfield_75001": 77,
+    "customfield_75002": 13,
+    "description": "## Who benefits\nSRE teams get a predictable, supported workflow for Ironbark multi-cluster rollout, with fewer hand-offs and less time spent on one-off fixes. Model builders gain visibility into how Ironbark multi-cluster rollout behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Ironbark multi-cluster rollout assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Summary\nEstablish Ironbark multi-cluster rollout as the default for every supported deployment.\n\n## Background\n- Drivers: compliance expectations from SRE teams, and support load reported by model builders.\n- Positioning: closes a gap that customers currently fill with custom tooling.\n\n## Action items\n1. Deliver offline and disconnected operation.\n2. Deliver an upgrade path with no manual steps.\n3. Deliver alerting thresholds that teams can tune.\n4. Deliver a rollback path within one release.\n\n## Risks & Assumptions\n- Performance on the smallest supported cluster size.\n- Capacity on shared CI runners.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAISTRAT-75025"
+      },
+      "type": {
+       "inward": "is blocked by",
+       "name": "Blocks",
+       "outward": "blocks"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i14",
+     "cc75-synthetic",
+     "synth-theme-aurora"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75002"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Ironbark staged rollout across managed clusters",
+    "updated": "2026-04-20T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75017"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [],
+    "created": "2026-09-17T12:00:00.000+0000",
+    "description": "## Problem statement\nFennel release engineering decisions are made inconsistently across teams.\n1. Decisions are not recorded in one place.\n2. Reviews happen too late to change direction.\n3. Nobody owns follow-up actions.\n\n## Refinement Phase\n- Agree the template and the decision owners.\n\n## Design and Development Phase\n- Pilot with two teams for one release.\n\n## Finalization Phase\n- Publish the process and retire the old checklist.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAISTRAT-75007"
+      },
+      "type": {
+       "inward": "relates to",
+       "name": "Relates",
+       "outward": "relates to"
+      }
+     },
+     {
+      "outwardIssue": {
+       "key": "RHAISTRAT-75017"
+      },
+      "type": {
+       "inward": "is depended on by",
+       "name": "Depend",
+       "outward": "depends on"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i15",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-eng-03"
+    },
+    "status": {
+     "name": "To Do",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Fennel release engineering for the inference stack",
+    "updated": "2026-09-22T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75018"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-03"
+    },
+    "components": [
+     {
+      "name": "synth-data"
+     }
+    ],
+    "created": "2026-09-02T12:00:00.000+0000",
+    "description": "## Who benefits\nModel builders get a predictable, supported workflow for Juniper data lineage, with fewer hand-offs and less time spent on one-off fixes. Security reviewers gain visibility into how Juniper data lineage behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Juniper data lineage assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Goal\nMake Juniper data lineage usable by model builders in day-to-day work, so that security reviewers no longer depend on manual workarounds.\n\n## Scope\n- A rollback path within one release\n- Offline and disconnected operation\n- An upgrade path with no manual steps\n- Dashboards for the key health signals\n\n## Success criteria\n- Median setup time below 15 minutes for a new team.\n- At least 3 internal teams onboarded within one release.\n\n### Requirement area 1\nJuniper data lineage must handle area 1 for security reviewers: per-team quotas and limits; alerting thresholds that teams can tune; an upgrade path with no manual steps; self-service configuration; role-based access aligned with existing groups; dashboards for the key health signals.\nOpen questions: dependency on an unreleased upstream component; migration of existing user data; unclear ownership between two teams.\n\n### Requirement area 2\nJuniper data lineage must handle area 2 for model builders: alerting thresholds that teams can tune; self-service configuration; audit events for every administrative action; role-based access aligned with existing groups; a rollback path within one release; dashboards for the key health signals.\nOpen questions: performance on the smallest supported cluster size; capacity on shared CI runners; unclear ownership between two teams.\n\n### Requirement area 3\nJuniper data lineage must handle area 3 for security reviewers: a rollback path within one release; dashboards for the key health signals; alerting thresholds that teams can tune; offline and disconnected operation; an upgrade path with no manual steps; a documented API with versioned schemas.\nOpen questions: unclear ownership between two teams; capacity on shared CI runners; migration of existing user data.\n\n### Requirement area 4\nJuniper data lineage must handle area 4 for model builders: role-based access aligned with existing groups; audit events for every administrative action; a rollback path within one release; self-service configuration; a documented API with versioned schemas; alerting thresholds that teams can tune.\nOpen questions: unclear ownership between two teams; dependency on an unreleased upstream component; migration of existing user data.\n\n### Requirement area 5\nJuniper data lineage must handle area 5 for security reviewers: per-team quotas and limits; a documented API with versioned schemas; dashboards for the key health signals; offline and disconnected operation; self-service configuration; audit events for every administrative action.\nOpen questions: capacity on shared CI runners; performance on the smallest supported cluster size; unclear ownership between two teams.\n\n### Requirement area 6\nJuniper data lineage must handle area 6 for model builders: an upgrade path with no manual steps; role-based access aligned with existing groups; audit events for every administrative action; offline and disconnected operation; a rollback path within one release; a documented API with versioned schemas.\nOpen questions: dependency on an unreleased upstream component; migration of existing user data; unclear ownership between two teams.\n\n### Requirement area 7\nJuniper data lineage must handle area 7 for security reviewers: role-based access aligned with existing groups; audit events for every administrative action; dashboards for the key health signals; offline and disconnected operation; per-team quotas and limits; self-service configuration.\nOpen questions: migration of existing user data; unclear ownership between two teams; capacity on shared CI runners.\n\n### Requirement area 8\nJuniper data lineage must handle area 8 for model builders: role-based access aligned with existing groups; audit events for every administrative action; a documented API with versioned schemas; per-team quotas and limits; a rollback path within one release; alerting thresholds that teams can tune.\nOpen questions: dependency on an unreleased upstream component; unclear ownership between two teams; migration of existing user data.\n\n### Requirement area 9\nJuniper data lineage must handle area 9 for security reviewers: alerting thresholds that teams can tune; audit events for every administrative action; self-service configuration; per-team quotas and limits; a rollback path within one release; dashboards for the key health signals.\nOpen questions: unclear ownership between two teams; capacity on shared CI runners; migration of existing user data.\n\n### Requirement area 10\nJuniper data lineage must handle area 10 for model builders: alerting thresholds that teams can tune; per-team quotas and limits; a documented API with versioned schemas; a rollback path within one release; dashboards for the key health signals; self-service configuration.\nOpen questions: dependency on an unreleased upstream component; capacity on shared CI runners; unclear ownership between two teams.\n\n### Requirement area 11\nJuniper data lineage must handle area 11 for security reviewers: role-based access aligned with existing groups; audit events for every administrative action; a rollback path within one release; self-service configuration; per-team quotas and limits; dashboards for the key health signals.\nOpen questions: capacity on shared CI runners; migration of existing user data; performance on the smallest supported cluster size.\n\n### Requirement area 12\nJuniper data lineage must handle area 12 for model builders: a documented API with versioned schemas; an upgrade path with no manual steps; role-based access aligned with existing groups; self-service configuration; a rollback path within one release; audit events for every administrative action.\nOpen questions: performance on the smallest supported cluster size; dependency on an unreleased upstream component; migration of existing user data.\n\n### Requirement area 13\nJuniper data lineage must handle area 13 for security reviewers: dashboards for the key health signals; an upgrade path with no manual steps; a rollback path within one release; offline and disconnected operation; self-service configuration; a documented API with versioned schemas.\nOpen questions: capacity on shared CI runners; performance on the smallest supported cluster size; unclear ownership between two teams.\n\n### Requirement area 14\nJuniper data lineage must handle area 14 for model builders: alerting thresholds that teams can tune; self-service configuration; dashboards for the key health signals; role-based access aligned with existing groups; per-team quotas and limits; an upgrade path with no manual steps.\nOpen questions: performance on the smallest supported cluster size; unclear ownership between two teams; capacity on shared CI runners.\n\n### Requirement area 15\nJuniper data lineage must handle area 15 for security reviewers: a documented API with versioned schemas; dashboards for the key health signals; role-based access aligned with existing groups; alerting thresholds that teams can tune; a rollback path within one release; audit events for every administrative action.\nOpen questions: unclear ownership between two teams; migration of existing user data; performance on the smallest supported cluster size.\n\n### Requirement area 16\nJuniper data lineage must handle area 16 for model builders: audit events for every administrative action; offline and disconnected operation; a rollback path within one release; an upgrade path with no manual steps; role-based access aligned with existing groups; per-team quotas and limits.\nOpen questions: performance on the smallest supported cluster size; dependency on an unreleased upstream component; capacity on shared CI runners.\n\n### Requirement area 17\nJuniper data lineage must handle area 17 for security reviewers: audit events for every administrative action; role-based access aligned with existing groups; an upgrade path with no manual steps; alerting thresholds that teams can tune; dashboards for the key health signals; self-service configuration.\nOpen questions: capacity on shared CI runners; unclear ownership between two teams; dependency on an unreleased upstream component.\n\n### Requirement area 18\nJuniper data lineage must handle area 18 for model builders: role-based access aligned with existing groups; dashboards for the key health signals; audit events for every administrative action; a documented API with versioned schemas; per-team quotas and limits; offline and disconnected operation.\nOpen questions: performance on the smallest supported cluster size; capacity on shared CI runners; dependency on an unreleased upstream component.\n\n### Requirement area 19\nJuniper data lineage must handle area 19 for security reviewers: self-service configuration; an upgrade path with no manual steps; per-team quotas and limits; alerting thresholds that teams can tune; role-based access aligned with existing groups; a documented API with versioned schemas.\nOpen questions: capacity on shared CI runners; performance on the smallest supported cluster size; dependency on an unreleased upstream component.\n\n### Requirement area 20\nJuniper data lineage must handle area 20 for model builders: audit events for every administrative action; role-based access aligned with existing groups; offline and disconnected operation; a documented API with versioned schemas; alerting thresholds that teams can tune; dashboards for the key health signals.\nOpen questions: migration of existing user data; dependency on an unreleased upstream component; performance on the smallest supported cluster size.\n\n### Requirement area 21\nJuniper data lineage must handle area 21 for security reviewers: per-team quotas and limits; alerting thresholds that teams can tune; a documented API with versioned schemas; self-service configuration; role-based access aligned with existing groups; an upgrade path with no manual steps.\nOpen questions: migration of existing user data; dependency on an unreleased upstream component; performance on the smallest supported cluster size.\n\n### Requirement area 22\nJuniper data lineage must handle area 22 for model builders: a rollback path within one release; offline and disconnected operation; an upgrade path with no manual steps; per-team quotas and limits; a documented API with versioned schemas; alerting thresholds that teams can tune.\nOpen questions: migration of existing user data; capacity on shared CI runners; dependency on an unreleased upstream component.\n\n### Requirement area 23\nJuniper data lineage must handle area 23 for security reviewers: an upgrade path with no manual steps; audit events for every administrative action; per-team quotas and limits; a rollback path within one release; self-service configuration; dashboards for the key health signals.\nOpen questions: dependency on an unreleased upstream component; performance on the smallest supported cluster size; migration of existing user data.\n\n### Requirement area 24\nJuniper data lineage must handle area 24 for model builders: a documented API with versioned schemas; role-based access aligned with existing groups; a rollback path within one release; an upgrade path with no manual steps; offline and disconnected operation; self-service configuration.\nOpen questions: capacity on shared CI runners; performance on the smallest supported cluster size; migration of existing user data.\n\n### Requirement area 25\nJuniper data lineage must handle area 25 for security reviewers: dashboards for the key health signals; a documented API with versioned schemas; per-team quotas and limits; an upgrade path with no manual steps; a rollback path within one release; audit events for every administrative action.\nOpen questions: dependency on an unreleased upstream component; performance on the smallest supported cluster size; capacity on shared CI runners.\n\n### Requirement area 26\nJuniper data lineage must handle area 26 for model builders: dashboards for the key health signals; a rollback path within one release; self-service configuration; audit events for every administrative action; alerting thresholds that teams can tune; an upgrade path with no manual steps.\nOpen questions: unclear ownership between two teams; capacity on shared CI runners; dependency on an unreleased upstream component.\n\n### Requirement area 27\nJuniper data lineage must handle area 27 for security reviewers: offline and disconnected operation; dashboards for the key health signals; alerting thresholds that teams can tune; an upgrade path with no manual steps; a documented API with versioned schemas; role-based access aligned with existing groups.\nOpen questions: unclear ownership between two teams; capacity on shared CI runners; migration of existing user data.\n\n### Requirement area 28\nJuniper data lineage must handle area 28 for model builders: a rollback path within one release; offline and disconnected operation; audit events for every administrative action; role-based access aligned with existing groups; a documented API with versioned schemas; alerting thresholds that teams can tune.\nOpen questions: dependency on an unreleased upstream component; migration of existing user data; performance on the smallest supported cluster size.\n\n### Requirement area 29\nJuniper data lineage must handle area 29 for security reviewers: self-service configuration; dashboards for the key health signals; per-team quotas and limits; a rollback path within one release; an upgrade path with no manual steps; a documented API with versioned schemas.\nOpen questions: performance on the smallest supported cluster size; capacity on shared CI runners; unclear ownership between two teams.\n\n### Requirement area 30\nJuniper data lineage must handle area 30 for model builders: a rollback path within one release; dashboards for the key health signals; role-based access aligned with existing groups; self-service configuration; a documented API with versioned schemas; alerting thresholds that teams can tune.\nOpen questions: performance on the smallest supported cluster size; unclear ownership between two teams; dependency on an unreleased upstream component.\n\n## Acceptance Criteria\n- [ ] A rollback path within one release is verified.\n- [ ] Offline and disconnected operation is verified.\n- [ ] An upgrade path with no manual steps is verified.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAISTRAT-75010"
+      },
+      "type": {
+       "inward": "relates to",
+       "name": "Relates",
+       "outward": "relates to"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i16",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-autofix-rubric-pass"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-03"
+    },
+    "status": {
+     "name": "Refinement",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] End-to-end data lineage with Juniper",
+    "updated": "2026-09-07T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75019"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [
+     {
+      "name": "synth-ci"
+     }
+    ],
+    "created": "2026-10-20T12:00:00.000+0000",
+    "description": "## Who benefits\nRelease owners get a predictable, supported workflow for Wren test-failure visibility, with fewer hand-offs and less time spent on one-off fixes. Data scientists gain visibility into how Wren test-failure visibility behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Wren test-failure visibility assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Goal\nMake Wren test-failure visibility usable by release owners in day-to-day work, so that data scientists no longer depend on manual workarounds.\n\n## Scope\n- Per-team quotas and limits\n- Role-based access aligned with existing groups\n- An upgrade path with no manual steps\n- A documented API with versioned schemas\n\n## Success criteria\n- Median setup time below 15 minutes for a new team.\n- At least 3 internal teams onboarded within one release.",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i17",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-needs-attention"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-06"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Wren test-failure visibility for release owners",
+    "updated": "2026-10-25T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75020"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-02"
+    },
+    "components": [
+     {
+      "name": "synth-ci"
+     }
+    ],
+    "created": "2026-10-20T12:00:00.000+0000",
+    "description": "## Who benefits\nSRE teams get a predictable, supported workflow for Wren flaky-test quarantine, with fewer hand-offs and less time spent on one-off fixes. Platform administrators gain visibility into how Wren flaky-test quarantine behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Wren flaky-test quarantine assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Feature Overview (mandatory - complete while in New status)\nWren flaky-test quarantine gives SRE teams and platform administrators a supported way to work with this capability without bespoke scripts. This Initiative tracks the product bet end to end.\n\n## Goals (mandatory - New)\n- Provide an upgrade path with no manual steps.\n- Provide per-team quotas and limits.\n- Provide audit events for every administrative action.\n\n## Requirements (mandatory - Refinement)\n| Requirement | Notes | isMVP? |\n| --- | --- | --- |\n| An upgrade path with no manual steps | Synthetic requirement 1 | Yes |\n| Per-team quotas and limits | Synthetic requirement 2 | Yes |\n| Audit events for every administrative action | Synthetic requirement 3 | Yes |\n| Offline and disconnected operation | Synthetic requirement 4 | No |\n| A rollback path within one release | Synthetic requirement 5 | No |\n\n## Out of Scope\n- Replacing existing tooling outside Wren flaky-test quarantine.\n\n## Acceptance Criteria\n- [ ] An upgrade path with no manual steps is verified.\n- [ ] Per-team quotas and limits is verified.\n- [ ] Audit events for every administrative action is verified.",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i18",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-autofix-rubric-pass",
+     "initiative-ignore"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-06"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Wren flaky-test quarantine and triage",
+    "updated": "2026-10-25T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75021"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [
+     {
+      "name": "synth-ci"
+     }
+    ],
+    "created": "2026-10-20T12:00:00.000+0000",
+    "description": "## Who benefits\nModel builders get a predictable, supported workflow for Wren CI cost reporting, with fewer hand-offs and less time spent on one-off fixes. Data scientists gain visibility into how Wren CI cost reporting behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Wren CI cost reporting assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Goal\nMake Wren CI cost reporting usable by model builders in day-to-day work, so that data scientists no longer depend on manual workarounds.\n\n## Scope\n- An upgrade path with no manual steps\n- Audit events for every administrative action\n- Dashboards for the key health signals\n- Per-team quotas and limits\n\n## Success criteria\n- Median setup time below 15 minutes for a new team.\n- At least 3 internal teams onboarded within one release.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAIRFE-75002"
+      },
+      "type": {
+       "inward": "is cloned by",
+       "name": "Cloners",
+       "outward": "clones"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i19",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-autofix-rubric-pass",
+     "strat-creator-ignore"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-06"
+    },
+    "status": {
+     "name": "To Do",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Wren CI cost reporting per repository",
+    "updated": "2026-10-25T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75022"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [],
+    "created": "2026-10-02T12:00:00.000+0000",
+    "description": "TBD; scope for Ember sandbox hardening to follow.",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i20",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-autofix-rubric-pass",
+     "strat-creator-processing"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-eng-04"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Ember sandbox hardening",
+    "updated": "2026-10-07T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75023"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [
+     {
+      "name": "synth-security"
+     }
+    ],
+    "created": "2026-04-05T12:00:00.000+0000",
+    "description": "## Who benefits\nSecurity reviewers get a predictable, supported workflow for Slate audit logging, with fewer hand-offs and less time spent on one-off fixes. Model builders gain visibility into how Slate audit logging behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Slate audit logging assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Feature Overview (mandatory - complete while in New status)\nSlate audit logging gives security reviewers and model builders a supported way to work with this capability without bespoke scripts. This Initiative tracks the product bet end to end.\n\n## Goals (mandatory - New)\n- Provide dashboards for the key health signals.\n- Provide per-team quotas and limits.\n- Provide offline and disconnected operation.\n\n## Requirements (mandatory - Refinement)\n| Requirement | Notes | isMVP? |\n| --- | --- | --- |\n| Dashboards for the key health signals | Synthetic requirement 1 | Yes |\n| Per-team quotas and limits | Synthetic requirement 2 | Yes |\n| Offline and disconnected operation | Synthetic requirement 3 | Yes |\n| Role-based access aligned with existing groups | Synthetic requirement 4 | No |\n| An upgrade path with no manual steps | Synthetic requirement 5 | No |\n\n## Out of Scope\n- Replacing existing tooling outside Slate audit logging.\n\n## Acceptance Criteria\n- [ ] Dashboards for the key health signals is verified.\n- [ ] Per-team quotas and limits is verified.\n- [ ] Offline and disconnected operation is verified.",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i21",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-autofix-rubric-pass"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-05"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Slate audit logging for administrative actions",
+    "updated": "2026-08-23T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75024"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-02"
+    },
+    "components": [
+     {
+      "name": "synth-security"
+     },
+     {
+      "name": "synth-networking"
+     }
+    ],
+    "created": "2026-07-24T12:00:00.000+0000",
+    "description": "## Who benefits\nData scientists get a predictable, supported workflow for Thornbill network policy baseline, with fewer hand-offs and less time spent on one-off fixes. SRE teams gain visibility into how Thornbill network policy baseline behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Thornbill network policy baseline assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Summary\nEstablish Thornbill network policy baseline as the default for every supported deployment.\n\n## Background\n- Drivers: compliance expectations from data scientists, and support load reported by SRE teams.\n- Positioning: closes a gap that customers currently fill with custom tooling.\n\n## Action items\n1. Deliver audit events for every administrative action.\n2. Deliver a rollback path within one release.\n3. Deliver a documented API with versioned schemas.\n4. Deliver role-based access aligned with existing groups.\n\n## Risks & Assumptions\n- Performance on the smallest supported cluster size.\n- Capacity on shared CI runners.",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i22",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-autofix-rubric-pass",
+     "strat-creator-auto-refined",
+     "strat-creator-human-sign-off",
+     "strat-creator-rubric-pass"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75002"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-eng-02"
+    },
+    "status": {
+     "name": "Release Pending",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Thornbill default network policy baseline for workloads",
+    "updated": "2026-07-29T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75025"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [
+     {
+      "name": "synth-security"
+     }
+    ],
+    "created": "2026-06-14T12:00:00.000+0000",
+    "description": "## Who benefits\nModel builders get a predictable, supported workflow for Alder secrets rotation, with fewer hand-offs and less time spent on one-off fixes. Release owners gain visibility into how Alder secrets rotation behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Alder secrets rotation assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Goal\nMake Alder secrets rotation usable by model builders in day-to-day work, so that release owners no longer depend on manual workarounds.\n\n## Scope\n- Offline and disconnected operation\n- Alerting thresholds that teams can tune\n- Self-service configuration\n- Audit events for every administrative action\n\n## Success criteria\n- Median setup time below 15 minutes for a new team.\n- At least 3 internal teams onboarded within one release.\n\n## Acceptance Criteria\n- [ ] Offline and disconnected operation is verified.\n- [ ] Alerting thresholds that teams can tune is verified.\n- [ ] Self-service configuration is verified.",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i23",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-autofix-rubric-pass",
+     "strat-creator-auto-refined",
+     "strat-creator-human-sign-off",
+     "strat-creator-rubric-pass"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-01"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Alder automatic secrets rotation for platform services",
+    "updated": "2026-06-19T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75026"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [
+     {
+      "name": "synth-images"
+     }
+    ],
+    "created": "2026-05-05T12:00:00.000+0000",
+    "description": "## Who benefits\nPlatform administrators get a predictable, supported workflow for Osprey SBOM publication, with fewer hand-offs and less time spent on one-off fixes. Security reviewers gain visibility into how Osprey SBOM publication behaves across teams, which today requires asking around or reading logs.\nToday, teams that need Osprey SBOM publication assemble it themselves from scripts and internal notes; the result differs per team, is hard to support, and breaks on upgrade.\n\n## Summary\nEstablish Osprey SBOM publication as the default for every supported deployment.\n\n## Background\n- Drivers: compliance expectations from platform administrators, and support load reported by security reviewers.\n- Positioning: closes a gap that customers currently fill with custom tooling.\n\n## Action items\n1. Deliver role-based access aligned with existing groups.\n2. Deliver offline and disconnected operation.\n3. Deliver a rollback path within one release.\n4. Deliver per-team quotas and limits.\n\n## Risks & Assumptions\n- Unclear ownership between two teams.\n- Capacity on shared CI runners.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAI-75043"
+      },
+      "type": {
+       "inward": "is incorporated by",
+       "name": "Incorporates",
+       "outward": "incorporates"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i24",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-autofix-rubric-pass",
+     "strat-creator-auto-refined",
+     "strat-creator-human-sign-off",
+     "strat-creator-rubric-pass"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-03"
+    },
+    "status": {
+     "name": "Refinement",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Osprey SBOM publication for shipped images",
+    "updated": "2026-05-10T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75027"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [
+     {
+      "name": "synth-serving"
+     },
+     {
+      "name": "synth-observability"
+     }
+    ],
+    "created": "2026-10-20T12:00:00.000+0000",
+    "customfield_10855": "synth-2.0",
+    "description": "## Problem\nOperators of predictive model-serving endpoints cannot connect a slow client request to what happened inside the model server. MLServer already creates a server span for each REST request (its bundled FastAPI OpenTelemetry instrumentation), but on the platform those spans go nowhere: the exporter is hard-coded to an insecure connection, nothing configures it, and incoming trace context from the caller is not joined.\n\n## Who benefits\n- Platform operators diagnosing slow requests on predictive InferenceServices served by MLServer.\n- Application teams that already trace their own services and want the model call in the same trace.\n\n## Goal\nFor an InferenceService that opts in, each sampled REST inference request served by the MLServer runtime produces an MLServer server span that joins the caller's W3C trace context and is exported over TLS to the platform's existing data-science-collector, which already forwards traces to Tempo. One trace then shows the caller's spans and the time spent inside the model server.\n\n## Scope\n- Runtime: MLServer only, the supported MLServer ServingRuntime image, RawDeployment mode.\n- Protocol: REST (KServe v2 HTTP) only.\n- Workers: spans from the main MLServer process; with parallel workers enabled, inference inside a worker process is covered by the server span only (see P1 below).\n\n## Requirements\n| ID | Requirement | Acceptance | Priority |\n| --- | --- | --- | --- |\n| R1 | Opt in per InferenceService with an annotation; odh-model-controller sets the OTEL_* environment (endpoint, sampler, resource attributes) on the predictor only when it is present | Without the annotation the predictor pod spec is byte-for-byte unchanged | P0 |\n| R2 | MLServer exports spans over TLS, trusting the OpenShift service CA from the namespace's injected service-CA ConfigMap (downstream patch to the hard-coded insecure exporter) | Spans reach the collector on 4317 with TLS verification on; a wrong CA produces no export and no request errors | P0 |\n| R3 | The server span joins an incoming W3C traceparent | A request sent with a traceparent appears in Tempo as a child of the caller's span | P0 |\n| R4 | Parent-based ratio sampling, default 1 percent, set per InferenceService by the annotation value | Measured export rate within 0.5 percentage points of the configured ratio over 10,000 requests | P0 |\n| R5 | The collector NetworkPolicy admits OTLP only from predictor pods (KServe predictor pod label), and the existing k8sattributes and identity-sanitizing processors set the namespace attribute | A pod without the label cannot export; a span claiming another namespace is rewritten to its real one | P0 |\n| R6 | Separate inference span inside parallel-worker processes (trace context across MLServer's worker IPC) | Server span minus inference span equals codec and queue time within 1 ms | P1 |\n\n## Non-functional requirements\n- Overhead: at 1 percent sampling, added p95 latency below 2 ms in the benchmark below.\n- Privacy: no request or response payload, header value or token in any span attribute.\n- Availability: if the collector is unreachable or the CA is wrong, requests succeed unchanged and spans are dropped.\n\n## Benchmark\nThe scikit-learn iris model on the MLServer runtime, one replica, 100 requests per second of KServe v2 REST for 10 minutes, measured with and without the annotation at 1 percent sampling and at 100 percent sampling. The p95 difference at 1 percent is the overhead figure. Owned by the model serving team; the harness is a small addition to the existing runtime performance tests.\n\n## Out of scope\n- Spans for the OpenShift router and the kube-rbac-proxy (or Authorino) authentication hop: that time appears only as the gap between the caller's span and the server span.\n- gRPC: it is not externally routable on the predictive Route path today.\n- LLMInferenceService, vLLM, OpenVINO Model Server, Triton and AutoGluon: each would be its own Initiative.\n- The KServe agent sidecar and any proxy or Service rewiring.\n- Installing or configuring the OpenTelemetry or Tempo operators: RHOAI does not install external operators; without the collector, nothing is exported.\n- Per-namespace trace access for model owners: traces land in the shared Tempo, and access is arranged by administrators. Self-service access is a follow-on.\n\n## Dependencies\n- The existing data-science-collector deployment (OTLP over TLS on 4317) and its Tempo export.\n- MLServer's bundled OpenTelemetry SDK and FastAPI instrumentation (already in the shipped image).\n- One downstream MLServer patch (R2); no upstream change is needed for the P0 scope.\n\n## Effort and rollout\n- Size M: model serving team (odh-model-controller annotation and env injection, MLServer patch, benchmark) and platform observability team (NetworkPolicy, sanitization tests). About three sprints for both teams in parallel.\n- Technology preview behind the annotation in one release; general availability after one release of preview feedback, with R6 considered for GA.\n\n## Acceptance Criteria\n- [ ] R1-R5 pass on a cluster with the collector installed; R6 is tracked separately.\n- [ ] The benchmark shows added p95 latency below 2 ms at 1 percent sampling.\n- [ ] An InferenceService without the annotation is unchanged (pod spec diff and benchmark).\n- [ ] With the collector absent or the CA wrong, all requests succeed and no errors are logged per request.",
+    "issuetype": {
+     "name": "Initiative"
+    },
+    "labels": [
+     "cc75-fx-i25",
+     "cc75-synthetic",
+     "initiative-autofix-opt-in",
+     "initiative-autofix-rubric-pass"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75001"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAISTRAT"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Bramblewick trace export from the MLServer runtime for predictive serving",
+    "updated": "2026-10-25T12:00:00.000+0000"
+   },
+   "key": "RHAISTRAT-75028"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [],
+    "created": "2026-06-14T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Lanternfish telemetry.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAI-75002"
+      },
+      "type": {
+       "inward": "is blocked by",
+       "name": "Blocks",
+       "outward": "blocks"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i01-rhai-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75004"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-01"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Lanternfish telemetry: API contract and design",
+    "updated": "2026-06-17T12:00:00.000+0000"
+   },
+   "key": "RHAI-75001"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [],
+    "created": "2026-06-14T12:00:00.000+0000",
+    "description": "Synthetic Epic: core implementation for Lanternfish telemetry.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAI-75003"
+      },
+      "type": {
+       "inward": "is blocked by",
+       "name": "Blocks",
+       "outward": "blocks"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i01-rhai-e2",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75004"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-01"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Lanternfish telemetry: Core implementation",
+    "updated": "2026-06-17T12:00:00.000+0000"
+   },
+   "key": "RHAI-75002"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [],
+    "created": "2026-06-14T12:00:00.000+0000",
+    "description": "Synthetic Epic: observability and alerts for Lanternfish telemetry.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i01-rhai-e3",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75004"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-01"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Lanternfish telemetry: Observability and alerts",
+    "updated": "2026-06-17T12:00:00.000+0000"
+   },
+   "key": "RHAI-75003"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [],
+    "created": "2026-06-14T12:00:00.000+0000",
+    "description": "Synthetic Epic: documentation and enablement for Lanternfish telemetry.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i01-rhai-e4",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75004"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-01"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Lanternfish telemetry: Documentation and enablement",
+    "updated": "2026-06-17T12:00:00.000+0000"
+   },
+   "key": "RHAI-75004"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-02"
+    },
+    "components": [],
+    "created": "2026-02-04T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Saltmarsh batch scheduler.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i02-rhai-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75005"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Saltmarsh batch scheduler: API contract and design",
+    "updated": "2026-02-07T12:00:00.000+0000"
+   },
+   "key": "RHAI-75005"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-02"
+    },
+    "components": [],
+    "created": "2026-02-04T12:00:00.000+0000",
+    "description": "Synthetic Epic: core implementation for Saltmarsh batch scheduler.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i02-rhai-e2",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75005"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Saltmarsh batch scheduler: Core implementation",
+    "updated": "2026-02-07T12:00:00.000+0000"
+   },
+   "key": "RHAI-75006"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [],
+    "created": "2025-12-16T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Quillwork design reviews.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i04-rhoaieng-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75007"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHOAIENG"
+    },
+    "reporter": {
+     "displayName": "synth-eng-03"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Quillwork design reviews: API contract and design",
+    "updated": "2025-12-19T12:00:00.000+0000"
+   },
+   "key": "RHOAIENG-75001"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [],
+    "created": "2026-03-16T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Basalt base images.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAI-75008"
+      },
+      "type": {
+       "inward": "is blocked by",
+       "name": "Blocks",
+       "outward": "blocks"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i05-rhai-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75008"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-03"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Basalt base images: API contract and design",
+    "updated": "2026-03-19T12:00:00.000+0000"
+   },
+   "key": "RHAI-75007"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [],
+    "created": "2026-03-16T12:00:00.000+0000",
+    "description": "Synthetic Epic: core implementation for Basalt base images.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i05-rhai-e2",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75008"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-03"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Basalt base images: Core implementation",
+    "updated": "2026-03-19T12:00:00.000+0000"
+   },
+   "key": "RHAI-75008"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [],
+    "created": "2026-03-16T12:00:00.000+0000",
+    "description": "Synthetic Epic: observability and alerts for Basalt base images.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i05-rhai-e3",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75008"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-03"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Basalt base images: Observability and alerts",
+    "updated": "2026-03-19T12:00:00.000+0000"
+   },
+   "key": "RHAI-75009"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [],
+    "created": "2026-03-16T12:00:00.000+0000",
+    "description": "Synthetic Epic: documentation and enablement for Basalt base images.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i05-rhai-e4",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75008"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-03"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Basalt base images: Documentation and enablement",
+    "updated": "2026-03-19T12:00:00.000+0000"
+   },
+   "key": "RHAI-75010"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [],
+    "created": "2026-03-16T12:00:00.000+0000",
+    "description": "Synthetic Epic: performance and scale testing for Basalt base images.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i05-rhai-e5",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75008"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-03"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Basalt base images: Performance and scale testing",
+    "updated": "2026-03-19T12:00:00.000+0000"
+   },
+   "key": "RHAI-75011"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [],
+    "created": "2026-03-16T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Basalt base images.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i05-rhoaieng-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75008"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHOAIENG"
+    },
+    "reporter": {
+     "displayName": "synth-pm-03"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Basalt base images: API contract and design",
+    "updated": "2026-03-19T12:00:00.000+0000"
+   },
+   "key": "RHOAIENG-75002"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [],
+    "created": "2026-09-02T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Driftwood notebook sync.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i06-rhai-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75009"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-eng-01"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Driftwood notebook sync: API contract and design",
+    "updated": "2026-09-05T12:00:00.000+0000"
+   },
+   "key": "RHAI-75012"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [],
+    "created": "2026-09-02T12:00:00.000+0000",
+    "description": "Synthetic Epic: core implementation for Driftwood notebook sync.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i06-rhai-e2",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75009"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-eng-01"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Driftwood notebook sync: Core implementation",
+    "updated": "2026-09-05T12:00:00.000+0000"
+   },
+   "key": "RHAI-75013"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-02"
+    },
+    "components": [],
+    "created": "2026-05-30T12:00:00.000+0000",
+    "description": "Synthetic onboarding Story delivered without an Epic layer.",
+    "issuetype": {
+     "name": "Story"
+    },
+    "labels": [
+     "cc75-fx-i10-s1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75013"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-eng-02"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Sparrow runtime team: onboarding cohort 1",
+    "updated": "2026-06-02T12:00:00.000+0000"
+   },
+   "key": "RHAI-75014"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-02"
+    },
+    "components": [],
+    "created": "2026-05-30T12:00:00.000+0000",
+    "description": "Synthetic onboarding Story delivered without an Epic layer.",
+    "issuetype": {
+     "name": "Story"
+    },
+    "labels": [
+     "cc75-fx-i10-s2",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75013"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-eng-02"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Sparrow runtime team: onboarding cohort 2",
+    "updated": "2026-06-02T12:00:00.000+0000"
+   },
+   "key": "RHAI-75015"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-02"
+    },
+    "components": [],
+    "created": "2026-05-30T12:00:00.000+0000",
+    "description": "Synthetic onboarding Story delivered without an Epic layer.",
+    "issuetype": {
+     "name": "Story"
+    },
+    "labels": [
+     "cc75-fx-i10-s3",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75013"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-eng-02"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Sparrow runtime team: onboarding cohort 3",
+    "updated": "2026-06-02T12:00:00.000+0000"
+   },
+   "key": "RHAI-75016"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [],
+    "created": "2026-07-24T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Pumice GPU quotas.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i12-rhoaieng-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75015"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHOAIENG"
+    },
+    "reporter": {
+     "displayName": "synth-pm-04"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Pumice GPU quotas: API contract and design",
+    "updated": "2026-07-27T12:00:00.000+0000"
+   },
+   "key": "RHOAIENG-75003"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [],
+    "created": "2026-07-24T12:00:00.000+0000",
+    "description": "Synthetic Epic: core implementation for Pumice GPU quotas.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i12-rhoaieng-e2",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75015"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHOAIENG"
+    },
+    "reporter": {
+     "displayName": "synth-pm-04"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Pumice GPU quotas: Core implementation",
+    "updated": "2026-07-27T12:00:00.000+0000"
+   },
+   "key": "RHOAIENG-75004"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [],
+    "created": "2026-07-24T12:00:00.000+0000",
+    "description": "Synthetic Epic: observability and alerts for Pumice GPU quotas.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i12-rhoaieng-e3",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75015"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHOAIENG"
+    },
+    "reporter": {
+     "displayName": "synth-pm-04"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Pumice GPU quotas: Observability and alerts",
+    "updated": "2026-07-27T12:00:00.000+0000"
+   },
+   "key": "RHOAIENG-75005"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [],
+    "created": "2026-07-04T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Cobalt serving autoscaler.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i13-rhai-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75016"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Cobalt serving autoscaler: API contract and design",
+    "updated": "2026-07-07T12:00:00.000+0000"
+   },
+   "key": "RHAI-75017"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [],
+    "created": "2026-07-04T12:00:00.000+0000",
+    "description": "Synthetic Epic: core implementation for Cobalt serving autoscaler.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i13-rhai-e2",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75016"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Cobalt serving autoscaler: Core implementation",
+    "updated": "2026-07-07T12:00:00.000+0000"
+   },
+   "key": "RHAI-75018"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [],
+    "created": "2026-07-04T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Cobalt serving autoscaler.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i13-aipcc-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75016"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "AIPCC"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Cobalt serving autoscaler: API contract and design",
+    "updated": "2026-07-07T12:00:00.000+0000"
+   },
+   "key": "AIPCC-75001"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-04-25T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Ironbark multi-cluster rollout.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAI-75020"
+      },
+      "type": {
+       "inward": "is blocked by",
+       "name": "Blocks",
+       "outward": "blocks"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i14-rhai-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75017"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Ironbark multi-cluster rollout: API contract and design",
+    "updated": "2026-04-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75019"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-04-25T12:00:00.000+0000",
+    "description": "Synthetic Epic: core implementation for Ironbark multi-cluster rollout.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAI-75021"
+      },
+      "type": {
+       "inward": "is blocked by",
+       "name": "Blocks",
+       "outward": "blocks"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i14-rhai-e2",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75017"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Ironbark multi-cluster rollout: Core implementation",
+    "updated": "2026-04-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75020"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-04-25T12:00:00.000+0000",
+    "description": "Synthetic Epic: observability and alerts for Ironbark multi-cluster rollout.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAI-75023"
+      },
+      "type": {
+       "inward": "is blocked by",
+       "name": "Blocks",
+       "outward": "blocks"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i14-rhai-e3",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75017"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Ironbark multi-cluster rollout: Observability and alerts",
+    "updated": "2026-04-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75021"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-04-25T12:00:00.000+0000",
+    "description": "Synthetic Epic: documentation and enablement for Ironbark multi-cluster rollout.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i14-rhai-e4",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75017"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Ironbark multi-cluster rollout: Documentation and enablement",
+    "updated": "2026-04-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75022"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-04-25T12:00:00.000+0000",
+    "description": "Synthetic Epic: performance and scale testing for Ironbark multi-cluster rollout.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i14-rhai-e5",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75017"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Ironbark multi-cluster rollout: Performance and scale testing",
+    "updated": "2026-04-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75023"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-04-25T12:00:00.000+0000",
+    "description": "Synthetic Epic: security review for Ironbark multi-cluster rollout.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i14-rhai-e6",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75017"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Ironbark multi-cluster rollout: Security review",
+    "updated": "2026-04-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75024"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-04-25T12:00:00.000+0000",
+    "description": "Synthetic Epic: upgrade and migration path for Ironbark multi-cluster rollout.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i14-rhai-e7",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75017"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Ironbark multi-cluster rollout: Upgrade and migration path",
+    "updated": "2026-04-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75025"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-04-25T12:00:00.000+0000",
+    "description": "Synthetic Epic: ci coverage for Ironbark multi-cluster rollout.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAI-75027"
+      },
+      "type": {
+       "inward": "is blocked by",
+       "name": "Blocks",
+       "outward": "blocks"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i14-rhai-e8",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75017"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Ironbark multi-cluster rollout: CI coverage",
+    "updated": "2026-04-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75026"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-04-25T12:00:00.000+0000",
+    "description": "Synthetic Epic: console integration for Ironbark multi-cluster rollout.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i14-rhai-e9",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75017"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Ironbark multi-cluster rollout: Console integration",
+    "updated": "2026-04-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75027"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-04-25T12:00:00.000+0000",
+    "description": "Synthetic Epic: rollout behind a feature flag for Ironbark multi-cluster rollout.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i14-rhai-e10",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75017"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Ironbark multi-cluster rollout: Rollout behind a feature flag",
+    "updated": "2026-04-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75028"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-04-25T12:00:00.000+0000",
+    "description": "Synthetic Epic: packaging and distribution for Ironbark multi-cluster rollout.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i14-rhai-e11",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75017"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Ironbark multi-cluster rollout: Packaging and distribution",
+    "updated": "2026-04-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75029"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-pm-02"
+    },
+    "components": [],
+    "created": "2026-04-25T12:00:00.000+0000",
+    "description": "Synthetic Epic: usage telemetry for Ironbark multi-cluster rollout.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i14-rhai-e12",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75017"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-02"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Ironbark multi-cluster rollout: Usage telemetry",
+    "updated": "2026-04-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75030"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [],
+    "created": "2026-09-27T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Fennel release engineering.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i15-rhai-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75018"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-eng-03"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Fennel release engineering: API contract and design",
+    "updated": "2026-09-30T12:00:00.000+0000"
+   },
+   "key": "RHAI-75031"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [],
+    "created": "2026-09-27T12:00:00.000+0000",
+    "description": "Synthetic Epic: core implementation for Fennel release engineering.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i15-rhai-e2",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75018"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-eng-03"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Fennel release engineering: Core implementation",
+    "updated": "2026-09-30T12:00:00.000+0000"
+   },
+   "key": "RHAI-75032"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-01"
+    },
+    "components": [],
+    "created": "2026-10-30T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Wren test-failure visibility.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i17-rhai-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75020"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-06"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Wren test-failure visibility: API contract and design",
+    "updated": "2026-11-01T12:00:00.000+0000"
+   },
+   "key": "RHAI-75033"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-02"
+    },
+    "components": [],
+    "created": "2026-10-30T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Wren flaky-test quarantine.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i18-rhai-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75021"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-06"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Wren flaky-test quarantine: API contract and design",
+    "updated": "2026-11-01T12:00:00.000+0000"
+   },
+   "key": "RHAI-75034"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-02"
+    },
+    "components": [],
+    "created": "2026-10-30T12:00:00.000+0000",
+    "description": "Synthetic Epic: core implementation for Wren flaky-test quarantine.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i18-rhai-e2",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75021"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-06"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Wren flaky-test quarantine: Core implementation",
+    "updated": "2026-11-01T12:00:00.000+0000"
+   },
+   "key": "RHAI-75035"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [],
+    "created": "2026-10-30T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Wren CI cost reporting.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i19-rhai-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75022"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-06"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Wren CI cost reporting: API contract and design",
+    "updated": "2026-11-01T12:00:00.000+0000"
+   },
+   "key": "RHAI-75036"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [],
+    "created": "2026-04-15T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Slate audit logging.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i21-rhai-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75024"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-05"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Slate audit logging: API contract and design",
+    "updated": "2026-04-18T12:00:00.000+0000"
+   },
+   "key": "RHAI-75037"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [],
+    "created": "2026-04-15T12:00:00.000+0000",
+    "description": "Synthetic Epic: core implementation for Slate audit logging.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i21-rhai-e2",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75024"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-05"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Slate audit logging: Core implementation",
+    "updated": "2026-04-18T12:00:00.000+0000"
+   },
+   "key": "RHAI-75038"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [],
+    "created": "2026-04-15T12:00:00.000+0000",
+    "description": "Synthetic Epic: observability and alerts for Slate audit logging.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i21-rhai-e3",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75024"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-05"
+    },
+    "resolution": {
+     "name": "Done"
+    },
+    "status": {
+     "name": "Closed",
+     "statusCategory": {
+      "key": "done"
+     }
+    },
+    "summary": "[SYNTH] Slate audit logging: Observability and alerts",
+    "updated": "2026-04-18T12:00:00.000+0000"
+   },
+   "key": "RHAI-75039"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [],
+    "created": "2026-06-24T12:00:00.000+0000",
+    "description": "Synthetic Epic: api contract and design for Alder secrets rotation.",
+    "issuelinks": [
+     {
+      "outwardIssue": {
+       "key": "RHAI-75041"
+      },
+      "type": {
+       "inward": "is blocked by",
+       "name": "Blocks",
+       "outward": "blocks"
+      }
+     }
+    ],
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i23-rhai-e1",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75026"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-01"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Alder secrets rotation: API contract and design",
+    "updated": "2026-06-27T12:00:00.000+0000"
+   },
+   "key": "RHAI-75040"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [],
+    "created": "2026-06-24T12:00:00.000+0000",
+    "description": "Synthetic Epic: core implementation for Alder secrets rotation.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i23-rhai-e2",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75026"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-01"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Alder secrets rotation: Core implementation",
+    "updated": "2026-06-27T12:00:00.000+0000"
+   },
+   "key": "RHAI-75041"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-03"
+    },
+    "components": [],
+    "created": "2026-06-24T12:00:00.000+0000",
+    "description": "Synthetic Epic: observability and alerts for Alder secrets rotation.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i23-rhai-e3",
+     "cc75-synthetic"
+    ],
+    "parent": {
+     "key": "RHAISTRAT-75026"
+    },
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-01"
+    },
+    "status": {
+     "name": "New",
+     "statusCategory": {
+      "key": "new"
+     }
+    },
+    "summary": "[SYNTH] Alder secrets rotation: Observability and alerts",
+    "updated": "2026-06-27T12:00:00.000+0000"
+   },
+   "key": "RHAI-75042"
+  },
+  {
+   "fields": {
+    "assignee": {
+     "displayName": "synth-eng-04"
+    },
+    "components": [],
+    "created": "2026-05-25T12:00:00.000+0000",
+    "description": "Synthetic Epic linked by a legacy Incorporates link, with no parent.",
+    "issuetype": {
+     "name": "Epic"
+    },
+    "labels": [
+     "cc75-fx-i24-legacy",
+     "cc75-synthetic"
+    ],
+    "priority": {
+     "name": "Major"
+    },
+    "project": {
+     "key": "RHAI"
+    },
+    "reporter": {
+     "displayName": "synth-pm-03"
+    },
+    "status": {
+     "name": "In Progress",
+     "statusCategory": {
+      "key": "indeterminate"
+     }
+    },
+    "summary": "[SYNTH] Osprey SBOM publication: legacy decomposition",
+    "updated": "2026-05-28T12:00:00.000+0000"
+   },
+   "key": "RHAI-75043"
+  }
+ ]
+}

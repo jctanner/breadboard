@@ -1,0 +1,65 @@
+{
+  "jira_url": "https://jira.w530.local",
+  "issues_in_fixture": 78,
+  "started": "2026-11-16T18:22:50.090956+00:00",
+  "config:rhaistrat-initiatives.json": {
+    "statuses": 8,
+    "issue_types": 1,
+    "priorities": 0,
+    "resolutions": 0,
+    "link_types": 2,
+    "custom_fields": 3,
+    "workflows": 1,
+    "projects": 1
+  },
+  "config:rhai-project.json": {
+    "statuses": 0,
+    "issue_types": 0,
+    "priorities": 0,
+    "resolutions": 0,
+    "link_types": 0,
+    "custom_fields": 0,
+    "workflows": 0,
+    "projects": 1
+  },
+  "import": {
+    "imported": 0,
+    "updated": 78,
+    "projects_created": [],
+    "users_created": []
+  },
+  "rhai_components": {
+    "wanted": [
+      "synth-ci",
+      "synth-data",
+      "synth-evaluation",
+      "synth-fleet",
+      "synth-images",
+      "synth-installer",
+      "synth-networking",
+      "synth-observability",
+      "synth-runtime",
+      "synth-security",
+      "synth-serving",
+      "synth-ui"
+    ],
+    "created": [
+      "synth-ci",
+      "synth-data",
+      "synth-evaluation",
+      "synth-fleet",
+      "synth-images",
+      "synth-installer",
+      "synth-networking",
+      "synth-observability",
+      "synth-runtime",
+      "synth-security",
+      "synth-serving",
+      "synth-ui"
+    ]
+  },
+  "verify_problems": [],
+  "fixture_issue_count": 78,
+  "snapshot": "snapshot_cc75-baseline_20261116_182256.db",
+  "ok": true
+}

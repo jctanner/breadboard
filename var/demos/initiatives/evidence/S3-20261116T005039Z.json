@@ -1,0 +1,32 @@
+{
+  "scenario": "S3",
+  "pipeline": 4,
+  "variables": {
+    "INITIATIVE_STRATEGIES": "on",
+    "STRAT_EXECUTOR": "fullsend"
+  },
+  "jobs": {
+    "fullsend-input-check": {
+      "id": 4,
+      "status": "failed",
+      "stage": "validate"
+    },
+    "python-tests": {
+      "id": 5,
+      "status": "failed",
+      "stage": "validate",
+      "expected_status": "failed",
+      "status_ok": true,
+      "marker": "<strat-pipeline tripwire message>",
+      "marker_found": true
+    },
+    "workflow-batch-initiative": {
+      "id": 6,
+      "status": "manual",
+      "stage": "strategy"
+    }
+  },
+  "jira_writes": [],
+  "ok": true,
+  "checked_at": "2026-11-16T00:50:39.419276+00:00"
+}

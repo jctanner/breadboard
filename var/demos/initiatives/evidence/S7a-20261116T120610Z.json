@@ -1,0 +1,135 @@
+{
+  "scenario": "S7a",
+  "pipeline": 24,
+  "variables": {
+    "INITIATIVE_STRATEGIES": "on",
+    "STRAT_EXECUTOR": "fullsend",
+    "STRAT_DRY_RUN": "0",
+    "FULLSEND_PUBLISH": "1",
+    "STRAT_CREATOR_REPO": "https://github-emulator.ai-pipeline.svc.cluster.local/fullsend-ai/strat-creator.git",
+    "STRAT_CREATOR_BRANCH": "cc75-emulator",
+    "BATCH_SIZE": "1"
+  },
+  "ref": "cc75-live",
+  "fixture": {
+    "baseline": "snapshot_cc75-baseline_20261116_003128.db",
+    "variant": "baseline",
+    "kept_as_snapshot": "snapshot_cc75-after-S7a_20261116_120610.db"
+  },
+  "jobs": {
+    "fullsend-input-check": {
+      "id": 48,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true
+    },
+    "python-tests": {
+      "id": 49,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true,
+      "marker": "cc75: live Initiative run",
+      "marker_found": true
+    },
+    "workflow-batch-initiative": {
+      "id": 50,
+      "status": "failed",
+      "stage": "strategy",
+      "markers": {
+        "RHAISTRAT-75006": true,
+        "Validation passed": false,
+        "Job succeeded": false
+      },
+      "expected_status": "success",
+      "status_ok": false
+    }
+  },
+  "live": {
+    "checks": {
+      "writes_only_to_selected": true,
+      "every_selected_written": true,
+      "untouched_not_written": true,
+      "RHAISTRAT-75006_strategy_attachment": true,
+      "RHAISTRAT-75006_gate_label": false,
+      "RHAISTRAT-75006_lock_released": true,
+      "results_published": false
+    },
+    "issues": {
+      "RHAISTRAT-75006": {
+        "labels": [
+          "cc75-fx-i03",
+          "cc75-synthetic",
+          "initiative-autofix-opt-in",
+          "initiative-autofix-rubric-pass"
+        ],
+        "status": "New",
+        "attachments": [
+          "RHAISTRAT-75006-strategy.md"
+        ]
+      },
+      "RHAISTRAT-75009": {
+        "labels": [
+          "cc75-fx-i06",
+          "cc75-synthetic",
+          "initiative-autofix-opt-in",
+          "initiative-autofix-rubric-pass"
+        ],
+        "status": "Refinement",
+        "attachments": []
+      },
+      "RHAISTRAT-75010": {
+        "labels": [
+          "cc75-fx-i07",
+          "cc75-synthetic",
+          "initiative-autofix-opt-in",
+          "initiative-autofix-rubric-pass"
+        ],
+        "status": "New",
+        "attachments": []
+      },
+      "RHAISTRAT-75019": {
+        "labels": [
+          "cc75-fx-i16",
+          "cc75-synthetic",
+          "initiative-autofix-opt-in",
+          "initiative-autofix-rubric-pass"
+        ],
+        "status": "Refinement",
+        "attachments": []
+      }
+    },
+    "write_keys": [
+      "RHAISTRAT-75006"
+    ],
+    "write_paths": [
+      "POST /rest/api/3/issue/RHAISTRAT-75006/attachments",
+      "PUT /rest/api/3/issue/RHAISTRAT-75006"
+    ],
+    "data_repo_new_paths": []
+  },
+  "jira_writes": 3,
+  "jira_read_posts": [
+    {
+      "method": "POST",
+      "path": "/rest/api/3/search/jql",
+      "status": 200,
+      "user": "cc75-strat-bot"
+    },
+    {
+      "method": "POST",
+      "path": "/rest/api/3/search/jql",
+      "status": 200,
+      "user": "cc75-strat-bot"
+    }
+  ],
+  "ok": false,
+  "checked_at": "2026-11-16T12:06:10.326741+00:00",
+  "post_review": {
+    "result": "failed (pipeline 24, job 50; Fullsend cost estimate $2.84)",
+    "cause": "The live push wrote RHAISTRAT-75006-strategy.md and updated the issue, then its read-back of the attachment was refused by the sandbox proxy (Tunnel connection failed: 403). The Jira emulator returns attachment content URLs on its BASE_URL (https://jira.w530.local) while JIRA_SERVER was the in-cluster service name, which was the only Jira host the sandbox policy allowed.",
+    "fix": "JIRA_SERVER and the sandbox's opaque Jira tunnel use the emulator's canonical URL jira.<domain>, as production uses its site URL (commit after 6f21dd8). The end-state snapshot this run left was deleted so S7b cannot start from it.",
+    "checks_that_held": "writes touched only RHAISTRAT-75006; the lock was released by the CI cleanup; nothing was published"
+  }
+}

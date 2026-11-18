@@ -1,0 +1,19 @@
+# CC-75 S2: job-owned Fullsend/OpenShell gateway smoke (no model).
+gateway-smoke:
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags: [aipcc-small-x86_64]
+  timeout: 45m
+  variables:
+    STRAT_CREATOR_URL: https://github-emulator.ai-pipeline.svc.cluster.local/fullsend-ai/strat-creator.git
+    STRAT_CREATOR_REF: main
+  script:
+    - bash smoke.sh
+  after_script:
+    - |
+      for f in smoke-output/podman.log smoke-output/sandbox-build.log smoke-output/gateway.log smoke-output/gateway-cleanup.log smoke-output/sandbox-create-help.txt; do
+        [ -f "$f" ] && { echo "----- tail $f"; tail -n 40 "$f"; }
+      done
+      true
+  artifacts:
+    when: always
+    paths: [smoke-output/]

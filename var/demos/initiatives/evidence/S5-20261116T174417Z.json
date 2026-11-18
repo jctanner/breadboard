@@ -1,0 +1,144 @@
+{
+  "scenario": "S5",
+  "pipeline": 56,
+  "schedule": 1,
+  "job": 197,
+  "jobs": {
+    "compare-parallel-period": "manual",
+    "python-tests": "success",
+    "test-alt-gcp-key": "manual",
+    "autofix-initiative": "success",
+    "autofix-initiative-stage-dry": "manual",
+    "autofix-rfe": "manual",
+    "autofix-rfe-alt-dry-run": "manual",
+    "autofix-rfe-alt-dry-run-46": "manual",
+    "autofix-rfe-anthropic": "manual",
+    "autofix-rfe-dry-fullsend": "manual",
+    "autofix-rfe-stage-dry": "manual"
+  },
+  "checks": {
+    "job_success": true,
+    "watchdog_limit_ok": true,
+    "trace: cc75: model via Model Relay": true,
+    "trace: cc75: autofix limit 3, batch size 3": true,
+    "trace: Jira identity probe OK": true,
+    "trace: Jira permissions probe skipped": true,
+    "writes_only_opted_in": true,
+    "written_within_limit": true,
+    "results_pushed": true,
+    "RHAISTRAT-75004_summary_unchanged": true,
+    "RHAISTRAT-75006_summary_unchanged": true,
+    "RHAISTRAT-75009_summary_unchanged": true,
+    "RHAISTRAT-75004_has_outcome_label": true,
+    "RHAISTRAT-75006_has_outcome_label": true,
+    "RHAISTRAT-75009_has_outcome_label": true
+  },
+  "written_keys": [
+    "RHAISTRAT-75004",
+    "RHAISTRAT-75006",
+    "RHAISTRAT-75009"
+  ],
+  "label_changes": {
+    "RHAISTRAT-75004": {
+      "before": [
+        "cc75-fx-i01",
+        "cc75-synthetic",
+        "initiative-autofix-opt-in"
+      ],
+      "after": [
+        "cc75-fx-i01",
+        "cc75-synthetic",
+        "initiative-alignment-partial",
+        "initiative-autofix-opt-in",
+        "initiative-autofix-rubric-pass",
+        "initiative-feasibility-pass",
+        "initiative-needs-attention"
+      ]
+    },
+    "RHAISTRAT-75006": {
+      "before": [
+        "cc75-fx-i03",
+        "cc75-synthetic",
+        "initiative-autofix-opt-in",
+        "initiative-autofix-rubric-pass"
+      ],
+      "after": [
+        "cc75-fx-i03",
+        "cc75-synthetic",
+        "initiative-alignment-partial",
+        "initiative-auto-revised",
+        "initiative-autofix-opt-in",
+        "initiative-autofix-rubric-pass",
+        "initiative-feasibility-pass"
+      ]
+    },
+    "RHAISTRAT-75009": {
+      "before": [
+        "cc75-fx-i06",
+        "cc75-synthetic",
+        "initiative-autofix-opt-in",
+        "initiative-autofix-rubric-pass"
+      ],
+      "after": [
+        "cc75-fx-i06",
+        "cc75-synthetic",
+        "initiative-alignment-partial",
+        "initiative-autofix-opt-in",
+        "initiative-autofix-rubric-pass",
+        "initiative-feasibility-pass",
+        "initiative-needs-attention"
+      ]
+    }
+  },
+  "comments_added": {
+    "RHAISTRAT-75004": 1,
+    "RHAISTRAT-75006": 0,
+    "RHAISTRAT-75009": 1
+  },
+  "initiative_creator_comments": {
+    "RHAISTRAT-75004": 1,
+    "RHAISTRAT-75006": 0,
+    "RHAISTRAT-75009": 1
+  },
+  "write_paths": [
+    "POST /rest/api/3/issue/RHAISTRAT-75004/comment",
+    "POST /rest/api/3/issue/RHAISTRAT-75009/comment",
+    "PUT /rest/api/3/issue/RHAISTRAT-75004",
+    "PUT /rest/api/3/issue/RHAISTRAT-75006",
+    "PUT /rest/api/3/issue/RHAISTRAT-75009"
+  ],
+  "data_repo_new_paths": [
+    "initiative-rhaistrat/20261116-173311/auto-fix-runs/initiative-run-20261116-173311-report.html",
+    "initiative-rhaistrat/20261116-173311/auto-fix-runs/initiative-run-20261116-173311.yaml",
+    "initiative-rhaistrat/20261116-173311/auto-fix-runs/initiative-snapshot-20261116-173315.yaml",
+    "initiative-rhaistrat/20261116-173311/initiative-originals/RHAISTRAT-75004.md",
+    "initiative-rhaistrat/20261116-173311/initiative-originals/RHAISTRAT-75006.md",
+    "initiative-rhaistrat/20261116-173311/initiative-originals/RHAISTRAT-75009.md",
+    "initiative-rhaistrat/20261116-173311/initiative-reviews/RHAISTRAT-75004-alignment.md",
+    "initiative-rhaistrat/20261116-173311/initiative-reviews/RHAISTRAT-75004-feasibility.md",
+    "initiative-rhaistrat/20261116-173311/initiative-reviews/RHAISTRAT-75004-review.md",
+    "initiative-rhaistrat/20261116-173311/initiative-reviews/RHAISTRAT-75006-alignment.md",
+    "initiative-rhaistrat/20261116-173311/initiative-reviews/RHAISTRAT-75006-feasibility.md",
+    "initiative-rhaistrat/20261116-173311/initiative-reviews/RHAISTRAT-75006-review.md",
+    "initiative-rhaistrat/20261116-173311/initiative-reviews/RHAISTRAT-75009-alignment.md",
+    "initiative-rhaistrat/20261116-173311/initiative-reviews/RHAISTRAT-75009-feasibility.md",
+    "initiative-rhaistrat/20261116-173311/initiative-reviews/RHAISTRAT-75009-review.md",
+    "initiative-rhaistrat/20261116-173311/initiatives/RHAISTRAT-75004.md",
+    "initiative-rhaistrat/20261116-173311/initiatives/RHAISTRAT-75006.md",
+    "initiative-rhaistrat/20261116-173311/initiatives/RHAISTRAT-75009.md",
+    "initiative-rhaistrat/20261116-173311/rfe-rubric.md",
+    "initiative-rhaistrat/latest"
+  ],
+  "ok": true,
+  "checked_at": "2026-11-16T17:44:17.920765+00:00",
+  "restored_after": "snapshot_cc75-baseline_20261116_003128.db",
+  "ok_as_recorded": false,
+  "post_review": {
+    "result": "pass after correcting the acceptance check (no re-run)",
+    "correction": "The plan required exactly one of initiative-autofix-rubric-pass / initiative-needs-attention. Upstream allows both: rfe-creator flags a passing Initiative for a human (strat-creator config/initiative-settings.yaml). 75004 and 75009 passed and were flagged; 75006 was revised (6 -> 9/10) and passes.",
+    "cost_estimate_usd": 6.04,
+    "duration_s": 589,
+    "route": "agentic-ci API-key provider -> Model Relay (claude-opus-5-5), Claude Code 2.1.296 in a per-job claude-sandbox:0.3.46 copy with the emulator CA",
+    "end_state": "not kept as a snapshot (recorded ok was False); Jira restored to cc75-baseline"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "scenario": "S6",
+  "pipeline": 20,
+  "variables": {
+    "INITIATIVE_STRATEGIES": "on",
+    "STRAT_EXECUTOR": "fullsend",
+    "STRAT_DRY_RUN": "1",
+    "FULLSEND_PUBLISH": "0",
+    "STRAT_CREATOR_REPO": "https://github-emulator.ai-pipeline.svc.cluster.local/fullsend-ai/strat-creator.git",
+    "STRAT_CREATOR_BRANCH": "cc75-emulator",
+    "BATCH_SIZE": "1"
+  },
+  "fixture": {
+    "baseline": "snapshot_cc75-baseline_20261116_003128.db",
+    "variant": "baseline",
+    "restored_after": "snapshot_cc75-baseline_20261116_003128.db"
+  },
+  "jobs": {
+    "fullsend-input-check": {
+      "id": 38,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true
+    },
+    "python-tests": {
+      "id": 39,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true
+    },
+    "workflow-batch-initiative": {
+      "id": 40,
+      "status": "failed",
+      "stage": "strategy",
+      "markers": {
+        "RHAISTRAT-75006": true,
+        "Sandbox created": true,
+        "Validation passed": false,
+        "Job succeeded": false
+      },
+      "expected_status": "success",
+      "status_ok": false
+    }
+  },
+  "jira_writes": [],
+  "jira_read_posts": [
+    {
+      "method": "POST",
+      "path": "/rest/api/3/search/jql",
+      "status": 200,
+      "user": "cc75-strat-bot"
+    },
+    {
+      "method": "POST",
+      "path": "/rest/api/3/search/jql",
+      "status": 200,
+      "user": "cc75-strat-bot"
+    }
+  ],
+  "ok": false,
+  "checked_at": "2026-11-16T03:33:10.857557+00:00",
+  "post_review": {
+    "note": "Corsair recipe with Jira as a TLS-terminating provider: model via relay worked, but the sandboxed Python Jira client failed CERTIFICATE_VERIFY_FAILED against the OpenShell proxy certificate; create never ran; ~$1.50. Superseded by S6-20261116T035436Z (Jira on production's opaque-tunnel design)."
+  }
+}

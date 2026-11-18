@@ -1,0 +1,54 @@
+{
+  "intended": [
+    "RHAISTRAT-75006",
+    "RHAISTRAT-75009",
+    "RHAISTRAT-75010",
+    "RHAISTRAT-75019",
+    "RHAISTRAT-75025",
+    "RHAISTRAT-75026",
+    "RHAISTRAT-75027"
+  ],
+  "refs": {
+    "main": {
+      "commit": "95799c4e0812313d8834bc0c83bf89248610a75d",
+      "jql": "project = RHAISTRAT AND issuetype = \"Initiative\" AND labels = \"initiative-autofix-opt-in\" AND (labels = \"initiative-autofix-rubric-pass\") AND (labels NOT IN (\"strat-creator-processing\", \"initiative-needs-attention\") OR labels IS EMPTY) AND status NOT IN (\"Closed\", \"Resolved\") ORDER BY key ASC",
+      "selected": [
+        "RHAISTRAT-75006",
+        "RHAISTRAT-75009",
+        "RHAISTRAT-75010",
+        "RHAISTRAT-75019",
+        "RHAISTRAT-75021",
+        "RHAISTRAT-75022",
+        "RHAISTRAT-75025",
+        "RHAISTRAT-75026",
+        "RHAISTRAT-75027"
+      ],
+      "matches_intended": false,
+      "extra_with_labels": {
+        "RHAISTRAT-75021": [
+          "initiative-ignore"
+        ],
+        "RHAISTRAT-75022": [
+          "strat-creator-ignore"
+        ]
+      },
+      "missing": []
+    },
+    "pr-124": {
+      "commit": "55e03525808febd3f1c5c0bd509a95aac71e2ce9",
+      "jql": "project = RHAISTRAT AND issuetype = \"Initiative\" AND labels = \"initiative-autofix-opt-in\" AND (labels = \"initiative-autofix-rubric-pass\") AND (labels NOT IN (\"strat-creator-processing\", \"initiative-needs-attention\", \"strat-creator-ignore\", \"initiative-ignore\") OR labels IS EMPTY) AND status NOT IN (\"Closed\", \"Resolved\") ORDER BY key ASC",
+      "selected": [
+        "RHAISTRAT-75006",
+        "RHAISTRAT-75009",
+        "RHAISTRAT-75010",
+        "RHAISTRAT-75019",
+        "RHAISTRAT-75025",
+        "RHAISTRAT-75026",
+        "RHAISTRAT-75027"
+      ],
+      "matches_intended": true,
+      "extra_with_labels": {},
+      "missing": []
+    }
+  }
+}

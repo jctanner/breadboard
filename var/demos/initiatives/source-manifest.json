@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "note": "Public upstreams mirrored into the GitHub emulator. Pins are resolved at mirror time and recorded in topology-manifest.json; a deliberate refresh is a new mirror run plus a ledger entry. Private GitLab sources (strat-pipeline, strat-pipeline-data, strat-dashboard, rfe-autofixer, rfe-autofixer-results, epic-decomposer) need glab and are listed under gitlab_private.",
+  "github": [
+    {
+      "org": "fullsend-ai",
+      "name": "strat-creator",
+      "upstream": "https://github.com/fullsend-ai/strat-creator.git",
+      "refs": {
+        "main": "refs/heads/main",
+        "pr-124": "refs/pull/124/head"
+      }
+    },
+    {
+      "org": "fullsend-ai",
+      "name": "rfe-creator",
+      "upstream": "https://github.com/fullsend-ai/rfe-creator.git",
+      "refs": {
+        "main": "refs/heads/main",
+        "ci-prod": "refs/heads/ci-prod",
+        "ci-stage": "refs/heads/ci-stage"
+      }
+    },
+    {
+      "org": "fullsend-ai",
+      "name": "epic-creator",
+      "upstream": "https://github.com/fullsend-ai/epic-creator.git",
+      "refs": {
+        "main": "refs/heads/main",
+        "pr-40": "refs/pull/40/head"
+      }
+    },
+    {
+      "org": "opendatahub-io",
+      "name": "assess-strat",
+      "upstream": "https://github.com/opendatahub-io/assess-strat.git",
+      "refs": {
+        "main": "refs/heads/main"
+      }
+    }
+  ],
+  "gitlab_private": [
+    "redhat/rhel-ai/agentic-ci/strat-pipeline",
+    "redhat/rhel-ai/agentic-ci/strat-pipeline-data",
+    "redhat/rhel-ai/agentic-ci/strat-dashboard",
+    "redhat/rhel-ai/agentic-ci/rfe-autofixer",
+    "redhat/rhel-ai/agentic-ci/rfe-autofixer-results",
+    "redhat/rhel-ai/agentic-ci/epic-decomposer"
+  ],
+  "patched": [
+    {
+      "org": "fullsend-ai",
+      "name": "strat-creator",
+      "base": "pr-124",
+      "branch": "cc75-emulator",
+      "patches": "strat-creator"
+    }
+  ]
+}

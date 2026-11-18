@@ -1,0 +1,39 @@
+{
+  "scenario": "S3",
+  "pipeline": 23,
+  "variables": {
+    "INITIATIVE_STRATEGIES": "on",
+    "STRAT_EXECUTOR": "fullsend"
+  },
+  "ref": "main",
+  "fixture": null,
+  "jobs": {
+    "fullsend-input-check": {
+      "id": 45,
+      "status": "running",
+      "stage": "validate"
+    },
+    "python-tests": {
+      "id": 46,
+      "status": "failed",
+      "stage": "validate",
+      "expected_status": "failed",
+      "status_ok": true,
+      "marker": "<strat-pipeline tripwire message>",
+      "marker_found": true
+    },
+    "workflow-batch-initiative": {
+      "id": 47,
+      "status": "manual",
+      "stage": "strategy"
+    }
+  },
+  "live": null,
+  "jira_writes": [],
+  "jira_read_posts": [],
+  "ok": true,
+  "checked_at": "2026-11-16T11:53:38.209804+00:00",
+  "post_review": {
+    "note": "Re-run after adding the cc75-live branch: the emulator main still refuses a live Initiative run."
+  }
+}

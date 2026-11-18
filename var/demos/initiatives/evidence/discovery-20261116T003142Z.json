@@ -1,0 +1,308 @@
+{
+  "strat_creator_jql": {
+    "expected": [
+      "RHAISTRAT-75006",
+      "RHAISTRAT-75009",
+      "RHAISTRAT-75010",
+      "RHAISTRAT-75019",
+      "RHAISTRAT-75025",
+      "RHAISTRAT-75026",
+      "RHAISTRAT-75027"
+    ],
+    "got": [
+      "RHAISTRAT-75006",
+      "RHAISTRAT-75009",
+      "RHAISTRAT-75010",
+      "RHAISTRAT-75019",
+      "RHAISTRAT-75025",
+      "RHAISTRAT-75026",
+      "RHAISTRAT-75027"
+    ],
+    "non_fixture_selected": []
+  },
+  "rfe_autofixer_optin": {
+    "jql": "project = RHAISTRAT AND issuetype = Initiative AND labels = 'initiative-autofix-opt-in' ORDER BY key ASC",
+    "expected": [
+      "RHAISTRAT-75004",
+      "RHAISTRAT-75006",
+      "RHAISTRAT-75009",
+      "RHAISTRAT-75010",
+      "RHAISTRAT-75011",
+      "RHAISTRAT-75015",
+      "RHAISTRAT-75018",
+      "RHAISTRAT-75019",
+      "RHAISTRAT-75020",
+      "RHAISTRAT-75021",
+      "RHAISTRAT-75022",
+      "RHAISTRAT-75023",
+      "RHAISTRAT-75024",
+      "RHAISTRAT-75025",
+      "RHAISTRAT-75026",
+      "RHAISTRAT-75027"
+    ],
+    "got": [
+      "RHAISTRAT-75004",
+      "RHAISTRAT-75006",
+      "RHAISTRAT-75009",
+      "RHAISTRAT-75010",
+      "RHAISTRAT-75011",
+      "RHAISTRAT-75015",
+      "RHAISTRAT-75018",
+      "RHAISTRAT-75019",
+      "RHAISTRAT-75020",
+      "RHAISTRAT-75021",
+      "RHAISTRAT-75022",
+      "RHAISTRAT-75023",
+      "RHAISTRAT-75024",
+      "RHAISTRAT-75025",
+      "RHAISTRAT-75026",
+      "RHAISTRAT-75027"
+    ],
+    "non_fixture_selected": []
+  },
+  "epic_creator_skip": {
+    "RHAISTRAT-75025": {
+      "expected": "decompose",
+      "got": "decompose",
+      "epic_children": [],
+      "legacy_incorporates": []
+    },
+    "RHAISTRAT-75026": {
+      "expected": "skip",
+      "got": "skip",
+      "epic_children": [
+        "RHAI-75040",
+        "RHAI-75041",
+        "RHAI-75042"
+      ],
+      "legacy_incorporates": []
+    },
+    "RHAISTRAT-75027": {
+      "expected": "skip",
+      "got": "skip",
+      "epic_children": [],
+      "legacy_incorporates": [
+        "RHAI-75043"
+      ]
+    }
+  },
+  "epic_child_rollup": {
+    "RHAISTRAT-75004": {
+      "expected": [
+        "RHAI-75001",
+        "RHAI-75002",
+        "RHAI-75003",
+        "RHAI-75004"
+      ],
+      "got": [
+        "RHAI-75001",
+        "RHAI-75002",
+        "RHAI-75003",
+        "RHAI-75004"
+      ]
+    },
+    "RHAISTRAT-75005": {
+      "expected": [
+        "RHAI-75005",
+        "RHAI-75006"
+      ],
+      "got": [
+        "RHAI-75005",
+        "RHAI-75006"
+      ]
+    },
+    "RHAISTRAT-75006": {
+      "expected": [],
+      "got": []
+    },
+    "RHAISTRAT-75007": {
+      "expected": [
+        "RHOAIENG-75001"
+      ],
+      "got": [
+        "RHOAIENG-75001"
+      ]
+    },
+    "RHAISTRAT-75008": {
+      "expected": [
+        "RHAI-75007",
+        "RHAI-75008",
+        "RHAI-75009",
+        "RHAI-75010",
+        "RHAI-75011",
+        "RHOAIENG-75002"
+      ],
+      "got": [
+        "RHAI-75007",
+        "RHAI-75008",
+        "RHAI-75009",
+        "RHAI-75010",
+        "RHAI-75011",
+        "RHOAIENG-75002"
+      ]
+    },
+    "RHAISTRAT-75009": {
+      "expected": [
+        "RHAI-75012",
+        "RHAI-75013"
+      ],
+      "got": [
+        "RHAI-75012",
+        "RHAI-75013"
+      ]
+    },
+    "RHAISTRAT-75010": {
+      "expected": [],
+      "got": []
+    },
+    "RHAISTRAT-75011": {
+      "expected": [],
+      "got": []
+    },
+    "RHAISTRAT-75012": {
+      "expected": [],
+      "got": []
+    },
+    "RHAISTRAT-75013": {
+      "expected": [],
+      "got": []
+    },
+    "RHAISTRAT-75014": {
+      "expected": [],
+      "got": []
+    },
+    "RHAISTRAT-75015": {
+      "expected": [
+        "RHOAIENG-75003",
+        "RHOAIENG-75004",
+        "RHOAIENG-75005"
+      ],
+      "got": [
+        "RHOAIENG-75003",
+        "RHOAIENG-75004",
+        "RHOAIENG-75005"
+      ]
+    },
+    "RHAISTRAT-75016": {
+      "expected": [
+        "AIPCC-75001",
+        "RHAI-75017",
+        "RHAI-75018"
+      ],
+      "got": [
+        "AIPCC-75001",
+        "RHAI-75017",
+        "RHAI-75018"
+      ]
+    },
+    "RHAISTRAT-75017": {
+      "expected": [
+        "RHAI-75019",
+        "RHAI-75020",
+        "RHAI-75021",
+        "RHAI-75022",
+        "RHAI-75023",
+        "RHAI-75024",
+        "RHAI-75025",
+        "RHAI-75026",
+        "RHAI-75027",
+        "RHAI-75028",
+        "RHAI-75029",
+        "RHAI-75030"
+      ],
+      "got": [
+        "RHAI-75019",
+        "RHAI-75020",
+        "RHAI-75021",
+        "RHAI-75022",
+        "RHAI-75023",
+        "RHAI-75024",
+        "RHAI-75025",
+        "RHAI-75026",
+        "RHAI-75027",
+        "RHAI-75028",
+        "RHAI-75029",
+        "RHAI-75030"
+      ]
+    },
+    "RHAISTRAT-75018": {
+      "expected": [
+        "RHAI-75031",
+        "RHAI-75032"
+      ],
+      "got": [
+        "RHAI-75031",
+        "RHAI-75032"
+      ]
+    },
+    "RHAISTRAT-75019": {
+      "expected": [],
+      "got": []
+    },
+    "RHAISTRAT-75020": {
+      "expected": [
+        "RHAI-75033"
+      ],
+      "got": [
+        "RHAI-75033"
+      ]
+    },
+    "RHAISTRAT-75021": {
+      "expected": [
+        "RHAI-75034",
+        "RHAI-75035"
+      ],
+      "got": [
+        "RHAI-75034",
+        "RHAI-75035"
+      ]
+    },
+    "RHAISTRAT-75022": {
+      "expected": [
+        "RHAI-75036"
+      ],
+      "got": [
+        "RHAI-75036"
+      ]
+    },
+    "RHAISTRAT-75023": {
+      "expected": [],
+      "got": []
+    },
+    "RHAISTRAT-75024": {
+      "expected": [
+        "RHAI-75037",
+        "RHAI-75038",
+        "RHAI-75039"
+      ],
+      "got": [
+        "RHAI-75037",
+        "RHAI-75038",
+        "RHAI-75039"
+      ]
+    },
+    "RHAISTRAT-75025": {
+      "expected": [],
+      "got": []
+    },
+    "RHAISTRAT-75026": {
+      "expected": [
+        "RHAI-75040",
+        "RHAI-75041",
+        "RHAI-75042"
+      ],
+      "got": [
+        "RHAI-75040",
+        "RHAI-75041",
+        "RHAI-75042"
+      ]
+    },
+    "RHAISTRAT-75027": {
+      "expected": [],
+      "got": []
+    }
+  },
+  "failures": [],
+  "ok": true,
+  "checked_at": "2026-11-16T00:31:42.342982+00:00"
+}

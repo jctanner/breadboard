@@ -1,0 +1,124 @@
+{
+  "checked_at": "2026-11-16T14:12:05.039314+00:00",
+  "relay_project": "cc75-initiatives",
+  "project_action": "unchanged",
+  "upstream_profile": "rh-vertex-strat-evals",
+  "allowed_models": [
+    "claude-opus-5-5"
+  ],
+  "auth_status": {
+    "backend": "anthropic",
+    "enabled": true,
+    "project_id": "cc75-initiatives",
+    "routing": {
+      "default_upstream": "rh-vertex-strat-evals",
+      "model_overrides": {}
+    },
+    "synthetic": false,
+    "upstream_auth": {
+      "configured": true,
+      "error": null,
+      "expires_at": "2026-11-16T15:10:52.856799103+00:00",
+      "mode": "google-service-account",
+      "project_id": "<vertex-project>",
+      "region": "global",
+      "state": "ready"
+    },
+    "upstream_profile": "rh-vertex-strat-evals",
+    "upstreams": [
+      {
+        "backend": "anthropic",
+        "synthetic": false,
+        "upstream_auth": {
+          "configured": true,
+          "error": null,
+          "expires_at": "2026-11-16T15:10:52.856799103+00:00",
+          "mode": "google-service-account",
+          "project_id": "<vertex-project>",
+          "region": "global",
+          "state": "ready"
+        },
+        "upstream_profile": "rh-vertex-strat-evals"
+      }
+    ]
+  },
+  "workload_key": "reused",
+  "api_key_action": "reused",
+  "exchange_only_direct_messages_status": 403,
+  "ci_projects": {
+    "strat-pipeline": 4,
+    "rfe-autofixer": 6,
+    "epic-decomposer": 7
+  },
+  "ci_file_variables": [
+    "CC75_RELAY_WORKLOAD_KEY (masked)",
+    "GOOGLE_APPLICATION_CREDENTIALS"
+  ],
+  "ci_env_variables": [
+    "CC75_RELAY_API_KEY (masked)"
+  ],
+  "smoke": {
+    "exchange_status": 200,
+    "exchanged_token": {
+      "status": 200,
+      "model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 18,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 4,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "speed": "standard"
+      },
+      "error_message": ""
+    },
+    "api_key_bearer": {
+      "status": 200,
+      "model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 18,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 4,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "speed": "standard"
+      },
+      "error_message": ""
+    },
+    "messages_api_key": {
+      "status": 200,
+      "model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 18,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 4,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "speed": "standard"
+      },
+      "error_message": ""
+    },
+    "raw_predict_status": 200
+  },
+  "notes": [
+    "No key or token values are recorded."
+  ]
+}

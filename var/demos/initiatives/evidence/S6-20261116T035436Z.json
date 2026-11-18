@@ -1,0 +1,91 @@
+{
+  "scenario": "S6",
+  "pipeline": 21,
+  "variables": {
+    "INITIATIVE_STRATEGIES": "on",
+    "STRAT_EXECUTOR": "fullsend",
+    "STRAT_DRY_RUN": "1",
+    "FULLSEND_PUBLISH": "0",
+    "STRAT_CREATOR_REPO": "https://github-emulator.ai-pipeline.svc.cluster.local/fullsend-ai/strat-creator.git",
+    "STRAT_CREATOR_BRANCH": "cc75-emulator",
+    "BATCH_SIZE": "1"
+  },
+  "fixture": {
+    "baseline": "snapshot_cc75-baseline_20261116_003128.db",
+    "variant": "baseline",
+    "restored_after": "snapshot_cc75-baseline_20261116_003128.db"
+  },
+  "jobs": {
+    "fullsend-input-check": {
+      "id": 41,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true
+    },
+    "python-tests": {
+      "id": 42,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true
+    },
+    "workflow-batch-initiative": {
+      "id": 43,
+      "status": "success",
+      "stage": "strategy",
+      "markers": {
+        "RHAISTRAT-75006": true,
+        "Sandbox created": true,
+        "Validation passed": true,
+        "Job succeeded": true
+      },
+      "expected_status": "success",
+      "status_ok": true
+    }
+  },
+  "jira_writes": [],
+  "jira_read_posts": [
+    {
+      "method": "POST",
+      "path": "/rest/api/3/search/jql",
+      "status": 200,
+      "user": "cc75-strat-bot"
+    },
+    {
+      "method": "POST",
+      "path": "/rest/api/3/search/jql",
+      "status": 200,
+      "user": "cc75-strat-bot"
+    }
+  ],
+  "ok": true,
+  "checked_at": "2026-11-16T03:54:36.577796+00:00",
+  "post_review": {
+    "recipe": "model via OpenShell provider model-relay (Messages API, key held by OpenShell); Jira via production opaque tunnel + STRAT_EXTRA_CA_FILE",
+    "agent": {
+      "model": "claude-opus-5-5",
+      "seconds": 812.8,
+      "fullsend_cost_estimate_usd": 6.0327,
+      "validation": "passed"
+    },
+    "relay": {
+      "requests": 109,
+      "client_apis": [
+        "anthropic"
+      ],
+      "http_statuses": [
+        200
+      ],
+      "input_tokens": 91184,
+      "output_tokens": 74910,
+      "cache_creation_input_tokens": 697258,
+      "cache_read_input_tokens": 4486751
+    },
+    "review": {
+      "key": "RHAISTRAT-75006",
+      "verdict": "REVISE",
+      "score": "4/8"
+    }
+  }
+}

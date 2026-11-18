@@ -1,0 +1,161 @@
+{
+  "scenario": "S8",
+  "fixture": {
+    "baseline": "snapshot_cc75-baseline_20261116_182256.db",
+    "strategies_attached": [
+      "RHAISTRAT-75025",
+      "RHAISTRAT-75026",
+      "RHAISTRAT-75027"
+    ]
+  },
+  "first": {
+    "pipeline": 62,
+    "job": 245,
+    "status": "failed",
+    "markers": {
+      "cc75: model via Model Relay": true,
+      "cc75: Model Relay route; skipping setup-gcp-credentials.py": true,
+      "Jira identity probe OK for the JIRA_USERNAME username": true,
+      "OK: model via ANTHROPIC_BASE_URL": true
+    },
+    "cost_lines": []
+  },
+  "rerun": {
+    "pipeline": 63,
+    "job": 252,
+    "status": "failed",
+    "markers": {
+      "cc75: model via Model Relay": true,
+      "cc75: Model Relay route; skipping setup-gcp-credentials.py": true,
+      "Jira identity probe OK for the JIRA_USERNAME username": true,
+      "OK: model via ANTHROPIC_BASE_URL": true
+    },
+    "cost_lines": [],
+    "new_issues": [],
+    "jira_writes": 0
+  },
+  "checks": {
+    "job_success": false,
+    "trace: cc75: model via Model Relay": true,
+    "trace: cc75: Model Relay route; skipping setup-gcp-credentials.py": true,
+    "trace: Jira identity probe OK for the JIRA_USERNAME username": true,
+    "trace: OK: model via ANTHROPIC_BASE_URL": true,
+    "RHAISTRAT-75025 decomposed into 2..8 Epics": false,
+    "RHAISTRAT-75025 new Epics are RHAI Epics": false,
+    "RHAISTRAT-75025 labelled epic-creator-auto-decomposed": false,
+    "RHAISTRAT-75026 skipped (existing Epic children): no new Epics": true,
+    "RHAISTRAT-75026 skipped (existing Epic children): not labelled": true,
+    "RHAISTRAT-75027 skipped (legacy Incorporates link to an Epic): no new Epics": true,
+    "RHAISTRAT-75027 skipped (legacy Incorporates link to an Epic): not labelled": true,
+    "sibling links are Blocks only": true,
+    "writes only to candidates and new Epics": true,
+    "results pushed": true,
+    "rerun job success": false,
+    "rerun creates no Epics": true
+  },
+  "new_epics_by_parent": {},
+  "sibling_link_types": [],
+  "new_epic_summaries": {},
+  "candidate_labels": {
+    "RHAISTRAT-75025": [
+      "cc75-fx-i22",
+      "cc75-synthetic",
+      "initiative-autofix-opt-in",
+      "initiative-autofix-rubric-pass",
+      "strat-creator-auto-refined",
+      "strat-creator-human-sign-off",
+      "strat-creator-rubric-pass"
+    ],
+    "RHAISTRAT-75026": [
+      "cc75-fx-i23",
+      "cc75-synthetic",
+      "initiative-autofix-opt-in",
+      "initiative-autofix-rubric-pass",
+      "strat-creator-auto-refined",
+      "strat-creator-human-sign-off",
+      "strat-creator-rubric-pass"
+    ],
+    "RHAISTRAT-75027": [
+      "cc75-fx-i24",
+      "cc75-synthetic",
+      "initiative-autofix-opt-in",
+      "initiative-autofix-rubric-pass",
+      "strat-creator-auto-refined",
+      "strat-creator-human-sign-off",
+      "strat-creator-rubric-pass"
+    ]
+  },
+  "written_keys": [],
+  "write_paths": [],
+  "data_repo_new_paths": [
+    "2026-11-16T18-24-01Z/decompose-runs/.gitkeep",
+    "2026-11-16T18-24-01Z/decompose-runs/2026-11-16T18-24-01Z-report.html",
+    "2026-11-16T18-24-01Z/decompose-runs/2026-11-16T18-24-01Z.yaml",
+    "2026-11-16T18-24-01Z/epic-reviews/.gitkeep",
+    "2026-11-16T18-24-01Z/epic-reviews/RHAISTRAT-75025-decomp-review.md",
+    "2026-11-16T18-24-01Z/epic-reviews/RHAISTRAT-75026-decomp-review.md",
+    "2026-11-16T18-24-01Z/epic-reviews/RHAISTRAT-75027-decomp-review.md",
+    "2026-11-16T18-24-01Z/epic-tasks/.gitkeep",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E001-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E001.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E002-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E002.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E003-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E003.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E004-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E004.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E005-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E005.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E006-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E006.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E007-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-E007.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75025-decomposition.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75026-E001-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75026-E001.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75026-E002-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75026-E002.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75026-E003-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75026-E003.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75026-E004-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75026-E004.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75026-E005-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75026-E005.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75026-decomposition.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75027-E001-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75027-E001.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75027-E002-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75027-E002.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75027-E003-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75027-E003.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75027-E004-ai-signals.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75027-E004.md",
+    "2026-11-16T18-24-01Z/epic-tasks/RHAISTRAT-75027-decomposition.md",
+    "2026-11-16T18-24-01Z/strat-tasks/.gitkeep",
+    "2026-11-16T18-24-01Z/strat-tasks/RHAISTRAT-75025.md",
+    "2026-11-16T18-24-01Z/strat-tasks/RHAISTRAT-75026.md",
+    "2026-11-16T18-24-01Z/strat-tasks/RHAISTRAT-75027.md",
+    "latest"
+  ],
+  "kept_as_snapshot": "snapshot_cc75-S8-failed_20261116_185348.db",
+  "restored_after": "snapshot_cc75-baseline_20261116_182256.db",
+  "ok": false,
+  "checked_at": "2026-11-16T18:53:48.880872+00:00",
+  "post_review": {
+    "result": "failed at submit; nothing written to Jira (pipelines 62 and 63)",
+    "cause": "The stand-in job ran epic-creator #40's legacy submit line `submit.py --all`; #40 refuses typed (workload) artifacts without --workload ('typed artifacts require explicit --workload selection'). Fixed in the mirror's epic-decomposer adaptations.",
+    "vacuous_checks": "The 75026/75027 'skipped' checks passed only because submission created nothing; run_decompose.py now requires submitted Epics for them to count.",
+    "observed_before_submit": "#40 planned Epics for all three signed-off Initiatives: 75025 (7), 75026 (4) and 75027 (4), and every plan passed review (13-14/14). 75026 already has Epic children and 75027 a legacy Incorporates link, so the skip gap is visible in planning; submit would create the duplicates.",
+    "cost_estimate_usd": {
+      "job_245_first": 7.4,
+      "job_252_rerun": "about 7.4 (same plan)",
+      "job_231_stopped_at_bootstrap": "small"
+    },
+    "plumbing_verified": [
+      "Model Relay route; Google key steps skipped",
+      "identity probe accepted JIRA_USERNAME",
+      "Claude Code installed on the job host",
+      "results pushed to epic-decomposer-results"
+    ]
+  }
+}

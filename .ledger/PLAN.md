@@ -17,6 +17,10 @@
 
 ## Current milestone
 
+- [CC-75: w530 Initiatives scenario and demo](tasks/blocked/cc75-w530-initiatives-scenario.md):
+  phase 1 inventory and [plan](plans/cc75-w530-initiatives-scenario-plan.md)
+  await human review; w530 unreachable; relay credentials are the human's step.
+
 - [CC-61: PR #8 manual merge preparation](tasks/done/cc61-pr8.md): isolated
   fallback [PR #10](https://github.com/jctanner/breadboard/pull/10) is ready for manual merge after reviewed fixes and passing W530 strict conformance.
   Nonblocking [conformance evidence automation](bugs/open/conformance-evidence-automation.md) remains a follow-up.

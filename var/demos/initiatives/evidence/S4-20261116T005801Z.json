@@ -1,0 +1,45 @@
+{
+  "scenario": "S4",
+  "pipeline": 6,
+  "variables": {
+    "INITIATIVE_STRATEGIES": "on",
+    "STRAT_EXECUTOR": "fullsend",
+    "STRAT_DRY_RUN": "1",
+    "FULLSEND_PUBLISH": "0",
+    "STRAT_CREATOR_REPO": "https://github-emulator.ai-pipeline.svc.cluster.local/fullsend-ai/strat-creator.git",
+    "STRAT_CREATOR_BRANCH": "cc75-emulator",
+    "BATCH_SIZE": "1"
+  },
+  "fixture": {
+    "baseline": "snapshot_cc75-baseline_20261116_003128.db",
+    "variant": "no-opt-in",
+    "opt_in_removed": 16,
+    "restored_after": "snapshot_cc75-baseline_20261116_003128.db"
+  },
+  "jobs": {
+    "fullsend-input-check": {
+      "id": 10,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true
+    },
+    "python-tests": {
+      "id": 11,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true
+    },
+    "workflow-batch-initiative": {
+      "id": 12,
+      "status": "failed",
+      "stage": "strategy",
+      "expected_status": "success",
+      "status_ok": false
+    }
+  },
+  "jira_writes": [],
+  "ok": false,
+  "checked_at": "2026-11-16T00:58:01.821898+00:00"
+}

@@ -1,0 +1,20 @@
+# CC-75: how the GitLab emulator resolves CI variables (no model). Project variables, a
+# File variable and pipeline variables are set by run_smoke.py --vars; this job prints names
+# and values of throwaway probe variables only.
+variables:
+  TOP_ONLY: "yaml-top"
+  TOP_VS_PROJECT: "yaml-top"
+probe:
+  image: registry.access.redhat.com/ubi9/python-312:latest
+  tags: [aipcc-small-x86_64]
+  variables:
+    JOB_VS_PROJECT: "yaml-job"
+    JOB_VS_PIPELINE: "yaml-job"
+    EXPANDED: "$PROBE_SOURCE"
+  script:
+    - echo "SMOKE TOP_VS_PROJECT=$TOP_VS_PROJECT (project sets project)"
+    - echo "SMOKE JOB_VS_PROJECT=$JOB_VS_PROJECT (project sets project)"
+    - echo "SMOKE JOB_VS_PIPELINE=$JOB_VS_PIPELINE (pipeline sets pipeline)"
+    - echo "SMOKE EXPANDED=$EXPANDED (PROBE_SOURCE is project-value)"
+    - echo "SMOKE PROBE_FILE path=$PROBE_FILE first_line=$(head -1 "$PROBE_FILE" 2>&1)"
+    - echo SMOKE_PASS

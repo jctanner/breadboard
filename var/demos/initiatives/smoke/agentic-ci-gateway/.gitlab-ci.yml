@@ -1,0 +1,9 @@
+# CC-75: start agentic-ci's own OpenShell gateway in the rfe-autofixer job image (no model).
+gateway-probe:
+  image: quay.io/aipcc/agentic-ci/openshell:0.3.46
+  tags: [aipcc-small-x86_64]
+  timeout: 20m
+  script:
+    - bash smoke.sh
+  after_script:
+    - "true"

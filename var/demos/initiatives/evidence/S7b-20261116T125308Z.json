@@ -1,0 +1,207 @@
+{
+  "scenario": "S7b",
+  "pipeline": 27,
+  "variables": {
+    "INITIATIVE_STRATEGIES": "on",
+    "STRAT_EXECUTOR": "fullsend",
+    "STRAT_DRY_RUN": "0",
+    "FULLSEND_PUBLISH": "1",
+    "STRAT_CREATOR_REPO": "https://github-emulator.ai-pipeline.svc.cluster.local/fullsend-ai/strat-creator.git",
+    "STRAT_CREATOR_BRANCH": "cc75-emulator",
+    "BATCH_SIZE": "3"
+  },
+  "ref": "cc75-live",
+  "fixture": {
+    "baseline": "snapshot_cc75-after-S7a_20261116_122933.db",
+    "variant": "after-S7a",
+    "kept_as_snapshot": "snapshot_cc75-after-S7b_20261116_125308.db"
+  },
+  "jobs": {
+    "fullsend-input-check": {
+      "id": 55,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true
+    },
+    "python-tests": {
+      "id": 56,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true,
+      "marker": "cc75: live Initiative run",
+      "marker_found": true
+    },
+    "workflow-batch-initiative": {
+      "id": 57,
+      "status": "success",
+      "stage": "strategy",
+      "markers": {
+        "RHAISTRAT-75009": true,
+        "RHAISTRAT-75010": true,
+        "RHAISTRAT-75019": true,
+        "Validation passed": true,
+        "Job succeeded": true
+      },
+      "expected_status": "success",
+      "status_ok": true
+    }
+  },
+  "live": {
+    "checks": {
+      "writes_only_to_selected": true,
+      "every_selected_written": true,
+      "untouched_not_written": true,
+      "RHAISTRAT-75009_strategy_attachment": true,
+      "RHAISTRAT-75009_gate_label": true,
+      "RHAISTRAT-75009_lock_released": true,
+      "RHAISTRAT-75010_strategy_attachment": true,
+      "RHAISTRAT-75010_gate_label": true,
+      "RHAISTRAT-75010_lock_released": true,
+      "RHAISTRAT-75019_strategy_attachment": true,
+      "RHAISTRAT-75019_gate_label": true,
+      "RHAISTRAT-75019_lock_released": true,
+      "results_published": true
+    },
+    "issues": {
+      "RHAISTRAT-75009": {
+        "labels": [
+          "cc75-fx-i06",
+          "cc75-synthetic",
+          "initiative-autofix-opt-in",
+          "initiative-autofix-rubric-pass",
+          "strat-creator-auto-refined",
+          "strat-creator-needs-attention"
+        ],
+        "status": "Refinement",
+        "attachments": [
+          "RHAISTRAT-75009-review.md",
+          "RHAISTRAT-75009-strategy.md"
+        ]
+      },
+      "RHAISTRAT-75010": {
+        "labels": [
+          "cc75-fx-i07",
+          "cc75-synthetic",
+          "initiative-autofix-opt-in",
+          "initiative-autofix-rubric-pass",
+          "strat-creator-auto-refined",
+          "strat-creator-needs-attention"
+        ],
+        "status": "New",
+        "attachments": [
+          "RHAISTRAT-75010-review.md",
+          "RHAISTRAT-75010-strategy.md"
+        ]
+      },
+      "RHAISTRAT-75019": {
+        "labels": [
+          "cc75-fx-i16",
+          "cc75-synthetic",
+          "initiative-autofix-opt-in",
+          "initiative-autofix-rubric-pass",
+          "strat-creator-auto-refined",
+          "strat-creator-needs-attention"
+        ],
+        "status": "Refinement",
+        "attachments": [
+          "RHAISTRAT-75019-review.md",
+          "RHAISTRAT-75019-strategy.md"
+        ]
+      },
+      "RHAISTRAT-75006": {
+        "labels": [
+          "cc75-fx-i03",
+          "cc75-synthetic",
+          "initiative-autofix-opt-in",
+          "initiative-autofix-rubric-pass",
+          "strat-creator-auto-refined",
+          "strat-creator-needs-attention"
+        ],
+        "status": "New",
+        "attachments": [
+          "RHAISTRAT-75006-review.md",
+          "RHAISTRAT-75006-strategy.md"
+        ]
+      }
+    },
+    "write_keys": [
+      "RHAISTRAT-75009",
+      "RHAISTRAT-75010",
+      "RHAISTRAT-75019"
+    ],
+    "write_paths": [
+      "POST /rest/api/3/issue/RHAISTRAT-75009/attachments",
+      "POST /rest/api/3/issue/RHAISTRAT-75009/comment",
+      "POST /rest/api/3/issue/RHAISTRAT-75010/attachments",
+      "POST /rest/api/3/issue/RHAISTRAT-75010/comment",
+      "POST /rest/api/3/issue/RHAISTRAT-75019/attachments",
+      "POST /rest/api/3/issue/RHAISTRAT-75019/comment",
+      "PUT /rest/api/3/issue/RHAISTRAT-75009",
+      "PUT /rest/api/3/issue/RHAISTRAT-75010",
+      "PUT /rest/api/3/issue/RHAISTRAT-75019"
+    ],
+    "data_repo_new_paths": [
+      "initiative-strategy/run-gitlab-job-57/.publication.json",
+      "initiative-strategy/run-gitlab-job-57/pipeline-data.json",
+      "initiative-strategy/run-gitlab-job-57/reports/report.html",
+      "initiative-strategy/run-gitlab-job-57/strat-originals/RHAISTRAT-75009-comments.md",
+      "initiative-strategy/run-gitlab-job-57/strat-originals/RHAISTRAT-75009.md",
+      "initiative-strategy/run-gitlab-job-57/strat-originals/RHAISTRAT-75010-comments.md",
+      "initiative-strategy/run-gitlab-job-57/strat-originals/RHAISTRAT-75010.md",
+      "initiative-strategy/run-gitlab-job-57/strat-originals/RHAISTRAT-75019-comments.md",
+      "initiative-strategy/run-gitlab-job-57/strat-originals/RHAISTRAT-75019.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75009-review-architecture.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75009-review-comment.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75009-review-feasibility.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75009-review-provenance.json",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75009-review-scope.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75009-review-scorer.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75009-review-testability.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75009-review.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75010-review-architecture.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75010-review-comment.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75010-review-feasibility.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75010-review-provenance.json",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75010-review-scope.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75010-review-scorer.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75010-review-testability.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75010-review.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75019-review-architecture.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75019-review-comment.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75019-review-feasibility.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75019-review-provenance.json",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75019-review-scope.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75019-review-scorer.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75019-review-testability.md",
+      "initiative-strategy/run-gitlab-job-57/strat-reviews/RHAISTRAT-75019-review.md",
+      "initiative-strategy/run-gitlab-job-57/strat-tasks/RHAISTRAT-75009.md",
+      "initiative-strategy/run-gitlab-job-57/strat-tasks/RHAISTRAT-75010.md",
+      "initiative-strategy/run-gitlab-job-57/strat-tasks/RHAISTRAT-75019.md"
+    ]
+  },
+  "jira_writes": 21,
+  "jira_read_posts": [
+    {
+      "method": "POST",
+      "path": "/rest/api/3/search/jql",
+      "status": 200,
+      "user": "cc75-strat-bot"
+    },
+    {
+      "method": "POST",
+      "path": "/rest/api/3/search/jql",
+      "status": 200,
+      "user": "cc75-strat-bot"
+    }
+  ],
+  "ok": true,
+  "checked_at": "2026-11-16T12:53:08.822980+00:00",
+  "post_review": {
+    "cost_estimate_usd": 17.11,
+    "duration_s": 984,
+    "review": "all three REVISE 4/8, needs_attention; scope 0 on one",
+    "skipped_already_processed": "RHAISTRAT-75006 (strat-creator-needs-attention from S7a) was not selected or written"
+  }
+}

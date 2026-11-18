@@ -1,0 +1,32 @@
+{
+  "scenario": "S3-control",
+  "pipeline": 5,
+  "variables": {
+    "INITIATIVE_STRATEGIES": "on",
+    "STRAT_EXECUTOR": "fullsend",
+    "STRAT_DRY_RUN": "1",
+    "FULLSEND_PUBLISH": "0"
+  },
+  "jobs": {
+    "fullsend-input-check": {
+      "id": 7,
+      "status": "failed",
+      "stage": "validate"
+    },
+    "python-tests": {
+      "id": 8,
+      "status": "success",
+      "stage": "validate",
+      "expected_status": "success",
+      "status_ok": true
+    },
+    "workflow-batch-initiative": {
+      "id": 9,
+      "status": "manual",
+      "stage": "strategy"
+    }
+  },
+  "jira_writes": [],
+  "ok": true,
+  "checked_at": "2026-11-16T00:51:13.521158+00:00"
+}
